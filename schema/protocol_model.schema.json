@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/protocol_model.schema.json",
+  "title": "Protocol Reverse Engineering Model",
+  "type": "object",
+  "required": ["protocol_name", "version", "families"],
+  "properties": {
+    "protocol_name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/family"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/family_relation"
+      }
+    }
+  },
+  "$defs": {
+    "segment": {
+      "type": "object",
+      "required": ["start", "end", "kind", "confidence"],
+      "properties": {
+        "start": {"type": "integer", "minimum": 0},
+        "end": {"type": "integer", "minimum": 0},
+        "kind": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+        "evidence": {"type": "object"}
+      }
+    },
+    "field_hypothesis": {
+      "type": "object",
+      "required": ["family_id", "start", "length", "field_type", "confidence"],
+      "properties": {
+        "family_id": {"type": "string"},
+        "start": {"type": "integer", "minimum": 0},
+        "length": {"type": "integer", "minimum": 1},
+        "field_type": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+        "endian": {"type": ["string", "null"]},
+        "evidence": {"type": "object"},
+        "attributes": {"type": "object"}
+      }
+    },
+    "family_relation": {
+      "type": "object",
+      "required": ["request_family_id", "response_family_id", "pair_count", "avg_pair_score"],
+      "properties": {
+        "request_family_id": {"type": "string"},
+        "response_family_id": {"type": "string"},
+        "pair_count": {"type": "integer", "minimum": 0},
+        "avg_pair_score": {"type": "number"},
+        "avg_latency_ms": {"type": ["number", "null"]},
+        "echo_fields": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "length_relations": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      }
+    },
+    "family": {
+      "type": "object",
+      "required": ["family_id", "role", "message_count", "template"],
+      "properties": {
+        "family_id": {"type": "string"},
+        "role": {"type": "string"},
+        "message_count": {"type": "integer", "minimum": 0},
+        "template": {"type": "string"},
+        "segments": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/segment"}
+        },
+        "field_hypotheses": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/field_hypothesis"}
+        },
+        "related_families": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "examples": {
+          "type": "array",
+          "items": {"type": "integer"}
+        },
+        "evidence": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}
