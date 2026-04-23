@@ -46,7 +46,7 @@ def unique_messages(records: Sequence[MessageRecord]) -> List[MessageRecord]:
 
 
 
-def vectorize_messages(records: Sequence[MessageRecord]) -> np.ndarray:
+def vectorize_messages(records: Sequence[MessageRecord]) -> np.ndarray: # type: ignore
     messages = [hex_to_bytes(record.payload_hex) for record in records]
     if np is None:
         raise RuntimeError("NumPy is required for vectorization-based clustering")
@@ -58,7 +58,7 @@ def vectorize_messages(records: Sequence[MessageRecord]) -> np.ndarray:
 
 
 
-def maybe_reduce_dimensions(matrix: np.ndarray, n_components: int | None = None) -> np.ndarray:
+def maybe_reduce_dimensions(matrix: np.ndarray, n_components: int | None = None) -> np.ndarray: # pyright: ignore[reportInvalidTypeForm]
     if n_components is None or PCA is None or matrix.size == 0:
         return matrix
     if matrix.shape[1] <= 1:
