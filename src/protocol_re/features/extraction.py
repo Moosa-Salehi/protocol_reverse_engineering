@@ -2,17 +2,16 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from math import log2
-from statistics import mean
+from statistics import mean, stdev
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
 
-NGRAM_SIZES = (2, 3)
+NGRAM_SIZES = (2, 3, 4)
 TOP_VALUES_LIMIT = 8
 TOP_MOTIFS_LIMIT = 10
-
 
 
 def shannon_entropy(values: Sequence[int]) -> float:
@@ -23,11 +22,9 @@ def shannon_entropy(values: Sequence[int]) -> float:
     return -sum((count / total) * log2(count / total) for count in counts.values())
 
 
-
 def sparse_byte_histogram(payload: bytes) -> Dict[str, int]:
     histogram = Counter(payload)
     return {f"{value:02x}": count for value, count in sorted(histogram.items())}
-
 
 
 def top_byte_values(payload: bytes, limit: int = TOP_VALUES_LIMIT) -> List[Dict[str, object]]:
@@ -36,7 +33,6 @@ def top_byte_values(payload: bytes, limit: int = TOP_VALUES_LIMIT) -> List[Dict[
         {"byte": f"{value:02x}", "count": count}
         for value, count in counts.most_common(limit)
     ]
-
 
 
 def run_length_stats(payload: bytes) -> Dict[str, int]:
@@ -72,12 +68,10 @@ def run_length_stats(payload: bytes) -> Dict[str, int]:
     }
 
 
-
 def ngram_counts(payload: bytes, n: int) -> Counter[bytes]:
     if len(payload) < n:
         return Counter()
     return Counter(payload[index : index + n] for index in range(0, len(payload) - n + 1))
-
 
 
 def repeated_ngram_summary(payload: bytes) -> Dict[str, object]:
@@ -98,6 +92,69 @@ def repeated_ngram_summary(payload: bytes) -> Dict[str, object]:
     }
 
 
+def ngram_frequency_distribution(payload: bytes) -> List[Dict[str, object]]:
+    """Compute n-gram frequency distributions for n in NGRAM_SIZES."""
+    result = {}
+    for n in NGRAM_SIZES:
+        counts = ngram_counts(payload, n)
+        if counts:
+            total = sum(counts.values())
+            freq_dist = [
+                {"ngram": gram.hex(), "count": count, "frequency": round(count / total, 6)}
+                for gram, count in counts.most_common(20)
+            ]
+            result[f"ngram_{n}"] = freq_dist
+    return result
+
+
+def position_entropy_vector(payload: bytes, context_window: int = 1) -> List[float]:
+    """Compute entropy vector across payload positions."""
+    if not payload:
+        return []
+    
+    max_pos = len(payload)
+    entropy_vector = []
+    
+    for pos in range(max_pos):
+        values = []
+        for offset in range(-context_window, context_window + 1):
+            idx = pos + offset
+            if 0 <= idx < len(payload):
+                values.append(payload[idx])
+        if values:
+            entropy_vector.append(round(shannon_entropy(values), 6))
+    
+    return entropy_vector
+
+
+def byte_uniqueness_ratio(payload: bytes) -> float:
+    """Ratio of unique bytes to total bytes."""
+    if not payload:
+        return 0.0
+    return len(set(payload)) / len(payload)
+
+
+def payload_checksum(payload: bytes) -> Dict[str, str]:
+    """Compute various checksums for payload integrity checking."""
+    if not payload:
+        return {"sum": "00", "xor": "00", "crc32": "00000000"}
+    
+    byte_sum = sum(payload) & 0xFF
+    xor_all = 0
+    for b in payload:
+        xor_all ^= b
+    
+    # Simple CRC-like checksum
+    crc = 0
+    for byte in payload:
+        crc = (crc + byte) & 0xFFFFFFFF
+    
+    return {
+        "sum": f"{byte_sum:02x}",
+        "xor": f"{xor_all:02x}",
+        "crc32": f"{crc:08x}",
+    }
+
 
 def message_feature_record(record: MessageRecord) -> Dict[str, object]:
     payload = hex_to_bytes(record.payload_hex)
@@ -113,18 +170,19 @@ def message_feature_record(record: MessageRecord) -> Dict[str, object]:
         "payload_len": record.payload_len,
         "byte_entropy": round(shannon_entropy(values), 6),
         "unique_byte_count": len(set(values)),
-        "unique_byte_ratio": round(len(set(values)) / len(values), 6) if values else 0.0,
+        "unique_byte_ratio": round(byte_uniqueness_ratio(payload), 6),
         "byte_histogram": histogram,
         "top_byte_values": top_byte_values(payload),
+        "ngram_frequency": ngram_frequency_distribution(payload),
+        "position_entropy": position_entropy_vector(payload),
+        "checksums": payload_checksum(payload),
         **run_stats,
         **motif_stats,
     }
 
 
-
 def _family_lookup(assignments: Sequence[FamilyAssignment]) -> Dict[int, str]:
     return {assignment.msg_id: assignment.family_id for assignment in assignments}
-
 
 
 def group_records_by_family(
@@ -148,7 +206,6 @@ def group_records_by_family(
     return dict(grouped)
 
 
-
 def family_length_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
     lengths = [record.payload_len for record in records]
     counts = Counter(lengths)
@@ -156,10 +213,10 @@ def family_length_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
         "min": min(lengths) if lengths else 0,
         "max": max(lengths) if lengths else 0,
         "mean": round(mean(lengths), 6) if lengths else 0.0,
+        "std_dev": round(stdev(lengths), 6) if len(lengths) > 1 else 0.0,
         "distinct_lengths": len(counts),
         "length_histogram": {str(length): count for length, count in sorted(counts.items())},
     }
-
 
 
 def family_position_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
@@ -183,13 +240,11 @@ def family_position_stats(records: Sequence[MessageRecord]) -> Dict[str, object]
     }
 
 
-
 def family_byte_histogram(records: Sequence[MessageRecord]) -> Dict[str, int]:
     histogram: Counter[int] = Counter()
     for record in records:
         histogram.update(hex_to_bytes(record.payload_hex))
     return {f"{value:02x}": count for value, count in sorted(histogram.items())}
-
 
 
 def family_motif_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
@@ -224,7 +279,6 @@ def family_motif_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
     }
 
 
-
 def family_feature_record(family_id: str, records: Sequence[MessageRecord]) -> Dict[str, object]:
     message_features = [message_feature_record(record) for record in records]
     entropy_values = [item["byte_entropy"] for item in message_features]
@@ -254,7 +308,6 @@ def family_feature_record(family_id: str, records: Sequence[MessageRecord]) -> D
         "motif_stats": family_motif_stats(records),
         "example_msg_ids": [record.msg_id for record in records[:10]],
     }
-
 
 
 def extract_feature_artifacts(
