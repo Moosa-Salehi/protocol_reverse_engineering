@@ -24,20 +24,41 @@ Feature artifacts
 
 Recommended flow from PCAPs
 
-```bash
-PYTHONPATH=src python3 scripts/01_collect_pcaps.py files pcaps
-PYTHONPATH=src python3 scripts/02_dedup_pcaps.py pcaps --delete
-PYTHONPATH=src python3 scripts/03_extract_messages.py pcaps data/messages.jsonl
-PYTHONPATH=src python3 scripts/05_discover_families.py data/messages.jsonl data/family_assignments.json
-PYTHONPATH=src python3 scripts/14_extract_features.py data/messages.jsonl data/features --assignments-json data/family_assignments.json
-PYTHONPATH=src python3 scripts/06_infer_boundaries.py data/messages.jsonl data/families.json --assignments-json data/family_assignments.json
-PYTHONPATH=src python3 scripts/07_pair_requests_responses.py data/messages.jsonl data/pairs.json --assignments-json data/family_assignments.json
-PYTHONPATH=src python3 scripts/08_infer_keywords.py data/messages.jsonl data/keywords.json --assignments-json data/family_assignments.json
-PYTHONPATH=src python3 scripts/10_compare_subcluster_hypotheses.py data/messages.jsonl data/subcluster_hypotheses.json --assignments-json data/family_assignments.json
-PYTHONPATH=src python3 scripts/11_infer_relations.py data/messages.jsonl data/family_assignments.json data/pairs.json data/relations.json
-PYTHONPATH=src python3 scripts/13_infer_semantics.py data/families.json data/relations.json data/semantics.json
-PYTHONPATH=src python3 scripts/09_build_protocol_model.py data/families.json data/protocol_model.json --relations-json data/relations.json --semantics-json data/semantics.json
-PYTHONPATH=src python3 scripts/12_export_markdown.py data/protocol_model.json data/protocol_spec.md
+<div style="border: 1px solid #313131; padding: 17px; margin-bottom: 15px; border-radius: 4px; background: #2B2B2B; font-family: monospace; direction: ltr;">
+  <div style="display: flex; justify-content: space-between;">
+<span>$env:PYTHONPATH="src"</span>
+<span style="color: #8C8C8C">powershell</span>
+  </div>
+</div>
+
+<div style="border: 1px solid #313131; padding: 17px; margin-bottom: 15px; border-radius: 4px; background: #2B2B2B; font-family: monospace; direction: ltr;">
+  <div style="display: flex; justify-content: space-between;">
+<span>set PYTHONPATH=src</span>
+<span style="color: #8C8C8C">cmd</span>
+  </div>
+</div>
+
+<div style="border: 1px solid #313131; padding: 17px; margin-bottom: 15px; border-radius: 4px; background: #2B2B2B; font-family: monospace; direction: ltr;">
+  <div style="display: flex; justify-content: space-between;">
+<span>PYTHONPATH=src</span>
+<span style="color: #8C8C8C">bash</span>
+  </div>
+</div>
+
+```code
+python scripts/01_collect_pcaps.py files pcaps
+python scripts/02_dedup_pcaps.py pcaps --delete
+python scripts/03_extract_messages.py pcaps data/messages.jsonl
+python scripts/05_discover_families.py data/messages.jsonl data/family_assignments.json
+python scripts/14_extract_features.py data/messages.jsonl data/features --assignments-json data/family_assignments.json
+python scripts/06_infer_boundaries.py data/messages.jsonl data/families.json --assignments-json data/family_assignments.json
+python scripts/07_pair_requests_responses.py data/messages.jsonl data/pairs.json --assignments-json data/family_assignments.json
+python scripts/08_infer_keywords.py data/messages.jsonl data/keywords.json --assignments-json data/family_assignments.json
+python scripts/10_compare_subcluster_hypotheses.py data/messages.jsonl data/subcluster_hypotheses.json --assignments-json data/family_assignments.json
+python scripts/11_infer_relations.py data/messages.jsonl data/family_assignments.json data/pairs.json data/relations.json
+python scripts/13_infer_semantics.py data/families.json data/relations.json data/semantics.json
+python scripts/09_build_protocol_model.py data/families.json data/protocol_model.json --relations-json data/relations.json --semantics-json data/semantics.json
+python scripts/12_export_markdown.py data/protocol_model.json data/protocol_spec.md
 ```
 
 Compatibility note
