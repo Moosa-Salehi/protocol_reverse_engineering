@@ -4,10 +4,10 @@ Version: `0.1`
 
 ## Metadata
 
-- **source_family_summary**: data\families.json
-- **source_feature_summary**: None
-- **source_relations_summary**: data\relations.json
-- **source_semantics_summary**: data\semantics.json
+- **source_family_summary**: D:\tez\practical\protocol_re\data\04_families.json
+- **source_feature_summary**: D:\tez\practical\protocol_re\data\03_features\family_features.json
+- **source_relations_summary**: D:\tez\practical\protocol_re\data\08_relations.json
+- **source_semantics_summary**: D:\tez\practical\protocol_re\data\09_semantics.json
 - **notes**: Initial auto-generated protocol model assembled from family summaries.
 
 ## Family Relations
@@ -53,6 +53,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_1`, `family_10`, `family_11`, `family_12`, `family_13`, `family_14`, `family_3`, `family_4`, `family_5`
 - Role hint: `request`
 - Semantic confidence: `0.5145`
+- Length stats: min=`10` max=`12` distinct=`3`
+- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.337998`
 
 #### Segments
 
@@ -101,6 +103,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_12.
 - Echoes request fields from family_13 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `33215` (`1.0`)
+- Repeated n-gram instances: `40665`
+- Top motifs: `0000`x66700, `000000`x33341, `0101`x20160, `0006`x18239, `000006`x18111
+
 ### family_8
 
 - Role: `request`
@@ -109,6 +117,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_1`, `family_10`, `family_11`, `family_12`, `family_13`, `family_14`, `family_3`, `family_4`, `family_5`
 - Role hint: `request`
 - Semantic confidence: `0.5485`
+- Length stats: min=`10` max=`12` distinct=`3`
+- Entropy summary: min=`1.521928` max=`2.732159` mean=`2.335913`
 
 #### Segments
 
@@ -157,6 +167,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_7.
 - Echoes request fields from family_8 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `32930` (`1.0`)
+- Repeated n-gram instances: `40304`
+- Top motifs: `0000`x66172, `000000`x33062, `0101`x20232, `0006`x17973, `0601`x17861
+
 ### family_11
 
 - Role: `response`
@@ -165,6 +181,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_1`, `family_10`, `family_11`, `family_12`, `family_13`, `family_14`, `family_2`, `family_3`, `family_4`
 - Role hint: `response`
 - Semantic confidence: `0.5566`
+- Length stats: min=`10` max=`12` distinct=`3`
+- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.336032`
 
 #### Segments
 
@@ -213,6 +231,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_10.
 - Echoes request fields from family_11 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `14615` (`1.0`)
+- Repeated n-gram instances: `18187`
+- Top motifs: `0000`x29358, `000000`x14671, `0101`x9333, `0100`x7719, `0006`x7583
+
 ### family_0
 
 - Role: `response`
@@ -221,6 +245,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_10`, `family_11`, `family_12`, `family_13`, `family_14`, `family_5`, `family_8`, `noise`
 - Role hint: `response`
 - Semantic confidence: `0.9868`
+- Length stats: min=`11` max=`12` distinct=`2`
+- Entropy summary: min=`2.450826` max=`3.027169` mean=`3.013184`
 
 #### Segments
 
@@ -258,6 +284,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_11.
 - Echoes request fields from family_14 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `5956` (`1.0`)
+- Repeated n-gram instances: `6007`
+- Top motifs: `0000`x11937, `000000`x5981, `000005`x5890, `000501`x5890, `010402`x5890
+
 ### noise
 
 - Role: `request`
@@ -266,6 +298,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_1`, `family_10`, `family_11`, `family_12`, `family_13`, `family_14`, `family_7`, `family_8`, `family_9`
 - Role hint: `request`
 - Semantic confidence: `0.5408`
+- Length stats: min=`11` max=`12` distinct=`2`
+- Entropy summary: min=`1.729574` max=`3.027169` mean=`2.611084`
 
 #### Segments
 
@@ -314,6 +348,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_11.
 - Echoes request fields from family_13 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `5770` (`1.0`)
+- Repeated n-gram instances: `5929`
+- Top motifs: `0000`x11596, `000000`x5826, `0006`x3213, `000006`x3212, `000601`x3212
+
 ### family_3
 
 - Role: `response`
@@ -322,6 +362,8 @@ Version: `0.1`
 - Related families: `family_1`, `family_11`, `family_14`, `family_8`
 - Role hint: `response`
 - Semantic confidence: `0.8159`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`2.594907` max=`3.027169` mean=`3.015693`
 
 #### Segments
 
@@ -351,6 +393,12 @@ Version: `0.1`
 - Echoes request fields from family_8 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_8.
 
+#### Feature Summary
+
+- Messages with repetition: `1109` (`1.0`)
+- Repeated n-gram instances: `1111`
+- Top motifs: `0000`x2219, `000000`x1110, `000005`x1109, `000501`x1109, `010402`x1109
+
 ### family_12
 
 - Role: `request`
@@ -359,6 +407,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_10`, `family_11`, `family_14`, `family_7`, `family_8`, `family_9`, `noise`
 - Role hint: `request`
 - Semantic confidence: `0.8423`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.284159` max=`2.450826` mean=`2.448793`
 
 #### Segments
 
@@ -390,6 +440,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_7.
 - Echoes request fields from family_8 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `1066` (`1.0`)
+- Repeated n-gram instances: `1072`
+- Top motifs: `0000`x2132, `2300`x1072, `000000`x1066, `000006`x1066, `000601`x1066
+
 ### family_6
 
 - Role: `request`
@@ -398,6 +454,8 @@ Version: `0.1`
 - Related families: `family_8`
 - Role hint: `request`
 - Semantic confidence: `1.0`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.284159` max=`2.450826` mean=`2.448516`
 
 #### Segments
 
@@ -421,6 +479,12 @@ Version: `0.1`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9792`
 - bytes `1`..`1` | label=`blob` confidence=`0.5`
 
+#### Feature Summary
+
+- Messages with repetition: `1010` (`1.0`)
+- Repeated n-gram instances: `1015`
+- Top motifs: `0000`x2020, `2300`x1015, `000000`x1010, `000006`x1010, `000601`x1010
+
 ### family_7
 
 - Role: `request`
@@ -429,6 +493,8 @@ Version: `0.1`
 - Related families: `family_10`, `family_11`, `family_12`, `family_13`, `family_14`, `family_8`, `family_9`, `noise`
 - Role hint: `request`
 - Semantic confidence: `1.0`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`1.825011` max=`2.221252` mean=`2.211363`
 
 #### Segments
 
@@ -452,6 +518,12 @@ Version: `0.1`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9783`
 - bytes `1`..`1` | label=`blob` confidence=`0.5`
 
+#### Feature Summary
+
+- Messages with repetition: `967` (`1.0`)
+- Repeated n-gram instances: `970`
+- Top motifs: `0000`x1934, `1900`x970, `000000`x967, `000006`x967, `000601`x967
+
 ### family_13
 
 - Role: `request`
@@ -460,6 +532,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_10`, `family_11`, `family_14`, `family_7`, `family_8`, `family_9`, `noise`
 - Role hint: `request`
 - Semantic confidence: `0.7503`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.054585` max=`2.221252` mean=`2.219488`
 
 #### Segments
 
@@ -491,6 +565,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_7.
 - Echoes request fields from family_8 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `945` (`1.0`)
+- Repeated n-gram instances: `949`
+- Top motifs: `0000`x1890, `1900`x949, `000000`x945, `000006`x945, `000601`x945
+
 ### family_9
 
 - Role: `request`
@@ -499,6 +579,8 @@ Version: `0.1`
 - Related families: `family_11`, `family_12`, `family_13`, `family_14`, `family_7`, `family_8`, `noise`
 - Role hint: `request`
 - Semantic confidence: `0.8052`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.284159` max=`2.450826` mean=`2.44905`
 
 #### Segments
 
@@ -530,6 +612,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_13.
 - Echoes request fields from family_14 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `657` (`1.0`)
+- Repeated n-gram instances: `659`
+- Top motifs: `0000`x1314, `2300`x659, `000000`x657, `000006`x657, `000601`x657
+
 ### family_10
 
 - Role: `request`
@@ -538,6 +626,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_11`, `family_12`, `family_13`, `family_14`, `family_5`, `family_7`, `family_8`, `noise`
 - Role hint: `request`
 - Semantic confidence: `0.6385`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.054585` max=`2.221252` mean=`2.219449`
 
 #### Segments
 
@@ -569,6 +659,12 @@ Version: `0.1`
 - Response size is tied to request fields from family_12.
 - Echoes request fields from family_13 with up to 20 strong offset matches.
 
+#### Feature Summary
+
+- Messages with repetition: `647` (`1.0`)
+- Repeated n-gram instances: `650`
+- Top motifs: `0000`x1294, `1900`x650, `000000`x647, `000006`x647, `000601`x647
+
 ### family_1
 
 - Role: `response`
@@ -577,6 +673,8 @@ Version: `0.1`
 - Related families: `family_11`, `family_14`, `family_3`, `family_8`, `noise`
 - Role hint: `response`
 - Semantic confidence: `1.0`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.023786`
 
 #### Segments
 
@@ -607,6 +705,12 @@ Version: `0.1`
 - Echoes request fields from family_3 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_3.
 
+#### Feature Summary
+
+- Messages with repetition: `645` (`1.0`)
+- Repeated n-gram instances: `645`
+- Top motifs: `0000`x1290, `000000`x645, `000005`x645, `000501`x645, `010402`x645
+
 ### family_4
 
 - Role: `response`
@@ -615,6 +719,8 @@ Version: `0.1`
 - Related families: `family_11`, `family_14`, `family_8`
 - Role hint: `response`
 - Semantic confidence: `0.8634`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`3.027169` max=`3.027169` mean=`3.027169`
 
 #### Segments
 
@@ -646,6 +752,12 @@ Version: `0.1`
 - Echoes request fields from family_8 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_8.
 
+#### Feature Summary
+
+- Messages with repetition: `189` (`1.0`)
+- Repeated n-gram instances: `189`
+- Top motifs: `0000`x378, `000000`x189, `000005`x189, `000501`x189, `010402`x189
+
 ### family_5
 
 - Role: `response`
@@ -654,6 +766,8 @@ Version: `0.1`
 - Related families: `family_0`, `family_10`, `family_11`, `family_14`, `family_8`
 - Role hint: `response`
 - Semantic confidence: `0.784`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.022734`
 
 #### Segments
 
@@ -685,6 +799,12 @@ Version: `0.1`
 - Echoes request fields from family_8 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_8.
 
+#### Feature Summary
+
+- Messages with repetition: `164` (`1.0`)
+- Repeated n-gram instances: `164`
+- Top motifs: `0000`x328, `000000`x164, `000005`x164, `000501`x164, `010402`x164
+
 ### family_2
 
 - Role: `response`
@@ -693,6 +813,8 @@ Version: `0.1`
 - Related families: `family_11`
 - Role hint: `response`
 - Semantic confidence: `1.0`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.024007`
 
 #### Segments
 
@@ -716,3 +838,9 @@ Version: `0.1`
 
 - Echoes request fields from family_11 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_11.
+
+#### Feature Summary
+
+- Messages with repetition: `115` (`1.0`)
+- Repeated n-gram instances: `115`
+- Top motifs: `0000`x230, `000000`x115, `000005`x115, `000501`x115, `010402`x115
