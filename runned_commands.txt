@@ -1,0 +1,33 @@
+python.exe .\scripts\04_build_corpus.py .\modbus-payloads\ .\data\01_messages.jsonl --deduplicate-payloads
+[+] Wrote 1830412 canonical message records to .\data\01_messages.jsonl
+---
+python.exe .\scripts\05_discover_families.py .\data\01_messages.jsonl .\data\02_family_assignments.json
+[+] Wrote 100000 family assignments to .\data\02_family_assignments.json
+---
+python.exe .\scripts\14_extract_features.py .\data\01_messages.jsonl .\data\03_features --assignments-json .\data\02_family_assignments.json
+[+] Wrote 100000 assigned message feature records to data\03_features\message_features.jsonl
+[+] Wrote 16 family feature records to data\03_features\family_features.json
+---
+python.exe .\scripts\06_infer_boundaries.py data\01_messages.jsonl data\04_families.json --assignments-json data\02_family_assignments.json
+[+] Wrote 16 family boundary summaries to data\04_families.json
+---
+python.exe .\scripts\07_pair_requests_responses.py data\01_messages.jsonl data\05_pairs.json --assignments-json data\02_family_assignments.json
+[+] Wrote 639353 request/response pair hypotheses to data\05_pairs.json
+---
+python.exe .\scripts\08_infer_keywords.py data\01_messages.jsonl data\06_keywords.json --assignments-json data\02_family_assignments.json
+[+] Wrote keyword hypotheses for 16 families to data\06_keywords.json
+---
+python.exe .\scripts\10_compare_subcluster_hypotheses.py data\01_messages.jsonl data\07_subcluster_hypotheses.json --assignments-json data\02_family_assignments.json
+[+] Wrote subcluster hypothesis comparison for 16 families to data\07_subcluster_hypotheses.json
+---
+python.exe .\scripts\11_infer_relations.py data\01_messages.jsonl data\02_family_assignments.json data\05_pairs.json data\08_relations.json
+[+] Wrote 70 family relation summaries to data\08_relations.json
+---
+python.exe .\scripts\13_infer_semantics.py data\04_families.json data\08_relations.json data\09_semantics.json
+[+] Wrote semantic summaries for 16 families to data\09_semantics.json
+---
+python.exe .\scripts\09_build_protocol_model.py data\04_families.json data\10_protocol_model.json --relations-json data\08_relations.json --semantics-json data\09_semantics.json
+[+] Wrote protocol model with 16 families to data\10_protocol_model.json
+---
+python.exe .\scripts\12_export_markdown.py data\10_protocol_model.json data\protocol_spec.md
+[+] Wrote Markdown protocol specification to data\protocol_spec.md
