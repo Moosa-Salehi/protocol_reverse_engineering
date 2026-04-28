@@ -1,7 +1,110 @@
-- Use the extracted features (lengths, entropy vectors, byte histograms, uniqueness ratios, and motif/repetition features) in the project.
-- Add repetition-pattern detection: repeated subsequences, trailing data blocks, fixed-vs-variable length profiles, and frequent byte n-grams.
-- Improve message reconstruction so the PCAP path can optionally use true TCP stream reconstruction rather than packet-payload extraction only.
-- Add an LLM-prep exporter that writes one compact evidence bundle per family: template, segment stats, top examples, request/response links, echoed fields, length relations, and semantic candidates.
-- Add evaluation/reporting for the implemented stages: family coverage, cluster size distribution, boundary confidence summaries, and parseability of discovered families.
-- beautifull html (dark mode, using css, perfect ui/ux) report (protocol spec) generation.
-- merge stages 1 to 3, 1 script must create 01_messages.jsonl from the folder containing pcaps.
+# Protocol RE TODO
+
+This TODO reflects the current codebase and README. The project already has a
+working staged pipeline, feature extraction, relation inference, semantic
+labeling, and Markdown export. The highest-priority work is to make the default
+PCAP workflow match the README and to improve evidence quality.
+
+## 1. Make one command build `data/01_messages.jsonl` from a PCAP folder
+
+Status: Not done.
+
+- Update `main.py` so `python main.py <folder containing pcaps>` actually uses
+  the provided folder instead of always reading `archive/protocol-x-payloads`.
+- Merge stages 1 to 3 into the runner flow:
+  - collect PCAP/PCAPNG files from the input folder into `pcaps/`
+  - deduplicate collected captures
+  - extract canonical messages into `data/01_messages.jsonl`
+- Keep `scripts/03_alt_build_corpus.py` as an explicit compatibility path, not
+  the default main pipeline.
+- Add CLI flags for common modes:
+  - `--legacy-json <dir>` to use archived extracted JSON payloads
+  - `--skip-collect` to run directly against an existing `pcaps/` directory
+  - `--service-port` to override the default Modbus/TCP port `502`
+  - `--max-workers` for PCAP extraction parallelism
+- Ensure output directories are created by the runner before steps write files.
+- Update README examples after the runner behavior is fixed.
+
+## 2. Improve PCAP message reconstruction
+
+Status: Not done.
+
+- Add optional true TCP stream reconstruction rather than packet-payload-only
+  extraction in `src/protocol_re/io/extract_payloads.py`.
+- Preserve packet-level extraction as a fast fallback.
+- Handle retransmissions, out-of-order segments, duplicate TCP data, and stream
+  gaps where possible.
+- Add metadata that records whether a message came from packet payloads or a
+  reconstructed stream.
+- Add small tests or fixtures for split TCP application payloads.
+
+## 3. Use extracted feature artifacts throughout the model
+
+Status: Partially done.
+
+- `scripts/05_extract_features.py` and `src/protocol_re/features/extraction.py`
+  already generate per-message and per-family features.
+- Wire `data/03_features/family_features.json` into
+  `scripts/12_build_protocol_model.py` from `main.py` using `--features-json`.
+- Update README step-by-step commands so the protocol model includes feature
+  summaries.
+- Consider using feature vectors to improve family clustering and boundary
+  confidence instead of only exporting them.
+- Expand family-level aggregate n-gram/frequency summaries if needed for later
+  evidence bundles.
+
+## 4. Add deeper repetition and structure detection
+
+Status: Partially done.
+
+- Current feature extraction detects run-lengths and repeated 2/3-byte n-grams.
+- Add repeated subsequence detection for wider motifs and variable-width blocks.
+- Detect trailing data blocks, fixed vs variable length profiles, padding, and
+  recurring field groups.
+- Feed these patterns into boundary inference and LLM evidence output.
+
+## 5. Add an LLM evidence exporter
+
+Status: Not done.
+
+- Create a compact per-family evidence bundle for downstream LLM analysis.
+- Include template, segment stats, top examples, length histograms, entropy and
+  uniqueness vectors, repeated motifs, request/response links, echo fields,
+  length relations, semantic candidates, and confidence notes.
+- Keep this separate from the generic `protocol_model.json` so it can be tuned
+  for token efficiency.
+
+## 6. Add evaluation and reporting
+
+Status: Not done.
+
+- Report family coverage, unassigned/noise counts, cluster size distribution,
+  and assignment sample limits.
+- Report boundary confidence summaries and parseability/coverage of discovered
+  families.
+- Add relation quality metrics: pair counts, score distributions, echo support,
+  and direction-known vs direction-unknown pairing modes.
+- Add regression tests for representative pipeline stages.
+
+## 7. Add a polished HTML protocol report
+
+Status: Not done.
+
+- Add an HTML exporter alongside Markdown.
+- Produce a dark, readable, CSS-styled report with sections for metadata,
+  families, field hypotheses, semantic labels, relations, examples, and feature
+  evidence.
+- Keep output self-contained unless assets are intentionally introduced.
+- Add a CLI script such as `scripts/14_export_html.py`.
+
+## 8. Keep schemas and docs aligned
+
+Status: Partially done.
+
+- Update `schema/protocol_model.schema.json` to include current optional fields
+  such as `feature_summary`, `semantic_summary`, and relation evidence details.
+- Fix script help text references that still mention old stage numbers.
+- Document the distinction between real PCAP extraction and legacy archive JSON
+  conversion.
+- Add a short architecture section describing the data flow from messages to
+  families, pairs, relations, semantics, and final reports.
