@@ -1,0 +1,5 @@
+colorama==0.4.6
+hdbscan==0.8.40
+numpy==2.3.4
+scapy==2.7.0
+scikit_learn==1.7.2
