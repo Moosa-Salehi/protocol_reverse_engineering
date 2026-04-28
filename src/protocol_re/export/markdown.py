@@ -155,8 +155,11 @@ def render_protocol_model_markdown(model: Dict[str, object]) -> str:
                 lines.append(
                     f"- Repeated n-gram instances: `{motif_stats.get('repeated_ngram_instances', 0)}`"
                 )
+                motif_text = ", ".join(
+                    f"`{item['ngram']}`x{item['count']}" for item in top_motifs[:5]
+                )
                 lines.append(
-                    f"- Top motifs: {', '.join(f'`{item['ngram']}`x{item['count']}' for item in top_motifs[:5])}"
+                    f"- Top motifs: {motif_text}"
                 )
                 lines.append("")
 

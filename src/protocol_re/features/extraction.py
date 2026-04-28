@@ -1,47 +1,44 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from math import log2
-from statistics import mean, stdev
+from dataclasses import dataclass, field
+from math import log2, sqrt
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
 
-NGRAM_SIZES = (2, 3, 4)
+NGRAM_SIZES = (2, 3)
 TOP_VALUES_LIMIT = 8
 TOP_MOTIFS_LIMIT = 10
 
 
-def shannon_entropy(values: Sequence[int]) -> float:
-    if not values:
-        return 0.0
-    counts = Counter(values)
+def shannon_entropy_from_counts(counts: Counter[int]) -> float:
     total = float(sum(counts.values()))
+    if total <= 0:
+        return 0.0
     return -sum((count / total) * log2(count / total) for count in counts.values())
 
 
+def shannon_entropy(values: Sequence[int]) -> float:
+    return shannon_entropy_from_counts(Counter(values))
+
+
 def sparse_byte_histogram(payload: bytes) -> Dict[str, int]:
-    histogram = Counter(payload)
-    return {f"{value:02x}": count for value, count in sorted(histogram.items())}
+    return {f"{value:02x}": count for value, count in sorted(Counter(payload).items())}
 
 
 def top_byte_values(payload: bytes, limit: int = TOP_VALUES_LIMIT) -> List[Dict[str, object]]:
-    counts = Counter(payload)
     return [
         {"byte": f"{value:02x}", "count": count}
-        for value, count in counts.most_common(limit)
+        for value, count in Counter(payload).most_common(limit)
     ]
 
 
 def run_length_stats(payload: bytes) -> Dict[str, int]:
     if not payload:
-        return {
-            "max_run_length": 0,
-            "repeated_run_count": 0,
-            "adjacent_repeat_pairs": 0,
-        }
+        return {"max_run_length": 0, "repeated_run_count": 0, "adjacent_repeat_pairs": 0}
 
     max_run_length = 1
     repeated_run_count = 0
@@ -60,7 +57,6 @@ def run_length_stats(payload: bytes) -> Dict[str, int]:
     if current_run > 1:
         repeated_run_count += 1
     max_run_length = max(max_run_length, current_run)
-
     return {
         "max_run_length": max_run_length,
         "repeated_run_count": repeated_run_count,
@@ -68,22 +64,22 @@ def run_length_stats(payload: bytes) -> Dict[str, int]:
     }
 
 
-def ngram_counts(payload: bytes, n: int) -> Counter[bytes]:
-    if len(payload) < n:
+def ngram_counts(payload: bytes, width: int) -> Counter[bytes]:
+    if len(payload) < width:
         return Counter()
-    return Counter(payload[index : index + n] for index in range(0, len(payload) - n + 1))
+    return Counter(payload[index : index + width] for index in range(0, len(payload) - width + 1))
 
 
 def repeated_ngram_summary(payload: bytes) -> Dict[str, object]:
     repeated_total = 0
     top_motifs: List[Dict[str, object]] = []
 
-    for n in NGRAM_SIZES:
-        counts = ngram_counts(payload, n)
+    for width in NGRAM_SIZES:
+        counts = ngram_counts(payload, width)
         repeated = {gram: count for gram, count in counts.items() if count > 1}
         repeated_total += sum(count - 1 for count in repeated.values())
         for gram, count in Counter(repeated).most_common(TOP_MOTIFS_LIMIT):
-            top_motifs.append({"ngram": gram.hex(), "count": count, "width": n})
+            top_motifs.append({"ngram": gram.hex(), "count": count, "width": width})
 
     top_motifs.sort(key=lambda item: (-int(item["count"]), -int(item["width"]), str(item["ngram"])))
     return {
@@ -92,77 +88,9 @@ def repeated_ngram_summary(payload: bytes) -> Dict[str, object]:
     }
 
 
-def ngram_frequency_distribution(payload: bytes) -> List[Dict[str, object]]:
-    """Compute n-gram frequency distributions for n in NGRAM_SIZES."""
-    result = {}
-    for n in NGRAM_SIZES:
-        counts = ngram_counts(payload, n)
-        if counts:
-            total = sum(counts.values())
-            freq_dist = [
-                {"ngram": gram.hex(), "count": count, "frequency": round(count / total, 6)}
-                for gram, count in counts.most_common(20)
-            ]
-            result[f"ngram_{n}"] = freq_dist
-    return result
-
-
-def position_entropy_vector(payload: bytes, context_window: int = 1) -> List[float]:
-    """Compute entropy vector across payload positions."""
-    if not payload:
-        return []
-    
-    max_pos = len(payload)
-    entropy_vector = []
-    
-    for pos in range(max_pos):
-        values = []
-        for offset in range(-context_window, context_window + 1):
-            idx = pos + offset
-            if 0 <= idx < len(payload):
-                values.append(payload[idx])
-        if values:
-            entropy_vector.append(round(shannon_entropy(values), 6))
-    
-    return entropy_vector
-
-
-def byte_uniqueness_ratio(payload: bytes) -> float:
-    """Ratio of unique bytes to total bytes."""
-    if not payload:
-        return 0.0
-    return len(set(payload)) / len(payload)
-
-
-def payload_checksum(payload: bytes) -> Dict[str, str]:
-    """Compute various checksums for payload integrity checking."""
-    if not payload:
-        return {"sum": "00", "xor": "00", "crc32": "00000000"}
-    
-    byte_sum = sum(payload) & 0xFF
-    xor_all = 0
-    for b in payload:
-        xor_all ^= b
-    
-    # Simple CRC-like checksum
-    crc = 0
-    for byte in payload:
-        crc = (crc + byte) & 0xFFFFFFFF
-    
-    return {
-        "sum": f"{byte_sum:02x}",
-        "xor": f"{xor_all:02x}",
-        "crc32": f"{crc:08x}",
-    }
-
-
 def message_feature_record(record: MessageRecord) -> Dict[str, object]:
     payload = hex_to_bytes(record.payload_hex)
-    run_stats = run_length_stats(payload)
-    motif_stats = repeated_ngram_summary(payload)
-    histogram = sparse_byte_histogram(payload)
     values = list(payload)
-
     return {
         "msg_id": record.msg_id,
         "session_id": record.session_id,
@@ -170,14 +98,11 @@ def message_feature_record(record: MessageRecord) -> Dict[str, object]:
         "payload_len": record.payload_len,
         "byte_entropy": round(shannon_entropy(values), 6),
         "unique_byte_count": len(set(values)),
-        "unique_byte_ratio": round(byte_uniqueness_ratio(payload), 6),
-        "byte_histogram": histogram,
+        "unique_byte_ratio": round(len(set(values)) / len(values), 6) if values else 0.0,
+        "byte_histogram": sparse_byte_histogram(payload),
         "top_byte_values": top_byte_values(payload),
-        "ngram_frequency": ngram_frequency_distribution(payload),
-        "position_entropy": position_entropy_vector(payload),
-        "checksums": payload_checksum(payload),
-        **run_stats,
-        **motif_stats,
+        **run_length_stats(payload),
+        **repeated_ngram_summary(payload),
     }
 
 
@@ -185,146 +110,164 @@ def _family_lookup(assignments: Sequence[FamilyAssignment]) -> Dict[int, str]:
     return {assignment.msg_id: assignment.family_id for assignment in assignments}
 
 
-def group_records_by_family(
-    records: Sequence[MessageRecord],
+@dataclass
+class RunningStats:
+    count: int = 0
+    total: float = 0.0
+    total_sq: float = 0.0
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+
+    def update(self, value: float) -> None:
+        self.count += 1
+        self.total += value
+        self.total_sq += value * value
+        self.min_value = value if self.min_value is None else min(self.min_value, value)
+        self.max_value = value if self.max_value is None else max(self.max_value, value)
+
+    def mean(self) -> float:
+        return self.total / self.count if self.count else 0.0
+
+    def std_dev(self) -> float:
+        if self.count <= 1:
+            return 0.0
+        variance = (self.total_sq - (self.total * self.total / self.count)) / (self.count - 1)
+        return sqrt(max(0.0, variance))
+
+    def summary(self, include_std: bool = False) -> Dict[str, float]:
+        data = {
+            "min": round(self.min_value or 0.0, 6),
+            "max": round(self.max_value or 0.0, 6),
+            "mean": round(self.mean(), 6),
+        }
+        if include_std:
+            data["std_dev"] = round(self.std_dev(), 6)
+        return data
+
+
+@dataclass
+class FamilyFeatureAccumulator:
+    family_id: str
+    message_count: int = 0
+    length_stats: RunningStats = field(default_factory=RunningStats)
+    length_histogram: Counter[int] = field(default_factory=Counter)
+    aggregate_byte_histogram: Counter[int] = field(default_factory=Counter)
+    entropy_stats: RunningStats = field(default_factory=RunningStats)
+    unique_ratio_stats: RunningStats = field(default_factory=RunningStats)
+    max_run_stats: RunningStats = field(default_factory=RunningStats)
+    position_counts: List[Counter[int]] = field(default_factory=list)
+    position_coverage: List[int] = field(default_factory=list)
+    motif_counts: Dict[int, Counter[bytes]] = field(default_factory=lambda: {width: Counter() for width in NGRAM_SIZES})
+    repeated_message_count: int = 0
+    repeated_ngram_instances: int = 0
+    example_msg_ids: List[int] = field(default_factory=list)
+
+    def update(self, record: MessageRecord, feature_record: Dict[str, object]) -> None:
+        payload = hex_to_bytes(record.payload_hex)
+        self.message_count += 1
+        self.length_stats.update(record.payload_len)
+        self.length_histogram.update([record.payload_len])
+        self.aggregate_byte_histogram.update(payload)
+        self.entropy_stats.update(float(feature_record["byte_entropy"]))
+        self.unique_ratio_stats.update(float(feature_record["unique_byte_ratio"]))
+        self.max_run_stats.update(float(feature_record["max_run_length"]))
+        if len(self.example_msg_ids) < 10:
+            self.example_msg_ids.append(record.msg_id)
+
+        for offset, byte_value in enumerate(payload):
+            while len(self.position_counts) <= offset:
+                self.position_counts.append(Counter())
+                self.position_coverage.append(0)
+            self.position_counts[offset].update([byte_value])
+            self.position_coverage[offset] += 1
+
+        has_repetition = False
+        for width in NGRAM_SIZES:
+            counts = ngram_counts(payload, width)
+            repeated = {gram: count for gram, count in counts.items() if count > 1}
+            if repeated:
+                has_repetition = True
+            self.repeated_ngram_instances += sum(count - 1 for count in repeated.values())
+            self.motif_counts[width].update(counts)
+        if has_repetition:
+            self.repeated_message_count += 1
+
+    def position_stats(self) -> Dict[str, List[float]]:
+        entropy_vector: List[float] = []
+        uniqueness_ratio_vector: List[float] = []
+        coverage_vector: List[float] = []
+        for counts, coverage_count in zip(self.position_counts, self.position_coverage):
+            entropy_vector.append(round(shannon_entropy_from_counts(counts), 6))
+            uniqueness_ratio_vector.append(round(len(counts) / coverage_count, 6) if coverage_count else 0.0)
+            coverage_vector.append(round(coverage_count / self.message_count, 6) if self.message_count else 0.0)
+        return {
+            "entropy_vector": entropy_vector,
+            "uniqueness_ratio_vector": uniqueness_ratio_vector,
+            "coverage_vector": coverage_vector,
+        }
+
+    def motif_stats(self) -> Dict[str, object]:
+        top_motifs: List[Dict[str, object]] = []
+        for width, counts in self.motif_counts.items():
+            for gram, count in counts.most_common(TOP_MOTIFS_LIMIT):
+                top_motifs.append({"ngram": gram.hex(), "count": count, "width": width})
+        top_motifs.sort(key=lambda item: (-int(item["count"]), -int(item["width"]), str(item["ngram"])))
+        return {
+            "messages_with_repetition": self.repeated_message_count,
+            "messages_with_repetition_ratio": round(self.repeated_message_count / self.message_count, 6) if self.message_count else 0.0,
+            "repeated_ngram_instances": self.repeated_ngram_instances,
+            "top_motifs": top_motifs[:TOP_MOTIFS_LIMIT],
+        }
+
+    def to_record(self) -> Dict[str, object]:
+        return {
+            "family_id": self.family_id,
+            "message_count": self.message_count,
+            "length_stats": {
+                **self.length_stats.summary(include_std=True),
+                "distinct_lengths": len(self.length_histogram),
+                "length_histogram": {str(length): count for length, count in sorted(self.length_histogram.items())},
+            },
+            "position_stats": self.position_stats(),
+            "aggregate_byte_histogram": {f"{value:02x}": count for value, count in sorted(self.aggregate_byte_histogram.items())},
+            "entropy_summary": self.entropy_stats.summary(),
+            "unique_ratio_summary": self.unique_ratio_stats.summary(),
+            "run_length_summary": {
+                "max": int(self.max_run_stats.max_value or 0),
+                "mean": round(self.max_run_stats.mean(), 6),
+            },
+            "motif_stats": self.motif_stats(),
+            "example_msg_ids": self.example_msg_ids,
+        }
+
+
+def stream_feature_artifacts(
+    records: Iterable[MessageRecord],
+    message_output_handle,
     assignments: Optional[Sequence[FamilyAssignment]] = None,
     include_unassigned: bool = False,
-) -> Dict[str, List[MessageRecord]]:
-    grouped: Dict[str, List[MessageRecord]] = defaultdict(list)
+) -> Dict[str, Dict[str, object]]:
     family_by_msg_id = _family_lookup(assignments or [])
+    family_accumulators: Dict[str, FamilyFeatureAccumulator] = {}
+    message_count = 0
 
-    if assignments:
-        for record in records:
+    for record in records:
+        feature_record = message_feature_record(record)
+        message_output_handle.write(__import__("json").dumps(feature_record, sort_keys=True) + "\n")
+        message_count += 1
+
+        if assignments:
             family_id = family_by_msg_id.get(record.msg_id)
             if family_id is None and not include_unassigned:
                 continue
-            grouped[family_id or "unassigned"].append(record)
-    else:
-        for record in records:
-            grouped[f"len_{record.payload_len}"].append(record)
+            family_id = family_id or "unassigned"
+        else:
+            family_id = f"len_{record.payload_len}"
 
-    return dict(grouped)
+        accumulator = family_accumulators.setdefault(family_id, FamilyFeatureAccumulator(family_id=family_id))
+        accumulator.update(record, feature_record)
 
-
-def _family_length_stats_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, object]:
-    lengths = [item["payload_len"] for item in features]
-    counts = Counter(lengths)
-    return {
-        "min": min(lengths) if lengths else 0,
-        "max": max(lengths) if lengths else 0,
-        "mean": round(mean(lengths), 6) if lengths else 0.0,
-        "std_dev": round(stdev(lengths), 6) if len(lengths) > 1 else 0.0,
-        "distinct_lengths": len(counts),
-        "length_histogram": {str(length): count for length, count in sorted(counts.items())},
-    }
-
-
-def _family_position_stats_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, object]:
-    """Compute position stats using pre-computed per-position entropy vectors from messages."""
-    # Collect all position entropy vectors
-    position_entropy_vectors = [item["position_entropy"] for item in features if "position_entropy" in item]
-    if not position_entropy_vectors:
-        return {"entropy_vector": [], "uniqueness_ratio_vector": [], "coverage_vector": []}
-    
-    max_len = max((len(v) for v in position_entropy_vectors), default=0)
-    num_messages = len(position_entropy_vectors)
-    
-    entropy_vector: List[float] = []
-    uniqueness_ratio_vector: List[float] = []
-    coverage_vector: List[float] = []
-    
-    for pos in range(max_len):
-        values = []
-        for vec in position_entropy_vectors:
-            if pos < len(vec):
-                values.append(vec[pos])
-        
-        coverage = len(values) / num_messages if num_messages else 0.0
-        entropy_vector.append(round(mean(values), 6) if values else 0.0)
-        # Approximate uniqueness: all values are floats, so uniqueness = 1.0 if any values
-        uniqueness_ratio_vector.append(1.0 if values else 0.0)
-        coverage_vector.append(round(coverage, 6))
-    
-    return {
-        "entropy_vector": entropy_vector,
-        "uniqueness_ratio_vector": uniqueness_ratio_vector,
-        "coverage_vector": coverage_vector,
-    }
-
-
-def _family_byte_histogram_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, int]:
-    histogram: Dict[str, int] = {}
-    for feat in features:
-        hist = feat.get("byte_histogram", {})
-        for byte_val, count in hist.items():
-            histogram[byte_val] = histogram.get(byte_val, 0) + count
-    return histogram
-
-
-def _family_motif_stats_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, object]:
-    """Aggregate motif stats from pre-computed per-message motifs."""
-    total_repeated_instances = 0
-    repeated_message_count = 0
-    aggregate_counts: Dict[int, Counter[bytes]] = {width: Counter() for width in NGRAM_SIZES}
-    
-    for feat in features:
-        motif = feat.get("motif_stats", {})
-        if motif.get("repeated_ngram_instances", 0) > 0:
-            repeated_message_count += 1
-        total_repeated_instances += motif.get("repeated_ngram_instances", 0)
-        
-        for motif_item in motif.get("top_repeated_motifs", []):
-            gram = bytes.fromhex(motif_item["ngram"])
-            width = motif_item["width"]
-            if width in aggregate_counts:
-                aggregate_counts[width][gram] += motif_item["count"]
-    
-    top_motifs: List[Dict[str, object]] = []
-    for width, counts in aggregate_counts.items():
-        for gram, count in counts.most_common(TOP_MOTIFS_LIMIT):
-            top_motifs.append({"ngram": gram.hex(), "count": count, "width": width})
-    top_motifs.sort(key=lambda item: (-int(item["count"]), -int(item["width"]), str(item["ngram"])))
-
-    return {
-        "messages_with_repetition": repeated_message_count,
-        "messages_with_repetition_ratio": round(repeated_message_count / len(features), 6) if features else 0.0,
-        "repeated_ngram_instances": total_repeated_instances,
-        "top_motifs": top_motifs[:TOP_MOTIFS_LIMIT],
-    }
-
-
-def family_feature_record(family_id: str, records: Sequence[MessageRecord], message_features: Optional[Sequence[Dict[str, object]]] = None) -> Dict[str, object]:
-    """Compute family-level features, preferring pre-computed message_features."""
-    if message_features is None:
-        message_features = [message_feature_record(record) for record in records]
-    
-    entropy_values = [item["byte_entropy"] for item in message_features]
-    unique_ratios = [item["unique_byte_ratio"] for item in message_features]
-    max_run_lengths = [item["max_run_length"] for item in message_features]
-
-    return {
-        "family_id": family_id,
-        "message_count": len(records),
-        "length_stats": _family_length_stats_from_features(message_features),
-        "position_stats": _family_position_stats_from_features(message_features),
-        "aggregate_byte_histogram": _family_byte_histogram_from_features(message_features),
-        "entropy_summary": {
-            "min": round(min(entropy_values), 6) if entropy_values else 0.0,
-            "max": round(max(entropy_values), 6) if entropy_values else 0.0,
-            "mean": round(mean(entropy_values), 6) if entropy_values else 0.0,
-        },
-        "unique_ratio_summary": {
-            "min": round(min(unique_ratios), 6) if unique_ratios else 0.0,
-            "max": round(max(unique_ratios), 6) if unique_ratios else 0.0,
-            "mean": round(mean(unique_ratios), 6) if unique_ratios else 0.0,
-        },
-        "run_length_summary": {
-            "max": max(max_run_lengths) if max_run_lengths else 0,
-            "mean": round(mean(max_run_lengths), 6) if max_run_lengths else 0.0,
-        },
-        "motif_stats": _family_motif_stats_from_features(message_features),
-        "example_msg_ids": [item["msg_id"] for item in message_features[:10]],
-    }
+    return {family_id: accumulator.to_record() for family_id, accumulator in family_accumulators.items()}
 
 
 def extract_feature_artifacts(
@@ -332,11 +275,14 @@ def extract_feature_artifacts(
     assignments: Optional[Sequence[FamilyAssignment]] = None,
     include_unassigned: bool = False,
 ) -> Tuple[List[Dict[str, object]], Dict[str, Dict[str, object]]]:
-    message_features = [message_feature_record(record) for record in records]
-    grouped = group_records_by_family(records, assignments=assignments, include_unassigned=include_unassigned)
-    
-    family_features = {}
-    for family_id, family_records in grouped.items():
-        family_features[family_id] = family_feature_record(family_id, family_records, message_features=message_features)
-    
+    message_features: List[Dict[str, object]] = []
+    from io import StringIO
+
+    buffer = StringIO()
+    family_features = stream_feature_artifacts(records, buffer, assignments=assignments, include_unassigned=include_unassigned)
+    buffer.seek(0)
+    import json
+
+    for line in buffer:
+        message_features.append(json.loads(line))
     return message_features, family_features

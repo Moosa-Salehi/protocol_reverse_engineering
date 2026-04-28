@@ -21,6 +21,7 @@ Feature artifacts
 
 - `message_features.jsonl` contains per-message length, entropy, sparse byte histogram, top byte values, run-length statistics, and repeated n-gram motifs.
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, and motif/repetition summaries.
+- `scripts/14_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
 
 Recommended flow from PCAPs
 

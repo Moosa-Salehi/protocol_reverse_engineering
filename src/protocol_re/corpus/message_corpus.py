@@ -106,14 +106,16 @@ def write_corpus_jsonl(records: Sequence[MessageRecord], output_path: str) -> No
 
 
 def load_corpus_jsonl(input_path: str) -> List[MessageRecord]:
-    records: List[MessageRecord] = []
+    return list(iter_corpus_jsonl(input_path))
+
+
+def iter_corpus_jsonl(input_path: str) -> Iterator[MessageRecord]:
     with open(input_path, "r", encoding="utf-8") as handle:
         for line in handle:
             if not line.strip():
                 continue
             item = json.loads(line)
-            records.append(MessageRecord(**item))
-    return records
+            yield MessageRecord(**item)
 
 
 def group_messages_by_session(records: Iterable[MessageRecord]) -> Dict[str, List[MessageRecord]]:
