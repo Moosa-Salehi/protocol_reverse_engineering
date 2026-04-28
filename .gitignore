@@ -1,4 +1,4 @@
 modbus-payloads/
 data/
 *.pyc
-archive.txt
+archive/
