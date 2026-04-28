@@ -7,23 +7,24 @@ PCAP workflow match the README and to improve evidence quality.
 
 ## 1. Make one command build `data/01_messages.jsonl` from a PCAP folder
 
-Status: Not done.
+Status: Implemented; needs broader end-to-end validation on real PCAP sets.
 
-- Update `main.py` so `python main.py <folder containing pcaps>` actually uses
-  the provided folder instead of always reading `archive/protocol-x-payloads`.
-- Merge stages 1 to 3 into the runner flow:
+- Done: `main.py` now defaults to the PCAP workflow and uses the provided input
+  folder instead of always reading `archive/protocol-x-payloads`.
+- Done: the runner merges stages 1 to 3:
   - collect PCAP/PCAPNG files from the input folder into `pcaps/`
   - deduplicate collected captures
   - extract canonical messages into `data/01_messages.jsonl`
-- Keep `scripts/03_alt_build_corpus.py` as an explicit compatibility path, not
-  the default main pipeline.
-- Add CLI flags for common modes:
-  - `--legacy-json <dir>` to use archived extracted JSON payloads
-  - `--skip-collect` to run directly against an existing `pcaps/` directory
-  - `--service-port` to override the default Modbus/TCP port `502`
-  - `--max-workers` for PCAP extraction parallelism
-- Ensure output directories are created by the runner before steps write files.
-- Update README examples after the runner behavior is fixed.
+- Done: `scripts/03_alt_build_corpus.py` remains available through
+  `--legacy-json <dir>` for archived extracted JSON payloads.
+- Done: added runner flags for `--legacy-json`, `--skip-collect`,
+  `--service-port`, `--max-workers`, `--data-dir`, `--pcap-dir`,
+  `--output-dir`, `--family-sample-size`, and `--stop-after`.
+- Done: the runner creates output directories before steps write files.
+- Done: README examples now document the default PCAP workflow and legacy JSON
+  compatibility mode.
+- Remaining: run the full PCAP path on representative captures and decide
+  whether deduplication should always delete duplicates or become configurable.
 
 ## 2. Improve PCAP message reconstruction
 
@@ -44,10 +45,10 @@ Status: Partially done.
 
 - `scripts/05_extract_features.py` and `src/protocol_re/features/extraction.py`
   already generate per-message and per-family features.
-- Wire `data/03_features/family_features.json` into
-  `scripts/12_build_protocol_model.py` from `main.py` using `--features-json`.
-- Update README step-by-step commands so the protocol model includes feature
-  summaries.
+- Done: `main.py` wires `data/03_features/family_features.json` into
+  `scripts/12_build_protocol_model.py` using `--features-json`.
+- Done: README step-by-step commands include `--features-json` so the protocol
+  model includes feature summaries.
 - Consider using feature vectors to improve family clustering and boundary
   confidence instead of only exporting them.
 - Expand family-level aggregate n-gram/frequency summaries if needed for later

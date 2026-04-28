@@ -1,10 +1,13 @@
+from __future__ import annotations
+
+import argparse
+import logging
+import os
+import shlex
 import subprocess
 import sys
 import time
-import os
-import logging
 from pathlib import Path
-import argparse
 
 # ---------------------------------------------------------
 # Logging setup
@@ -23,6 +26,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------
 try:
     from colorama import Fore, Style, init
+
     init()
     GREEN = Fore.GREEN
     RED = Fore.RED
@@ -32,65 +36,210 @@ try:
 except Exception:
     GREEN = RED = CYAN = YELLOW = RESET = ""
 
-# ---------------------------------------------------------
-# Ensure PYTHONPATH=src
-# ---------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent
 SRC_PATH = PROJECT_ROOT / "src"
+
+# Ensure child scripts can import the local package without installation.
 os.environ["PYTHONPATH"] = str(SRC_PATH)
 
-logger.info("-------------------------------------------------------------------------------------------------------------")
+logger.info("-" * 109)
 logger.info("Project root: %s", PROJECT_ROOT)
 logger.info("PYTHONPATH set to: %s", SRC_PATH)
 
-# ---------------------------------------------------------
-# Pipeline builder
-# ---------------------------------------------------------
-def build_pipeline(pcap_folder):
-    return [
-        # ("01_collect_pcaps",      ["scripts/01_collect_pcaps.py", str(pcap_folder), "pcaps"]),
-        # ("02_dedup_pcaps",        ["scripts/02_dedup_pcaps.py", "pcaps", "--delete"]),
-        # ("03_extract_messages",   ["scripts/03_extract_messages.py", "pcaps", "data/01_messages.jsonl"]),
-        ("03_alt_build_corpus",   ["scripts/03_alt_build_corpus.py", "archive/protocol-x-payloads", "data/01_messages.jsonl", "--deduplicate-payloads"]),
-        ("04_discover_families",  ["scripts/04_discover_families.py", "data/01_messages.jsonl", "data/02_family_assignments.json"]),
-        ("05_extract_features",   ["scripts/05_extract_features.py", "data/01_messages.jsonl", "data/03_features", "--assignments-json", "data/02_family_assignments.json"]),
-        ("06_infer_boundaries",   ["scripts/06_infer_boundaries.py", "data/01_messages.jsonl", "data/04_families.json", "--assignments-json", "data/02_family_assignments.json"]),
-        ("07_pair_requests_responses", ["scripts/07_pair_requests_responses.py", "data/01_messages.jsonl", "data/05_pairs.json", "--assignments-json", "data/02_family_assignments.json"]),
-        ("08_infer_keywords",     ["scripts/08_infer_keywords.py", "data/01_messages.jsonl", "data/06_keywords.json", "--assignments-json", "data/02_family_assignments.json"]),
-        ("09_compare_subcluster", ["scripts/09_compare_subcluster_hypotheses.py", "data/01_messages.jsonl", "data/07_subcluster_hypotheses.json", "--assignments-json", "data/02_family_assignments.json"]),
-        ("10_infer_relations",    ["scripts/10_infer_relations.py", "data/01_messages.jsonl", "data/02_family_assignments.json", "data/05_pairs.json", "data/08_relations.json"]),
-        ("11_infer_semantics",    ["scripts/11_infer_semantics.py", "data/04_families.json", "data/08_relations.json", "data/09_semantics.json"]),
-        ("12_build_protocol_model", ["scripts/12_build_protocol_model.py", "data/04_families.json", "data/10_protocol_model.json", "--relations-json", "data/08_relations.json", "--semantics-json", "data/09_semantics.json"]),
-        ("13_export_markdown",    ["scripts/13_export_markdown.py", "data/10_protocol_model.json", "output/protocol_spec.md"]),
-    ]
 
-# ---------------------------------------------------------
-# Execute pipeline step
-# ---------------------------------------------------------
-def run_step(name, args):
+def _script(name: str) -> str:
+    return str(PROJECT_ROOT / "scripts" / name)
 
+
+def _path(path: Path) -> str:
+    return str(path)
+
+
+def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
+    data_dir = args.data_dir
+    pcap_dir = args.pcap_dir
+    output_dir = args.output_dir
+
+    messages_jsonl = data_dir / "01_messages.jsonl"
+    assignments_json = data_dir / "02_family_assignments.json"
+    features_dir = data_dir / "03_features"
+    family_features_json = features_dir / "family_features.json"
+    families_json = data_dir / "04_families.json"
+    pairs_json = data_dir / "05_pairs.json"
+    keywords_json = data_dir / "06_keywords.json"
+    subclusters_json = data_dir / "07_subcluster_hypotheses.json"
+    relations_json = data_dir / "08_relations.json"
+    semantics_json = data_dir / "09_semantics.json"
+    model_json = data_dir / "10_protocol_model.json"
+    protocol_spec_md = output_dir / "protocol_spec.md"
+
+    pipeline: list[tuple[str, list[str]]] = []
+
+    if args.legacy_json:
+        corpus_step = [
+            _script("03_alt_build_corpus.py"),
+            _path(args.legacy_json),
+            _path(messages_jsonl),
+            "--service-port",
+            str(args.service_port),
+        ]
+        if args.deduplicate_payloads:
+            corpus_step.append("--deduplicate-payloads")
+        pipeline.append(("03_alt_build_corpus", corpus_step))
+    else:
+        if not args.skip_collect:
+            pipeline.extend(
+                [
+                    ("01_collect_pcaps", [_script("01_collect_pcaps.py"), _path(args.input_folder), _path(pcap_dir)]),
+                    ("02_dedup_pcaps", [_script("02_dedup_pcaps.py"), _path(pcap_dir), "--delete"]),
+                ]
+            )
+            extraction_input = pcap_dir
+        else:
+            extraction_input = args.input_folder
+
+        pipeline.append(
+            (
+                "03_extract_messages",
+                [
+                    _script("03_extract_messages.py"),
+                    _path(extraction_input),
+                    _path(messages_jsonl),
+                    "--service-port",
+                    str(args.service_port),
+                    "--max-workers",
+                    str(args.max_workers),
+                ],
+            )
+        )
+
+    pipeline.extend(
+        [
+            (
+                "04_discover_families",
+                [
+                    _script("04_discover_families.py"),
+                    _path(messages_jsonl),
+                    _path(assignments_json),
+                    "--sample-size",
+                    str(args.family_sample_size),
+                ],
+            ),
+            (
+                "05_extract_features",
+                [
+                    _script("05_extract_features.py"),
+                    _path(messages_jsonl),
+                    _path(features_dir),
+                    "--assignments-json",
+                    _path(assignments_json),
+                ],
+            ),
+            (
+                "06_infer_boundaries",
+                [
+                    _script("06_infer_boundaries.py"),
+                    _path(messages_jsonl),
+                    _path(families_json),
+                    "--assignments-json",
+                    _path(assignments_json),
+                ],
+            ),
+            (
+                "07_pair_requests_responses",
+                [
+                    _script("07_pair_requests_responses.py"),
+                    _path(messages_jsonl),
+                    _path(pairs_json),
+                    "--assignments-json",
+                    _path(assignments_json),
+                ],
+            ),
+            (
+                "08_infer_keywords",
+                [
+                    _script("08_infer_keywords.py"),
+                    _path(messages_jsonl),
+                    _path(keywords_json),
+                    "--assignments-json",
+                    _path(assignments_json),
+                ],
+            ),
+            (
+                "09_compare_subcluster",
+                [
+                    _script("09_compare_subcluster_hypotheses.py"),
+                    _path(messages_jsonl),
+                    _path(subclusters_json),
+                    "--assignments-json",
+                    _path(assignments_json),
+                ],
+            ),
+            (
+                "10_infer_relations",
+                [
+                    _script("10_infer_relations.py"),
+                    _path(messages_jsonl),
+                    _path(assignments_json),
+                    _path(pairs_json),
+                    _path(relations_json),
+                ],
+            ),
+            (
+                "11_infer_semantics",
+                [_script("11_infer_semantics.py"), _path(families_json), _path(relations_json), _path(semantics_json)],
+            ),
+            (
+                "12_build_protocol_model",
+                [
+                    _script("12_build_protocol_model.py"),
+                    _path(families_json),
+                    _path(model_json),
+                    "--features-json",
+                    _path(family_features_json),
+                    "--relations-json",
+                    _path(relations_json),
+                    "--semantics-json",
+                    _path(semantics_json),
+                ],
+            ),
+            ("13_export_markdown", [_script("13_export_markdown.py"), _path(model_json), _path(protocol_spec_md)]),
+        ]
+    )
+
+    if args.stop_after:
+        for index, (name, _) in enumerate(pipeline):
+            if name == args.stop_after:
+                return pipeline[: index + 1]
+        raise ValueError(f"Unknown --stop-after step: {args.stop_after}")
+
+    return pipeline
+
+
+def run_step(name: str, step_args: list[str]) -> bool:
     print(f"\n{CYAN}--- Running step: {name} ---{RESET}")
     logger.info("Starting step: %s", name)
 
     start = time.time()
-
-    cmd = [sys.executable] + args
-    cmd_str = " ".join(cmd)
+    cmd = [sys.executable] + step_args
+    cmd_str = " ".join(shlex.quote(part) for part in cmd)
 
     print(f"{YELLOW}Command: {cmd_str}{RESET}")
     logger.info("Command: %s", cmd_str)
 
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(SRC_PATH)
+
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=PROJECT_ROOT, env=env)
+        if result.stdout:
+            print(result.stdout.rstrip())
+        if result.stderr:
+            print(result.stderr.rstrip(), file=sys.stderr)
         logger.info("STDOUT:\n%s", result.stdout)
         if result.stderr:
             logger.warning("STDERR:\n%s", result.stderr)
-        if result.returncode != 0:
-            raise subprocess.CalledProcessError(result.returncode, cmd)
+        result.check_returncode()
         elapsed = time.time() - start
         print(f"{GREEN}[OK]{RESET} {name} completed in {elapsed:.2f}s")
         logger.info("Step completed: %s (%.2fs)", name, elapsed)
@@ -101,49 +250,99 @@ def run_step(name, args):
         logger.error("Step FAILED: %s (%.2fs)", name, elapsed)
         return False
 
-# ---------------------------------------------------------
-# Argument parser
-# ---------------------------------------------------------
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Protocol RE Pipeline Runner"
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Protocol RE Pipeline Runner")
+    parser.add_argument(
+        "input_folder",
+        nargs="?",
+        type=Path,
+        help="Folder containing PCAP files, or an existing pcap dir when --skip-collect is used.",
     )
     parser.add_argument(
-        "pcap_folder",
+        "--legacy-json",
         type=Path,
-        help="Path to folder containing PCAP files"
+        help="Use an extracted protocol-x-payloads JSON folder instead of PCAP input.",
     )
+    parser.add_argument(
+        "--skip-collect",
+        action="store_true",
+        help="Treat input_folder as the already-normalized PCAP directory and skip collect/dedup stages.",
+    )
+    parser.add_argument("--service-port", type=int, default=502, help="TCP service port to extract, default: 502.")
+    parser.add_argument("--max-workers", type=int, default=4, help="Parallel workers for PCAP extraction.")
+    parser.add_argument("--family-sample-size", type=int, default=100000, help="Max unique messages for clustering.")
+    parser.add_argument("--deduplicate-payloads", action="store_true", help="Drop duplicate payloads in --legacy-json mode.")
+    parser.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
+    parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
+    parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
+    parser.add_argument("--stop-after", help="Run through the named pipeline step and then stop; useful for smoke tests.")
     return parser.parse_args()
 
-# ---------------------------------------------------------
-# Main
-# ---------------------------------------------------------
-def main():
+
+def _resolve_under_project(path: Path) -> Path:
+    if path.is_absolute():
+        return path
+    return PROJECT_ROOT / path
+
+
+def validate_args(args: argparse.Namespace) -> None:
+    args.pcap_dir = _resolve_under_project(args.pcap_dir)
+    args.data_dir = _resolve_under_project(args.data_dir)
+    args.output_dir = _resolve_under_project(args.output_dir)
+
+    if args.legacy_json:
+        args.legacy_json = args.legacy_json.resolve()
+        if not args.legacy_json.is_dir():
+            raise SystemExit(f"{RED}Error:{RESET} legacy JSON folder does not exist: {args.legacy_json}")
+        if args.input_folder is not None:
+            print(f"{YELLOW}Note:{RESET} ignoring input_folder because --legacy-json was provided.")
+        return
+
+    if args.input_folder is None:
+        raise SystemExit(f"{RED}Error:{RESET} input_folder is required unless --legacy-json is provided.")
+
+    args.input_folder = args.input_folder.resolve()
+    if not args.input_folder.is_dir():
+        raise SystemExit(f"{RED}Error:{RESET} input folder does not exist: {args.input_folder}")
+
+
+def prepare_output_dirs(args: argparse.Namespace) -> None:
+    args.data_dir.mkdir(parents=True, exist_ok=True)
+    (args.data_dir / "03_features").mkdir(parents=True, exist_ok=True)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    if not args.legacy_json and not args.skip_collect:
+        args.pcap_dir.mkdir(parents=True, exist_ok=True)
+
+
+def main() -> None:
     print(f"{CYAN}=== Protocol RE Pipeline Runner ==={RESET}")
     logger.info("Pipeline started")
 
     args = parse_args()
-    pcap_path = args.pcap_folder.resolve()
+    validate_args(args)
+    prepare_output_dirs(args)
 
-    logger.info("Input PCAP folder: %s", pcap_path)
-    if not pcap_path.exists() or not pcap_path.is_dir():
-        print(f"{RED}Error:{RESET} folder does not exist: {pcap_path}")
-        logger.error("PCAP folder does not exist: %s", pcap_path)
-        sys.exit(1)
+    source = args.legacy_json if args.legacy_json else args.input_folder
+    mode = "legacy JSON" if args.legacy_json else "PCAP"
+    logger.info("Input %s folder: %s", mode, source)
+    print(f"{GREEN}{mode} input folder:{RESET} {source}\n")
 
-    print(f"{GREEN}PCAP input folder:{RESET} {pcap_path}\n")
+    try:
+        pipeline = build_pipeline(args)
+    except ValueError as exc:
+        raise SystemExit(f"{RED}Error:{RESET} {exc}") from exc
 
-    pipeline = build_pipeline(pcap_path)
-
-    for name, args in pipeline:
-        ok = run_step(name, args)
+    for name, step_args in pipeline:
+        ok = run_step(name, step_args)
         if not ok:
             print(f"{RED}\nPipeline aborted due to failure in step: {name}{RESET}")
             logger.error("Pipeline aborted at step: %s", name)
             sys.exit(1)
 
     print(f"\n{GREEN}Pipeline completed successfully!{RESET}")
-
     logger.info("Pipeline finished successfully")
+
+
 if __name__ == "__main__":
     main()
