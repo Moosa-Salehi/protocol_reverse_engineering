@@ -8,6 +8,8 @@ The pipeline is:
   5. Detect field boundaries inside messages (using statistical differences between bytes).
   6. Produce structured summaries of each message type (length patterns, field positions, statistics).
   7. Prepare this structured information so it can later be analyzed by an LLM to infer field roles and generate a protocol specification.
+  
+The package code lives under src/protocol_re/; CLI stages live in scripts/; generated/intermediate artifacts live in data/; final specs go to output/.
 
 ## Core stages
 
