@@ -54,23 +54,23 @@ python.exe .\scripts\13_export_markdown.py data\10_protocol_model.json output\pr
 
 <div style="border: 1px solid #313131; padding: 8px 12px; margin-bottom: 15px; border-radius: 4px; background: #2B2B2B; font-family: monospace;">
   <div style="display: flex; justify-content: space-between;">
-    <span>PYTHONPATH=src</span>
+    <span></span>
     <span style="color: #8C8C8C">bash</span>
   </div>
   <div style="white-space: pre; overflow-x: auto;">
-python3 scripts/01_collect_pcaps.py files pcaps
-python3 scripts/02_dedup_pcaps.py pcaps --delete
-python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl
-python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
-python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
-python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json
-python3 scripts/07_pair_requests_responses.py data/01_messages.jsonl data/05_pairs.json --assignments-json data/02_family_assignments.json
-python3 scripts/08_infer_keywords.py data/01_messages.jsonl data/06_keywords.json --assignments-json data/02_family_assignments.json
-python3 scripts/09_compare_subcluster_hypotheses.py data/01_messages.jsonl data/07_subcluster_hypotheses.json --assignments-json data/02_family_assignments.json
-python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assignments.json data/05_pairs.json data/08_relations.json
-python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.json data/09_semantics.json
-python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
-python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
+PYTHONPATH=src python3 scripts/01_collect_pcaps.py files pcaps
+PYTHONPATH=src python3 scripts/02_dedup_pcaps.py pcaps --delete
+PYTHONPATH=src python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl
+PYTHONPATH=src python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
+PYTHONPATH=src python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
+PYTHONPATH=src python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json
+PYTHONPATH=src python3 scripts/07_pair_requests_responses.py data/01_messages.jsonl data/05_pairs.json --assignments-json data/02_family_assignments.json
+PYTHONPATH=src python3 scripts/08_infer_keywords.py data/01_messages.jsonl data/06_keywords.json --assignments-json data/02_family_assignments.json
+PYTHONPATH=src python3 scripts/09_compare_subcluster_hypotheses.py data/01_messages.jsonl data/07_subcluster_hypotheses.json --assignments-json data/02_family_assignments.json
+PYTHONPATH=src python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assignments.json data/05_pairs.json data/08_relations.json
+PYTHONPATH=src python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.json data/09_semantics.json
+PYTHONPATH=src python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
+PYTHONPATH=src python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
   </div>
 </div>
 
