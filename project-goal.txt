@@ -1,5 +1,5 @@
 This project is a framework for reverse engineering industrial communication protocols from PCAP traffic. The system should take raw network captures and
-  gradually infer the structure of an unknown protocol (for example Modbus treated as unknown).
+  gradually infer the structure of an unknown protocol.
 
   The intended pipeline is:
 

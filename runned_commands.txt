@@ -1,4 +1,4 @@
-python.exe .\scripts\04_build_corpus.py .\modbus-payloads\ .\data\01_messages.jsonl --deduplicate-payloads
+python.exe .\scripts\04_build_corpus.py .\archive\protocol-x-payloads\ .\data\01_messages.jsonl --deduplicate-payloads
 [+] Wrote 1830412 canonical message records to .\data\01_messages.jsonl
 ---
 python.exe .\scripts\05_discover_families.py .\data\01_messages.jsonl .\data\02_family_assignments.json

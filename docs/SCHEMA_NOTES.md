@@ -76,5 +76,5 @@ python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protoco
 
 Compatibility note
 
-- `scripts/03_alt_build_corpus.py` exists so you can keep using the already extracted `modbus-payloads/*.json` dataset while migrating to the new structure.
+- `scripts/03_alt_build_corpus.py` exists so you can keep using the already extracted `protocol-x-payloads/*.json` dataset while migrating to the new structure.
 - `scripts/03_extract_messages.py` is the preferred path for future runs because it preserves per-message direction and timestamps.
