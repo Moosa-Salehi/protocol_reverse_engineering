@@ -2,8 +2,21 @@ import subprocess
 import sys
 import time
 import os
+import logging
 from pathlib import Path
 import argparse
+
+# ---------------------------------------------------------
+# Logging setup
+# ---------------------------------------------------------
+logging.basicConfig(
+    filename="main.log",
+    filemode="a",
+    level=logging.INFO,
+    format="[%(levelname)s] %(message)s",
+)
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------
 # Color output (fallback if colorama absent)
@@ -25,6 +38,10 @@ except Exception:
 PROJECT_ROOT = Path(__file__).resolve().parent
 SRC_PATH = PROJECT_ROOT / "src"
 os.environ["PYTHONPATH"] = str(SRC_PATH)
+
+logger.info("-------------------------------------------------------------------------------------------------------------")
+logger.info("Project root: %s", PROJECT_ROOT)
+logger.info("PYTHONPATH set to: %s", SRC_PATH)
 
 # ---------------------------------------------------------
 # Pipeline builder
@@ -51,20 +68,37 @@ def build_pipeline(pcap_folder):
 # Execute pipeline step
 # ---------------------------------------------------------
 def run_step(name, args):
+
     print(f"\n{CYAN}--- Running step: {name} ---{RESET}")
+    logger.info("Starting step: %s", name)
+
     start = time.time()
 
     cmd = [sys.executable] + args
-    print(f"{YELLOW}Command: {' '.join(cmd)}{RESET}")
+    cmd_str = " ".join(cmd)
+
+    print(f"{YELLOW}Command: {cmd_str}{RESET}")
+    logger.info("Command: %s", cmd_str)
 
     try:
-        subprocess.run(cmd, check=True)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True
+        )
+        logger.info("STDOUT:\n%s", result.stdout)
+        if result.stderr:
+            logger.warning("STDERR:\n%s", result.stderr)
+        if result.returncode != 0:
+            raise subprocess.CalledProcessError(result.returncode, cmd)
         elapsed = time.time() - start
         print(f"{GREEN}[OK]{RESET} {name} completed in {elapsed:.2f}s")
+        logger.info("Step completed: %s (%.2fs)", name, elapsed)
         return True
     except subprocess.CalledProcessError:
         elapsed = time.time() - start
         print(f"{RED}[FAILED]{RESET} {name} (after {elapsed:.2f}s)")
+        logger.error("Step FAILED: %s (%.2fs)", name, elapsed)
         return False
 
 # ---------------------------------------------------------
@@ -74,13 +108,11 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Protocol RE Pipeline Runner"
     )
-
     parser.add_argument(
         "pcap_folder",
         type=Path,
         help="Path to folder containing PCAP files"
     )
-
     return parser.parse_args()
 
 # ---------------------------------------------------------
@@ -88,12 +120,15 @@ def parse_args():
 # ---------------------------------------------------------
 def main():
     print(f"{CYAN}=== Protocol RE Pipeline Runner ==={RESET}")
+    logger.info("Pipeline started")
 
     args = parse_args()
     pcap_path = args.pcap_folder.resolve()
 
+    logger.info("Input PCAP folder: %s", pcap_path)
     if not pcap_path.exists() or not pcap_path.is_dir():
         print(f"{RED}Error:{RESET} folder does not exist: {pcap_path}")
+        logger.error("PCAP folder does not exist: %s", pcap_path)
         sys.exit(1)
 
     print(f"{GREEN}PCAP input folder:{RESET} {pcap_path}\n")
@@ -104,9 +139,11 @@ def main():
         ok = run_step(name, args)
         if not ok:
             print(f"{RED}\nPipeline aborted due to failure in step: {name}{RESET}")
+            logger.error("Pipeline aborted at step: %s", name)
             sys.exit(1)
 
     print(f"\n{GREEN}Pipeline completed successfully!{RESET}")
 
+    logger.info("Pipeline finished successfully")
 if __name__ == "__main__":
     main()
