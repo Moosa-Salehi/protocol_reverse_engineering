@@ -1,4 +1,4 @@
-Protocol model artifacts
+Protocol RE project
 
 Core stages
 

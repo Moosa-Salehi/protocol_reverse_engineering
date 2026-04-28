@@ -29,5 +29,5 @@ python.exe .\scripts\13_infer_semantics.py data\04_families.json data\08_relatio
 python.exe .\scripts\09_build_protocol_model.py data\04_families.json data\10_protocol_model.json --relations-json data\08_relations.json --semantics-json data\09_semantics.json
 [+] Wrote protocol model with 16 families to data\10_protocol_model.json
 ---
-python.exe .\scripts\12_export_markdown.py data\10_protocol_model.json data\protocol_spec.md
-[+] Wrote Markdown protocol specification to data\protocol_spec.md
+python.exe .\scripts\12_export_markdown.py data\10_protocol_model.json output\protocol_spec.md
+[+] Wrote Markdown protocol specification to output\protocol_spec.md
