@@ -1,29 +1,7 @@
-Status
-
-  What’s Missing
-
-  - A dedicated feature extraction stage is missing.
-      - Right now features are computed ad hoc inside boundary detection and clustering.
-      - There is no features/ module producing reusable artifacts like per-message and per-family stats.
-  - Repetition patterns / motif detection are missing.
-      - No code currently measures repeated byte runs, repeated subsequences, byte n-grams, or field recurrence patterns.
-  - Structured summaries are not yet optimized for LLM consumption.
-      - protocol_model.json is useful, but it is still a generic model artifact rather than a compact evidence package for later LLM analysis.
-  - Flow/message reconstruction is simple rather than full reassembly.
-      - The extractor uses packet payloads directly and groups by flow/session, but it does not appear to perform TCP stream reassembly beyond what Scapy
-        gives at packet level in src/protocol_re/io/extract_payloads.py:43.
-  - Evaluation and confidence calibration are missing for the intended pipeline.
-      - There is no implemented scoring/reporting layer for cluster quality, boundary stability, or summary coverage.
-
-  Concise TODO
-
-  - Add a real features stage that writes reusable per-message and per-family artifacts: lengths, entropy vectors, byte histograms, uniqueness ratios, and
-    motif/repetition features.
-  - Add repetition-pattern detection: repeated subsequences, trailing data blocks, fixed-vs-variable length profiles, and frequent byte n-grams.
-  - Improve message reconstruction so the PCAP path can optionally use true TCP stream reconstruction rather than packet-payload extraction only.
-  - Add an LLM-prep exporter that writes one compact evidence bundle per family: template, segment stats, top examples, request/response links, echoed
-    fields, length relations, and semantic candidates.
-  - Add evaluation/reporting for the implemented stages: family coverage, cluster size distribution, boundary confidence summaries, and parseability of
-    discovered families.
-  - beautifull html (dark mode, using css, perfect ui/ux) report (protocol spec) generation.
-  - merge stages 1 to 3, 1 script must create 01_messages.jsonl from the folder containing pcaps.
+- Use the extracted features (lengths, entropy vectors, byte histograms, uniqueness ratios, and motif/repetition features) in the project.
+- Add repetition-pattern detection: repeated subsequences, trailing data blocks, fixed-vs-variable length profiles, and frequent byte n-grams.
+- Improve message reconstruction so the PCAP path can optionally use true TCP stream reconstruction rather than packet-payload extraction only.
+- Add an LLM-prep exporter that writes one compact evidence bundle per family: template, segment stats, top examples, request/response links, echoed fields, length relations, and semantic candidates.
+- Add evaluation/reporting for the implemented stages: family coverage, cluster size distribution, boundary confidence summaries, and parseability of discovered families.
+- beautifull html (dark mode, using css, perfect ui/ux) report (protocol spec) generation.
+- merge stages 1 to 3, 1 script must create 01_messages.jsonl from the folder containing pcaps.
