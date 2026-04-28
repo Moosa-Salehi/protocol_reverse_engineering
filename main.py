@@ -31,9 +31,10 @@ os.environ["PYTHONPATH"] = str(SRC_PATH)
 # ---------------------------------------------------------
 def build_pipeline(pcap_folder):
     return [
-        ("01_collect_pcaps",      ["scripts/01_collect_pcaps.py", str(pcap_folder), "pcaps"]),
-        ("02_dedup_pcaps",        ["scripts/02_dedup_pcaps.py", "pcaps", "--delete"]),
-        ("03_extract_messages",   ["scripts/03_extract_messages.py", "pcaps", "data/01_messages.jsonl"]),
+        # ("01_collect_pcaps",      ["scripts/01_collect_pcaps.py", str(pcap_folder), "pcaps"]),
+        # ("02_dedup_pcaps",        ["scripts/02_dedup_pcaps.py", "pcaps", "--delete"]),
+        # ("03_extract_messages",   ["scripts/03_extract_messages.py", "pcaps", "data/01_messages.jsonl"]),
+        ("03_alt_build_corpus",   ["scripts/03_alt_build_corpus.py", "archive/protocol-x-payloads", "data/01_messages.jsonl", "--deduplicate-payloads"]),
         ("04_discover_families",  ["scripts/04_discover_families.py", "data/01_messages.jsonl", "data/02_family_assignments.json"]),
         ("05_extract_features",   ["scripts/05_extract_features.py", "data/01_messages.jsonl", "data/03_features", "--assignments-json", "data/02_family_assignments.json"]),
         ("06_infer_boundaries",   ["scripts/06_infer_boundaries.py", "data/01_messages.jsonl", "data/04_families.json", "--assignments-json", "data/02_family_assignments.json"]),
