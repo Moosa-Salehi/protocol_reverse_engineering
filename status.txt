@@ -116,3 +116,4 @@ Status
   - Add evaluation/reporting for the implemented stages: family coverage, cluster size distribution, boundary confidence summaries, and parseability of
     discovered families.
   - beautifull html (dark mode, using css, perfect ui/ux) report (protocol spec) generation.
+  - merge stages 1 to 3, 1 script must create 01_messages.jsonl from the folder containing pcaps.
