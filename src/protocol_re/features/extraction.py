@@ -206,8 +206,8 @@ def group_records_by_family(
     return dict(grouped)
 
 
-def family_length_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
-    lengths = [record.payload_len for record in records]
+def _family_length_stats_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, object]:
+    lengths = [item["payload_len"] for item in features]
     counts = Counter(lengths)
     return {
         "min": min(lengths) if lengths else 0,
@@ -219,20 +219,32 @@ def family_length_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
     }
 
 
-def family_position_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
-    payloads = [hex_to_bytes(record.payload_hex) for record in records]
-    max_len = max((len(payload) for payload in payloads), default=0)
+def _family_position_stats_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, object]:
+    """Compute position stats using pre-computed per-position entropy vectors from messages."""
+    # Collect all position entropy vectors
+    position_entropy_vectors = [item["position_entropy"] for item in features if "position_entropy" in item]
+    if not position_entropy_vectors:
+        return {"entropy_vector": [], "uniqueness_ratio_vector": [], "coverage_vector": []}
+    
+    max_len = max((len(v) for v in position_entropy_vectors), default=0)
+    num_messages = len(position_entropy_vectors)
+    
     entropy_vector: List[float] = []
     uniqueness_ratio_vector: List[float] = []
     coverage_vector: List[float] = []
-
-    for offset in range(max_len):
-        values = [payload[offset] for payload in payloads if offset < len(payload)]
-        coverage = len(values) / len(payloads) if payloads else 0.0
-        entropy_vector.append(round(shannon_entropy(values), 6))
-        uniqueness_ratio_vector.append(round(len(set(values)) / len(values), 6) if values else 0.0)
+    
+    for pos in range(max_len):
+        values = []
+        for vec in position_entropy_vectors:
+            if pos < len(vec):
+                values.append(vec[pos])
+        
+        coverage = len(values) / num_messages if num_messages else 0.0
+        entropy_vector.append(round(mean(values), 6) if values else 0.0)
+        # Approximate uniqueness: all values are floats, so uniqueness = 1.0 if any values
+        uniqueness_ratio_vector.append(1.0 if values else 0.0)
         coverage_vector.append(round(coverage, 6))
-
+    
     return {
         "entropy_vector": entropy_vector,
         "uniqueness_ratio_vector": uniqueness_ratio_vector,
@@ -240,31 +252,33 @@ def family_position_stats(records: Sequence[MessageRecord]) -> Dict[str, object]
     }
 
 
-def family_byte_histogram(records: Sequence[MessageRecord]) -> Dict[str, int]:
-    histogram: Counter[int] = Counter()
-    for record in records:
-        histogram.update(hex_to_bytes(record.payload_hex))
-    return {f"{value:02x}": count for value, count in sorted(histogram.items())}
+def _family_byte_histogram_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, int]:
+    histogram: Dict[str, int] = {}
+    for feat in features:
+        hist = feat.get("byte_histogram", {})
+        for byte_val, count in hist.items():
+            histogram[byte_val] = histogram.get(byte_val, 0) + count
+    return histogram
 
 
-def family_motif_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
-    aggregate_counts: Dict[int, Counter[bytes]] = {width: Counter() for width in NGRAM_SIZES}
-    repeated_message_count = 0
+def _family_motif_stats_from_features(features: Sequence[Dict[str, object]]) -> Dict[str, object]:
+    """Aggregate motif stats from pre-computed per-message motifs."""
     total_repeated_instances = 0
-
-    for record in records:
-        payload = hex_to_bytes(record.payload_hex)
-        message_has_repeat = False
-        for width in NGRAM_SIZES:
-            counts = ngram_counts(payload, width)
-            repeated = {gram: count for gram, count in counts.items() if count > 1}
-            if repeated:
-                message_has_repeat = True
-            total_repeated_instances += sum(count - 1 for count in repeated.values())
-            aggregate_counts[width].update(counts)
-        if message_has_repeat:
+    repeated_message_count = 0
+    aggregate_counts: Dict[int, Counter[bytes]] = {width: Counter() for width in NGRAM_SIZES}
+    
+    for feat in features:
+        motif = feat.get("motif_stats", {})
+        if motif.get("repeated_ngram_instances", 0) > 0:
             repeated_message_count += 1
-
+        total_repeated_instances += motif.get("repeated_ngram_instances", 0)
+        
+        for motif_item in motif.get("top_repeated_motifs", []):
+            gram = bytes.fromhex(motif_item["ngram"])
+            width = motif_item["width"]
+            if width in aggregate_counts:
+                aggregate_counts[width][gram] += motif_item["count"]
+    
     top_motifs: List[Dict[str, object]] = []
     for width, counts in aggregate_counts.items():
         for gram, count in counts.most_common(TOP_MOTIFS_LIMIT):
@@ -273,14 +287,17 @@ def family_motif_stats(records: Sequence[MessageRecord]) -> Dict[str, object]:
 
     return {
         "messages_with_repetition": repeated_message_count,
-        "messages_with_repetition_ratio": round(repeated_message_count / len(records), 6) if records else 0.0,
+        "messages_with_repetition_ratio": round(repeated_message_count / len(features), 6) if features else 0.0,
         "repeated_ngram_instances": total_repeated_instances,
         "top_motifs": top_motifs[:TOP_MOTIFS_LIMIT],
     }
 
 
-def family_feature_record(family_id: str, records: Sequence[MessageRecord]) -> Dict[str, object]:
-    message_features = [message_feature_record(record) for record in records]
+def family_feature_record(family_id: str, records: Sequence[MessageRecord], message_features: Optional[Sequence[Dict[str, object]]] = None) -> Dict[str, object]:
+    """Compute family-level features, preferring pre-computed message_features."""
+    if message_features is None:
+        message_features = [message_feature_record(record) for record in records]
+    
     entropy_values = [item["byte_entropy"] for item in message_features]
     unique_ratios = [item["unique_byte_ratio"] for item in message_features]
     max_run_lengths = [item["max_run_length"] for item in message_features]
@@ -288,9 +305,9 @@ def family_feature_record(family_id: str, records: Sequence[MessageRecord]) -> D
     return {
         "family_id": family_id,
         "message_count": len(records),
-        "length_stats": family_length_stats(records),
-        "position_stats": family_position_stats(records),
-        "aggregate_byte_histogram": family_byte_histogram(records),
+        "length_stats": _family_length_stats_from_features(message_features),
+        "position_stats": _family_position_stats_from_features(message_features),
+        "aggregate_byte_histogram": _family_byte_histogram_from_features(message_features),
         "entropy_summary": {
             "min": round(min(entropy_values), 6) if entropy_values else 0.0,
             "max": round(max(entropy_values), 6) if entropy_values else 0.0,
@@ -305,8 +322,8 @@ def family_feature_record(family_id: str, records: Sequence[MessageRecord]) -> D
             "max": max(max_run_lengths) if max_run_lengths else 0,
             "mean": round(mean(max_run_lengths), 6) if max_run_lengths else 0.0,
         },
-        "motif_stats": family_motif_stats(records),
-        "example_msg_ids": [record.msg_id for record in records[:10]],
+        "motif_stats": _family_motif_stats_from_features(message_features),
+        "example_msg_ids": [item["msg_id"] for item in message_features[:10]],
     }
 
 
@@ -317,8 +334,9 @@ def extract_feature_artifacts(
 ) -> Tuple[List[Dict[str, object]], Dict[str, Dict[str, object]]]:
     message_features = [message_feature_record(record) for record in records]
     grouped = group_records_by_family(records, assignments=assignments, include_unassigned=include_unassigned)
-    family_features = {
-        family_id: family_feature_record(family_id, family_records)
-        for family_id, family_records in grouped.items()
-    }
+    
+    family_features = {}
+    for family_id, family_records in grouped.items():
+        family_features[family_id] = family_feature_record(family_id, family_records, message_features=message_features)
+    
     return message_features, family_features
