@@ -1,6 +1,15 @@
-Protocol RE project
+# Protocol RE project
+This project is a framework for reverse engineering industrial communication protocols from PCAP traffic. The system should take raw network captures and gradually infer the structure of an unknown protocol.
+The pipeline is:
+  1. Read PCAP files and reconstruct flows/messages.
+  2. Extract raw payloads and represent them as byte/hex sequences.
+  3. Compute basic features (message length, byte statistics, entropy, repetition patterns, etc.).
+  4. Cluster similar messages to identify message types.
+  5. Detect field boundaries inside messages (using statistical differences between bytes).
+  6. Produce structured summaries of each message type (length patterns, field positions, statistics).
+  7. Prepare this structured information so it can later be analyzed by an LLM to infer field roles and generate a protocol specification.
 
-Core stages
+## Core stages
 
 - `scripts/01_collect_pcaps.py` collects PCAP files from a source tree into one normalized directory.
 - `scripts/02_dedup_pcaps.py` finds duplicate PCAP files and can remove them.
@@ -16,13 +25,25 @@ Core stages
 - `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`.
 - `scripts/13_export_markdown.py` renders a human-readable Markdown protocol specification.
 
-Feature artifacts
+## Feature artifacts
 
 - `message_features.jsonl` contains per-message length, entropy, sparse byte histogram, top byte values, run-length statistics, and repeated n-gram motifs.
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, and motif/repetition summaries.
 - `scripts/05_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
 
-Recommended flow from PCAPs
+## Installing dependencies
+
+```code
+pip install -r requirements.txt
+```
+
+## Running the pipeline
+
+```code
+python main.py <folder containing the pcaps>
+```
+
+## Running step by step
 
 <div style="border: 1px solid #313131; padding: 8px 12px; margin-bottom: 15px; border-radius: 4px; background: #2B2B2B; font-family: monospace;">
   <div style="display: flex; justify-content: space-between;">
@@ -74,7 +95,7 @@ PYTHONPATH=src python3 scripts/13_export_markdown.py data/10_protocol_model.json
   </div>
 </div>
 
-Compatibility note
+## Compatibility note
 
 - `scripts/03_alt_build_corpus.py` exists so you can keep using the already extracted `protocol-x-payloads/*.json` dataset while migrating to the new structure.
 - `scripts/03_extract_messages.py` is the preferred path for future runs because it preserves per-message direction and timestamps.
