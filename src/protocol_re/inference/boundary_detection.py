@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from math import log2
 from statistics import mean
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FieldHypothesis, Segment
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
@@ -85,6 +85,7 @@ def infer_segments(
     messages_hex: Sequence[str],
     score_threshold: float = 1.5,
     min_segment_width: int = 1,
+    family_features: Optional[Dict[str, Any]] = None,
 ) -> List[Segment]:
     if not messages_hex:
         return []
@@ -92,6 +93,7 @@ def infer_segments(
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max(len(msg) for msg in messages)
     boundary_scores = score_boundaries(messages_hex)
+    boundary_score_by_offset = {int(item["boundary_after"]): item for item in boundary_scores}
 
     raw_boundaries = [0]
     for item in boundary_scores:
@@ -110,20 +112,92 @@ def infer_segments(
         entropy_proxy = mean([_entropy(list(value)) for value in segment_values]) if segment_values else 0.0
         kind = "constant" if value_count <= 1 else "variable"
         confidence = 1.0 / (1.0 + entropy_proxy)
+        evidence: Dict[str, Any] = {
+            "value_count": value_count,
+            "mean_byte_entropy": round(entropy_proxy, 4),
+        }
+
+        left_boundary = boundary_score_by_offset.get(start - 1) if start > 0 else None
+        right_boundary = boundary_score_by_offset.get(end - 1) if end < max_len else None
+        boundary_supports = [
+            float(item["score"])
+            for item in (left_boundary, right_boundary)
+            if item is not None
+        ]
+        if boundary_supports:
+            evidence["boundary_support"] = round(max(boundary_supports), 4)
+
+        feature_evidence = segment_feature_summary(family_features, start, end)
+        if feature_evidence:
+            evidence.update(feature_evidence)
+            confidence = feature_adjusted_segment_confidence(kind, confidence, feature_evidence)
+
         segments.append(
             Segment(
                 start=start,
                 end=end,
                 kind=kind,
                 confidence=round(confidence, 4),
-                evidence={
-                    "value_count": value_count,
-                    "mean_byte_entropy": round(entropy_proxy, 4),
-                },
+                evidence=evidence,
             )
         )
 
     return segments
+
+
+def _average_window(values: Sequence[float], start: int, end: int) -> Optional[float]:
+    window = [float(value) for value in values[start:end]]
+    if not window:
+        return None
+    return mean(window)
+
+
+def segment_feature_summary(
+    family_features: Optional[Dict[str, Any]],
+    start: int,
+    end: int,
+) -> Dict[str, Any]:
+    if not family_features:
+        return {}
+
+    position_stats_payload = family_features.get("position_stats", {}) or {}
+    entropy_vector = position_stats_payload.get("entropy_vector", []) or []
+    unique_ratio_vector = position_stats_payload.get("uniqueness_ratio_vector", []) or []
+    coverage_vector = position_stats_payload.get("coverage_vector", []) or []
+
+    avg_entropy = _average_window(entropy_vector, start, end)
+    avg_unique_ratio = _average_window(unique_ratio_vector, start, end)
+    avg_coverage = _average_window(coverage_vector, start, end)
+    if avg_entropy is None and avg_unique_ratio is None and avg_coverage is None:
+        return {}
+
+    evidence: Dict[str, Any] = {"feature_source": "family_features"}
+    if avg_entropy is not None:
+        evidence["feature_avg_offset_entropy"] = round(avg_entropy, 6)
+        evidence["feature_stability_score"] = round(max(0.0, 1.0 - min(avg_entropy / 8.0, 1.0)), 6)
+    if avg_unique_ratio is not None:
+        evidence["feature_avg_unique_ratio"] = round(avg_unique_ratio, 6)
+    if avg_coverage is not None:
+        evidence["feature_avg_coverage"] = round(avg_coverage, 6)
+    return evidence
+
+
+def feature_adjusted_segment_confidence(
+    kind: str,
+    base_confidence: float,
+    feature_evidence: Dict[str, Any],
+) -> float:
+    coverage = float(feature_evidence.get("feature_avg_coverage", 1.0))
+    stability = float(feature_evidence.get("feature_stability_score", base_confidence))
+    unique_ratio = float(feature_evidence.get("feature_avg_unique_ratio", 0.0))
+
+    if kind == "constant":
+        feature_confidence = (0.7 * stability) + (0.3 * coverage)
+    else:
+        variability_support = min(1.0, unique_ratio * 2.0)
+        feature_confidence = (0.4 * stability) + (0.4 * variability_support) + (0.2 * coverage)
+
+    return max(0.0, min(1.0, (0.55 * base_confidence) + (0.45 * feature_confidence)))
 
 
 def infer_template(messages_hex: Sequence[str], stability_threshold: float = 0.95) -> str:

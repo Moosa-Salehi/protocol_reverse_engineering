@@ -12,6 +12,7 @@ from protocol_re.utils.bytes import hex_to_bytes
 NGRAM_SIZES = (2, 3)
 TOP_VALUES_LIMIT = 8
 TOP_MOTIFS_LIMIT = 10
+TOP_NGRAM_FREQUENCIES_LIMIT = 20
 
 
 def shannon_entropy_from_counts(counts: Counter[int]) -> float:
@@ -208,7 +209,17 @@ class FamilyFeatureAccumulator:
 
     def motif_stats(self) -> Dict[str, object]:
         top_motifs: List[Dict[str, object]] = []
+        ngram_frequencies: Dict[str, List[Dict[str, object]]] = {}
         for width, counts in self.motif_counts.items():
+            total_width_ngrams = sum(counts.values())
+            ngram_frequencies[str(width)] = [
+                {
+                    "ngram": gram.hex(),
+                    "count": count,
+                    "frequency": round(count / total_width_ngrams, 6) if total_width_ngrams else 0.0,
+                }
+                for gram, count in counts.most_common(TOP_NGRAM_FREQUENCIES_LIMIT)
+            ]
             for gram, count in counts.most_common(TOP_MOTIFS_LIMIT):
                 top_motifs.append({"ngram": gram.hex(), "count": count, "width": width})
         top_motifs.sort(key=lambda item: (-int(item["count"]), -int(item["width"]), str(item["ngram"])))
@@ -217,6 +228,7 @@ class FamilyFeatureAccumulator:
             "messages_with_repetition_ratio": round(self.repeated_message_count / self.message_count, 6) if self.message_count else 0.0,
             "repeated_ngram_instances": self.repeated_ngram_instances,
             "top_motifs": top_motifs[:TOP_MOTIFS_LIMIT],
+            "ngram_frequencies": ngram_frequencies,
         }
 
     def to_record(self) -> Dict[str, object]:

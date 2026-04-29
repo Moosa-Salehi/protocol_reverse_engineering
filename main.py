@@ -145,6 +145,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(families_json),
                     "--assignments-json",
                     _path(assignments_json),
+                    "--features-json",
+                    _path(family_features_json),
                 ],
             ),
             (

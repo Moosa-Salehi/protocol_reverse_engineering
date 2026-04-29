@@ -23,7 +23,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/03_alt_build_corpus.py` builds the same canonical corpus from legacy extracted `protocol-x-payloads/*.json` files.
 - `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback.
 - `scripts/05_extract_features.py` writes reusable per-message and per-family feature artifacts.
-- `scripts/06_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses.
+- `scripts/06_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json`, it uses family entropy/uniqueness/coverage vectors to refine segment confidence.
 - `scripts/07_pair_requests_responses.py` emits candidate request/response pairs per session.
 - `scripts/08_infer_keywords.py` finds candidate keyword bytes and keyword-based subformats.
 - `scripts/09_compare_subcluster_hypotheses.py` compares keyword-based and length-based subclustering strategies.
@@ -35,9 +35,9 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 ## Feature artifacts
 
 - `message_features.jsonl` contains per-message length, entropy, sparse byte histogram, top byte values, run-length statistics, and repeated n-gram motifs.
-- `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, and motif/repetition summaries.
+- `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, and top n-gram frequency tables.
 - `scripts/05_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
-- `main.py` passes `data/03_features/family_features.json` into the protocol-model builder so final models include feature summaries.
+- `main.py` passes `data/03_features/family_features.json` into boundary inference and the protocol-model builder so boundary evidence and final models include feature summaries.
 
 ## Installing dependencies
 
@@ -89,7 +89,7 @@ python3 scripts/02_dedup_pcaps.py pcaps --delete
 python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --service-port <port> --max-workers 4 --reassembly-mode packet
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
-python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json
+python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json --features-json data/03_features/family_features.json
 python3 scripts/07_pair_requests_responses.py data/01_messages.jsonl data/05_pairs.json --assignments-json data/02_family_assignments.json
 python3 scripts/08_infer_keywords.py data/01_messages.jsonl data/06_keywords.json --assignments-json data/02_family_assignments.json
 python3 scripts/09_compare_subcluster_hypotheses.py data/01_messages.jsonl data/07_subcluster_hypotheses.json --assignments-json data/02_family_assignments.json
@@ -105,7 +105,7 @@ Build from legacy extracted JSON payloads:
 python3 scripts/03_alt_build_corpus.py archive/protocol-x-payloads data/01_messages.jsonl --deduplicate-payloads
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
-python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json
+python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json --features-json data/03_features/family_features.json
 python3 scripts/07_pair_requests_responses.py data/01_messages.jsonl data/05_pairs.json --assignments-json data/02_family_assignments.json
 python3 scripts/08_infer_keywords.py data/01_messages.jsonl data/06_keywords.json --assignments-json data/02_family_assignments.json
 python3 scripts/09_compare_subcluster_hypotheses.py data/01_messages.jsonl data/07_subcluster_hypotheses.json --assignments-json data/02_family_assignments.json

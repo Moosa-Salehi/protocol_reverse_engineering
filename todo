@@ -53,18 +53,22 @@ Status: Partially implemented; needs broader validation.
 
 ## 3. Use extracted feature artifacts throughout the model
 
-Status: Partially done.
+Status: Complete for the current pipeline baseline.
 
 - `scripts/05_extract_features.py` and `src/protocol_re/features/extraction.py`
   already generate per-message and per-family features.
 - Done: `main.py` wires `data/03_features/family_features.json` into
-  `scripts/12_build_protocol_model.py` using `--features-json`.
-- Done: README step-by-step commands include `--features-json` so the protocol
-  model includes feature summaries.
-- Consider using feature vectors to improve family clustering and boundary
-  confidence instead of only exporting them.
-- Expand family-level aggregate n-gram/frequency summaries if needed for later
-  evidence bundles.
+  `scripts/06_infer_boundaries.py` and `scripts/12_build_protocol_model.py`
+  using `--features-json`.
+- Done: README step-by-step commands include `--features-json` so boundary
+  inference and protocol model output include feature summaries.
+- Done: family feature artifacts now include `motif_stats.ngram_frequencies`
+  with top aggregate n-gram counts and frequencies per width.
+- Done: README documents the n-gram frequency tables.
+- Done: boundary inference uses family entropy, uniqueness, and coverage vectors
+  to adjust segment confidence and attach feature evidence.
+- Future enhancement: use feature vectors directly in family clustering, beyond
+  the current clustering byte-vector path.
 
 ## 4. Add deeper repetition and structure detection
 

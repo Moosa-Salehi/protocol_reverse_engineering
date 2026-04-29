@@ -17,9 +17,15 @@ def main() -> None:
     parser.add_argument("--include-unassigned", action="store_true", help="Include records missing a family assignment")
     parser.add_argument("--family-mode", choices=["length", "prefix2"], default="length", help="Cheap family grouping heuristic")
     parser.add_argument("--score-threshold", type=float, default=1.5, help="Boundary score threshold")
+    parser.add_argument("--features-json", help="Optional family feature JSON from 05_extract_features.py")
     args = parser.parse_args()
 
     records = load_corpus_jsonl(args.input_jsonl)
+    feature_by_family = {}
+    if args.features_json:
+        with open(args.features_json, "r", encoding="utf-8") as handle:
+            feature_by_family = json.load(handle)
+
     grouped = defaultdict(list)
     if args.assignments_json:
         with open(args.assignments_json, "r", encoding="utf-8") as handle:
@@ -40,7 +46,11 @@ def main() -> None:
 
     result = {}
     for family_id, messages_hex in grouped.items():
-        segments = infer_segments(messages_hex, score_threshold=args.score_threshold)
+        segments = infer_segments(
+            messages_hex,
+            score_threshold=args.score_threshold,
+            family_features=feature_by_family.get(family_id),
+        )
         hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
         result[family_id] = {
             "message_count": len(messages_hex),
