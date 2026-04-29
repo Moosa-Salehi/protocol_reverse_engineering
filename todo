@@ -96,7 +96,7 @@ Status: Implemented.
 - Done: added `src/protocol_re/export/llm_evidence.py` and
   `scripts/14_export_llm_evidence.py`.
 - Done: exports a compact per-family evidence bundle for downstream LLM
-  analysis to `output/llm_evidence.json` from `main.py`.
+  analysis to `data/12_llm_evidence.json` from `main.py`.
 - Done: includes templates, segment stats, top examples, length histograms,
   entropy/uniqueness/coverage vector digests, repeated motifs, structure hints,
   request/response links, echo fields, length relations, semantic candidates,

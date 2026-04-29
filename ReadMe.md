@@ -60,7 +60,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps>
 ```
 
-This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_spec.md`, writes `output/llm_evidence.json`, writes `data/11_evaluation.json`, and writes `output/protocol_report.html`.
+This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_spec.md` and `output/protocol_report.html`.
 
 Useful runner options:
 
@@ -104,7 +104,7 @@ python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assi
 python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.json data/09_semantics.json
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
-python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json output/llm_evidence.json
+python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json
 python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json
 python3 scripts/16_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
@@ -123,7 +123,7 @@ python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assi
 python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.json data/09_semantics.json
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
-python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json output/llm_evidence.json
+python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json
 python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json
 python3 scripts/16_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```

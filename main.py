@@ -73,7 +73,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     model_json = data_dir / "10_protocol_model.json"
     evaluation_json = data_dir / "11_evaluation.json"
     protocol_spec_md = output_dir / "protocol_spec.md"
-    llm_evidence_json = output_dir / "llm_evidence.json"
+    llm_evidence_json = data_dir / "12_llm_evidence.json"
     html_report = output_dir / "protocol_report.html"
 
     pipeline: list[tuple[str, list[str]]] = []
