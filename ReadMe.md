@@ -32,6 +32,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`.
 - `scripts/13_export_markdown.py` renders a human-readable Markdown protocol specification.
 - `scripts/14_export_llm_evidence.py` renders a compact per-family evidence bundle for downstream LLM analysis.
+- `scripts/15_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, and relations.
 
 ## Feature artifacts
 
@@ -54,7 +55,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps>
 ```
 
-This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_spec.md`, and writes `output/llm_evidence.json`.
+This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_spec.md`, writes `output/llm_evidence.json`, and writes `data/11_evaluation.json`.
 
 Useful runner options:
 
@@ -99,6 +100,7 @@ python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.js
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json output/llm_evidence.json
+python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json
 ```
 
 Build from legacy extracted JSON payloads:
@@ -116,6 +118,7 @@ python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.js
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json output/llm_evidence.json
+python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json
 ```
 
 Windows PowerShell equivalent for imports:

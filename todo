@@ -108,15 +108,23 @@ Status: Implemented.
 
 ## 6. Add evaluation and reporting
 
-Status: Not done.
+Status: Implemented for JSON metrics; tests remain future work.
 
-- Report family coverage, unassigned/noise counts, cluster size distribution,
-  and assignment sample limits.
-- Report boundary confidence summaries and parseability/coverage of discovered
-  families.
-- Add relation quality metrics: pair counts, score distributions, echo support,
-  and direction-known vs direction-unknown pairing modes.
-- Add regression tests for representative pipeline stages.
+- Done: added `src/protocol_re/evaluation/reporting.py` and
+  `scripts/15_evaluate_pipeline.py`.
+- Done: writes `data/11_evaluation.json` from `main.py`.
+- Done: reports corpus message/session/source counts and payload-length
+  distributions.
+- Done: reports family assignment coverage, unassigned/noise counts, cluster
+  size distribution, assignment sample size, and clustering feature shape.
+- Done: reports boundary parseability, segment/field count distributions,
+  confidence summaries, template lengths, and feature-evidence coverage.
+- Done: reports pair counts, score distributions, latency distributions,
+  direction-known vs direction-unknown ratios, and pairing modes.
+- Done: reports relation edge counts, pair-count/score distributions, echo
+  support, length-relation support, role-hint counts, and top family edges.
+- Future enhancement: add committed regression tests for representative pipeline
+  stages.
 
 ## 7. Add a polished HTML protocol report
 
