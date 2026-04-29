@@ -13,7 +13,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Infer field boundaries and coarse field types from message families.")
     parser.add_argument("input_jsonl", help="Canonical message corpus JSONL")
     parser.add_argument("output_json", help="Output JSON file for family templates and segment hypotheses")
-    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 05_discover_families.py")
+    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 04_discover_families.py")
     parser.add_argument("--include-unassigned", action="store_true", help="Include records missing a family assignment")
     parser.add_argument("--family-mode", choices=["length", "prefix2"], default="length", help="Cheap family grouping heuristic")
     parser.add_argument("--score-threshold", type=float, default=1.5, help="Boundary score threshold")

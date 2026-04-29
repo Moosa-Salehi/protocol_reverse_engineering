@@ -12,7 +12,7 @@ from protocol_re.inference.request_response_relations import summarize_family_re
 def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize request-response relations between discovered message families.")
     parser.add_argument("input_jsonl", help="Canonical message corpus JSONL")
-    parser.add_argument("assignments_json", help="Output from 05_discover_families.py")
+    parser.add_argument("assignments_json", help="Output from 04_discover_families.py")
     parser.add_argument("pairs_json", help="Output from 07_pair_requests_responses.py")
     parser.add_argument("output_json", help="Output JSON file for inferred family relations")
     parser.add_argument("--min-echo-support", type=float, default=0.9)

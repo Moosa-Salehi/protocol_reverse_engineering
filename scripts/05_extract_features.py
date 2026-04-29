@@ -14,7 +14,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Extract reusable per-message and per-family feature artifacts from the canonical corpus.")
     parser.add_argument("input_jsonl", help="Canonical message corpus JSONL")
     parser.add_argument("output_dir", help="Directory for feature artifacts")
-    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 05_discover_families.py")
+    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 04_discover_families.py")
     parser.add_argument("--include-unassigned", action="store_true", help="Include records without a family assignment")
     args = parser.parse_args()
 

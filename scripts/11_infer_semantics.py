@@ -10,7 +10,7 @@ from protocol_re.inference.semantic_labeling import summarize_semantics
 def main() -> None:
     parser = argparse.ArgumentParser(description="Infer semantic labels for families and fields from boundaries plus request-response relations.")
     parser.add_argument("family_json", help="Output from 06_infer_boundaries.py")
-    parser.add_argument("relations_json", help="Output from 11_infer_relations.py")
+    parser.add_argument("relations_json", help="Output from 10_infer_relations.py")
     parser.add_argument("output_json", help="Output JSON file for semantic summaries")
     args = parser.parse_args()
 

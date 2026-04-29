@@ -15,6 +15,13 @@ The pipeline is:
 
 The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; generated/intermediate artifacts live in `data/`; final specs go to `output/`.
 
+## Architecture
+
+The pipeline is intentionally protocol-agnostic. PCAP extraction creates a canonical message corpus, family discovery groups similar payloads, feature extraction builds reusable byte-level evidence, boundary inference proposes templates and fields, request/response pairing and relation inference connect families, semantic labeling adds role and field hints, and exporters turn the resulting protocol model into Markdown, HTML, evaluation metrics, and LLM evidence bundles.
+
+Use `scripts/03_extract_messages.py` for real PCAP/PCAPNG input. Use `scripts/03_alt_build_corpus.py` only when starting from the bundled legacy extracted JSON payloads; that compatibility path cannot recover true per-message direction or timestamps.
+
+
 ## Core stages
 
 - `scripts/01_collect_pcaps.py` collects PCAP files from a source tree into one normalized directory.

@@ -13,7 +13,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Infer likely request/response message pairs inside each session.")
     parser.add_argument("input_jsonl", help="Canonical message corpus JSONL")
     parser.add_argument("output_json", help="Output JSON file for pair hypotheses")
-    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 05_discover_families.py")
+    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 04_discover_families.py")
     parser.add_argument("--min-score", type=float, default=1.5, help="Minimum pairing score")
     parser.add_argument("--max-index-gap", type=int, default=3, help="Maximum forward search window within a session")
     args = parser.parse_args()

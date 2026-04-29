@@ -13,7 +13,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Infer candidate keyword bytes and keyword-based subformats.")
     parser.add_argument("input_jsonl")
     parser.add_argument("output_json")
-    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 05_discover_families.py")
+    parser.add_argument("--assignments-json", help="Optional family assignment JSON from 04_discover_families.py")
     parser.add_argument("--include-unassigned", action="store_true", help="Include records missing a family assignment")
     parser.add_argument("--family-mode", choices=["length", "prefix2"], default="length")
     args = parser.parse_args()

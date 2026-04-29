@@ -11,9 +11,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Assemble a protocol-model JSON document from inferred family summaries.")
     parser.add_argument("family_json", help="Output from 06_infer_boundaries.py")
     parser.add_argument("output_json", help="Protocol model output path")
-    parser.add_argument("--features-json", help="Optional family feature JSON from 14_extract_features.py")
-    parser.add_argument("--relations-json", help="Optional output from 11_infer_relations.py")
-    parser.add_argument("--semantics-json", help="Optional output from 13_infer_semantics.py")
+    parser.add_argument("--features-json", help="Optional family feature JSON from 05_extract_features.py")
+    parser.add_argument("--relations-json", help="Optional output from 10_infer_relations.py")
+    parser.add_argument("--semantics-json", help="Optional output from 11_infer_semantics.py")
     args = parser.parse_args()
 
     with open(args.family_json, "r", encoding="utf-8") as handle:

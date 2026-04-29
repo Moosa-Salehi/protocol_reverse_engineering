@@ -4,33 +4,25 @@
   "title": "Protocol Reverse Engineering Model",
   "type": "object",
   "required": ["protocol_name", "version", "families"],
+  "additionalProperties": false,
   "properties": {
-    "protocol_name": {
-      "type": "string"
-    },
-    "version": {
-      "type": "string"
-    },
-    "metadata": {
-      "type": "object"
-    },
+    "protocol_name": {"type": "string"},
+    "version": {"type": "string"},
+    "metadata": {"type": "object"},
     "families": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/family"
-      }
+      "items": {"$ref": "#/$defs/family"}
     },
     "relations": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/family_relation"
-      }
+      "items": {"$ref": "#/$defs/family_relation"}
     }
   },
   "$defs": {
     "segment": {
       "type": "object",
       "required": ["start", "end", "kind", "confidence"],
+      "additionalProperties": false,
       "properties": {
         "start": {"type": "integer", "minimum": 0},
         "end": {"type": "integer", "minimum": 0},
@@ -42,6 +34,7 @@
     "field_hypothesis": {
       "type": "object",
       "required": ["family_id", "start", "length", "field_type", "confidence"],
+      "additionalProperties": false,
       "properties": {
         "family_id": {"type": "string"},
         "start": {"type": "integer", "minimum": 0},
@@ -53,9 +46,47 @@
         "attributes": {"type": "object"}
       }
     },
+    "family_semantic_summary": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "family_id": {"type": "string"},
+        "role": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+        "field_labels": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "notes": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "family_feature_summary": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "family_id": {"type": "string"},
+        "message_count": {"type": "integer", "minimum": 0},
+        "length_stats": {"type": "object"},
+        "position_stats": {"type": "object"},
+        "aggregate_byte_histogram": {"type": "object"},
+        "entropy_summary": {"type": "object"},
+        "unique_ratio_summary": {"type": "object"},
+        "run_length_summary": {"type": "object"},
+        "motif_stats": {"type": "object"},
+        "structure_stats": {"type": "object"},
+        "example_msg_ids": {
+          "type": "array",
+          "items": {"type": "integer"}
+        }
+      }
+    },
     "family_relation": {
       "type": "object",
       "required": ["request_family_id", "response_family_id", "pair_count", "avg_pair_score"],
+      "additionalProperties": false,
       "properties": {
         "request_family_id": {"type": "string"},
         "response_family_id": {"type": "string"},
@@ -75,6 +106,7 @@
     "family": {
       "type": "object",
       "required": ["family_id", "role", "message_count", "template"],
+      "additionalProperties": false,
       "properties": {
         "family_id": {"type": "string"},
         "role": {"type": "string"},
@@ -88,6 +120,8 @@
           "type": "array",
           "items": {"$ref": "#/$defs/field_hypothesis"}
         },
+        "feature_summary": {"$ref": "#/$defs/family_feature_summary"},
+        "semantic_summary": {"$ref": "#/$defs/family_semantic_summary"},
         "related_families": {
           "type": "array",
           "items": {"type": "string"}
@@ -96,9 +130,7 @@
           "type": "array",
           "items": {"type": "integer"}
         },
-        "evidence": {
-          "type": "object"
-        }
+        "evidence": {"type": "object"}
       }
     }
   }
