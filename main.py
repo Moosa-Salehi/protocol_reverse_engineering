@@ -72,6 +72,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     semantics_json = data_dir / "09_semantics.json"
     model_json = data_dir / "10_protocol_model.json"
     protocol_spec_md = output_dir / "protocol_spec.md"
+    llm_evidence_json = output_dir / "llm_evidence.json"
 
     pipeline: list[tuple[str, list[str]]] = []
 
@@ -208,6 +209,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             ("13_export_markdown", [_script("13_export_markdown.py"), _path(model_json), _path(protocol_spec_md)]),
+            (
+                "14_export_llm_evidence",
+                [_script("14_export_llm_evidence.py"), _path(model_json), _path(llm_evidence_json)],
+            ),
         ]
     )
 

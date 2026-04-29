@@ -31,6 +31,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/11_infer_semantics.py` attaches semantic field labels using boundary hypotheses plus request/response evidence.
 - `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`.
 - `scripts/13_export_markdown.py` renders a human-readable Markdown protocol specification.
+- `scripts/14_export_llm_evidence.py` renders a compact per-family evidence bundle for downstream LLM analysis.
 
 ## Feature artifacts
 
@@ -53,7 +54,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps>
 ```
 
-This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, and writes `output/protocol_spec.md`.
+This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_spec.md`, and writes `output/llm_evidence.json`.
 
 Useful runner options:
 
@@ -89,7 +90,7 @@ python3 scripts/02_dedup_pcaps.py pcaps --delete
 python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --service-port <port> --max-workers 4 --reassembly-mode packet
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
-python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json --features-json data/03_features/family_features.json
+python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json
 python3 scripts/07_pair_requests_responses.py data/01_messages.jsonl data/05_pairs.json --assignments-json data/02_family_assignments.json
 python3 scripts/08_infer_keywords.py data/01_messages.jsonl data/06_keywords.json --assignments-json data/02_family_assignments.json
 python3 scripts/09_compare_subcluster_hypotheses.py data/01_messages.jsonl data/07_subcluster_hypotheses.json --assignments-json data/02_family_assignments.json
@@ -97,6 +98,7 @@ python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assi
 python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.json data/09_semantics.json
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
+python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json output/llm_evidence.json
 ```
 
 Build from legacy extracted JSON payloads:
@@ -105,7 +107,7 @@ Build from legacy extracted JSON payloads:
 python3 scripts/03_alt_build_corpus.py archive/protocol-x-payloads data/01_messages.jsonl --deduplicate-payloads
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
-python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json --features-json data/03_features/family_features.json
+python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json
 python3 scripts/07_pair_requests_responses.py data/01_messages.jsonl data/05_pairs.json --assignments-json data/02_family_assignments.json
 python3 scripts/08_infer_keywords.py data/01_messages.jsonl data/06_keywords.json --assignments-json data/02_family_assignments.json
 python3 scripts/09_compare_subcluster_hypotheses.py data/01_messages.jsonl data/07_subcluster_hypotheses.json --assignments-json data/02_family_assignments.json
@@ -113,6 +115,7 @@ python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assi
 python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.json data/09_semantics.json
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
+python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json output/llm_evidence.json
 ```
 
 Windows PowerShell equivalent for imports:

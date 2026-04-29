@@ -91,14 +91,20 @@ Status: Complete for feature-artifact baseline; deeper parser inference can buil
 
 ## 5. Add an LLM evidence exporter
 
-Status: Not done.
+Status: Implemented.
 
-- Create a compact per-family evidence bundle for downstream LLM analysis.
-- Include template, segment stats, top examples, length histograms, entropy and
-  uniqueness vectors, repeated motifs, request/response links, echo fields,
-  length relations, semantic candidates, and confidence notes.
-- Keep this separate from the generic `protocol_model.json` so it can be tuned
-  for token efficiency.
+- Done: added `src/protocol_re/export/llm_evidence.py` and
+  `scripts/14_export_llm_evidence.py`.
+- Done: exports a compact per-family evidence bundle for downstream LLM
+  analysis to `output/llm_evidence.json` from `main.py`.
+- Done: includes templates, segment stats, top examples, length histograms,
+  entropy/uniqueness/coverage vector digests, repeated motifs, structure hints,
+  request/response links, echo fields, length relations, semantic candidates,
+  and confidence notes.
+- Done: kept separate from generic `protocol_model.json` and trims vectors,
+  relations, motifs, and labels for token efficiency.
+- Future enhancement: add Markdown or prompt-template rendering for specific LLM
+  workflows.
 
 ## 6. Add evaluation and reporting
 
