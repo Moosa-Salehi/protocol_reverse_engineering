@@ -35,7 +35,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 ## Feature artifacts
 
 - `message_features.jsonl` contains per-message length, entropy, sparse byte histogram, top byte values, run-length statistics, and repeated n-gram motifs.
-- `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, and top n-gram frequency tables.
+- `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, top n-gram frequency tables, wider repeated motifs, trailing-block/padding hints, length profiles, and recurring fixed-position groups.
 - `scripts/05_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
 - `main.py` passes `data/03_features/family_features.json` into boundary inference and the protocol-model builder so boundary evidence and final models include feature summaries.
 

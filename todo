@@ -72,13 +72,22 @@ Status: Complete for the current pipeline baseline.
 
 ## 4. Add deeper repetition and structure detection
 
-Status: Partially done.
+Status: Complete for feature-artifact baseline; deeper parser inference can build on it.
 
-- Current feature extraction detects run-lengths and repeated 2/3-byte n-grams.
-- Add repeated subsequence detection for wider motifs and variable-width blocks.
-- Detect trailing data blocks, fixed vs variable length profiles, padding, and
-  recurring field groups.
-- Feed these patterns into boundary inference and LLM evidence output.
+- Done: current feature extraction detects run-lengths and repeated 2/3-byte
+  n-grams.
+- Done: family feature artifacts include wider repeated motifs for 4/5/6/8-byte
+  subsequences under `motif_stats.wide_repeated_motifs`.
+- Done: family feature artifacts include trailing data block and padding hints
+  under `structure_stats.trailing_block_stats`.
+- Done: family feature artifacts include fixed, mostly fixed, or variable length
+  profiles under `structure_stats.length_profile`.
+- Done: family feature artifacts include recurring fixed-position byte groups
+  under `structure_stats.recurring_field_groups`.
+- Done: these structure features are carried into `protocol_model.json` through
+  family feature summaries and are available to the next LLM evidence exporter.
+- Future enhancement: use these structure hints directly in boundary splitting
+  and semantic labeling, not only as exported evidence.
 
 ## 5. Add an LLM evidence exporter
 

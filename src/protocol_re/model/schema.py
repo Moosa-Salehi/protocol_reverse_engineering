@@ -100,6 +100,7 @@ class FamilyFeatureSummary:
     unique_ratio_summary: Dict[str, Any] = field(default_factory=dict)
     run_length_summary: Dict[str, Any] = field(default_factory=dict)
     motif_stats: Dict[str, Any] = field(default_factory=dict)
+    structure_stats: Dict[str, Any] = field(default_factory=dict)
     example_msg_ids: List[int] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
