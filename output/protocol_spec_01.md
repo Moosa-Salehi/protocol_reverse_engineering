@@ -58,16 +58,16 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7041`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6428`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7887`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`1.0`
-- bytes `8`..`8` | kind=`variable` confidence=`1.0`
-- bytes `9`..`9` | kind=`variable` confidence=`1.0`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
-- bytes `11`..`11` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7774`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7887`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7717`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7632`
+- bytes `11`..`11` | kind=`variable` confidence=`0.779`
 
 #### Field Hypotheses
 
@@ -122,16 +122,16 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7038`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6428`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7885`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`1.0`
-- bytes `8`..`8` | kind=`variable` confidence=`1.0`
-- bytes `9`..`9` | kind=`variable` confidence=`1.0`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
-- bytes `11`..`11` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7775`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7885`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7715`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7624`
+- bytes `11`..`11` | kind=`variable` confidence=`0.7788`
 
 #### Field Hypotheses
 
@@ -186,16 +186,16 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7249`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6463`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7879`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`1.0`
-- bytes `8`..`8` | kind=`variable` confidence=`1.0`
-- bytes `9`..`9` | kind=`variable` confidence=`1.0`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
-- bytes `11`..`11` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7776`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7879`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7719`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7615`
+- bytes `11`..`11` | kind=`variable` confidence=`0.776`
 
 #### Field Hypotheses
 
@@ -250,11 +250,11 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`9` | kind=`variable` confidence=`0.294`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
-- bytes `11`..`11` | kind=`constant` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.6823`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6557`
+- bytes `2`..`9` | kind=`variable` confidence=`0.4303`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7198`
+- bytes `11`..`11` | kind=`constant` confidence=`0.8665`
 
 #### Field Hypotheses
 
@@ -303,16 +303,16 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.6873`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6571`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7978`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`1.0`
-- bytes `8`..`8` | kind=`variable` confidence=`1.0`
-- bytes `9`..`9` | kind=`variable` confidence=`1.0`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
-- bytes `11`..`11` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7832`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7978`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7789`
+- bytes `10`..`10` | kind=`variable` confidence=`0.764`
+- bytes `11`..`11` | kind=`variable` confidence=`0.7756`
 
 #### Field Hypotheses
 
@@ -367,10 +367,10 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`9` | kind=`variable` confidence=`0.2936`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.739`
+- bytes `1`..`1` | kind=`variable` confidence=`0.725`
+- bytes `2`..`9` | kind=`variable` confidence=`0.4318`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7709`
 
 #### Field Hypotheses
 
@@ -412,9 +412,9 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`11` | kind=`constant` confidence=`0.3377`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7263`
+- bytes `1`..`1` | kind=`variable` confidence=`0.726`
+- bytes `2`..`11` | kind=`constant` confidence=`0.6358`
 
 #### Field Hypotheses
 
@@ -459,9 +459,9 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`11` | kind=`constant` confidence=`0.3377`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7288`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7306`
+- bytes `2`..`11` | kind=`constant` confidence=`0.6358`
 
 #### Field Hypotheses
 
@@ -498,9 +498,9 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`11` | kind=`constant` confidence=`0.3724`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7295`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7344`
+- bytes `2`..`11` | kind=`constant` confidence=`0.6548`
 
 #### Field Hypotheses
 
@@ -537,9 +537,9 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`11` | kind=`constant` confidence=`0.3724`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7304`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7366`
+- bytes `2`..`11` | kind=`constant` confidence=`0.6548`
 
 #### Field Hypotheses
 
@@ -584,9 +584,9 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`11` | kind=`constant` confidence=`0.3377`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7431`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7785`
+- bytes `2`..`11` | kind=`constant` confidence=`0.6358`
 
 #### Field Hypotheses
 
@@ -631,9 +631,9 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`11` | kind=`constant` confidence=`0.3724`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7431`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7793`
+- bytes `2`..`11` | kind=`constant` confidence=`0.6548`
 
 #### Field Hypotheses
 
@@ -678,10 +678,10 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`9` | kind=`constant` confidence=`0.2936`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7506`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7813`
+- bytes `2`..`9` | kind=`constant` confidence=`0.6115`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7907`
 
 #### Field Hypotheses
 
@@ -724,10 +724,10 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`9` | kind=`constant` confidence=`0.2936`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7695`
+- bytes `1`..`1` | kind=`variable` confidence=`0.8553`
+- bytes `2`..`9` | kind=`constant` confidence=`0.6115`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7919`
 
 #### Field Hypotheses
 
@@ -771,10 +771,10 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`9` | kind=`variable` confidence=`0.2936`
-- bytes `10`..`10` | kind=`variable` confidence=`1.0`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7832`
+- bytes `1`..`1` | kind=`variable` confidence=`0.8537`
+- bytes `2`..`9` | kind=`variable` confidence=`0.4339`
+- bytes `10`..`10` | kind=`variable` confidence=`0.8097`
 
 #### Field Hypotheses
 
@@ -818,9 +818,9 @@ Version: `0.1`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`1.0`
-- bytes `1`..`1` | kind=`variable` confidence=`1.0`
-- bytes `2`..`10` | kind=`variable` confidence=`0.2746`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7803`
+- bytes `1`..`1` | kind=`variable` confidence=`0.8546`
+- bytes `2`..`10` | kind=`variable` confidence=`0.4238`
 
 #### Field Hypotheses
 
