@@ -10,11 +10,22 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Extract TCP service payloads from PCAP files into a canonical JSONL corpus.")
     parser.add_argument("pcap_dir")
     parser.add_argument("output_jsonl")
-    parser.add_argument("--service-port", type=int, default=502)
+    parser.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
     parser.add_argument("--max-workers", type=int, default=4)
+    parser.add_argument(
+        "--reassembly-mode",
+        choices=["packet", "stream"],
+        default="packet",
+        help="Use packet payloads directly or reconstruct directional TCP streams first.",
+    )
     args = parser.parse_args()
 
-    messages = extract_messages_from_pcaps(args.pcap_dir, service_port=args.service_port, max_workers=args.max_workers)
+    messages = extract_messages_from_pcaps(
+        args.pcap_dir,
+        service_port=args.service_port,
+        max_workers=args.max_workers,
+        reassembly_mode=args.reassembly_mode,
+    )
     write_messages_jsonl(messages, args.output_jsonl)
     print(f"[+] Wrote {len(messages)} extracted messages to {args.output_jsonl}")
 

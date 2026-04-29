@@ -28,16 +28,28 @@ Status: Implemented; needs broader end-to-end validation on real PCAP sets.
 
 ## 2. Improve PCAP message reconstruction
 
-Status: Not done.
+Status: Partially implemented; needs broader validation.
 
-- Add optional true TCP stream reconstruction rather than packet-payload-only
-  extraction in `src/protocol_re/io/extract_payloads.py`.
-- Preserve packet-level extraction as a fast fallback.
-- Handle retransmissions, out-of-order segments, duplicate TCP data, and stream
-  gaps where possible.
-- Add metadata that records whether a message came from packet payloads or a
-  reconstructed stream.
-- Add small tests or fixtures for split TCP application payloads.
+- Done: `src/protocol_re/io/extract_payloads.py` supports optional
+  `reassembly_mode="stream"` in addition to the default packet-payload mode.
+- Done: packet-level extraction remains the default fast fallback.
+- Done: stream mode sorts directional TCP segments by sequence number, trims
+  retransmission overlap, ignores duplicate covered bytes, and splits chunks at
+  sequence gaps.
+- Done: stream-extracted records include metadata such as `extraction_mode`,
+  `framing`, stream offsets, TCP sequence range, and gap indicators.
+- Done: stream mode is protocol-agnostic; it emits raw reconstructed TCP byte
+  streams and does not assume any known grammar.
+- Done: `--service-port` is optional; without it, PCAP extraction treats all TCP
+  payloads as candidate unknown-protocol traffic instead of assuming a specific
+  industrial protocol port.
+- Done: `scripts/03_extract_messages.py` and `main.py` expose
+  `--reassembly-mode packet|stream`.
+- Done: README documents packet vs stream extraction modes for unknown
+  protocols.
+- Remaining: validate against larger real PCAP sets with out-of-order traffic,
+  retransmissions, and unknown industrial protocols.
+- Remaining: add committed tests/fixtures for split TCP application payloads.
 
 ## 3. Use extracted feature artifacts throughout the model
 

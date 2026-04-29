@@ -80,9 +80,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             _script("03_alt_build_corpus.py"),
             _path(args.legacy_json),
             _path(messages_jsonl),
-            "--service-port",
-            str(args.service_port),
         ]
+        if args.service_port is not None:
+            corpus_step.extend(["--service-port", str(args.service_port)])
         if args.deduplicate_payloads:
             corpus_step.append("--deduplicate-payloads")
         pipeline.append(("03_alt_build_corpus", corpus_step))
@@ -105,13 +105,15 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _script("03_extract_messages.py"),
                     _path(extraction_input),
                     _path(messages_jsonl),
-                    "--service-port",
-                    str(args.service_port),
                     "--max-workers",
                     str(args.max_workers),
+                    "--reassembly-mode",
+                    args.reassembly_mode,
                 ],
             )
         )
+        if args.service_port is not None:
+            pipeline[-1][1].extend(["--service-port", str(args.service_port)])
 
     pipeline.extend(
         [
@@ -269,8 +271,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Treat input_folder as the already-normalized PCAP directory and skip collect/dedup stages.",
     )
-    parser.add_argument("--service-port", type=int, default=502, help="TCP service port to extract, default: 502.")
+    parser.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
     parser.add_argument("--max-workers", type=int, default=4, help="Parallel workers for PCAP extraction.")
+    parser.add_argument(
+        "--reassembly-mode",
+        choices=["packet", "stream"],
+        default="packet",
+        help="PCAP extraction mode: packet payloads or reconstructed directional TCP streams.",
+    )
     parser.add_argument("--family-sample-size", type=int, default=100000, help="Max unique messages for clustering.")
     parser.add_argument("--deduplicate-payloads", action="store_true", help="Drop duplicate payloads in --legacy-json mode.")
     parser.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")

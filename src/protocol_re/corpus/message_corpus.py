@@ -27,7 +27,9 @@ def parse_session_key(session_key: str) -> Tuple[str, int, str, int]:
     )
 
 
-def infer_direction(src_port: int, dst_port: int, service_port: int = 502) -> str:
+def infer_direction(src_port: int, dst_port: int, service_port: Optional[int] = None) -> str:
+    if service_port is None:
+        return "unknown"
     if dst_port == service_port and src_port != service_port:
         return "client_to_server"
     if src_port == service_port and dst_port != service_port:
@@ -37,7 +39,7 @@ def infer_direction(src_port: int, dst_port: int, service_port: int = 502) -> st
 
 def iter_message_records(
     json_folder_path: str,
-    service_port: int = 502,
+    service_port: Optional[int] = None,
     deduplicate_payloads: bool = False,
 ) -> Iterator[MessageRecord]:
     next_msg_id = 0
@@ -87,7 +89,7 @@ def iter_message_records(
 
 def build_corpus(
     json_folder_path: str,
-    service_port: int = 502,
+    service_port: Optional[int] = None,
     deduplicate_payloads: bool = False,
 ) -> List[MessageRecord]:
     return list(

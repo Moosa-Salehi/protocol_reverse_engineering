@@ -58,7 +58,9 @@ This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate capture
 Useful runner options:
 
 ```bash
-python main.py <folder-containing-pcaps> --service-port 502 --max-workers 4
+python main.py <folder-containing-pcaps> --max-workers 4
+python main.py <folder-containing-pcaps> --service-port <port>
+python main.py <folder-containing-pcaps> --reassembly-mode stream
 python main.py pcaps --skip-collect
 python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads
 python main.py --legacy-json archive/protocol-x-payloads --data-dir /tmp/protocol_re_data --output-dir /tmp/protocol_re_output --stop-after 03_alt_build_corpus
@@ -66,7 +68,8 @@ python main.py --legacy-json archive/protocol-x-payloads --data-dir /tmp/protoco
 
 - `--legacy-json <dir>` uses already extracted archive JSON payloads instead of PCAPs.
 - `--skip-collect` treats the positional input folder as an existing normalized PCAP directory and skips collect/dedup.
-- `--service-port` selects the TCP service port to extract; the default is `502`.
+- `--service-port` optionally filters extraction to one TCP port. If omitted, the PCAP extractor treats all TCP payloads as candidate unknown-protocol traffic.
+- `--reassembly-mode packet` keeps the fast packet-payload extractor; `--reassembly-mode stream` reconstructs directional raw TCP byte streams without assuming any application protocol framing.
 - `--data-dir`, `--pcap-dir`, and `--output-dir` override artifact locations.
 - `--stop-after <step>` is useful for smoke tests and partial runs.
 
@@ -83,7 +86,7 @@ Build from PCAPs:
 ```bash
 python3 scripts/01_collect_pcaps.py files pcaps
 python3 scripts/02_dedup_pcaps.py pcaps --delete
-python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --service-port 502 --max-workers 4
+python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --service-port <port> --max-workers 4 --reassembly-mode packet
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
 python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json
@@ -122,4 +125,4 @@ $env:PYTHONPATH="src"
 
 - `scripts/03_alt_build_corpus.py` exists so you can keep using the already extracted `protocol-x-payloads/*.json` dataset while migrating to the PCAP workflow.
 - `scripts/03_extract_messages.py` is the preferred path for future runs because it preserves per-message direction and timestamps.
-- The current PCAP extractor reads packet-level TCP payloads. True TCP stream reassembly is a planned improvement.
+- The PCAP extractor defaults to packet-level TCP payloads. Use `--reassembly-mode stream` for directional raw TCP stream reconstruction; this handles retransmission overlap and stream gaps without assuming a known protocol grammar.
