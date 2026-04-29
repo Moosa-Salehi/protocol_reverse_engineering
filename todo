@@ -128,14 +128,17 @@ Status: Implemented for JSON metrics; tests remain future work.
 
 ## 7. Add a polished HTML protocol report
 
-Status: Not done.
+Status: Implemented.
 
-- Add an HTML exporter alongside Markdown.
-- Produce a dark, readable, CSS-styled report with sections for metadata,
-  families, field hypotheses, semantic labels, relations, examples, and feature
-  evidence.
-- Keep output self-contained unless assets are intentionally introduced.
-- Add a CLI script such as `scripts/14_export_html.py`.
+- Done: added `src/protocol_re/export/html.py` and `scripts/16_export_html.py`.
+- Done: `main.py` writes a self-contained report to
+  `output/protocol_report.html`.
+- Done: report includes metadata, evaluation metrics, strongest relations,
+  families, segment maps, field hypotheses, semantic labels, related families,
+  and feature evidence.
+- Done: report uses embedded CSS and no external assets.
+- Future enhancement: add interactive filtering/search for very large family
+  sets.
 
 ## 8. Keep schemas and docs aligned
 

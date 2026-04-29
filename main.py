@@ -74,6 +74,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     evaluation_json = data_dir / "11_evaluation.json"
     protocol_spec_md = output_dir / "protocol_spec.md"
     llm_evidence_json = output_dir / "llm_evidence.json"
+    html_report = output_dir / "protocol_report.html"
 
     pipeline: list[tuple[str, list[str]]] = []
 
@@ -223,6 +224,16 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(families_json),
                     _path(pairs_json),
                     _path(relations_json),
+                    _path(evaluation_json),
+                ],
+            ),
+            (
+                "16_export_html",
+                [
+                    _script("16_export_html.py"),
+                    _path(model_json),
+                    _path(html_report),
+                    "--evaluation-json",
                     _path(evaluation_json),
                 ],
             ),
