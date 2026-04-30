@@ -6,6 +6,8 @@ Version: `0.1`
 
 - **source_family_summary**: D:\tez\practical\protocol_re\data\04_families.json
 - **source_feature_summary**: D:\tez\practical\protocol_re\data\03_features\family_features.json
+- **source_keyword_summary**: D:\tez\practical\protocol_re\data\06_keywords.json
+- **source_subcluster_summary**: D:\tez\practical\protocol_re\data\07_subcluster_hypotheses.json
 - **source_relations_summary**: D:\tez\practical\protocol_re\data\08_relations.json
 - **source_semantics_summary**: D:\tez\practical\protocol_re\data\09_semantics.json
 - **notes**: Initial auto-generated protocol model assembled from family summaries.
@@ -55,6 +57,8 @@ Version: `0.1`
 - Semantic confidence: `0.5145`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.337998`
+- Candidate keyword offset: `9` cardinality=`7` entropy=`2.151`
+- Best subcluster strategy: `keyword` formats=`7`
 
 #### Segments
 
@@ -119,6 +123,8 @@ Version: `0.1`
 - Semantic confidence: `0.5485`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.521928` max=`2.732159` mean=`2.335913`
+- Candidate keyword offset: `9` cardinality=`7` entropy=`2.1583`
+- Best subcluster strategy: `keyword` formats=`4`
 
 #### Segments
 
@@ -183,6 +189,8 @@ Version: `0.1`
 - Semantic confidence: `0.5566`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.336032`
+- Candidate keyword offset: `9` cardinality=`7` entropy=`2.1445`
+- Best subcluster strategy: `keyword` formats=`4`
 
 #### Segments
 
@@ -247,6 +255,8 @@ Version: `0.1`
 - Semantic confidence: `0.9868`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.450826` max=`3.027169` mean=`3.013184`
+- Candidate keyword offset: `10` cardinality=`61` entropy=`4.6186`
+- Best subcluster strategy: `keyword` formats=`81`
 
 #### Segments
 
@@ -300,6 +310,8 @@ Version: `0.1`
 - Semantic confidence: `0.5408`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`1.729574` max=`3.027169` mean=`2.611084`
+- Candidate keyword offset: `10` cardinality=`50` entropy=`2.6282`
+- Best subcluster strategy: `keyword` formats=`11`
 
 #### Segments
 
@@ -364,6 +376,8 @@ Version: `0.1`
 - Semantic confidence: `0.8159`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.594907` max=`3.027169` mean=`3.015693`
+- Candidate keyword offset: `10` cardinality=`6` entropy=`2.2699`
+- Best subcluster strategy: `keyword` formats=`6`
 
 #### Segments
 
@@ -409,6 +423,8 @@ Version: `0.1`
 - Semantic confidence: `0.8423`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.284159` max=`2.450826` mean=`2.448793`
+- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Best subcluster strategy: `single` formats=`1`
 
 #### Segments
 
@@ -456,6 +472,8 @@ Version: `0.1`
 - Semantic confidence: `1.0`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.284159` max=`2.450826` mean=`2.448516`
+- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Best subcluster strategy: `single` formats=`1`
 
 #### Segments
 
@@ -495,6 +513,8 @@ Version: `0.1`
 - Semantic confidence: `1.0`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`1.825011` max=`2.221252` mean=`2.211363`
+- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Best subcluster strategy: `single` formats=`1`
 
 #### Segments
 
@@ -534,6 +554,8 @@ Version: `0.1`
 - Semantic confidence: `0.7503`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.221252` mean=`2.219488`
+- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Best subcluster strategy: `single` formats=`1`
 
 #### Segments
 
@@ -581,6 +603,8 @@ Version: `0.1`
 - Semantic confidence: `0.8052`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.284159` max=`2.450826` mean=`2.44905`
+- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Best subcluster strategy: `single` formats=`1`
 
 #### Segments
 
@@ -628,6 +652,8 @@ Version: `0.1`
 - Semantic confidence: `0.6385`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.221252` mean=`2.219449`
+- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Best subcluster strategy: `single` formats=`1`
 
 #### Segments
 
@@ -675,6 +701,8 @@ Version: `0.1`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.023786`
+- Candidate keyword offset: `10` cardinality=`3` entropy=`1.3759`
+- Best subcluster strategy: `keyword` formats=`3`
 
 #### Segments
 
@@ -721,6 +749,8 @@ Version: `0.1`
 - Semantic confidence: `0.8634`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`3.027169` max=`3.027169` mean=`3.027169`
+- Candidate keyword offset: `10` cardinality=`6` entropy=`1.7547`
+- Best subcluster strategy: `keyword` formats=`6`
 
 #### Segments
 
@@ -768,6 +798,8 @@ Version: `0.1`
 - Semantic confidence: `0.784`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.022734`
+- Candidate keyword offset: `10` cardinality=`7` entropy=`1.1389`
+- Best subcluster strategy: `keyword` formats=`7`
 
 #### Segments
 
@@ -815,6 +847,8 @@ Version: `0.1`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.024007`
+- Candidate keyword offset: `10` cardinality=`2` entropy=`0.2956`
+- Best subcluster strategy: `keyword` formats=`2`
 
 #### Segments
 
