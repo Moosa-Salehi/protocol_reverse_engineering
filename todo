@@ -129,6 +129,9 @@ Status: Implemented for JSON metrics; tests remain future work.
   direction-known vs direction-unknown ratios, and pairing modes.
 - Done: reports relation edge counts, pair-count/score distributions, echo
   support, length-relation support, role-hint counts, and top family edges.
+- Done: reports semantic-label coverage, role counts, role-confidence
+  distribution, field-label count/confidence distributions, note counts, and top
+  semantic labels when `data/09_semantics.json` is supplied.
 - Future enhancement: add committed regression tests for representative pipeline
   stages.
 

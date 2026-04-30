@@ -36,7 +36,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, keyword, subcluster, relation, and semantic evidence when supplied.
 - `scripts/13_export_markdown.py` renders a human-readable Markdown protocol specification.
 - `scripts/14_export_llm_evidence.py` renders a compact per-family evidence bundle for downstream LLM analysis.
-- `scripts/15_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, and relations.
+- `scripts/15_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, relations, and semantic-label coverage when supplied.
 - `scripts/16_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
 
 ## Feature artifacts
@@ -111,7 +111,7 @@ python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.js
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --keywords-json data/06_keywords.json --subclusters-json data/07_subcluster_hypotheses.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json
-python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json
+python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/16_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
@@ -130,7 +130,7 @@ python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.js
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --keywords-json data/06_keywords.json --subclusters-json data/07_subcluster_hypotheses.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_export_markdown.py data/10_protocol_model.json output/protocol_spec.md
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json
-python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json
+python3 scripts/15_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/16_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 

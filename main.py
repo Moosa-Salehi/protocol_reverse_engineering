@@ -229,6 +229,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(pairs_json),
                     _path(relations_json),
                     _path(evaluation_json),
+                    "--semantics-json",
+                    _path(semantics_json),
                 ],
             ),
             (

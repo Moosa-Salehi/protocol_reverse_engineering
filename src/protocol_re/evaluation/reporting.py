@@ -170,14 +170,49 @@ def relation_summary(relations_payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def semantics_summary(semantics_payload: Dict[str, Any], family_count: int) -> Dict[str, Any]:
+    semantic_items = list((semantics_payload or {}).values())
+    confidences: List[float] = []
+    field_label_counts: List[int] = []
+    label_confidences: List[float] = []
+    note_counts: List[int] = []
+    role_counts: Counter[Any] = Counter()
+    label_counts: Counter[Any] = Counter()
+
+    for item in semantic_items:
+        role_counts[item.get("role", "unknown")] += 1
+        confidences.append(float(item.get("confidence", 0.0) or 0.0))
+        labels = item.get("field_labels", []) or []
+        notes = item.get("notes", []) or []
+        field_label_counts.append(len(labels))
+        note_counts.append(len(notes))
+        for label in labels:
+            label_counts[label.get("label", "unknown")] += 1
+            label_confidences.append(float(label.get("confidence", 0.0) or 0.0))
+
+    return {
+        "semantic_family_count": len(semantic_items),
+        "family_count": family_count,
+        "semantic_coverage_ratio": round(len(semantic_items) / family_count, 6) if family_count else 0.0,
+        "role_counts": dict(sorted(role_counts.items())),
+        "role_confidence_distribution": _quantiles(confidences),
+        "field_label_count_distribution": _quantiles(field_label_counts),
+        "field_label_confidence_distribution": _quantiles(label_confidences),
+        "note_count_distribution": _quantiles(note_counts),
+        "top_field_labels": _top_counter(label_counts, 20),
+    }
+
+
 def build_evaluation_report(
     records: Sequence[MessageRecord],
     assignments_payload: Dict[str, Any],
     families_payload: Dict[str, Any],
     pairs_payload: Sequence[Dict[str, Any]],
     relations_payload: Dict[str, Any],
+    semantics_payload: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     total_messages = len(records)
+    family_count = len(families_payload)
     return {
         "artifact_type": "protocol_re_evaluation_report",
         "corpus": corpus_summary(records),
@@ -185,6 +220,7 @@ def build_evaluation_report(
         "boundaries": boundary_summary(families_payload),
         "pairs": pair_summary(pairs_payload),
         "relations": relation_summary(relations_payload),
+        "semantics": semantics_summary(semantics_payload or {}, family_count),
         "notes": [
             "Metrics are heuristic quality indicators for reverse-engineering workflow triage.",
             "Low assignment coverage usually means clustering sampled fewer messages than the full corpus.",
