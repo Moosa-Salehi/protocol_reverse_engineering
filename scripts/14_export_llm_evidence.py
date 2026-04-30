@@ -7,10 +7,18 @@ import json
 from protocol_re.export.llm_evidence import build_llm_evidence_bundle
 
 
+def _load_optional_json(path: str | None):
+    if not path:
+        return None
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export a compact per-family evidence bundle for downstream LLM analysis.")
     parser.add_argument("protocol_model_json", help="Input protocol model JSON from 12_build_protocol_model.py")
     parser.add_argument("output_json", help="Output compact evidence bundle JSON")
+    parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 13_evaluate_pipeline.py")
     parser.add_argument("--family-limit", type=int, help="Optional maximum number of largest families to include")
     parser.add_argument("--vector-limit", type=int, default=16, help="Number of vector entries/top offsets to retain per vector")
     parser.add_argument("--relation-limit", type=int, default=10, help="Max relation summaries to retain per family")
@@ -21,6 +29,7 @@ def main() -> None:
 
     bundle = build_llm_evidence_bundle(
         model,
+        evaluation=_load_optional_json(args.evaluation_json),
         family_limit=args.family_limit,
         vector_limit=args.vector_limit,
         relation_limit=args.relation_limit,

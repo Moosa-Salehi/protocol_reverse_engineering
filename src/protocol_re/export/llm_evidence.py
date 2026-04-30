@@ -94,6 +94,62 @@ def _relations_for_family(model: Dict[str, Any], family_id: str, limit: int) -> 
     )[:limit]
 
 
+def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not evaluation:
+        return {}
+
+    corpus = evaluation.get("corpus", {}) or {}
+    clustering = evaluation.get("clustering", {}) or {}
+    boundaries = evaluation.get("boundaries", {}) or {}
+    pairs = evaluation.get("pairs", {}) or {}
+    relations = evaluation.get("relations", {}) or {}
+    semantics = evaluation.get("semantics", {}) or {}
+
+    return {
+        "corpus": {
+            "message_count": corpus.get("message_count"),
+            "session_count": corpus.get("session_count"),
+            "payload_length": corpus.get("payload_length", {}),
+            "direction_counts": corpus.get("direction_counts", {}),
+        },
+        "clustering": {
+            "assignment_coverage_ratio": clustering.get("assignment_coverage_ratio"),
+            "family_count": clustering.get("family_count"),
+            "noise_count": clustering.get("noise_count"),
+            "cluster_size_distribution": clustering.get("cluster_size_distribution", {}),
+        },
+        "boundaries": {
+            "parseable_family_ratio": boundaries.get("parseable_family_ratio"),
+            "parseable_family_count": boundaries.get("parseable_family_count"),
+            "family_count": boundaries.get("family_count"),
+            "field_confidence_distribution": boundaries.get("field_confidence_distribution", {}),
+            "segment_confidence_distribution": boundaries.get("segment_confidence_distribution", {}),
+            "segments_with_feature_evidence": boundaries.get("segments_with_feature_evidence"),
+        },
+        "pairs": {
+            "pair_count": pairs.get("pair_count"),
+            "score_distribution": pairs.get("score_distribution", {}),
+            "direction_unknown_pair_ratio": pairs.get("direction_unknown_pair_ratio"),
+        },
+        "relations": {
+            "edge_count": relations.get("edge_count"),
+            "avg_pair_score_distribution": relations.get("avg_pair_score_distribution", {}),
+            "edges_with_echo_fields": relations.get("edges_with_echo_fields"),
+            "edges_with_length_relations": relations.get("edges_with_length_relations"),
+            "role_hint_counts": relations.get("role_hint_counts", {}),
+            "top_edges": (relations.get("top_edges", []) or [])[:10],
+        },
+        "semantics": {
+            "semantic_coverage_ratio": semantics.get("semantic_coverage_ratio"),
+            "semantic_family_count": semantics.get("semantic_family_count"),
+            "role_counts": semantics.get("role_counts", {}),
+            "role_confidence_distribution": semantics.get("role_confidence_distribution", {}),
+            "field_label_confidence_distribution": semantics.get("field_label_confidence_distribution", {}),
+            "top_field_labels": (semantics.get("top_field_labels", []) or [])[:10],
+        },
+    }
+
+
 def _compact_family(model: Dict[str, Any], family: Dict[str, Any], vector_limit: int, relation_limit: int) -> Dict[str, Any]:
     semantic_summary = family.get("semantic_summary") or {}
     feature_summary = family.get("feature_summary") or {}
@@ -155,6 +211,7 @@ def _family_confidence_notes(family: Dict[str, Any]) -> List[str]:
 
 def build_llm_evidence_bundle(
     model: Dict[str, Any],
+    evaluation: Optional[Dict[str, Any]] = None,
     family_limit: Optional[int] = None,
     vector_limit: int = 16,
     relation_limit: int = 10,
@@ -177,8 +234,10 @@ def build_llm_evidence_bundle(
             "total_relations_in_model": len(model.get("relations", []) or []),
             "vector_digest_limit": vector_limit,
             "relation_limit_per_family": relation_limit,
+            "has_evaluation": evaluation is not None,
             "notes": "Compact evidence for downstream LLM analysis; raw payloads are intentionally omitted.",
         },
+        "evaluation": _compact_evaluation(evaluation),
         "families": [
             _compact_family(model, family, vector_limit=vector_limit, relation_limit=relation_limit)
             for family in families

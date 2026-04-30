@@ -230,7 +230,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
             (
                 "14_export_llm_evidence",
-                [_script("14_export_llm_evidence.py"), _path(model_json), _path(llm_evidence_json)],
+                [
+                    _script("14_export_llm_evidence.py"),
+                    _path(model_json),
+                    _path(llm_evidence_json),
+                    "--evaluation-json",
+                    _path(evaluation_json),
+                ],
             ),
             (
                 "15_export_markdown",
