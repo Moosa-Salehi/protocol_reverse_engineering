@@ -3,27 +3,104 @@ from __future__ import annotations
 from typing import Any, Dict, Iterable, List, Optional
 
 
+SCHEMA_VERSION = "1.0.0"
+
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _as_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+
 def _top_items(items: Iterable[Dict[str, Any]], limit: int, score_key: str = "confidence") -> List[Dict[str, Any]]:
     return sorted(
         list(items),
-        key=lambda item: (-float(item.get(score_key, 0.0) or 0.0), int(item.get("start", 0) or 0)),
+        key=lambda item: (-_as_float(item.get(score_key, 0.0)), _as_int(item.get("start", 0))),
     )[:limit]
+
+
+def _template_digest(template: str, max_tokens: int = 32) -> Dict[str, Any]:
+    tokens = template.split() if template else []
+    return {
+        "byte_length": len(tokens),
+        "prefix": " ".join(tokens[:max_tokens]),
+        "truncated": len(tokens) > max_tokens,
+    }
 
 
 def _vector_digest(values: List[float], limit: int) -> Dict[str, Any]:
     if not values:
-        return {"length": 0, "head": [], "top_offsets": []}
-    top_offsets = sorted(
-        enumerate(values),
-        key=lambda item: (-float(item[1]), item[0]),
-    )[:limit]
+        return {"length": 0, "top_offsets": []}
+    top_offsets = sorted(enumerate(values), key=lambda item: (-_as_float(item[1]), item[0]))[:limit]
     return {
         "length": len(values),
-        "head": [round(float(value), 6) for value in values[:limit]],
         "top_offsets": [
-            {"offset": offset, "value": round(float(value), 6)}
+            {"offset": offset, "value": round(_as_float(value), 6)}
             for offset, value in top_offsets
         ],
+    }
+
+
+def _trim_object(item: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:
+    return {key: item.get(key) for key in keys if key in item}
+
+
+def _compact_field(field: Dict[str, Any]) -> Dict[str, Any]:
+    start = _as_int(field.get("start", 0))
+    length = _as_int(field.get("length", 0))
+    evidence = field.get("evidence", {}) or {}
+    result = {
+        "start": start,
+        "end": start + max(0, length),
+        "length": length,
+        "label": field.get("field_type") or field.get("label") or "unknown",
+        "confidence": round(_as_float(field.get("confidence", 0.0)), 6),
+    }
+    if field.get("endian"):
+        result["endian"] = field.get("endian")
+    if evidence:
+        result["evidence"] = _trim_object(
+            evidence,
+            [
+                "reason",
+                "feature_source",
+                "entropy_mean",
+                "unique_ratio_mean",
+                "coverage_mean",
+                "support",
+                "relation_type",
+                "echo_support",
+            ],
+        )
+    return result
+
+
+def _compact_label(label: Dict[str, Any]) -> Dict[str, Any]:
+    start = _as_int(label.get("start", 0))
+    length = _as_int(label.get("length", 0))
+    return {
+        "start": start,
+        "end": start + max(0, length),
+        "length": length,
+        "label": label.get("label", "unknown"),
+        "confidence": round(_as_float(label.get("confidence", 0.0)), 6),
+    }
+
+
+def _compact_segment(segment: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "start": _as_int(segment.get("start", 0)),
+        "end": _as_int(segment.get("end", 0)),
+        "kind": segment.get("kind", "unknown"),
+        "confidence": round(_as_float(segment.get("confidence", 0.0)), 6),
     }
 
 
@@ -37,61 +114,72 @@ def _compact_feature_summary(feature_summary: Optional[Dict[str, Any]], vector_l
     length_stats = feature_summary.get("length_stats", {}) or {}
 
     return {
-        "example_msg_ids": feature_summary.get("example_msg_ids", [])[:10],
-        "length_stats": {
+        "examples": feature_summary.get("example_msg_ids", [])[:5],
+        "length": {
             "min": length_stats.get("min"),
             "max": length_stats.get("max"),
             "mean": length_stats.get("mean"),
-            "std_dev": length_stats.get("std_dev"),
-            "distinct_lengths": length_stats.get("distinct_lengths"),
-            "length_histogram": dict(list((length_stats.get("length_histogram", {}) or {}).items())[:20]),
+            "distinct": length_stats.get("distinct_lengths"),
+            "top_lengths": dict(list((length_stats.get("length_histogram", {}) or {}).items())[:8]),
         },
-        "entropy_summary": feature_summary.get("entropy_summary", {}),
-        "unique_ratio_summary": feature_summary.get("unique_ratio_summary", {}),
-        "run_length_summary": feature_summary.get("run_length_summary", {}),
+        "entropy": feature_summary.get("entropy_summary", {}),
+        "unique_ratio": feature_summary.get("unique_ratio_summary", {}),
         "position_vectors": {
             "entropy": _vector_digest(position_stats.get("entropy_vector", []) or [], vector_limit),
             "unique_ratio": _vector_digest(position_stats.get("uniqueness_ratio_vector", []) or [], vector_limit),
             "coverage": _vector_digest(position_stats.get("coverage_vector", []) or [], vector_limit),
         },
         "motifs": {
-            "messages_with_repetition_ratio": motif_stats.get("messages_with_repetition_ratio"),
-            "repeated_ngram_instances": motif_stats.get("repeated_ngram_instances"),
-            "top_motifs": (motif_stats.get("top_motifs", []) or [])[:10],
-            "wide_repeated_motifs": (motif_stats.get("wide_repeated_motifs", []) or [])[:10],
-            "ngram_frequencies": {
-                str(width): rows[:8]
-                for width, rows in (motif_stats.get("ngram_frequencies", {}) or {}).items()
-            },
+            "repetition_ratio": motif_stats.get("messages_with_repetition_ratio"),
+            "top": (motif_stats.get("top_motifs", []) or [])[:5],
+            "wide": (motif_stats.get("wide_repeated_motifs", []) or [])[:5],
         },
         "structure": {
             "length_profile": structure_stats.get("length_profile", {}),
-            "trailing_block_stats": structure_stats.get("trailing_block_stats", {}),
-            "recurring_field_groups": (structure_stats.get("recurring_field_groups", []) or [])[:10],
+            "trailing_block": structure_stats.get("trailing_block_stats", {}),
+            "recurring_groups": (structure_stats.get("recurring_field_groups", []) or [])[:5],
         },
     }
 
 
-def _relations_for_family(model: Dict[str, Any], family_id: str, limit: int) -> List[Dict[str, Any]]:
-    relations = []
-    for relation in model.get("relations", []) or []:
-        if relation.get("request_family_id") != family_id and relation.get("response_family_id") != family_id:
-            continue
-        relations.append(
+def _compact_format_evidence(keyword_summary: Dict[str, Any], subcluster_summary: Dict[str, Any]) -> Dict[str, Any]:
+    subclusters = keyword_summary.get("subclusters", {}) if isinstance(keyword_summary, dict) else {}
+    formats = subcluster_summary.get("formats", {}) if isinstance(subcluster_summary, dict) else {}
+    return {
+        "keyword": keyword_summary.get("keyword") if isinstance(keyword_summary, dict) else None,
+        "keyword_format_count": len(subclusters or {}),
+        "best_subcluster_strategy": subcluster_summary.get("best_strategy") if isinstance(subcluster_summary, dict) else None,
+        "scores": subcluster_summary.get("scores", {}) if isinstance(subcluster_summary, dict) else {},
+        "top_formats": [
             {
-                "request_family_id": relation.get("request_family_id"),
-                "response_family_id": relation.get("response_family_id"),
-                "pair_count": relation.get("pair_count"),
-                "avg_pair_score": relation.get("avg_pair_score"),
-                "avg_latency_ms": relation.get("avg_latency_ms"),
-                "echo_fields": (relation.get("echo_fields", []) or [])[:8],
-                "length_relations": (relation.get("length_relations", []) or [])[:8],
+                "format_id": format_id,
+                "message_count": details.get("message_count"),
+                "source_subcluster_id": details.get("source_subcluster_id"),
+                "template": _template_digest(details.get("template", ""), max_tokens=16),
             }
-        )
-    return sorted(
-        relations,
-        key=lambda item: (-int(item.get("pair_count", 0) or 0), -float(item.get("avg_pair_score", 0.0) or 0.0)),
-    )[:limit]
+            for format_id, details in list((formats or {}).items())[:5]
+        ],
+    }
+
+
+def _compact_relation(relation: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "request_family_id": relation.get("request_family_id"),
+        "response_family_id": relation.get("response_family_id"),
+        "pair_count": relation.get("pair_count"),
+        "avg_pair_score": relation.get("avg_pair_score"),
+        "avg_latency_ms": relation.get("avg_latency_ms"),
+        "echo_fields": (relation.get("echo_fields", []) or [])[:3],
+        "length_relations": (relation.get("length_relations", []) or [])[:3],
+    }
+
+
+def _top_relations(model: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
+    relations = sorted(
+        model.get("relations", []) or [],
+        key=lambda item: (-_as_int(item.get("pair_count", 0)), -_as_float(item.get("avg_pair_score", 0.0))),
+    )
+    return [_compact_relation(relation) for relation in relations[:limit]]
 
 
 def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -121,10 +209,8 @@ def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         "boundaries": {
             "parseable_family_ratio": boundaries.get("parseable_family_ratio"),
             "parseable_family_count": boundaries.get("parseable_family_count"),
-            "family_count": boundaries.get("family_count"),
             "field_confidence_distribution": boundaries.get("field_confidence_distribution", {}),
             "segment_confidence_distribution": boundaries.get("segment_confidence_distribution", {}),
-            "segments_with_feature_evidence": boundaries.get("segments_with_feature_evidence"),
         },
         "pairs": {
             "pair_count": pairs.get("pair_count"),
@@ -137,57 +223,13 @@ def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             "edges_with_echo_fields": relations.get("edges_with_echo_fields"),
             "edges_with_length_relations": relations.get("edges_with_length_relations"),
             "role_hint_counts": relations.get("role_hint_counts", {}),
-            "top_edges": (relations.get("top_edges", []) or [])[:10],
         },
         "semantics": {
             "semantic_coverage_ratio": semantics.get("semantic_coverage_ratio"),
             "semantic_family_count": semantics.get("semantic_family_count"),
             "role_counts": semantics.get("role_counts", {}),
-            "role_confidence_distribution": semantics.get("role_confidence_distribution", {}),
-            "field_label_confidence_distribution": semantics.get("field_label_confidence_distribution", {}),
             "top_field_labels": (semantics.get("top_field_labels", []) or [])[:10],
         },
-    }
-
-
-def _compact_family(model: Dict[str, Any], family: Dict[str, Any], vector_limit: int, relation_limit: int) -> Dict[str, Any]:
-    semantic_summary = family.get("semantic_summary") or {}
-    feature_summary = family.get("feature_summary") or {}
-    keyword_summary = family.get("keyword_summary") or {}
-    subcluster_summary = family.get("subcluster_summary") or {}
-    segments = family.get("segments", []) or []
-    fields = family.get("field_hypotheses", []) or []
-    semantic_labels = semantic_summary.get("field_labels", []) or []
-
-    return {
-        "family_id": family.get("family_id"),
-        "role": family.get("role", "unknown"),
-        "message_count": family.get("message_count", 0),
-        "template": family.get("template", ""),
-        "related_families": family.get("related_families", [])[:20],
-        "examples": family.get("examples", []) or feature_summary.get("example_msg_ids", [])[:10],
-        "segments": sorted(segments, key=lambda item: (int(item.get("start", 0)), int(item.get("end", 0))))[:30],
-        "field_hypotheses": _top_items(fields, 20),
-        "semantic_summary": {
-            "role": semantic_summary.get("role", family.get("role", "unknown")),
-            "confidence": semantic_summary.get("confidence", 0.0),
-            "field_labels": _top_items(semantic_labels, 20),
-            "notes": (semantic_summary.get("notes", []) or [])[:10],
-        },
-        "feature_evidence": _compact_feature_summary(feature_summary, vector_limit),
-        "format_evidence": {
-            "keyword": keyword_summary.get("keyword") if isinstance(keyword_summary, dict) else None,
-            "keyword_subformats": dict(list((keyword_summary.get("subclusters", {}) or {}).items())[:10])
-            if isinstance(keyword_summary, dict)
-            else {},
-            "best_subcluster_strategy": subcluster_summary.get("best_strategy") if isinstance(subcluster_summary, dict) else None,
-            "subcluster_scores": subcluster_summary.get("scores", {}) if isinstance(subcluster_summary, dict) else {},
-            "subcluster_formats": dict(list((subcluster_summary.get("formats", {}) or {}).items())[:10])
-            if isinstance(subcluster_summary, dict)
-            else {},
-        },
-        "relations": _relations_for_family(model, str(family.get("family_id")), relation_limit),
-        "confidence_notes": _family_confidence_notes(family),
     }
 
 
@@ -202,44 +244,153 @@ def _family_confidence_notes(family: Dict[str, Any]) -> List[str]:
         notes.append(f"Semantic role confidence is {semantic.get('confidence')}.")
     fields = family.get("field_hypotheses", []) or []
     if fields:
-        high_conf = sum(1 for field in fields if float(field.get("confidence", 0.0) or 0.0) >= 0.8)
+        high_conf = sum(1 for field in fields if _as_float(field.get("confidence", 0.0)) >= 0.8)
         notes.append(f"{high_conf}/{len(fields)} field hypotheses have confidence >= 0.8.")
     if family.get("related_families"):
         notes.append(f"Has {len(family.get('related_families', []))} related family links.")
     return notes
 
 
+def _compact_family(family: Dict[str, Any], vector_limit: int, field_limit: int) -> Dict[str, Any]:
+    semantic_summary = family.get("semantic_summary") or {}
+    feature_summary = family.get("feature_summary") or {}
+    keyword_summary = family.get("keyword_summary") or {}
+    subcluster_summary = family.get("subcluster_summary") or {}
+    segments = family.get("segments", []) or []
+    fields = family.get("field_hypotheses", []) or []
+    labels = semantic_summary.get("field_labels", []) or []
+
+    return {
+        "family_id": family.get("family_id"),
+        "role": family.get("role", "unknown"),
+        "message_count": family.get("message_count", 0),
+        "template": _template_digest(family.get("template", "")),
+        "examples": family.get("examples", []) or feature_summary.get("example_msg_ids", [])[:5],
+        "related_family_ids": family.get("related_families", [])[:10],
+        "segments": [_compact_segment(segment) for segment in sorted(segments, key=lambda item: (_as_int(item.get("start", 0)), _as_int(item.get("end", 0))))[:12]],
+        "fields": [_compact_field(field) for field in _top_items(fields, field_limit)],
+        "semantic_labels": [_compact_label(label) for label in _top_items(labels, field_limit)],
+        "features": _compact_feature_summary(feature_summary, vector_limit),
+        "format": _compact_format_evidence(keyword_summary, subcluster_summary),
+        "confidence_notes": _family_confidence_notes(family),
+    }
+
+
+def _global_candidates(families: List[Dict[str, Any]], field_limit: int) -> Dict[str, Any]:
+    length_candidates: List[Dict[str, Any]] = []
+    opcode_candidates: List[Dict[str, Any]] = []
+    constants: List[Dict[str, Any]] = []
+    low_confidence: List[Dict[str, Any]] = []
+
+    for family in families:
+        family_id = family.get("family_id")
+        for field in family.get("field_hypotheses", []) or []:
+            field_type = str(field.get("field_type", "unknown"))
+            compact = _compact_field(field)
+            compact["family_id"] = family_id
+            if "length" in field_type:
+                length_candidates.append(compact)
+            elif field_type in {"keyword", "opcode", "function", "selector"} or "keyword" in field_type:
+                opcode_candidates.append(compact)
+            elif "constant" in field_type or field_type == "fixed":
+                constants.append(compact)
+            if _as_float(field.get("confidence", 0.0)) < 0.55:
+                low_confidence.append({**compact, "reason": "low field confidence"})
+
+    return {
+        "length_candidates": _top_items(length_candidates, field_limit),
+        "opcode_candidates": _top_items(opcode_candidates, field_limit),
+        "constants": _top_items(constants, field_limit),
+        "low_confidence_areas": _top_items(low_confidence, field_limit),
+    }
+
+
+def _coverage(bundle: Dict[str, Any]) -> Dict[str, Any]:
+    optional_sections = [
+        "evaluation",
+        "families",
+        "relations",
+        "global_hypotheses.length_candidates",
+        "global_hypotheses.opcode_candidates",
+        "global_hypotheses.constants",
+        "global_hypotheses.low_confidence_areas",
+    ]
+    filled: List[str] = []
+    missing: List[str] = []
+    for section in optional_sections:
+        value: Any = bundle
+        for part in section.split("."):
+            value = value.get(part, {}) if isinstance(value, dict) else {}
+        if value:
+            filled.append(section)
+        else:
+            missing.append(section)
+    return {
+        "filled_sections": filled,
+        "missing_sections": missing,
+        "completeness_score": round(len(filled) / len(optional_sections), 6) if optional_sections else 1.0,
+    }
+
+
 def build_llm_evidence_bundle(
     model: Dict[str, Any],
     evaluation: Optional[Dict[str, Any]] = None,
     family_limit: Optional[int] = None,
-    vector_limit: int = 16,
-    relation_limit: int = 10,
+    vector_limit: int = 8,
+    relation_limit: int = 8,
+    field_limit: int = 8,
 ) -> Dict[str, Any]:
     families = sorted(
         model.get("families", []) or [],
-        key=lambda item: (-int(item.get("message_count", 0) or 0), str(item.get("family_id", ""))),
+        key=lambda item: (-_as_int(item.get("message_count", 0)), str(item.get("family_id", ""))),
     )
     if family_limit is not None:
         families = families[:family_limit]
 
-    return {
+    relations = _top_relations(model, relation_limit)
+    candidates = _global_candidates(families, field_limit)
+    bundle = {
+        "schema_version": SCHEMA_VERSION,
         "artifact_type": "llm_protocol_evidence_bundle",
-        "protocol_name": model.get("protocol_name", "unknown-industrial-protocol"),
-        "version": model.get("version", "0.1"),
-        "metadata": {
-            "source_metadata": model.get("metadata", {}),
+        "protocol": {
+            "name": model.get("protocol_name", "unknown-industrial-protocol"),
+            "version": model.get("version", "0.1"),
+            "guess": "unknown",
+        },
+        "source": {
+            "model_metadata": model.get("metadata", {}),
             "total_families_in_model": len(model.get("families", []) or []),
             "families_in_bundle": len(families),
             "total_relations_in_model": len(model.get("relations", []) or []),
-            "vector_digest_limit": vector_limit,
-            "relation_limit_per_family": relation_limit,
-            "has_evaluation": evaluation is not None,
-            "notes": "Compact evidence for downstream LLM analysis; raw payloads are intentionally omitted.",
+            "relations_in_bundle": len(relations),
+            "limits": {
+                "family_limit": family_limit,
+                "field_limit_per_family": field_limit,
+                "vector_top_offsets": vector_limit,
+                "relation_limit": relation_limit,
+            },
+        },
+        "llm_guidance": {
+            "purpose": "Infer an unknown industrial protocol structure from compact statistical evidence. Do not assume a known protocol unless evidence supports it.",
+            "recommended_tasks": [
+                "identify_message_families",
+                "name_fields",
+                "infer_opcodes",
+                "infer_lengths",
+                "explain_request_response_relations",
+                "flag_low_confidence_hypotheses",
+            ],
+            "raw_payloads_included": False,
         },
         "evaluation": _compact_evaluation(evaluation),
-        "families": [
-            _compact_family(model, family, vector_limit=vector_limit, relation_limit=relation_limit)
-            for family in families
+        "relations": relations,
+        "global_hypotheses": candidates,
+        "families": [_compact_family(family, vector_limit=vector_limit, field_limit=field_limit) for family in families],
+        "open_questions": [
+            "Which fields are likely operation selectors, transaction identifiers, lengths, status codes, or payload values?",
+            "Which boundaries should be merged or split based on cross-family evidence?",
+            "Which request/response relations are semantically meaningful versus timing artifacts?",
         ],
     }
+    bundle["coverage"] = _coverage(bundle)
+    return bundle

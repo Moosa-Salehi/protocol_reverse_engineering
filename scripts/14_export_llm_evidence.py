@@ -19,9 +19,11 @@ def main() -> None:
     parser.add_argument("protocol_model_json", help="Input protocol model JSON from 12_build_protocol_model.py")
     parser.add_argument("output_json", help="Output compact evidence bundle JSON")
     parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 13_evaluate_pipeline.py")
-    parser.add_argument("--family-limit", type=int, help="Optional maximum number of largest families to include")
-    parser.add_argument("--vector-limit", type=int, default=16, help="Number of vector entries/top offsets to retain per vector")
-    parser.add_argument("--relation-limit", type=int, default=10, help="Max relation summaries to retain per family")
+    parser.add_argument("--family-limit", type=int, default=30, help="Optional maximum number of largest families to include")
+    parser.add_argument("--vector-limit", type=int, default=8, help="Number of top byte-offset vector entries to retain per vector")
+    parser.add_argument("--relation-limit", type=int, default=8, help="Max global relation summaries to retain")
+    parser.add_argument("--field-limit", type=int, default=8, help="Max field/semantic hypotheses to retain per family and global candidate type")
+    parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON; omitted by default to keep LLM evidence compact")
     args = parser.parse_args()
 
     with open(args.protocol_model_json, "r", encoding="utf-8") as handle:
@@ -33,10 +35,14 @@ def main() -> None:
         family_limit=args.family_limit,
         vector_limit=args.vector_limit,
         relation_limit=args.relation_limit,
+        field_limit=args.field_limit,
     )
 
     with open(args.output_json, "w", encoding="utf-8") as handle:
-        json.dump(bundle, handle, indent=2)
+        if args.pretty:
+            json.dump(bundle, handle, indent=2)
+        else:
+            json.dump(bundle, handle, separators=(",", ":"))
 
     print(f"[+] Wrote LLM evidence bundle with {len(bundle['families'])} families to {args.output_json}")
 

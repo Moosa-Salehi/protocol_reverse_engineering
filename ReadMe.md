@@ -35,7 +35,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/11_infer_semantics.py` attaches semantic field labels using boundary hypotheses plus request/response evidence.
 - `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, keyword, subcluster, relation, and semantic evidence when supplied.
 - `scripts/13_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, relations, and semantic-label coverage when supplied.
-- `scripts/14_export_llm_evidence.py` renders a compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
+- `scripts/14_export_llm_evidence.py` renders a schema-shaped compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
 - `scripts/15_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
 - `scripts/16_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
 
@@ -45,6 +45,10 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, top n-gram frequency tables, wider repeated motifs, trailing-block/padding hints, length profiles, and recurring fixed-position groups.
 - `scripts/05_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
 - `main.py` passes `data/03_features/family_features.json` into boundary inference and passes feature, keyword, subcluster, relation, and semantic artifacts into the protocol-model builder so final models retain the evidence from upstream stages.
+
+## LLM evidence schema
+
+`schema/llm_evidence.schema.json` defines the compact evidence bundle produced by `scripts/14_export_llm_evidence.py`. The bundle is protocol-agnostic and is organized for LLM analysis around source metadata, coverage, evaluation quality signals, top global relations, global field candidates, compact family evidence, and open questions. Raw payloads are intentionally omitted. The exporter writes compact JSON by default; use `--pretty` only when human-readable formatting is needed. Use `--family-limit`, `--field-limit`, `--vector-limit`, and `--relation-limit` to make smaller targeted bundles.
 
 ## Required system
 
