@@ -214,15 +214,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(semantics_json),
                 ],
             ),
-            ("13_export_markdown", [_script("13_export_markdown.py"), _path(model_json), _path(protocol_spec_md)]),
             (
-                "14_export_llm_evidence",
-                [_script("14_export_llm_evidence.py"), _path(model_json), _path(llm_evidence_json)],
-            ),
-            (
-                "15_evaluate_pipeline",
+                "13_evaluate_pipeline",
                 [
-                    _script("15_evaluate_pipeline.py"),
+                    _script("13_evaluate_pipeline.py"),
                     _path(messages_jsonl),
                     _path(assignments_json),
                     _path(families_json),
@@ -231,6 +226,20 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(evaluation_json),
                     "--semantics-json",
                     _path(semantics_json),
+                ],
+            ),
+            (
+                "14_export_llm_evidence",
+                [_script("14_export_llm_evidence.py"), _path(model_json), _path(llm_evidence_json)],
+            ),
+            (
+                "15_export_markdown",
+                [
+                    _script("15_export_markdown.py"),
+                    _path(model_json),
+                    _path(protocol_spec_md),
+                    "--evaluation-json",
+                    _path(evaluation_json),
                 ],
             ),
             (

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 
@@ -28,8 +28,71 @@ def _interesting_families(families: List[Dict[str, object]], limit: int = 50) ->
     )[:limit]
 
 
+def _fmt_metric(value: object) -> str:
+    if isinstance(value, float):
+        return f"{value:.4f}".rstrip("0").rstrip(".")
+    return str(value)
 
-def render_protocol_model_markdown(model: Dict[str, object]) -> str:
+
+def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
+    if not evaluation:
+        return []
+
+    lines: List[str] = ["## Evaluation", ""]
+    corpus = evaluation.get("corpus", {}) or {}
+    clustering = evaluation.get("clustering", {}) or {}
+    boundaries = evaluation.get("boundaries", {}) or {}
+    pairs = evaluation.get("pairs", {}) or {}
+    relations = evaluation.get("relations", {}) or {}
+    semantics = evaluation.get("semantics", {}) or {}
+
+    lines.append(f"- Messages: `{corpus.get('message_count', 0)}` across `{corpus.get('session_count', 0)}` sessions")
+    lines.append(
+        f"- Assignment coverage: `{_fmt_metric(clustering.get('assignment_coverage_ratio', 0.0))}` "
+        f"with `{clustering.get('family_count', 0)}` families"
+    )
+    lines.append(
+        f"- Parseable families: `{boundaries.get('parseable_family_count', 0)}` "
+        f"of `{boundaries.get('family_count', 0)}`"
+    )
+    lines.append(
+        f"- Pair hypotheses: `{pairs.get('pair_count', 0)}` "
+        f"direction_unknown_ratio=`{_fmt_metric(pairs.get('direction_unknown_pair_ratio', 0.0))}`"
+    )
+    lines.append(
+        f"- Relation edges: `{relations.get('edge_count', 0)}` "
+        f"echo_edges=`{relations.get('edges_with_echo_fields', 0)}` "
+        f"length_relation_edges=`{relations.get('edges_with_length_relations', 0)}`"
+    )
+    if semantics:
+        lines.append(
+            f"- Semantic coverage: `{semantics.get('semantic_family_count', 0)}` "
+            f"of `{semantics.get('family_count', 0)}` families "
+            f"ratio=`{_fmt_metric(semantics.get('semantic_coverage_ratio', 0.0))}`"
+        )
+        top_labels = semantics.get("top_field_labels", []) or []
+        if top_labels:
+            labels = ", ".join(f"`{item.get('value')}`x{item.get('count')}" for item in top_labels[:8])
+            lines.append(f"- Top semantic labels: {labels}")
+    lines.append("")
+
+    top_edges = relations.get("top_edges", []) or []
+    if top_edges:
+        lines.append("### Evaluation Top Relation Edges")
+        lines.append("")
+        for edge in top_edges[:10]:
+            lines.append(
+                f"- `{edge.get('request_family_id')}` -> `{edge.get('response_family_id')}` | "
+                f"pairs=`{edge.get('pair_count')}` avg_score=`{edge.get('avg_pair_score')}` "
+                f"echo_fields=`{edge.get('echo_field_count')}` length_rules=`{edge.get('length_relation_count')}`"
+            )
+        lines.append("")
+
+    return lines
+
+
+
+def render_protocol_model_markdown(model: Dict[str, object], evaluation: Optional[Dict[str, object]] = None) -> str:
     lines: List[str] = []
     lines.append(f"# {model.get('protocol_name', 'unknown-industrial-protocol')}")
     lines.append("")
@@ -43,6 +106,8 @@ def render_protocol_model_markdown(model: Dict[str, object]) -> str:
         for key, value in metadata.items():
             lines.append(f"- **{key}**: {value}")
         lines.append("")
+
+    lines.extend(_evaluation_section(evaluation))
 
     relations = model.get("relations", []) or []
     if relations:

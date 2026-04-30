@@ -7,16 +7,24 @@ import json
 from protocol_re.export.markdown import render_protocol_model_markdown
 
 
+def _load_optional_json(path: str | None):
+    if not path:
+        return None
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render a human-readable Markdown protocol specification from protocol_model.json.")
     parser.add_argument("protocol_model_json")
     parser.add_argument("output_md")
+    parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 13_evaluate_pipeline.py")
     args = parser.parse_args()
 
     with open(args.protocol_model_json, "r", encoding="utf-8") as handle:
         model = json.load(handle)
 
-    markdown = render_protocol_model_markdown(model)
+    markdown = render_protocol_model_markdown(model, evaluation=_load_optional_json(args.evaluation_json))
     with open(args.output_md, "w", encoding="utf-8") as handle:
         handle.write(markdown)
 

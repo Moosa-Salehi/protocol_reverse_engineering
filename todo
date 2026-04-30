@@ -109,15 +109,14 @@ Status: Implemented.
   and confidence notes.
 - Done: kept separate from generic `protocol_model.json` and trims vectors,
   relations, motifs, and labels for token efficiency.
-- Future enhancement: add Markdown or prompt-template rendering for specific LLM
-  workflows.
+- Future enhancement: add prompt-template rendering for specific LLM workflows.
 
 ## 6. Add evaluation and reporting
 
 Status: Implemented for JSON metrics; tests remain future work.
 
 - Done: added `src/protocol_re/evaluation/reporting.py` and
-  `scripts/15_evaluate_pipeline.py`.
+  `scripts/13_evaluate_pipeline.py`.
 - Done: writes `data/11_evaluation.json` from `main.py`.
 - Done: reports corpus message/session/source counts and payload-length
   distributions.
@@ -132,6 +131,8 @@ Status: Implemented for JSON metrics; tests remain future work.
 - Done: reports semantic-label coverage, role counts, role-confidence
   distribution, field-label count/confidence distributions, note counts, and top
   semantic labels when `data/09_semantics.json` is supplied.
+- Done: stage order now runs evaluation as `scripts/13_evaluate_pipeline.py`
+  before Markdown export so report metrics are available to later exporters.
 - Future enhancement: add committed regression tests for representative pipeline
   stages.
 
@@ -162,4 +163,6 @@ Status: Implemented.
 - Done: README has an architecture section describing the data flow from
   messages to families, features, boundaries, pairs, relations, semantics,
   model building, and final reports.
+- Done: README documents the reordered stages where evaluation is stage 13 and
+  Markdown export is stage 15 with `--evaluation-json`.
 - Done: validated the generated protocol model against the updated JSON schema.

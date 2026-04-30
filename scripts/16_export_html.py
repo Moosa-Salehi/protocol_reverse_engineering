@@ -18,7 +18,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Render a self-contained HTML protocol report from protocol_model.json.")
     parser.add_argument("protocol_model_json")
     parser.add_argument("output_html")
-    parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 15_evaluate_pipeline.py")
+    parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 13_evaluate_pipeline.py")
     args = parser.parse_args()
 
     with open(args.protocol_model_json, "r", encoding="utf-8") as handle:
