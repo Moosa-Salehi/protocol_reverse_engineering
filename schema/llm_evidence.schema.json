@@ -2,11 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.org/schemas/llm_evidence.schema.json",
   "title": "Protocol RE LLM Evidence Bundle",
-  "description": "Compact, protocol-agnostic evidence bundle for LLM-assisted industrial protocol reverse engineering. Raw payloads are intentionally omitted; the bundle summarizes inferred families, candidate fields, feature digests, relations, and evaluation quality signals.",
+  "description": "Compact, protocol-agnostic evidence bundle for LLM-assisted industrial protocol reverse engineering. Raw payloads and large feature vectors are intentionally omitted.",
   "type": "object",
   "required": [
-    "schema_version",
-    "artifact_type",
     "protocol",
     "source",
     "coverage",
@@ -19,32 +17,19 @@
   ],
   "additionalProperties": false,
   "properties": {
-    "schema_version": {
-      "type": "string",
-      "description": "Version of this LLM evidence schema."
-    },
-    "artifact_type": {
-      "const": "llm_protocol_evidence_bundle"
-    },
     "protocol": {
       "type": "object",
-      "required": ["name", "version", "guess"],
+      "required": ["name"],
       "additionalProperties": false,
       "properties": {
-        "name": {"type": "string"},
-        "version": {"type": "string"},
-        "guess": {
-          "type": "string",
-          "description": "Best protocol guess. Keep as 'unknown' unless evidence supports a known protocol."
-        }
+        "name": {"type": "string"}
       }
     },
     "source": {
       "type": "object",
-      "required": ["model_metadata", "total_families_in_model", "families_in_bundle", "total_relations_in_model", "relations_in_bundle", "limits"],
+      "required": ["total_families_in_model", "families_in_bundle", "total_relations_in_model", "relations_in_bundle", "limits"],
       "additionalProperties": false,
       "properties": {
-        "model_metadata": {"type": "object"},
         "total_families_in_model": {"type": "integer", "minimum": 0},
         "families_in_bundle": {"type": "integer", "minimum": 0},
         "total_relations_in_model": {"type": "integer", "minimum": 0},
@@ -55,7 +40,6 @@
           "properties": {
             "family_limit": {"type": ["integer", "null"], "minimum": 1},
             "field_limit_per_family": {"type": "integer", "minimum": 1},
-            "vector_top_offsets": {"type": "integer", "minimum": 1},
             "relation_limit": {"type": "integer", "minimum": 1}
           }
         }
@@ -100,7 +84,7 @@
     "evaluation": {"$ref": "#/$defs/evaluation"},
     "relations": {
       "type": "array",
-      "description": "Top global request/response family relation evidence. This avoids repeating large relation arrays inside each family.",
+      "description": "Top global request/response family relation evidence.",
       "items": {"$ref": "#/$defs/relation"}
     },
     "global_hypotheses": {
@@ -116,7 +100,6 @@
     },
     "families": {
       "type": "array",
-      "description": "Compact per-family evidence. Families are ordered by message count unless a family limit is provided.",
       "items": {"$ref": "#/$defs/family"}
     },
     "open_questions": {
@@ -129,12 +112,12 @@
       "type": "object",
       "additionalProperties": {"type": ["number", "integer", "null"]},
       "properties": {
-        "min": {"type": ["number", "integer"]},
-        "p25": {"type": ["number", "integer"]},
-        "median": {"type": ["number", "integer"]},
-        "p75": {"type": ["number", "integer"]},
-        "max": {"type": ["number", "integer"]},
-        "mean": {"type": ["number", "integer"]}
+        "min": {"type": ["number", "integer", "null"]},
+        "p25": {"type": ["number", "integer", "null"]},
+        "median": {"type": ["number", "integer", "null"]},
+        "p75": {"type": ["number", "integer", "null"]},
+        "max": {"type": ["number", "integer", "null"]},
+        "mean": {"type": ["number", "integer", "null"]}
       }
     },
     "evaluation": {
@@ -263,53 +246,10 @@
         "confidence": {"type": "number", "minimum": 0, "maximum": 1}
       }
     },
-    "vector_digest": {
-      "type": "object",
-      "required": ["length", "top_offsets"],
-      "additionalProperties": false,
-      "properties": {
-        "length": {"type": "integer", "minimum": 0},
-        "top_offsets": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["offset", "value"],
-            "additionalProperties": false,
-            "properties": {
-              "offset": {"type": "integer", "minimum": 0},
-              "value": {"type": "number"}
-            }
-          }
-        }
-      }
-    },
     "features": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "examples": {"type": "array", "items": {"type": "integer"}},
-        "length": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "min": {"type": ["integer", "number", "null"]},
-            "max": {"type": ["integer", "number", "null"]},
-            "mean": {"type": ["integer", "number", "null"]},
-            "distinct": {"type": ["integer", "null"], "minimum": 0},
-            "top_lengths": {"type": "object", "additionalProperties": {"type": "integer"}}
-          }
-        },
-        "entropy": {"type": "object"},
-        "unique_ratio": {"type": "object"},
-        "position_vectors": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "entropy": {"$ref": "#/$defs/vector_digest"},
-            "unique_ratio": {"$ref": "#/$defs/vector_digest"},
-            "coverage": {"$ref": "#/$defs/vector_digest"}
-          }
-        },
         "motifs": {
           "type": "object",
           "additionalProperties": false,
@@ -324,33 +264,7 @@
           "additionalProperties": false,
           "properties": {
             "length_profile": {"type": "object"},
-            "trailing_block": {"type": "object"},
-            "recurring_groups": {"type": "array", "items": {"type": "object"}}
-          }
-        }
-      }
-    },
-    "format": {
-      "type": "object",
-      "required": ["keyword", "keyword_format_count", "best_subcluster_strategy", "scores", "top_formats"],
-      "additionalProperties": false,
-      "properties": {
-        "keyword": {"type": ["object", "null"]},
-        "keyword_format_count": {"type": "integer", "minimum": 0},
-        "best_subcluster_strategy": {"type": ["string", "null"]},
-        "scores": {"type": "object", "additionalProperties": {"type": ["integer", "number"]}},
-        "top_formats": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["format_id", "message_count", "template"],
-            "additionalProperties": false,
-            "properties": {
-              "format_id": {"type": "string"},
-              "message_count": {"type": ["integer", "null"], "minimum": 0},
-              "source_subcluster_id": {"type": ["string", "null"]},
-              "template": {"$ref": "#/$defs/template_digest"}
-            }
+            "trailing_block": {"type": "object"}
           }
         }
       }
@@ -371,20 +285,18 @@
     },
     "family": {
       "type": "object",
-      "required": ["family_id", "role", "message_count", "template", "examples", "related_family_ids", "segments", "fields", "semantic_labels", "features", "format", "confidence_notes"],
+      "required": ["family_id", "role", "message_count", "template", "related_family_ids", "segments", "fields", "semantic_labels", "features", "confidence_notes"],
       "additionalProperties": false,
       "properties": {
         "family_id": {"type": ["string", "null"]},
         "role": {"type": "string", "enum": ["request", "response", "unknown", "mixed"]},
         "message_count": {"type": "integer", "minimum": 0},
         "template": {"$ref": "#/$defs/template_digest"},
-        "examples": {"type": "array", "items": {"type": "integer"}},
         "related_family_ids": {"type": "array", "items": {"type": "string"}},
         "segments": {"type": "array", "items": {"$ref": "#/$defs/segment"}},
         "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
         "semantic_labels": {"type": "array", "items": {"$ref": "#/$defs/field"}},
         "features": {"$ref": "#/$defs/features"},
-        "format": {"$ref": "#/$defs/format"},
         "confidence_notes": {"type": "array", "items": {"type": "string"}}
       }
     }
