@@ -1,0 +1,382 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "llm_evidence.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "protocol_guess",
+    "coverage",
+    "families",
+    "field_hypotheses",
+    "relations",
+    "byte_roles",
+    "constants",
+    "clusters",
+    "entropy_map",
+    "length_candidates",
+    "opcode_candidates",
+    "echo_fields",
+    "message_examples",
+    "evaluation_stats",
+    "tasks",
+    "low_confidence_areas",
+    "open_questions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the evidence schema, e.g. '1.1.0'"
+    },
+
+    "protocol_guess": {
+      "type": "string",
+      "description": "Best guess of the protocol family, or 'unknown'"
+    },
+
+    "coverage": {
+      "type": "object",
+      "required": ["filled_sections", "missing_sections", "completeness_score"],
+      "properties": {
+        "filled_sections": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "missing_sections": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "completeness_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+
+    "source_summary": {
+      "type": "string",
+      "description": "Short human-readable summary of what the evidence currently shows"
+    },
+
+    "raw_hints": {
+      "type": "array",
+      "description": "Loose textual hints, tags, or annotations extracted from upstream tooling",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "tag": { "type": "string" },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+
+    "families": {
+      "type": "array",
+      "description": "Detected families / clusters of messages",
+      "items": {
+        "type": "object",
+        "required": ["name", "role", "message_indices", "fields"],
+        "properties": {
+          "name": { "type": "string" },
+          "role": {
+            "type": "string",
+            "enum": ["request", "response", "unknown", "mixed"]
+          },
+          "message_indices": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/FieldHypothesis"
+            }
+          },
+          "description": { "type": "string" }
+        }
+      }
+    },
+
+    "field_hypotheses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FieldHypothesis"
+      }
+    },
+
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["request_family", "response_family", "confidence"],
+        "properties": {
+          "request_family": { "type": "string" },
+          "response_family": { "type": "string" },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "rationale": { "type": "string" }
+        }
+      }
+    },
+
+    "byte_roles": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9]+$": {
+          "type": "string"
+        }
+      }
+    },
+
+    "constants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["offset", "length", "value"],
+        "properties": {
+          "offset": { "type": "integer", "minimum": 0 },
+          "length": { "type": "integer", "minimum": 1 },
+          "value": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+
+    "clusters": {
+      "type": "object",
+      "properties": {
+        "cluster_count": { "type": "integer", "minimum": 0 },
+        "purity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "clusters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "message_indices"],
+            "properties": {
+              "name": { "type": "string" },
+              "message_indices": {
+                "type": "array",
+                "items": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "entropy_map": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9]+$": {
+          "type": "number"
+        }
+      }
+    },
+
+    "length_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["offset", "length", "confidence", "scope"],
+        "properties": {
+          "offset": { "type": "integer" },
+          "length": { "type": "integer" },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["header", "body", "payload", "whole"]
+          },
+          "formula": { "type": "string" }
+        }
+      }
+    },
+
+    "opcode_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["offset", "length", "confidence"],
+        "properties": {
+          "offset": { "type": "integer" },
+          "length": { "type": "integer" },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "repeating_values": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "echo_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["offset", "length", "echo_target", "confidence"],
+        "properties": {
+          "offset": { "type": "integer" },
+          "length": { "type": "integer" },
+          "echo_target": { "type": "string" },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+
+    "message_examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["message_index", "family", "payload_hex", "annotations"],
+        "properties": {
+          "message_index": { "type": "integer" },
+          "family": { "type": "string" },
+          "payload_hex": { "type": "string" },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["offset", "length", "label", "confidence"],
+              "properties": {
+                "offset": { "type": "integer" },
+                "length": { "type": "integer" },
+                "label": { "type": "string" },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "evaluation_stats": {
+      "type": "object",
+      "properties": {
+        "field_detection_precision": { "type": "number", "minimum": 0, "maximum": 1 },
+        "field_detection_recall": { "type": "number", "minimum": 0, "maximum": 1 },
+        "byte_boundary_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "field_type_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cluster_purity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "request_response_pair_accuracy": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "rename_fields",
+          "repair_clusters",
+          "identify_opcodes",
+          "explain_request_response_pairs",
+          "suggest_new_field_boundaries",
+          "fix_length_hypotheses",
+          "find_constants",
+          "semantic_labeling",
+          "check_structural_sanity",
+          "cross_protocol_alignment"
+        ]
+      }
+    },
+
+    "low_confidence_areas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "reason"],
+        "properties": {
+          "start": { "type": "integer" },
+          "end": { "type": "integer" },
+          "reason": { "type": "string" },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+
+    "open_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "missing_sections": {
+      "type": "array",
+      "description": "Optional explicit list of high-level sections that still need to be populated",
+      "items": { "type": "string" }
+    },
+
+    "llm_feedback": {
+      "type": "object",
+      "properties": {
+        "last_feedback_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "llm_protocol_layout": { "type": "string" },
+        "adopted_changes": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    }
+  },
+
+  "definitions": {
+    "FieldHypothesis": {
+      "type": "object",
+      "required": ["start", "end", "label", "confidence"],
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 },
+        "label": { "type": "string" },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "uint",
+            "int",
+            "string",
+            "byte",
+            "float",
+            "opcode",
+            "constant",
+            "length",
+            "crc",
+            "unknown"
+          ]
+        },
+        "is_repeating": { "type": "boolean" }
+      }
+    }
+  }
+}
