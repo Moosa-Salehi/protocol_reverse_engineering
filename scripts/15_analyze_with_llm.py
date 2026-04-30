@@ -8,7 +8,6 @@ from pathlib import Path
 from protocol_re.llm.analyze import (
     LLMRequestConfig,
     call_openai_compatible_chat,
-    env_value,
     extract_message_text,
     render_analysis_prompt,
 )
@@ -25,22 +24,45 @@ def _load_template(path: str | None) -> str | None:
     return Path(path).read_text(encoding="utf-8")
 
 
+def _load_config(path: str) -> dict:
+    config_path = Path(path)
+    if not config_path.is_file():
+        raise SystemExit(f"Error: LLM config file does not exist: {config_path}")
+    with open(config_path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def _env_api_key() -> str | None:
+    import os
+
+    return os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_API_KEY")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Render an LLM prompt from llm_evidence.json and optionally call an OpenAI-compatible chat-completions API."
     )
     parser.add_argument("llm_evidence_json", help="Input evidence bundle from 14_export_llm_evidence.py")
     parser.add_argument("output_json", help="Output LLM analysis JSON")
+    parser.add_argument("--config", default="LLM_config.json", help="LLM config JSON containing openai_base_url and model")
     parser.add_argument("--prompt-out", help="Optional path to write the rendered prompt Markdown")
     parser.add_argument("--template", help="Optional custom prompt-template Markdown file")
     parser.add_argument("--render-only", action="store_true", help="Only render prompt and metadata; do not call the LLM API")
-    parser.add_argument("--model", default="gpt-4o-mini", help="OpenAI-compatible model name")
-    parser.add_argument("--base-url", help="OpenAI-compatible base URL; falls back to OPENAI_BASE_URL or LLM_BASE_URL")
-    parser.add_argument("--api-key", help="API key; falls back to OPENAI_API_KEY or LLM_API_KEY")
-    parser.add_argument("--temperature", type=float, default=0.1)
-    parser.add_argument("--max-tokens", type=int, default=6000)
-    parser.add_argument("--timeout", type=int, default=120)
+    parser.add_argument("--temperature", type=float, help="Override temperature from LLM_config.json")
+    parser.add_argument("--max-tokens", type=int, help="Override max_tokens from LLM_config.json")
+    parser.add_argument("--timeout", type=int, help="Override timeout from LLM_config.json")
     args = parser.parse_args()
+
+    config = _load_config(args.config)
+    model = config.get("model")
+    base_url = config.get("openai_base_url")
+    if not model:
+        raise SystemExit("Error: LLM_config.json must define model.")
+    if not base_url:
+        raise SystemExit("Error: LLM_config.json must define openai_base_url.")
+    temperature = args.temperature if args.temperature is not None else float(config.get("temperature", 0.1))
+    max_tokens = args.max_tokens if args.max_tokens is not None else int(config.get("max_tokens", 6000))
+    timeout = args.timeout if args.timeout is not None else int(config.get("timeout", 120))
 
     evidence = _load_json(args.llm_evidence_json)
     template = _load_template(args.template)
@@ -54,7 +76,8 @@ def main() -> None:
         "artifact_type": "llm_protocol_analysis",
         "source_evidence": args.llm_evidence_json,
         "prompt_path": args.prompt_out,
-        "model": args.model,
+        "config_path": args.config,
+        "model": model,
         "render_only": args.render_only,
         "analysis_markdown": None,
         "usage": None,
@@ -62,21 +85,18 @@ def main() -> None:
     }
 
     if not args.render_only:
-        api_key = env_value(args.api_key, "OPENAI_API_KEY", "LLM_API_KEY")
-        base_url = env_value(args.base_url, "OPENAI_BASE_URL", "LLM_BASE_URL")
+        api_key = _env_api_key()
         if not api_key:
-            raise SystemExit("Error: API key required via --api-key, OPENAI_API_KEY, or LLM_API_KEY. Use --render-only to skip API call.")
-        if not base_url:
-            raise SystemExit("Error: base URL required via --base-url, OPENAI_BASE_URL, or LLM_BASE_URL. Use --render-only to skip API call.")
+            raise SystemExit("Error: API key required via OPENAI_API_KEY or LLM_API_KEY. Use --render-only to skip API call.")
         response = call_openai_compatible_chat(
             prompt,
             LLMRequestConfig(
-                model=args.model,
+                model=model,
                 base_url=base_url,
                 api_key=api_key,
-                temperature=args.temperature,
-                max_tokens=args.max_tokens,
-                timeout=args.timeout,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout,
             ),
         )
         output["analysis_markdown"] = extract_message_text(response)

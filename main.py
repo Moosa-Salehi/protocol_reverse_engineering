@@ -246,10 +246,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _script("15_analyze_with_llm.py"),
                     _path(llm_evidence_json),
                     _path(llm_analysis_json),
+                    "--config",
+                    _path(args.llm_config),
                     "--prompt-out",
                     _path(llm_prompt_md),
-                    "--model",
-                    args.llm_model,
                 ],
             ),
             (
@@ -278,8 +278,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     llm_step = next(step_args for step_name, step_args in pipeline if step_name == "15_analyze_with_llm")
     if args.llm_render_only:
         llm_step.append("--render-only")
-    if args.llm_base_url:
-        llm_step.extend(["--base-url", args.llm_base_url])
     if args.llm_template:
         llm_step.extend(["--template", _path(args.llm_template)])
     if args.llm_temperature is not None:
@@ -362,8 +360,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
     parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
     parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
-    parser.add_argument("--llm-model", default="gpt-4o-mini", help="OpenAI-compatible model for stage 15 LLM analysis.")
-    parser.add_argument("--llm-base-url", help="OpenAI-compatible base URL for stage 15; otherwise use OPENAI_BASE_URL or LLM_BASE_URL.")
+    parser.add_argument("--llm-config", type=Path, default=Path("LLM_config.json"), help="LLM config JSON for stage 15.")
     parser.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
     parser.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
     parser.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
@@ -382,6 +379,9 @@ def validate_args(args: argparse.Namespace) -> None:
     args.pcap_dir = _resolve_under_project(args.pcap_dir)
     args.data_dir = _resolve_under_project(args.data_dir)
     args.output_dir = _resolve_under_project(args.output_dir)
+    args.llm_config = _resolve_under_project(args.llm_config)
+    if not args.llm_config.is_file():
+        raise SystemExit(f"{RED}Error:{RESET} LLM config file does not exist: {args.llm_config}")
     if args.llm_template:
         args.llm_template = args.llm_template.resolve()
         if not args.llm_template.is_file():
