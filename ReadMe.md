@@ -46,6 +46,10 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/05_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
 - `main.py` passes `data/03_features/family_features.json` into boundary inference and the protocol-model builder so boundary evidence and final models include feature summaries.
 
+## Required system
+
+a windows/linux system with python installed.
+
 ## Installing dependencies
 
 ```bash
