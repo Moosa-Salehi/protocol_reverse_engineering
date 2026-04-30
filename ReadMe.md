@@ -49,6 +49,8 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 ## Installing dependencies
 
 ```bash
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
