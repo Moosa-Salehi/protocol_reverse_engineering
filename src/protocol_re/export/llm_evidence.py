@@ -97,6 +97,8 @@ def _relations_for_family(model: Dict[str, Any], family_id: str, limit: int) -> 
 def _compact_family(model: Dict[str, Any], family: Dict[str, Any], vector_limit: int, relation_limit: int) -> Dict[str, Any]:
     semantic_summary = family.get("semantic_summary") or {}
     feature_summary = family.get("feature_summary") or {}
+    keyword_summary = family.get("keyword_summary") or {}
+    subcluster_summary = family.get("subcluster_summary") or {}
     segments = family.get("segments", []) or []
     fields = family.get("field_hypotheses", []) or []
     semantic_labels = semantic_summary.get("field_labels", []) or []
@@ -117,6 +119,17 @@ def _compact_family(model: Dict[str, Any], family: Dict[str, Any], vector_limit:
             "notes": (semantic_summary.get("notes", []) or [])[:10],
         },
         "feature_evidence": _compact_feature_summary(feature_summary, vector_limit),
+        "format_evidence": {
+            "keyword": keyword_summary.get("keyword") if isinstance(keyword_summary, dict) else None,
+            "keyword_subformats": dict(list((keyword_summary.get("subclusters", {}) or {}).items())[:10])
+            if isinstance(keyword_summary, dict)
+            else {},
+            "best_subcluster_strategy": subcluster_summary.get("best_strategy") if isinstance(subcluster_summary, dict) else None,
+            "subcluster_scores": subcluster_summary.get("scores", {}) if isinstance(subcluster_summary, dict) else {},
+            "subcluster_formats": dict(list((subcluster_summary.get("formats", {}) or {}).items())[:10])
+            if isinstance(subcluster_summary, dict)
+            else {},
+        },
         "relations": _relations_for_family(model, str(family.get("family_id")), relation_limit),
         "confidence_notes": _family_confidence_notes(family),
     }

@@ -60,8 +60,14 @@ Status: Complete for the current pipeline baseline.
 - Done: `main.py` wires `data/03_features/family_features.json` into
   `scripts/06_infer_boundaries.py` and `scripts/12_build_protocol_model.py`
   using `--features-json`.
+- Done: `main.py` wires `data/06_keywords.json` and
+  `data/07_subcluster_hypotheses.json` into
+  `scripts/12_build_protocol_model.py` using `--keywords-json` and
+  `--subclusters-json`, so candidate discriminator bytes and subformat
+  hypotheses remain part of the final model evidence.
 - Done: README step-by-step commands include `--features-json` so boundary
-  inference and protocol model output include feature summaries.
+  inference and protocol model output include feature summaries, keyword
+  evidence, and subcluster evidence.
 - Done: family feature artifacts now include `motif_stats.ngram_frequencies`
   with top aggregate n-gram counts and frequencies per width.
 - Done: README documents the n-gram frequency tables.

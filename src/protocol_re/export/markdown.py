@@ -96,6 +96,19 @@ def render_protocol_model_markdown(model: Dict[str, object]) -> str:
                 f"- Entropy summary: min=`{entropy_summary.get('min', 0.0)}` "
                 f"max=`{entropy_summary.get('max', 0.0)}` mean=`{entropy_summary.get('mean', 0.0)}`"
             )
+        keyword_summary = family.get("keyword_summary") or {}
+        keyword = keyword_summary.get("keyword") if isinstance(keyword_summary, dict) else None
+        if keyword:
+            lines.append(
+                f"- Candidate keyword offset: `{int(keyword.get('offset', 0))}` "
+                f"cardinality=`{int(keyword.get('cardinality', 0))}` entropy=`{keyword.get('entropy', 0.0)}`"
+            )
+        subcluster_summary = family.get("subcluster_summary") or {}
+        if subcluster_summary:
+            lines.append(
+                f"- Best subcluster strategy: `{subcluster_summary.get('best_strategy', 'unknown')}` "
+                f"formats=`{len(subcluster_summary.get('formats', {}) or {})}`"
+            )
         lines.append("")
 
         segments = family.get("segments", [])
