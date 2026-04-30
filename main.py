@@ -74,6 +74,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     evaluation_json = data_dir / "11_evaluation.json"
     protocol_spec_md = output_dir / "protocol_spec.md"
     llm_evidence_json = data_dir / "12_llm_evidence.json"
+    llm_analysis_json = data_dir / "13_llm_analysis.json"
+    llm_prompt_md = data_dir / "13_llm_prompt.md"
     html_report = output_dir / "protocol_report.html"
 
     pipeline: list[tuple[str, list[str]]] = []
@@ -239,9 +241,21 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "15_export_markdown",
+                "15_analyze_with_llm",
                 [
-                    _script("15_export_markdown.py"),
+                    _script("15_analyze_with_llm.py"),
+                    _path(llm_evidence_json),
+                    _path(llm_analysis_json),
+                    "--prompt-out",
+                    _path(llm_prompt_md),
+                    "--model",
+                    args.llm_model,
+                ],
+            ),
+            (
+                "16_export_markdown",
+                [
+                    _script("16_export_markdown.py"),
                     _path(model_json),
                     _path(protocol_spec_md),
                     "--evaluation-json",
@@ -249,9 +263,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "16_export_html",
+                "17_export_html",
                 [
-                    _script("16_export_html.py"),
+                    _script("17_export_html.py"),
                     _path(model_json),
                     _path(html_report),
                     "--evaluation-json",
@@ -260,6 +274,18 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
         ]
     )
+
+    llm_step = next(step_args for step_name, step_args in pipeline if step_name == "15_analyze_with_llm")
+    if args.llm_render_only:
+        llm_step.append("--render-only")
+    if args.llm_base_url:
+        llm_step.extend(["--base-url", args.llm_base_url])
+    if args.llm_template:
+        llm_step.extend(["--template", _path(args.llm_template)])
+    if args.llm_temperature is not None:
+        llm_step.extend(["--temperature", str(args.llm_temperature)])
+    if args.llm_max_tokens is not None:
+        llm_step.extend(["--max-tokens", str(args.llm_max_tokens)])
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
@@ -336,6 +362,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
     parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
     parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
+    parser.add_argument("--llm-model", default="gpt-4o-mini", help="OpenAI-compatible model for stage 15 LLM analysis.")
+    parser.add_argument("--llm-base-url", help="OpenAI-compatible base URL for stage 15; otherwise use OPENAI_BASE_URL or LLM_BASE_URL.")
+    parser.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
+    parser.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
+    parser.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
+    parser.add_argument("--llm-max-tokens", type=int, default=6000, help="Max output tokens for stage 15 LLM analysis.")
     parser.add_argument("--stop-after", help="Run through the named pipeline step and then stop; useful for smoke tests.")
     return parser.parse_args()
 
@@ -350,6 +382,10 @@ def validate_args(args: argparse.Namespace) -> None:
     args.pcap_dir = _resolve_under_project(args.pcap_dir)
     args.data_dir = _resolve_under_project(args.data_dir)
     args.output_dir = _resolve_under_project(args.output_dir)
+    if args.llm_template:
+        args.llm_template = args.llm_template.resolve()
+        if not args.llm_template.is_file():
+            raise SystemExit(f"{RED}Error:{RESET} LLM template file does not exist: {args.llm_template}")
 
     if args.legacy_json:
         args.legacy_json = args.legacy_json.resolve()

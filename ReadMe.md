@@ -36,8 +36,9 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, keyword, subcluster, relation, and semantic evidence when supplied.
 - `scripts/13_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, relations, and semantic-label coverage when supplied.
 - `scripts/14_export_llm_evidence.py` renders a schema-shaped compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
-- `scripts/15_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
-- `scripts/16_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
+- `scripts/15_analyze_with_llm.py` renders the protocol-analysis prompt and can call an OpenAI-compatible LLM API to write `data/13_llm_analysis.json`.
+- `scripts/16_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
+- `scripts/17_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
 
 ## Feature artifacts
 
@@ -49,6 +50,18 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 ## LLM evidence schema
 
 `schema/llm_evidence.schema.json` defines the compact evidence bundle produced by `scripts/14_export_llm_evidence.py`. The bundle is protocol-agnostic and is organized for LLM analysis around source counts, coverage, evaluation quality signals, top global relations, global field candidates, compact family evidence, and open questions. Raw payloads are intentionally omitted. The exporter writes compact JSON by default; use `--pretty` only when human-readable formatting is needed. Use `--family-limit`, `--field-limit`, and `--relation-limit` to make smaller targeted bundles.
+
+## LLM protocol analysis
+
+`scripts/15_analyze_with_llm.py` reads `data/12_llm_evidence.json`, renders a protocol reverse-engineering prompt, and can call an OpenAI-compatible `/chat/completions` API. Configure credentials with environment variables or CLI flags:
+
+```bash
+export OPENAI_API_KEY=<api-key>
+export OPENAI_BASE_URL=<openai-compatible-base-url>/v1
+python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --model <model-name>
+```
+
+Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. The runner exposes the same workflow with `--llm-model`, `--llm-base-url`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, and `--llm-max-tokens`.
 
 ## Required system
 
@@ -70,7 +83,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps>
 ```
 
-This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_spec.md` and `output/protocol_report.html`.
+This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_spec.md`, and `output/protocol_report.html`.
 
 Useful runner options:
 
@@ -81,6 +94,7 @@ python main.py <folder-containing-pcaps> --reassembly-mode stream
 python main.py pcaps --skip-collect
 python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads
 python main.py --legacy-json archive/protocol-x-payloads --data-dir /tmp/protocol_re_data --output-dir /tmp/protocol_re_output --stop-after 03_alt_build_corpus
+python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads --llm-render-only --stop-after 15_analyze_with_llm
 ```
 
 - `--legacy-json <dir>` uses already extracted archive JSON payloads instead of PCAPs.
@@ -88,6 +102,7 @@ python main.py --legacy-json archive/protocol-x-payloads --data-dir /tmp/protoco
 - `--service-port` optionally filters extraction to one TCP port. If omitted, the PCAP extractor treats all TCP payloads as candidate unknown-protocol traffic.
 - `--reassembly-mode packet` keeps the fast packet-payload extractor; `--reassembly-mode stream` reconstructs directional raw TCP byte streams without assuming any application protocol framing.
 - `--data-dir`, `--pcap-dir`, and `--output-dir` override artifact locations.
+- `--llm-render-only` renders `data/13_llm_prompt.md` and `data/13_llm_analysis.json` metadata without calling an API.
 - `--stop-after <step>` is useful for smoke tests and partial runs.
 
 ## Running step by step
@@ -115,8 +130,9 @@ python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.js
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --keywords-json data/06_keywords.json --subclusters-json data/07_subcluster_hypotheses.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
-python3 scripts/15_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
-python3 scripts/16_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
+python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --model <model-name>
+python3 scripts/16_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/17_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
 Build from legacy extracted JSON payloads:
@@ -134,8 +150,9 @@ python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.js
 python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --keywords-json data/06_keywords.json --subclusters-json data/07_subcluster_hypotheses.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
-python3 scripts/15_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
-python3 scripts/16_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
+python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --model <model-name>
+python3 scripts/16_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/17_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
 Windows PowerShell equivalent for imports:

@@ -25,3 +25,18 @@ Status: Complete for feature-artifact baseline; deeper parser inference can buil
   family feature summaries and are available to the next LLM evidence exporter.
 - Future enhancement: use these structure hints directly in boundary splitting
   and semantic labeling, not only as exported evidence.
+
+## 3. Add LLM protocol analysis stage
+
+Status: Implemented.
+
+- Done: added `src/protocol_re/llm/analyze.py` with prompt rendering and an
+  OpenAI-compatible chat-completions client using only the standard library.
+- Done: added `scripts/15_analyze_with_llm.py` to read
+  `data/12_llm_evidence.json`, write `data/13_llm_prompt.md`, call an LLM API
+  unless `--render-only` is used, and write `data/13_llm_analysis.json`.
+- Done: renumbered Markdown export to `scripts/16_export_markdown.py` and HTML
+  export to `scripts/17_export_html.py`.
+- Done: `main.py` wires stage 15 after LLM evidence export and exposes
+  `--llm-model`, `--llm-base-url`, `--llm-template`, `--llm-render-only`,
+  `--llm-temperature`, and `--llm-max-tokens`.
