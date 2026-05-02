@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Protocol Evaluation Schema",
+  "type": "object",
+  "definitions": {
+
+    "ByteRange": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Start byte offset (inclusive)"
+        },
+        "end": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "End byte offset (inclusive). Null for variable-length fields."
+        }
+      },
+      "required": ["start", "end"]
+    },
+
+    "GroundTruthField": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Canonical field name"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "type": {
+          "type": "string",
+          "description": "Semantic field type (id, opcode, length, constant, payload, etc.)"
+        }
+      },
+      "required": ["name", "start", "end", "type"]
+    },
+
+    "GroundTruthSpec": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "description": "Protocol name (e.g., modbus_tcp)"
+        },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/GroundTruthField" },
+          "description": "List of known fields for the protocol"
+        }
+      },
+      "required": ["protocol", "fields"]
+    },
+
+    "PredictedFieldHypothesis": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "label": {
+          "type": "string",
+          "description": "Model-assigned field label (keyword, length, echo, etc.)"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": ["start", "end", "label"]
+    },
+
+    "MessageFamily": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": {
+          "type": "string",
+          "enum": ["request", "response", "unknown"],
+          "description": "Optional request/response role"
+        },
+        "field_hypotheses": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PredictedFieldHypothesis" }
+        },
+        "message_indices": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "description": "Optional: indices of messages belonging to this family"
+        }
+      },
+      "required": ["name", "field_hypotheses"]
+    },
+
+    "RequestResponseRelation": {
+      "type": "object",
+      "properties": {
+        "request_family": { "type": "string" },
+        "response_family": { "type": "string" },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": ["request_family", "response_family"]
+    },
+
+    "PredictedOutput": {
+      "type": "object",
+      "properties": {
+        "families": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MessageFamily" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/RequestResponseRelation" },
+          "description": "Optional request-response relationships"
+        }
+      },
+      "required": ["families"]
+    }
+  }
+}

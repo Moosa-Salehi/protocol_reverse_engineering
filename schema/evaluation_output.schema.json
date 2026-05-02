@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Protocol Evaluation Report",
+  "type": "object",
+  "required": [
+    "protocol",
+    "evaluation_timestamp",
+    "metrics"
+  ],
+  "properties": {
+
+    "protocol": {
+      "type": "string",
+      "description": "Protocol name evaluated (e.g., modbus_tcp)"
+    },
+
+    "evaluation_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of evaluation run"
+    },
+
+    "tool_metadata": {
+      "type": "object",
+      "description": "Optional metadata about the evaluated RE tool",
+      "properties": {
+        "tool_name": { "type": "string" },
+        "tool_version": { "type": "string" },
+        "input_prediction_file": { "type": "string" },
+        "input_groundtruth_file": { "type": "string" }
+      }
+    },
+
+    "metrics": {
+      "type": "object",
+      "required": [
+        "field_detection",
+        "byte_boundary",
+        "field_type_classification"
+      ],
+      "properties": {
+
+        "field_detection": {
+          "type": "object",
+          "required": [
+            "true_positives",
+            "false_positives",
+            "false_negatives",
+            "precision",
+            "recall",
+            "f1_score"
+          ],
+          "properties": {
+            "true_positives": { "type": "integer", "minimum": 0 },
+            "false_positives": { "type": "integer", "minimum": 0 },
+            "false_negatives": { "type": "integer", "minimum": 0 },
+            "precision": { "type": "number", "minimum": 0, "maximum": 1 },
+            "recall": { "type": "number", "minimum": 0, "maximum": 1 },
+            "f1_score": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+
+        "byte_boundary": {
+          "type": "object",
+          "required": [
+            "total_bytes",
+            "correct_bytes",
+            "accuracy"
+          ],
+          "properties": {
+            "total_bytes": { "type": "integer", "minimum": 0 },
+            "correct_bytes": { "type": "integer", "minimum": 0 },
+            "accuracy": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+
+        "field_type_classification": {
+          "type": "object",
+          "required": [
+            "total_matched_fields",
+            "correct_type_predictions",
+            "accuracy"
+          ],
+          "properties": {
+            "total_matched_fields": { "type": "integer", "minimum": 0 },
+            "correct_type_predictions": { "type": "integer", "minimum": 0 },
+            "accuracy": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+
+        "family_clustering": {
+          "type": "object",
+          "description": "Optional clustering evaluation",
+          "properties": {
+            "total_messages": { "type": "integer", "minimum": 0 },
+            "correctly_clustered_messages": { "type": "integer", "minimum": 0 },
+            "accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+            "purity": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+
+        "request_response_pairing": {
+          "type": "object",
+          "description": "Optional request-response pairing evaluation",
+          "properties": {
+            "detected_pairs": { "type": "integer", "minimum": 0 },
+            "correct_pairs": { "type": "integer", "minimum": 0 },
+            "accuracy": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    },
+
+    "per_family_metrics": {
+      "type": "array",
+      "description": "Optional detailed metrics per predicted family",
+      "items": {
+        "type": "object",
+        "required": ["family_name"],
+        "properties": {
+          "family_name": { "type": "string" },
+          "role": {
+            "type": "string",
+            "enum": ["request", "response", "unknown"]
+          },
+          "field_detection": {
+            "$ref": "#/definitions/FieldDetectionMetrics"
+          },
+          "field_type_accuracy": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+
+    "confusion_matrix": {
+      "type": "object",
+      "description": "Optional field type confusion matrix",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "FieldDetectionMetrics": {
+      "type": "object",
+      "properties": {
+        "true_positives": { "type": "integer", "minimum": 0 },
+        "false_positives": { "type": "integer", "minimum": 0 },
+        "false_negatives": { "type": "integer", "minimum": 0 },
+        "precision": { "type": "number", "minimum": 0, "maximum": 1 },
+        "recall": { "type": "number", "minimum": 0, "maximum": 1 },
+        "f1_score": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
