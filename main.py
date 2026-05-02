@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import logging
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -38,6 +40,7 @@ except Exception:
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 SRC_PATH = PROJECT_ROOT / "src"
+DEFAULT_MAX_MESSAGES = 2_000_000
 
 # Ensure child scripts can import the local package without installation.
 os.environ["PYTHONPATH"] = str(SRC_PATH)
@@ -90,9 +93,11 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             corpus_step.extend(["--service-port", str(args.service_port)])
         if args.deduplicate_payloads:
             corpus_step.append("--deduplicate-payloads")
+        if args.max_messages is not None:
+            corpus_step.extend(["--max-messages", str(args.max_messages)])
         pipeline.append(("03_alt_build_corpus", corpus_step))
     else:
-        if not args.skip_collect:
+        if args.collect:
             pipeline.extend(
                 [
                     ("01_collect_pcaps", [_script("01_collect_pcaps.py"), _path(args.input_folder), _path(pcap_dir)]),
@@ -119,6 +124,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         )
         if args.service_port is not None:
             pipeline[-1][1].extend(["--service-port", str(args.service_port)])
+        if args.max_messages is not None:
+            pipeline[-1][1].extend(["--max-messages", str(args.max_messages)])
 
     pipeline.extend(
         [
@@ -231,28 +238,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "14_export_llm_evidence",
-                [
-                    _script("14_export_llm_evidence.py"),
-                    _path(model_json),
-                    _path(llm_evidence_json),
-                    "--evaluation-json",
-                    _path(evaluation_json),
-                ],
-            ),
-            (
-                "15_analyze_with_llm",
-                [
-                    _script("15_analyze_with_llm.py"),
-                    _path(llm_evidence_json),
-                    _path(llm_analysis_json),
-                    "--config",
-                    _path(args.llm_config),
-                    "--prompt-out",
-                    _path(llm_prompt_md),
-                ],
-            ),
-            (
                 "16_export_markdown",
                 [
                     _script("16_export_markdown.py"),
@@ -275,15 +260,41 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         ]
     )
 
-    llm_step = next(step_args for step_name, step_args in pipeline if step_name == "15_analyze_with_llm")
-    if args.llm_render_only:
-        llm_step.append("--render-only")
-    if args.llm_template:
-        llm_step.extend(["--template", _path(args.llm_template)])
-    if args.llm_temperature is not None:
-        llm_step.extend(["--temperature", str(args.llm_temperature)])
-    if args.llm_max_tokens is not None:
-        llm_step.extend(["--max-tokens", str(args.llm_max_tokens)])
+    if not args.skip_llm:
+        llm_steps = [
+            (
+                "14_export_llm_evidence",
+                [
+                    _script("14_export_llm_evidence.py"),
+                    _path(model_json),
+                    _path(llm_evidence_json),
+                    "--evaluation-json",
+                    _path(evaluation_json),
+                ],
+            ),
+            (
+                "15_analyze_with_llm",
+                [
+                    _script("15_analyze_with_llm.py"),
+                    _path(llm_evidence_json),
+                    _path(llm_analysis_json),
+                    "--config",
+                    _path(args.llm_config),
+                    "--prompt-out",
+                    _path(llm_prompt_md),
+                ],
+            ),
+        ]
+        if args.llm_render_only:
+            llm_steps[1][1].append("--render-only")
+        if args.llm_template:
+            llm_steps[1][1].extend(["--template", _path(args.llm_template)])
+        if args.llm_temperature is not None:
+            llm_steps[1][1].extend(["--temperature", str(args.llm_temperature)])
+        if args.llm_max_tokens is not None:
+            llm_steps[1][1].extend(["--max-tokens", str(args.llm_max_tokens)])
+        insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "16_export_markdown")
+        pipeline[insert_at:insert_at] = llm_steps
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
@@ -335,7 +346,7 @@ def parse_args() -> argparse.Namespace:
         "input_folder",
         nargs="?",
         type=Path,
-        help="Folder containing PCAP files, or an existing pcap dir when --skip-collect is used.",
+        help="Folder containing PCAP files. By default, this is treated as an existing normalized PCAP directory.",
     )
     parser.add_argument(
         "--legacy-json",
@@ -343,10 +354,11 @@ def parse_args() -> argparse.Namespace:
         help="Use an extracted protocol-x-payloads JSON folder instead of PCAP input.",
     )
     parser.add_argument(
-        "--skip-collect",
+        "--collect",
         action="store_true",
-        help="Treat input_folder as the already-normalized PCAP directory and skip collect/dedup stages.",
+        help="Collect PCAP files into --pcap-dir and deduplicate before extraction.",
     )
+    parser.add_argument("--max-messages", type=int, default=DEFAULT_MAX_MESSAGES, help="Maximum messages to extract/write.")
     parser.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
     parser.add_argument("--max-workers", type=int, default=4, help="Parallel workers for PCAP extraction.")
     parser.add_argument(
@@ -363,10 +375,36 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-config", type=Path, default=Path("LLM_config.json"), help="LLM config JSON for stage 15.")
     parser.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
     parser.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
+    parser.add_argument("--skip-llm", action="store_true", help="Skip LLM evidence export and analysis stages.")
     parser.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
     parser.add_argument("--llm-max-tokens", type=int, default=6000, help="Max output tokens for stage 15 LLM analysis.")
     parser.add_argument("--stop-after", help="Run through the named pipeline step and then stop; useful for smoke tests.")
     return parser.parse_args()
+
+
+def warn_missing_requirements() -> None:
+    requirements_path = PROJECT_ROOT / "requirements.txt"
+    if not requirements_path.is_file():
+        return
+
+    missing = []
+    for line in requirements_path.read_text(encoding="utf-8").splitlines():
+        requirement = line.strip()
+        if not requirement or requirement.startswith("#"):
+            continue
+        package_name = re.split(r"[<>=~!]", requirement, maxsplit=1)[0].strip()
+        try:
+            importlib.metadata.version(package_name)
+        except importlib.metadata.PackageNotFoundError:
+            package_name = package_name.replace("_", "-")
+            try:
+                importlib.metadata.version(package_name)
+            except importlib.metadata.PackageNotFoundError:
+                missing.append(requirement)
+
+    if missing:
+        print(f"{YELLOW}Warning:{RESET} missing requirements: {', '.join(missing)}")
+        print(f"{YELLOW}Install with:{RESET} {sys.executable} -m pip install -r requirements.txt")
 
 
 def _resolve_under_project(path: Path) -> Path:
@@ -380,9 +418,11 @@ def validate_args(args: argparse.Namespace) -> None:
     args.data_dir = _resolve_under_project(args.data_dir)
     args.output_dir = _resolve_under_project(args.output_dir)
     args.llm_config = _resolve_under_project(args.llm_config)
-    if not args.llm_config.is_file():
+    if args.max_messages is not None and args.max_messages <= 0:
+        raise SystemExit(f"{RED}Error:{RESET} --max-messages must be greater than 0.")
+    if not args.skip_llm and not args.llm_config.is_file():
         raise SystemExit(f"{RED}Error:{RESET} LLM config file does not exist: {args.llm_config}")
-    if args.llm_template:
+    if not args.skip_llm and args.llm_template:
         args.llm_template = args.llm_template.resolve()
         if not args.llm_template.is_file():
             raise SystemExit(f"{RED}Error:{RESET} LLM template file does not exist: {args.llm_template}")
@@ -407,15 +447,29 @@ def prepare_output_dirs(args: argparse.Namespace) -> None:
     args.data_dir.mkdir(parents=True, exist_ok=True)
     (args.data_dir / "03_features").mkdir(parents=True, exist_ok=True)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    if not args.legacy_json and not args.skip_collect:
+    if not args.legacy_json and args.collect:
         args.pcap_dir.mkdir(parents=True, exist_ok=True)
+
+
+def output_paths(args: argparse.Namespace) -> list[Path]:
+    paths = [
+        args.data_dir / "10_protocol_model.json",
+        args.data_dir / "11_evaluation.json",
+        args.output_dir / "protocol_spec.md",
+        args.output_dir / "protocol_report.html",
+    ]
+    if not args.skip_llm:
+        paths.extend([args.data_dir / "12_llm_evidence.json", args.data_dir / "13_llm_analysis.json"])
+    return paths
 
 
 def main() -> None:
     print(f"{CYAN}=== Protocol RE Pipeline Runner ==={RESET}")
     logger.info("Pipeline started")
+    start = time.time()
 
     args = parse_args()
+    warn_missing_requirements()
     validate_args(args)
     prepare_output_dirs(args)
 
@@ -436,7 +490,12 @@ def main() -> None:
             logger.error("Pipeline aborted at step: %s", name)
             sys.exit(1)
 
+    elapsed = time.time() - start
     print(f"\n{GREEN}Pipeline completed successfully!{RESET}")
+    print(f"{GREEN}Total execution time:{RESET} {elapsed:.2f}s")
+    print(f"{GREEN}Output files:{RESET}")
+    for path in output_paths(args):
+        print(f"  - {path}")
     logger.info("Pipeline finished successfully")
 
 

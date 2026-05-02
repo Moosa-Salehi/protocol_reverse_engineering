@@ -70,7 +70,7 @@ export OPENAI_API_KEY=<api-key>
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 ```
 
-Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. The runner exposes the same workflow with `--llm-config`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, and `--llm-max-tokens`.
+Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. The runner exposes the same workflow with `--llm-config`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, `--llm-max-tokens`, and `--skip-llm`.
 
 ## Required system
 
@@ -92,7 +92,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps>
 ```
 
-This command collects PCAP/PCAPNG files into `pcaps/`, removes duplicate captures, extracts TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_spec.md`, and `output/protocol_report.html`.
+This command treats the input folder as an existing normalized PCAP directory, extracts up to 2,000,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_spec.md`, and `output/protocol_report.html`, then prints total execution time and output file paths.
 
 Useful runner options:
 
@@ -100,19 +100,23 @@ Useful runner options:
 python main.py <folder-containing-pcaps> --max-workers 4
 python main.py <folder-containing-pcaps> --service-port <port>
 python main.py <folder-containing-pcaps> --reassembly-mode stream
-python main.py pcaps --skip-collect
+python main.py files --collect
+python main.py pcaps --max-messages 5000000
+python main.py pcaps --skip-llm
 python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads
 python main.py --legacy-json archive/protocol-x-payloads --data-dir /tmp/protocol_re_data --output-dir /tmp/protocol_re_output --stop-after 03_alt_build_corpus
 python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads --llm-render-only --stop-after 15_analyze_with_llm
 ```
 
 - `--legacy-json <dir>` uses already extracted archive JSON payloads instead of PCAPs.
-- `--skip-collect` treats the positional input folder as an existing normalized PCAP directory and skips collect/dedup.
+- `--collect` collects PCAP/PCAPNG files into `pcaps/` and removes duplicate captures before extraction.
+- `--max-messages <n>` limits extraction/corpus writing; default is 2,000,000.
 - `--service-port` optionally filters extraction to one TCP port. If omitted, the PCAP extractor treats all TCP payloads as candidate unknown-protocol traffic.
 - `--reassembly-mode packet` keeps the fast packet-payload extractor; `--reassembly-mode stream` reconstructs directional raw TCP byte streams without assuming any application protocol framing.
 - `--data-dir`, `--pcap-dir`, and `--output-dir` override artifact locations.
 - `--llm-config <file>` points stage 15 at an LLM config JSON; by default it uses `LLM_config.json`.
 - `--llm-render-only` renders `data/13_llm_prompt.md` and `data/13_llm_analysis.json` metadata without calling an API.
+- `--skip-llm` skips LLM evidence export and analysis stages.
 - `--stop-after <step>` is useful for smoke tests and partial runs.
 
 ## Running step by step
@@ -128,7 +132,7 @@ Build from PCAPs:
 ```bash
 python3 scripts/01_collect_pcaps.py files pcaps
 python3 scripts/02_dedup_pcaps.py pcaps --delete
-python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --service-port <port> --max-workers 4 --reassembly-mode packet
+python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --service-port <port> --max-workers 4 --reassembly-mode packet --max-messages 2000000
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
 python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json
@@ -148,7 +152,7 @@ python3 scripts/17_export_html.py data/10_protocol_model.json output/protocol_re
 Build from legacy extracted JSON payloads:
 
 ```bash
-python3 scripts/03_alt_build_corpus.py archive/protocol-x-payloads data/01_messages.jsonl --deduplicate-payloads
+python3 scripts/03_alt_build_corpus.py archive/protocol-x-payloads data/01_messages.jsonl --deduplicate-payloads --max-messages 2000000
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features --assignments-json data/02_family_assignments.json
 python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json

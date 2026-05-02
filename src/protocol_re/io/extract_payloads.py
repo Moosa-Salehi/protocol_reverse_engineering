@@ -305,6 +305,7 @@ def extract_messages_from_pcaps(
     service_port: int | None = None,
     max_workers: int = 4,
     reassembly_mode: str = "packet",
+    max_messages: int | None = None,
 ) -> List[MessageRecord]:
     pcap_paths = [str(path) for path in sorted(Path(pcap_dir).iterdir()) if path.suffix.lower() in {".pcap", ".pcapng"}]
     all_messages: List[MessageRecord] = []
@@ -317,6 +318,10 @@ def extract_messages_from_pcaps(
                 message.msg_id = next_msg_id
                 all_messages.append(message)
                 next_msg_id += 1
+                if max_messages is not None and len(all_messages) >= max_messages:
+                    break
+            if max_messages is not None and len(all_messages) >= max_messages:
+                break
     else:
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = {
@@ -329,6 +334,10 @@ def extract_messages_from_pcaps(
                     message.msg_id = next_msg_id
                     all_messages.append(message)
                     next_msg_id += 1
+                    if max_messages is not None and len(all_messages) >= max_messages:
+                        break
+                if max_messages is not None and len(all_messages) >= max_messages:
+                    break
 
     all_messages.sort(key=lambda item: (item.session_id, item.index_in_session, item.msg_id))
     for idx, message in enumerate(all_messages):

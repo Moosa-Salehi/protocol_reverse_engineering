@@ -91,14 +91,18 @@ def build_corpus(
     json_folder_path: str,
     service_port: Optional[int] = None,
     deduplicate_payloads: bool = False,
+    max_messages: Optional[int] = None,
 ) -> List[MessageRecord]:
-    return list(
-        iter_message_records(
-            json_folder_path,
-            service_port=service_port,
-            deduplicate_payloads=deduplicate_payloads,
-        )
-    )
+    records = []
+    for record in iter_message_records(
+        json_folder_path,
+        service_port=service_port,
+        deduplicate_payloads=deduplicate_payloads,
+    ):
+        records.append(record)
+        if max_messages is not None and len(records) >= max_messages:
+            break
+    return records
 
 
 def write_corpus_jsonl(records: Sequence[MessageRecord], output_path: str) -> None:
