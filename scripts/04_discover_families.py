@@ -30,11 +30,21 @@ def main() -> None:
         dbscan_min_samples=args.dbscan_min_samples,
         hdbscan_min_cluster_size=args.hdbscan_min_cluster_size,
     )
+    requested_sample = args.sample_size if args.sample_size is not None else len(records)
+    assignment_strategy = (
+        "full_corpus_clustering"
+        if result.sample_size >= len(records)
+        else "sample_unique_then_duplicate_and_centroid_propagation"
+    )
 
     payload = {
         "assignments": [assignment.to_dict() for assignment in result.assignments],
         "labels": result.labels,
         "sample_size": result.sample_size,
+        "assigned_message_count": len(result.assignments),
+        "total_message_count": len(records),
+        "requested_sample_size": requested_sample,
+        "assignment_strategy": assignment_strategy,
         "feature_shape": list(result.feature_shape),
     }
     with open(args.output_json, "w", encoding="utf-8") as handle:

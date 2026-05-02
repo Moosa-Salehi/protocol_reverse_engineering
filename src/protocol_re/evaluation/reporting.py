@@ -52,15 +52,21 @@ def clustering_summary(total_messages: int, assignments_payload: Dict[str, Any])
     assigned_count = len(assignments)
     noise_count = family_counts.get("noise", 0)
     cluster_sizes = [count for family_id, count in family_counts.items() if family_id != "noise"]
+    sample_size = assignments_payload.get("sample_size")
+    corpus_assignment_coverage_ratio = round(assigned_count / total_messages, 6) if total_messages else 0.0
+    clustering_sample_ratio = round(sample_size / total_messages, 6) if total_messages and sample_size is not None else None
     return {
         "assigned_message_count": assigned_count,
         "total_message_count": total_messages,
-        "assignment_coverage_ratio": round(assigned_count / total_messages, 6) if total_messages else 0.0,
+        "assignment_coverage_ratio": corpus_assignment_coverage_ratio,
+        "corpus_assignment_coverage_ratio": corpus_assignment_coverage_ratio,
+        "clustering_sample_ratio": clustering_sample_ratio,
         "unassigned_message_count": max(0, total_messages - assigned_count),
         "family_count": len(family_counts),
         "noise_count": noise_count,
         "noise_ratio_of_assigned": round(noise_count / assigned_count, 6) if assigned_count else 0.0,
-        "sample_size": assignments_payload.get("sample_size"),
+        "sample_size": sample_size,
+        "assignment_strategy": assignments_payload.get("assignment_strategy"),
         "feature_shape": assignments_payload.get("feature_shape"),
         "cluster_size_distribution": _quantiles(cluster_sizes),
         "largest_families": _top_counter(family_counts, 20),

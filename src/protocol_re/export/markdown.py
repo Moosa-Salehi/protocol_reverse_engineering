@@ -48,9 +48,14 @@ def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
 
     lines.append(f"- Messages: `{corpus.get('message_count', 0)}` across `{corpus.get('session_count', 0)}` sessions")
     lines.append(
-        f"- Assignment coverage: `{_fmt_metric(clustering.get('assignment_coverage_ratio', 0.0))}` "
+        f"- Corpus assignment coverage: `{_fmt_metric(clustering.get('corpus_assignment_coverage_ratio', clustering.get('assignment_coverage_ratio', 0.0)))}` "
         f"with `{clustering.get('family_count', 0)}` families"
     )
+    if clustering.get("clustering_sample_ratio") is not None:
+        lines.append(
+            f"- Clustering sample: `{clustering.get('sample_size', 0)}` messages "
+            f"ratio=`{_fmt_metric(clustering.get('clustering_sample_ratio', 0.0))}`"
+        )
     lines.append(
         f"- Parseable families: `{boundaries.get('parseable_family_count', 0)}` "
         f"of `{boundaries.get('family_count', 0)}`"

@@ -150,6 +150,9 @@ def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         },
         "clustering": {
             "assignment_coverage_ratio": clustering.get("assignment_coverage_ratio"),
+            "corpus_assignment_coverage_ratio": clustering.get("corpus_assignment_coverage_ratio"),
+            "clustering_sample_ratio": clustering.get("clustering_sample_ratio"),
+            "sample_size": clustering.get("sample_size"),
             "family_count": clustering.get("family_count"),
             "noise_count": clustering.get("noise_count"),
             "cluster_size_distribution": clustering.get("cluster_size_distribution", {}),

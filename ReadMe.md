@@ -25,7 +25,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/02_dedup_pcaps.py` finds duplicate PCAP files and can remove them.
 - `scripts/03_extract_messages.py` extracts TCP payload messages from PCAPs directly into the canonical JSONL corpus.
 - `scripts/03_alt_build_corpus.py` builds the same canonical corpus from legacy extracted `protocol-x-payloads/*.json` files.
-- `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback.
+- `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback; it clusters a unique-message sample and propagates sampled labels to duplicate payloads across the corpus.
 - `scripts/05_extract_features.py` writes reusable per-message and per-family feature artifacts.
 - `scripts/06_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json`, it uses family entropy/uniqueness/coverage vectors to refine segment confidence.
 - `scripts/07_pair_requests_responses.py` emits candidate request/response pairs per session.
@@ -46,6 +46,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, top n-gram frequency tables, wider repeated motifs, trailing-block/padding hints, length profiles, and recurring fixed-position groups.
 - `scripts/05_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
 - `main.py` passes `data/03_features/family_features.json` into boundary inference and passes feature, keyword, subcluster, relation, and semantic artifacts into the protocol-model builder so final models retain the evidence from upstream stages.
+- Evaluation reports distinguish corpus assignment coverage from clustering sample ratio, so the configured 100K clustering sample is reported separately from propagated family assignment coverage.
 
 ## LLM evidence schema
 

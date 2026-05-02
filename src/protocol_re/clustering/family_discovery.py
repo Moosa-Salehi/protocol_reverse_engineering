@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Iterable, List, Sequence
+from typing import Any, Dict, List, Sequence
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
-from protocol_re.utils.bytes import hex_to_bytes, pad_messages
+from protocol_re.utils.bytes import hex_to_bytes
+
+CENTROID_ASSIGNMENT_BATCH_SIZE = 10000
 
 try:
     import numpy as np
@@ -46,27 +48,29 @@ def unique_messages(records: Sequence[MessageRecord]) -> List[MessageRecord]:
 
 
 
-def vectorize_messages(records: Sequence[MessageRecord]) -> np.ndarray: # type: ignore
+def vectorize_messages(records: Sequence[MessageRecord], width: int | None = None) -> np.ndarray: # type: ignore
     messages = [hex_to_bytes(record.payload_hex) for record in records]
     if np is None:
         raise RuntimeError("NumPy is required for vectorization-based clustering")
-    max_len = max((len(msg) for msg in messages), default=0)
+    max_len = width if width is not None else max((len(msg) for msg in messages), default=0)
     matrix = np.zeros((len(messages), max_len), dtype=np.uint8)
     for idx, msg in enumerate(messages):
-        matrix[idx, : len(msg)] = list(msg)
+        clipped = msg[:max_len]
+        matrix[idx, : len(clipped)] = list(clipped)
     return matrix
 
 
 
-def maybe_reduce_dimensions(matrix: np.ndarray, n_components: int | None = None) -> np.ndarray: # pyright: ignore[reportInvalidTypeForm]
+def maybe_reduce_dimensions(matrix: np.ndarray, n_components: int | None = None) -> tuple[np.ndarray, Any | None]: # pyright: ignore[reportInvalidTypeForm]
     if n_components is None or PCA is None or matrix.size == 0:
-        return matrix
+        return matrix, None
     if matrix.shape[1] <= 1:
-        return matrix
+        return matrix, None
     n_components = min(n_components, matrix.shape[0], matrix.shape[1])
     if n_components <= 1:
-        return matrix
-    return PCA(n_components=n_components).fit_transform(matrix)
+        return matrix, None
+    reducer = PCA(n_components=n_components)
+    return reducer.fit_transform(matrix), reducer
 
 
 def heuristic_family_assignments(records: Sequence[MessageRecord]) -> ClusteringResult:
@@ -90,6 +94,82 @@ def heuristic_family_assignments(records: Sequence[MessageRecord]) -> Clustering
     )
 
 
+def _propagate_assignments(
+    records: Sequence[MessageRecord],
+    sampled_assignments: Sequence[FamilyAssignment],
+    sampled_records: Sequence[MessageRecord],
+    reduced_sample_matrix: object | None = None,
+    reducer: Any | None = None,
+    vector_width: int | None = None,
+) -> List[FamilyAssignment]:
+    assignment_by_msg_id = {assignment.msg_id: assignment for assignment in sampled_assignments}
+    family_by_payload = {}
+    for record in records:
+        assignment = assignment_by_msg_id.get(record.msg_id)
+        if assignment is not None:
+            family_by_payload.setdefault(record.payload_hex, assignment.family_id)
+
+    assignments = []
+    for record in records:
+        sampled_assignment = assignment_by_msg_id.get(record.msg_id)
+        if sampled_assignment is not None:
+            assignments.append(sampled_assignment)
+            continue
+        family_id = family_by_payload.get(record.payload_hex)
+        if family_id is None:
+            continue
+        assignments.append(FamilyAssignment(msg_id=record.msg_id, family_id=family_id, confidence=0.95))
+
+    if np is None or reduced_sample_matrix is None:
+        return sorted(assignments, key=lambda assignment: assignment.msg_id)
+
+    assigned_msg_ids = {assignment.msg_id for assignment in assignments}
+    sampled_by_msg_id = {record.msg_id: index for index, record in enumerate(sampled_records)}
+    labels_by_family: Dict[str, List[int]] = defaultdict(list)
+    for assignment in sampled_assignments:
+        if assignment.family_id == "noise":
+            continue
+        sample_index = sampled_by_msg_id.get(assignment.msg_id)
+        if sample_index is not None:
+            labels_by_family[assignment.family_id].append(sample_index)
+    if not labels_by_family:
+        return sorted(assignments, key=lambda assignment: assignment.msg_id)
+
+    sample_matrix = np.asarray(reduced_sample_matrix)
+    centroids = {
+        family_id: sample_matrix[indexes].mean(axis=0)
+        for family_id, indexes in labels_by_family.items()
+        if indexes
+    }
+    if not centroids:
+        return sorted(assignments, key=lambda assignment: assignment.msg_id)
+
+    unique_unsampled = unique_messages([record for record in records if record.msg_id not in assigned_msg_ids])
+    if not unique_unsampled:
+        return sorted(assignments, key=lambda assignment: assignment.msg_id)
+
+    family_ids = list(centroids)
+    centroid_matrix = np.vstack([centroids[family_id] for family_id in family_ids])
+    for start in range(0, len(unique_unsampled), CENTROID_ASSIGNMENT_BATCH_SIZE):
+        batch = unique_unsampled[start : start + CENTROID_ASSIGNMENT_BATCH_SIZE]
+        unsampled_matrix = vectorize_messages(batch, width=vector_width or int(sample_matrix.shape[1]))
+        if reducer is not None:
+            unsampled_matrix = reducer.transform(unsampled_matrix)
+        for record, row in zip(batch, unsampled_matrix):
+            distances = np.linalg.norm(centroid_matrix - row, axis=1)
+            best_index = int(np.argmin(distances))
+            family_by_payload[record.payload_hex] = family_ids[best_index]
+
+    for record in records:
+        if record.msg_id in assigned_msg_ids:
+            continue
+        family_id = family_by_payload.get(record.payload_hex)
+        if family_id is None:
+            continue
+        assignments.append(FamilyAssignment(msg_id=record.msg_id, family_id=family_id, confidence=0.75))
+    return sorted(assignments, key=lambda assignment: assignment.msg_id)
+
+
 
 def discover_families(
     records: Sequence[MessageRecord],
@@ -105,10 +185,16 @@ def discover_families(
         working_records = working_records[:sample_size]
 
     if np is None or (method == "dbscan" and DBSCAN is None) or (method == "hdbscan" and hdbscan is None):
-        return heuristic_family_assignments(working_records)
+        result = heuristic_family_assignments(records)
+        return ClusteringResult(
+            assignments=result.assignments,
+            labels=result.labels,
+            sample_size=len(working_records),
+            feature_shape=result.feature_shape,
+        )
 
     matrix = vectorize_messages(working_records)
-    reduced = maybe_reduce_dimensions(matrix, pca_components)
+    reduced, reducer = maybe_reduce_dimensions(matrix, pca_components)
 
     if method == "dbscan":
         if DBSCAN is None:
@@ -121,13 +207,20 @@ def discover_families(
     else:
         raise ValueError(f"Unsupported clustering method: {method}")
 
-    assignments = []
+    sampled_assignments = []
     for record, label in zip(working_records, labels):
         family_id = "noise" if label == -1 else f"family_{label}"
-        assignments.append(FamilyAssignment(msg_id=record.msg_id, family_id=family_id, confidence=1.0))
+        sampled_assignments.append(FamilyAssignment(msg_id=record.msg_id, family_id=family_id, confidence=1.0))
 
     return ClusteringResult(
-        assignments=assignments,
+        assignments=_propagate_assignments(
+            records,
+            sampled_assignments,
+            working_records,
+            reduced_sample_matrix=reduced,
+            reducer=reducer,
+            vector_width=int(matrix.shape[1]),
+        ),
         labels=labels.tolist() if hasattr(labels, "tolist") else list(labels),
         sample_size=len(working_records),
         feature_shape=tuple(reduced.shape),

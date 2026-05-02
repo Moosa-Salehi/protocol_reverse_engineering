@@ -205,7 +205,8 @@ def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
       <h2>Pipeline Evaluation</h2>
       <div class="metric-grid">
         {_metric('Messages', corpus.get('message_count', 0), str(corpus.get('session_count', 0)) + ' sessions')}
-        {_metric('Assignment coverage', _pct(clustering.get('assignment_coverage_ratio', 0)), str(clustering.get('family_count', 0)) + ' families')}
+        {_metric('Corpus assignment coverage', _pct(clustering.get('corpus_assignment_coverage_ratio', clustering.get('assignment_coverage_ratio', 0))), str(clustering.get('family_count', 0)) + ' families')}
+        {_metric('Clustering sample', _pct(clustering.get('clustering_sample_ratio', 0)), str(clustering.get('sample_size', 0)) + ' messages')}
         {_metric('Parseable families', _pct(boundaries.get('parseable_family_ratio', 0)), str(boundaries.get('parseable_family_count', 0)) + ' families')}
         {_metric('Pair hypotheses', pairs.get('pair_count', 0), _pct(1 - float(pairs.get('direction_unknown_pair_ratio', 0) or 0)) + ' direction-known')}
         {_metric('Relation edges', relations.get('edge_count', 0), str(relations.get('edges_with_echo_fields', 0)) + ' with echoes')}
