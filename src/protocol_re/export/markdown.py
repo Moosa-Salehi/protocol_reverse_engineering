@@ -91,8 +91,28 @@ def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
     return lines
 
 
+def _llm_analysis_section(llm_analysis: Optional[Dict[str, object]]) -> List[str]:
+    if not llm_analysis:
+        return []
 
-def render_protocol_model_markdown(model: Dict[str, object], evaluation: Optional[Dict[str, object]] = None) -> str:
+    lines: List[str] = ["## LLM Analysis", ""]
+    analysis_markdown = llm_analysis.get("analysis_markdown")
+    if analysis_markdown:
+        lines.append(str(analysis_markdown).strip())
+    elif llm_analysis.get("render_only"):
+        lines.append("_LLM analysis was skipped because stage 15 ran in render-only mode._")
+    else:
+        lines.append("_No LLM analysis text is available._")
+    lines.append("")
+    return lines
+
+
+
+def render_protocol_model_markdown(
+    model: Dict[str, object],
+    evaluation: Optional[Dict[str, object]] = None,
+    llm_analysis: Optional[Dict[str, object]] = None,
+) -> str:
     lines: List[str] = []
     lines.append(f"# {model.get('protocol_name', 'unknown-industrial-protocol')}")
     lines.append("")
@@ -108,6 +128,7 @@ def render_protocol_model_markdown(model: Dict[str, object], evaluation: Optiona
         lines.append("")
 
     lines.extend(_evaluation_section(evaluation))
+    lines.extend(_llm_analysis_section(llm_analysis))
 
     relations = model.get("relations", []) or []
     if relations:

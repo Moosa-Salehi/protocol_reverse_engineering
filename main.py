@@ -295,6 +295,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             llm_steps[1][1].extend(["--max-tokens", str(args.llm_max_tokens)])
         insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "16_export_markdown")
         pipeline[insert_at:insert_at] = llm_steps
+        for step_name, step_args in pipeline:
+            if step_name in {"16_export_markdown", "17_export_html"}:
+                step_args.extend(["--llm-analysis-json", _path(llm_analysis_json)])
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):

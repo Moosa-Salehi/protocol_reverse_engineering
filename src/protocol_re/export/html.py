@@ -214,11 +214,34 @@ def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
     """
 
 
-def render_protocol_model_html(model: Dict[str, Any], evaluation: Optional[Dict[str, Any]] = None) -> str:
+def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
+    if not llm_analysis:
+        return ""
+    analysis_markdown = llm_analysis.get("analysis_markdown")
+    if analysis_markdown:
+        body = f"<pre>{_text(str(analysis_markdown).strip())}</pre>"
+    elif llm_analysis.get("render_only"):
+        body = '<p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>'
+    else:
+        body = '<p class="muted">No LLM analysis text is available.</p>'
+    return f"""
+    <section class="panel llm-panel">
+      <h2>LLM Analysis</h2>
+      {body}
+    </section>
+    """
+
+
+def render_protocol_model_html(
+    model: Dict[str, Any],
+    evaluation: Optional[Dict[str, Any]] = None,
+    llm_analysis: Optional[Dict[str, Any]] = None,
+) -> str:
     families = _families(model)
     family_cards = "\n".join(_family_card(family) for family in families)
     metadata_rows = _kv_rows(model.get("metadata", {}) or {})
     relation_rows = _relation_rows(model)
+    llm_block = _llm_analysis_block(llm_analysis)
     total_messages = sum(int(family.get("message_count", 0) or 0) for family in model.get("families", []) or [])
     return f"""<!doctype html>
 <html lang="en">
@@ -278,6 +301,7 @@ th {{ color: var(--accent-2); font-weight: 700; }}
 .pill.motif {{ color: #d7ff64; }}
 .pill.wide {{ color: #44d7b6; }}
 .template {{ display:block; white-space: pre-wrap; word-break: break-word; padding: 14px; background: #0b0f0e; border: 1px solid var(--line); border-radius: 14px; color: #dbe8d2; }}
+.llm-panel pre {{ white-space: pre-wrap; word-break: break-word; padding: 18px; background: #0b0f0e; border: 1px solid var(--line); border-radius: 16px; color: #dbe8d2; line-height: 1.5; }}
 .segment-map {{ display:flex; height: 18px; width:100%; overflow:hidden; border-radius: 999px; background:#0b0f0e; border:1px solid var(--line); margin: 16px 0; }}
 .seg {{ min-width: 3px; border-right: 1px solid rgba(0,0,0,.35); }}
 .seg.constant {{ background: var(--accent); }}
@@ -306,6 +330,7 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
     </div>
   </header>
   {_evaluation_block(evaluation)}
+  {llm_block}
   <section class="panel">
     <h2>Metadata</h2>
     <table class="meta-table"><tbody>{metadata_rows or '<tr><td>No metadata.</td></tr>'}</tbody></table>
