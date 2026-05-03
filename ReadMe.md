@@ -95,7 +95,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps>
 ```
 
-This command treats the input folder as an existing normalized PCAP directory, extracts up to 2,000,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_spec.md`, and `output/protocol_report.html`, then prints total execution time and output file paths.
+This command treats the input folder as an existing normalized PCAP directory, extracts up to 2,000,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_spec.md`, and `output/protocol_report.html`, then prints total execution time and output file paths. Typical runtime for 2 million messages: 30 minutes.
 
 Useful runner options:
 
