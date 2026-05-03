@@ -45,7 +45,10 @@ DEFAULT_MAX_MESSAGES = 2_000_000
 # Ensure child scripts can import the local package without installation.
 os.environ["PYTHONPATH"] = str(SRC_PATH)
 
-logger.info("-" * 109)
+logger.info("\n")
+logger.info("-" * 110)
+logger.info('-' + " " * 108 + '-')
+logger.info("-" * 110)
 logger.info("Project root: %s", PROJECT_ROOT)
 logger.info("PYTHONPATH set to: %s", SRC_PATH)
 
@@ -321,7 +324,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
 def run_step(name: str, step_args: list[str]) -> bool:
     print(f"\n{CYAN}--- Running step: {name} ---{RESET}")
-    logger.info("Starting step: %s", name)
+    logger.info(" ")
+    logger.info("------------------------------------- Starting step: %s", name)
 
     start = time.time()
     cmd = [sys.executable] + step_args
@@ -339,7 +343,7 @@ def run_step(name: str, step_args: list[str]) -> bool:
             print(result.stdout.rstrip())
         if result.stderr:
             print(result.stderr.rstrip(), file=sys.stderr)
-        logger.info("STDOUT:\n%s", result.stdout)
+        logger.info("STDOUT:\n%s", result.stdout.strip())
         if result.stderr:
             logger.warning("STDERR:\n%s", result.stderr)
         result.check_returncode()
@@ -467,13 +471,13 @@ def prepare_output_dirs(args: argparse.Namespace) -> None:
 
 def output_paths(args: argparse.Namespace) -> list[Path]:
     paths = [
-        args.data_dir / "10_protocol_model.json",
-        args.data_dir / "11_evaluation.json",
+        # args.data_dir / "10_protocol_model.json",
+        # args.data_dir / "11_evaluation.json",
         args.output_dir / "protocol_spec.md",
         args.output_dir / "protocol_report.html",
     ]
-    if not args.skip_llm:
-        paths.extend([args.data_dir / "12_llm_evidence.json", args.data_dir / "13_llm_analysis.json", args.data_dir / "14_evaluation_model_data.json"])
+    # if not args.skip_llm:
+    #     paths.extend([args.data_dir / "12_llm_evidence.json", args.data_dir / "13_llm_analysis.json", args.data_dir / "14_evaluation_model_data.json"])
     return paths
 
 
@@ -511,6 +515,7 @@ def main() -> None:
     for path in output_paths(args):
         print(f"  - {path}")
     logger.info("Pipeline finished successfully")
+    logger.info(f"Total execution time: {elapsed:.2f}s")
 
 
 if __name__ == "__main__":
