@@ -37,8 +37,9 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/13_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, relations, and semantic-label coverage when supplied.
 - `scripts/14_export_llm_evidence.py` renders a schema-shaped compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
 - `scripts/15_analyze_with_llm.py` renders the protocol-analysis prompt and can call an OpenAI-compatible LLM API to write `data/13_llm_analysis.json`.
-- `scripts/16_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
-- `scripts/17_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
+- `scripts/16_prepare_evaluation_data.py` prepares `data/14_evaluation_model_data.json` for final ground-truth evaluation.
+- `scripts/17_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
+- `scripts/18_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
 
 ## Feature artifacts
 
@@ -146,8 +147,9 @@ python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protoco
 python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
-python3 scripts/16_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
-python3 scripts/17_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
+python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json
+python3 scripts/17_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/18_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
 Build from legacy extracted JSON payloads:
@@ -166,8 +168,9 @@ python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protoco
 python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
-python3 scripts/16_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
-python3 scripts/17_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
+python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json
+python3 scripts/17_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/18_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
 Windows PowerShell equivalent for imports:
