@@ -1,139 +1,157 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Protocol Evaluation Schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/evaluation_input.schema.json",
+  "title": "Protocol RE Final Evaluation Input",
+  "description": "Input bundle for comparing the pipeline protocol model/spec against a ground-truth protocol specification.",
   "type": "object",
-  "definitions": {
-
-    "ByteRange": {
+  "required": ["predicted_protocol", "ground_truth_protocol"],
+  "additionalProperties": false,
+  "properties": {
+    "predicted_protocol": {"$ref": "#/$defs/predicted_protocol"},
+    "ground_truth_protocol": {"$ref": "#/$defs/ground_truth_protocol"},
+    "metadata": {"type": "object"}
+  },
+  "$defs": {
+    "predicted_protocol": {
       "type": "object",
+      "required": ["protocol_name", "families"],
+      "additionalProperties": true,
       "properties": {
-        "start": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Start byte offset (inclusive)"
-        },
-        "end": {
-          "type": ["integer", "null"],
-          "minimum": 0,
-          "description": "End byte offset (inclusive). Null for variable-length fields."
-        }
-      },
-      "required": ["start", "end"]
-    },
-
-    "GroundTruthField": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Canonical field name"
-        },
-        "start": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "end": {
-          "type": ["integer", "null"],
-          "minimum": 0
-        },
-        "type": {
-          "type": "string",
-          "description": "Semantic field type (id, opcode, length, constant, payload, etc.)"
-        }
-      },
-      "required": ["name", "start", "end", "type"]
-    },
-
-    "GroundTruthSpec": {
-      "type": "object",
-      "properties": {
-        "protocol": {
-          "type": "string",
-          "description": "Protocol name (e.g., modbus_tcp)"
-        },
-        "fields": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/GroundTruthField" },
-          "description": "List of known fields for the protocol"
-        }
-      },
-      "required": ["protocol", "fields"]
-    },
-
-    "PredictedFieldHypothesis": {
-      "type": "object",
-      "properties": {
-        "start": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "end": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "label": {
-          "type": "string",
-          "description": "Model-assigned field label (keyword, length, echo, etc.)"
-        },
-        "confidence": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        }
-      },
-      "required": ["start", "end", "label"]
-    },
-
-    "MessageFamily": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "role": {
-          "type": "string",
-          "enum": ["request", "response", "unknown"],
-          "description": "Optional request/response role"
-        },
-        "field_hypotheses": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/PredictedFieldHypothesis" }
-        },
-        "message_indices": {
-          "type": "array",
-          "items": { "type": "integer", "minimum": 0 },
-          "description": "Optional: indices of messages belonging to this family"
-        }
-      },
-      "required": ["name", "field_hypotheses"]
-    },
-
-    "RequestResponseRelation": {
-      "type": "object",
-      "properties": {
-        "request_family": { "type": "string" },
-        "response_family": { "type": "string" },
-        "confidence": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        }
-      },
-      "required": ["request_family", "response_family"]
-    },
-
-    "PredictedOutput": {
-      "type": "object",
-      "properties": {
+        "protocol_name": {"type": "string"},
+        "version": {"type": "string"},
+        "metadata": {"type": "object"},
         "families": {
           "type": "array",
-          "items": { "$ref": "#/definitions/MessageFamily" }
+          "items": {"$ref": "#/$defs/predicted_family"}
         },
         "relations": {
           "type": "array",
-          "items": { "$ref": "#/definitions/RequestResponseRelation" },
-          "description": "Optional request-response relationships"
+          "items": {"$ref": "#/$defs/predicted_relation"}
+        },
+        "llm_analysis": {"type": ["object", "string", "null"]}
+      }
+    },
+    "ground_truth_protocol": {
+      "type": "object",
+      "required": ["protocol_name", "message_types"],
+      "additionalProperties": true,
+      "properties": {
+        "protocol_name": {"type": "string"},
+        "version": {"type": "string"},
+        "description": {"type": "string"},
+        "message_types": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/ground_truth_message_type"}
+        },
+        "relations": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/ground_truth_relation"}
         }
-      },
-      "required": ["families"]
+      }
+    },
+    "predicted_family": {
+      "type": "object",
+      "required": ["family_id"],
+      "additionalProperties": true,
+      "properties": {
+        "family_id": {"type": "string"},
+        "role": {"type": "string"},
+        "message_count": {"type": "integer", "minimum": 0},
+        "template": {"type": "string"},
+        "segments": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/segment"}
+        },
+        "field_hypotheses": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/predicted_field"}
+        },
+        "semantic_summary": {"type": ["object", "null"]},
+        "evidence": {"type": "object"}
+      }
+    },
+    "ground_truth_message_type": {
+      "type": "object",
+      "required": ["message_type_id", "fields"],
+      "additionalProperties": true,
+      "properties": {
+        "message_type_id": {"type": "string"},
+        "name": {"type": "string"},
+        "role": {"type": "string"},
+        "description": {"type": "string"},
+        "fields": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/ground_truth_field"}
+        },
+        "examples": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "segment": {
+      "type": "object",
+      "required": ["start", "end"],
+      "additionalProperties": true,
+      "properties": {
+        "start": {"type": "integer", "minimum": 0},
+        "end": {"type": "integer", "minimum": 0},
+        "kind": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "predicted_field": {
+      "type": "object",
+      "required": ["start", "length", "field_type"],
+      "additionalProperties": true,
+      "properties": {
+        "family_id": {"type": "string"},
+        "start": {"type": "integer", "minimum": 0},
+        "length": {"type": "integer", "minimum": 1},
+        "field_type": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "endian": {"type": ["string", "null"]},
+        "evidence": {"type": "object"},
+        "attributes": {"type": "object"}
+      }
+    },
+    "ground_truth_field": {
+      "type": "object",
+      "required": ["name", "start", "length", "field_type"],
+      "additionalProperties": true,
+      "properties": {
+        "name": {"type": "string"},
+        "start": {"type": "integer", "minimum": 0},
+        "length": {"type": ["integer", "null"], "minimum": 1},
+        "end": {"type": ["integer", "null"], "minimum": 0},
+        "field_type": {"type": "string"},
+        "required": {"type": "boolean"},
+        "constant_value": {"type": ["string", "number", "integer", "null"]},
+        "endian": {"type": ["string", "null"]},
+        "description": {"type": "string"}
+      }
+    },
+    "predicted_relation": {
+      "type": "object",
+      "required": ["request_family_id", "response_family_id"],
+      "additionalProperties": true,
+      "properties": {
+        "request_family_id": {"type": "string"},
+        "response_family_id": {"type": "string"},
+        "pair_count": {"type": "integer", "minimum": 0},
+        "avg_pair_score": {"type": "number"}
+      }
+    },
+    "ground_truth_relation": {
+      "type": "object",
+      "required": ["request_message_type_id", "response_message_type_id"],
+      "additionalProperties": true,
+      "properties": {
+        "request_message_type_id": {"type": "string"},
+        "response_message_type_id": {"type": "string"},
+        "relation_type": {"type": "string"},
+        "description": {"type": "string"}
+      }
     }
   }
 }
