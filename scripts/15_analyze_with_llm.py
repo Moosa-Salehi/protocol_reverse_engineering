@@ -86,14 +86,14 @@ def main() -> None:
 
     if not args.render_only:
         api_key = _env_api_key()
-        if not api_key:
+        if not api_key and config.get("api_key_required") == "yes":
             raise SystemExit("Error: API key required via OPENAI_API_KEY or LLM_API_KEY. Use --render-only to skip API call.")
         response = call_openai_compatible_chat(
             prompt,
             LLMRequestConfig(
                 model=model,
                 base_url=base_url,
-                api_key=api_key,
+                api_key=api_key if api_key else "api_key",
                 temperature=temperature,
                 max_tokens=max_tokens,
                 timeout=timeout,

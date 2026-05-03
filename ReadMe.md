@@ -55,10 +55,11 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 
 ## LLM protocol analysis
 
-`scripts/15_analyze_with_llm.py` reads `data/12_llm_evidence.json`, renders a protocol reverse-engineering prompt, and can call an OpenAI-compatible `/chat/completions` API. Configure the API base URL and model in `LLM_config.json`; keep only the API key in an environment variable:
+`scripts/15_analyze_with_llm.py` reads `data/12_llm_evidence.json`, renders a protocol reverse-engineering prompt, and can call an OpenAI-compatible `/chat/completions` API. Configure the API base URL and model in `LLM_config.json`; keep the API key only in an environment variable:
 
 ```json
 {
+  "api_key_required": "yes",
   "openai_base_url": "https://api.openai.com/v1",
   "model": "gpt-4o-mini",
   "temperature": 0.1,
