@@ -46,6 +46,19 @@ def _metric(label: str, value: Any, hint: str = "") -> str:
     return f'<article class="metric"><strong>{_text(value)}</strong><span>{_text(label)}</span>{hint_html}</article>'
 
 
+def _flatten_usage(value: Any, prefix: str = "") -> List[tuple[str, Any]]:
+    if not isinstance(value, dict):
+        return []
+    items: List[tuple[str, Any]] = []
+    for key, item in value.items():
+        label = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(item, dict):
+            items.extend(_flatten_usage(item, label))
+        elif isinstance(item, (str, int, float, bool)) or item is None:
+            items.append((label, item))
+    return items
+
+
 def _kv_rows(items: Dict[str, Any]) -> str:
     rows = []
     for key, value in items.items():
@@ -218,6 +231,19 @@ def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
 def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
     if not llm_analysis:
         return ""
+    usage_items = _flatten_usage(llm_analysis.get("usage"))
+    usage_metrics = "".join(_metric(key, value) for key, value in usage_items)
+    prompt_stats = llm_analysis.get("prompt_stats") if isinstance(llm_analysis.get("prompt_stats"), dict) else {}
+    prompt_hint = "not found" if prompt_stats.get("exists") is False else str(prompt_stats.get("path", "prompt"))
+    stats_html = (
+        '<div class="metric-grid">'
+        f'{_metric("Model", llm_analysis.get("model", "unknown"))}'
+        f'{_metric("Prompt bytes", prompt_stats.get("bytes", 0), prompt_hint)}'
+        f'{_metric("Prompt chars", prompt_stats.get("characters", 0))}'
+        f'{_metric("Prompt est. tokens", prompt_stats.get("estimated_tokens", 0))}'
+        f'{usage_metrics}'
+        '</div>'
+    )
     analysis_markdown = llm_analysis.get("analysis_markdown")
     if analysis_markdown:
         body = f"<pre>{_text(str(analysis_markdown).strip())}</pre>"
@@ -228,6 +254,7 @@ def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
     return f"""
     <section class="panel llm-panel">
       <h2>LLM Analysis</h2>
+      {stats_html}
       {body}
     </section>
     """

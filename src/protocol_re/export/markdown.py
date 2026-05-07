@@ -34,6 +34,19 @@ def _fmt_metric(value: object) -> str:
     return str(value)
 
 
+def _flatten_usage(value: object, prefix: str = "") -> List[tuple[str, object]]:
+    if not isinstance(value, dict):
+        return []
+    items: List[tuple[str, object]] = []
+    for key, item in value.items():
+        label = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(item, dict):
+            items.extend(_flatten_usage(item, label))
+        elif isinstance(item, (str, int, float, bool)) or item is None:
+            items.append((label, item))
+    return items
+
+
 def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
     if not evaluation:
         return []
@@ -101,6 +114,25 @@ def _llm_analysis_section(llm_analysis: Optional[Dict[str, object]]) -> List[str
         return []
 
     lines: List[str] = ["## LLM Analysis", ""]
+    model = llm_analysis.get("model")
+    if model:
+        lines.append(f"- Model: `{model}`")
+    usage_items = _flatten_usage(llm_analysis.get("usage"))
+    if usage_items:
+        usage_text = ", ".join(f"`{key}`=`{_fmt_metric(value)}`" for key, value in usage_items)
+        lines.append(f"- Token usage: {usage_text}")
+    prompt_stats = llm_analysis.get("prompt_stats")
+    if isinstance(prompt_stats, dict):
+        if prompt_stats.get("exists") is False:
+            lines.append(f"- Prompt file: `{prompt_stats.get('path')}` not found")
+        else:
+            lines.append(
+                f"- Prompt size: `{prompt_stats.get('bytes', 0)}` bytes, "
+                f"`{prompt_stats.get('characters', 0)}` characters, "
+                f"estimated tokens=`{prompt_stats.get('estimated_tokens', 0)}`"
+            )
+    if model or usage_items or prompt_stats:
+        lines.append("")
     analysis_markdown = llm_analysis.get("analysis_markdown")
     if analysis_markdown:
         lines.append(str(analysis_markdown).strip())
