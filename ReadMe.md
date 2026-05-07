@@ -38,8 +38,9 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/14_export_llm_evidence.py` renders a schema-shaped compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
 - `scripts/15_analyze_with_llm.py` renders the protocol-analysis prompt and can call an OpenAI-compatible LLM API to write `data/13_llm_analysis.json`.
 - `scripts/16_prepare_evaluation_data.py` prepares `data/14_evaluation_model_data.json` for final ground-truth evaluation.
-- `scripts/17_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
-- `scripts/18_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
+- `scripts/17_evaluate_protocol_spec.py` compares `data/14_evaluation_model_data.json` against a ground-truth protocol JSON and writes `data/15_evaluation_result.json`.
+- `scripts/18_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
+- `scripts/19_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
 
 ## Feature artifacts
 
@@ -106,6 +107,7 @@ python main.py <folder-containing-pcaps> --reassembly-mode stream
 python main.py files --collect
 python main.py pcaps --max-messages 5000000
 python main.py pcaps --skip-llm
+python main.py pcaps --ground-truth-json ground_truth/protocol.json
 python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads
 python main.py --legacy-json archive/protocol-x-payloads --data-dir /tmp/protocol_re_data --output-dir /tmp/protocol_re_output --stop-after 03_alt_build_corpus
 python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads --llm-render-only --stop-after 15_analyze_with_llm
@@ -120,6 +122,7 @@ python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads 
 - `--llm-config <file>` points stage 15 at an LLM config JSON; by default it uses `LLM_config.json`.
 - `--llm-render-only` renders `data/13_llm_prompt.md` and `data/13_llm_analysis.json` metadata without calling an API.
 - `--skip-llm` skips LLM evidence export and analysis stages.
+- `--ground-truth-json <file>` runs final protocol-spec evaluation and writes `data/15_evaluation_result.json`.
 - `--stop-after <step>` is useful for smoke tests and partial runs.
 
 ## Running step by step
@@ -149,8 +152,9 @@ python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_as
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json
-python3 scripts/17_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
-python3 scripts/18_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
+python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json ground_truth/protocol.json data/15_evaluation_result.json
+python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
 Build from legacy extracted JSON payloads:
@@ -170,8 +174,9 @@ python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_as
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json
-python3 scripts/17_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
-python3 scripts/18_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
+python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json ground_truth/protocol.json data/15_evaluation_result.json
+python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
 Windows PowerShell equivalent for imports:

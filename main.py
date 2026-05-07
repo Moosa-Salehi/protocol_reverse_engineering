@@ -83,6 +83,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     llm_analysis_json = data_dir / "13_llm_analysis.json"
     llm_prompt_md = data_dir / "13_llm_prompt.md"
     evaluation_model_data_json = data_dir / "14_evaluation_model_data.json"
+    final_evaluation_json = data_dir / "15_evaluation_result.json"
     html_report = output_dir / "protocol_report.html"
 
     pipeline: list[tuple[str, list[str]]] = []
@@ -242,9 +243,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "17_export_markdown",
+                "18_export_markdown",
                 [
-                    _script("17_export_markdown.py"),
+                    _script("18_export_markdown.py"),
                     _path(model_json),
                     _path(protocol_spec_md),
                     "--evaluation-json",
@@ -252,9 +253,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "18_export_html",
+                "19_export_html",
                 [
-                    _script("18_export_html.py"),
+                    _script("19_export_html.py"),
                     _path(model_json),
                     _path(html_report),
                     "--evaluation-json",
@@ -299,6 +300,19 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
         ]
+
+        if args.ground_truth_json:
+            llm_steps.append(
+                (
+                    "17_evaluate_protocol_spec",
+                    [
+                        _script("17_evaluate_protocol_spec.py"),
+                        _path(evaluation_model_data_json),
+                        _path(args.ground_truth_json),
+                        _path(final_evaluation_json),
+                    ],
+                )
+            )
         if args.llm_render_only:
             llm_steps[1][1].append("--render-only")
         if args.llm_template:
@@ -307,10 +321,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             llm_steps[1][1].extend(["--temperature", str(args.llm_temperature)])
         if args.llm_max_tokens is not None:
             llm_steps[1][1].extend(["--max-tokens", str(args.llm_max_tokens)])
-        insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "17_export_markdown")
+        insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "18_export_markdown")
         pipeline[insert_at:insert_at] = llm_steps
         for step_name, step_args in pipeline:
-            if step_name in {"17_export_markdown", "18_export_html"}:
+            if step_name in {"18_export_markdown", "19_export_html"}:
                 step_args.extend(["--llm-analysis-json", _path(llm_analysis_json)])
 
     if args.stop_after:
@@ -391,6 +405,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
     parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
     parser.add_argument("--llm-config", type=Path, default=Path("LLM_config.json"), help="LLM config JSON for stage 15.")
+    parser.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation stage 17.")
     parser.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
     parser.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
     parser.add_argument("--skip-llm", action="store_true", help="Skip LLM evidence export and analysis stages.")
@@ -444,6 +459,10 @@ def validate_args(args: argparse.Namespace) -> None:
         args.llm_template = args.llm_template.resolve()
         if not args.llm_template.is_file():
             raise SystemExit(f"{RED}Error:{RESET} LLM template file does not exist: {args.llm_template}")
+    if args.ground_truth_json:
+        args.ground_truth_json = args.ground_truth_json.resolve()
+        if not args.ground_truth_json.is_file():
+            raise SystemExit(f"{RED}Error:{RESET} ground truth JSON file does not exist: {args.ground_truth_json}")
 
     if args.legacy_json:
         args.legacy_json = args.legacy_json.resolve()
