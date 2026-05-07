@@ -326,6 +326,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         for step_name, step_args in pipeline:
             if step_name in {"18_export_markdown", "19_export_html"}:
                 step_args.extend(["--llm-analysis-json", _path(llm_analysis_json)])
+                if args.ground_truth_json:
+                    step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):

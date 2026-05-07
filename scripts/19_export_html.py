@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("output_html")
     parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 13_evaluate_pipeline.py")
     parser.add_argument("--llm-analysis-json", help="Optional LLM analysis JSON from 15_analyze_with_llm.py")
+    parser.add_argument("--final-evaluation-json", help="Optional final evaluation report JSON from 17_evaluate_protocol_spec.py")
     args = parser.parse_args()
 
     with open(args.protocol_model_json, "r", encoding="utf-8") as handle:
@@ -29,6 +30,7 @@ def main() -> None:
         model,
         evaluation=_load_optional_json(args.evaluation_json),
         llm_analysis=_load_optional_json(args.llm_analysis_json),
+        final_evaluation=_load_optional_json(args.final_evaluation_json),
     )
     with open(args.output_html, "w", encoding="utf-8") as handle:
         handle.write(html)

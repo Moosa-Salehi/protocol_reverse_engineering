@@ -112,11 +112,37 @@ def _llm_analysis_section(llm_analysis: Optional[Dict[str, object]]) -> List[str
     return lines
 
 
+def _final_evaluation_section(final_evaluation: Optional[Dict[str, object]]) -> List[str]:
+    if not final_evaluation:
+        return []
+
+    summary = final_evaluation.get("summary", {}) or {}
+    metrics = final_evaluation.get("metrics", {}) or {}
+    lines: List[str] = ["## Final Ground Truth Evaluation", ""]
+    lines.append(f"- Overall score: `{_fmt_metric(summary.get('overall_score', 0.0))}`")
+    lines.append(f"- Verdict: `{summary.get('verdict', 'unknown')}`")
+    lines.append(f"- Matched message types: `{summary.get('matched_message_type_count', 0)}` of `{summary.get('ground_truth_message_type_count', 0)}`")
+    for label, key in [
+        ("Message type matching", "message_type_matching"),
+        ("Field boundary", "field_boundary"),
+        ("Field semantics", "field_semantics"),
+        ("Relations", "relations"),
+    ]:
+        metric = metrics.get(key, {}) or {}
+        lines.append(
+            f"- {label}: precision=`{_fmt_metric(metric.get('precision', 0.0))}` "
+            f"recall=`{_fmt_metric(metric.get('recall', 0.0))}` f1=`{_fmt_metric(metric.get('f1_score', 0.0))}`"
+        )
+    lines.append("")
+    return lines
+
+
 
 def render_protocol_model_markdown(
     model: Dict[str, object],
     evaluation: Optional[Dict[str, object]] = None,
     llm_analysis: Optional[Dict[str, object]] = None,
+    final_evaluation: Optional[Dict[str, object]] = None,
 ) -> str:
     lines: List[str] = []
     lines.append(f"# {model.get('protocol_name', 'unknown-industrial-protocol')}")
@@ -133,6 +159,7 @@ def render_protocol_model_markdown(
         lines.append("")
 
     lines.extend(_evaluation_section(evaluation))
+    lines.extend(_final_evaluation_section(final_evaluation))
     lines.extend(_llm_analysis_section(llm_analysis))
 
     relations = model.get("relations", []) or []

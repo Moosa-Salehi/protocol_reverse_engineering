@@ -233,16 +233,38 @@ def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
     """
 
 
+def _final_evaluation_block(final_evaluation: Optional[Dict[str, Any]]) -> str:
+    if not final_evaluation:
+        return ""
+    summary = final_evaluation.get("summary", {}) or {}
+    metrics = final_evaluation.get("metrics", {}) or {}
+    return f"""
+    <section class="panel eval-panel">
+      <h2>Final Ground Truth Evaluation</h2>
+      <div class="metric-grid">
+        {_metric('Overall score', summary.get('overall_score', 0.0), str(summary.get('verdict', 'unknown')))}
+        {_metric('Matched message types', summary.get('matched_message_type_count', 0), 'of ' + str(summary.get('ground_truth_message_type_count', 0)))}
+        {_metric('Message type F1', (metrics.get('message_type_matching', {}) or {}).get('f1_score', 0.0))}
+        {_metric('Field boundary F1', (metrics.get('field_boundary', {}) or {}).get('f1_score', 0.0))}
+        {_metric('Field semantics F1', (metrics.get('field_semantics', {}) or {}).get('f1_score', 0.0))}
+        {_metric('Relation F1', (metrics.get('relations', {}) or {}).get('f1_score', 0.0))}
+      </div>
+    </section>
+    """
+
+
 def render_protocol_model_html(
     model: Dict[str, Any],
     evaluation: Optional[Dict[str, Any]] = None,
     llm_analysis: Optional[Dict[str, Any]] = None,
+    final_evaluation: Optional[Dict[str, Any]] = None,
 ) -> str:
     families = _families(model)
     family_cards = "\n".join(_family_card(family) for family in families)
     metadata_rows = _kv_rows(model.get("metadata", {}) or {})
     relation_rows = _relation_rows(model)
     llm_block = _llm_analysis_block(llm_analysis)
+    final_evaluation_block = _final_evaluation_block(final_evaluation)
     total_messages = sum(int(family.get("message_count", 0) or 0) for family in model.get("families", []) or [])
     return f"""<!doctype html>
 <html lang="en">
@@ -331,6 +353,7 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
     </div>
   </header>
   {_evaluation_block(evaluation)}
+  {final_evaluation_block}
   {llm_block}
   <section class="panel">
     <h2>Metadata</h2>
