@@ -50,6 +50,8 @@ def main() -> None:
     with open(args.output_json, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
 
+    family_count = len({assignment.family_id for assignment in result.assignments})
+    print(f"[+] Discovered {family_count} families")
     print(f"[+] Wrote {len(result.assignments)} family assignments to {args.output_json}")
 
 
