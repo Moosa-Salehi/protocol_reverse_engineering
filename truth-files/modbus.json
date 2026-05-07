@@ -1,0 +1,485 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "modbus",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "modbus",
+    "version": "1.1b3",
+    "description": "Modbus is a client-server industrial communication protocol used for reading and writing data in industrial automation systems. It defines a simple request-response message structure. The core application protocol uses function codes to operate on coils, discrete inputs, holding registers, and input registers. Modbus RTU and Modbus ASCII are serial transport encodings, while Modbus TCP encapsulates Modbus Application Protocol data in TCP/IP with a MBAP header.",
+    "message_types": [
+      {
+        "message_type_id": "modbus_request",
+        "name": "Modbus Request",
+        "role": "request",
+        "description": "Client-to-server Modbus application request. Contains a function code and function-specific data.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "description": "Modbus function code identifying the requested operation."
+          },
+          {
+            "name": "data",
+            "start": 1,
+            "field_type": "bytes",
+            "required": true,
+            "description": "Function-specific payload."
+          }
+        ],
+        "examples": [
+          "03 00 6B 00 03",
+          "06 00 01 00 03"
+        ]
+      },
+      {
+        "message_type_id": "modbus_response",
+        "name": "Modbus Response",
+        "role": "response",
+        "description": "Server-to-client Modbus application response. Contains either normal function response data or an exception response.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "description": "Echoed function code or function code with exception bit set."
+          },
+          {
+            "name": "data_or_exception",
+            "start": 1,
+            "field_type": "bytes",
+            "required": true,
+            "description": "Returned data for normal responses, or an exception code for error responses."
+          }
+        ],
+        "examples": [
+          "03 02 00 2A",
+          "83 02"
+        ]
+      },
+      {
+        "message_type_id": "modbus_tcp_mbap",
+        "name": "Modbus TCP MBAP Header",
+        "role": "header",
+        "description": "Modbus TCP framing header used before the PDU. It contains transaction identifier, protocol identifier, length, and unit identifier.",
+        "fields": [
+          {
+            "name": "transaction_identifier",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Used to match requests and responses."
+          },
+          {
+            "name": "protocol_identifier",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "constant_value": 0,
+            "endian": "big",
+            "description": "Always 0 for Modbus TCP."
+          },
+          {
+            "name": "length",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Number of bytes following this field, including unit identifier and PDU."
+          },
+          {
+            "name": "unit_identifier",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "description": "Identifies the remote slave or unit in bridging scenarios."
+          }
+        ],
+        "examples": [
+          "00 01 00 00 00 06 11"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc01_read_coils",
+        "name": "Read Coils Request",
+        "role": "request",
+        "description": "Reads the status of one or more coils.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 1,
+            "description": "Function code 01."
+          },
+          {
+            "name": "starting_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Starting coil address."
+          },
+          {
+            "name": "quantity",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Number of coils to read."
+          }
+        ],
+        "examples": [
+          "01 00 13 00 25"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc03_read_holding_registers",
+        "name": "Read Holding Registers Request",
+        "role": "request",
+        "description": "Reads one or more holding registers from the server.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 3,
+            "description": "Function code 03."
+          },
+          {
+            "name": "starting_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Starting register address."
+          },
+          {
+            "name": "quantity",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Number of registers to read."
+          }
+        ],
+        "examples": [
+          "03 00 6B 00 03"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc04_read_input_registers",
+        "name": "Read Input Registers Request",
+        "role": "request",
+        "description": "Reads one or more input registers from the server.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 4,
+            "description": "Function code 04."
+          },
+          {
+            "name": "starting_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Starting input register address."
+          },
+          {
+            "name": "quantity",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Number of input registers to read."
+          }
+        ],
+        "examples": [
+          "04 00 08 00 01"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc05_write_single_coil",
+        "name": "Write Single Coil Request",
+        "role": "request",
+        "description": "Writes a single coil to ON or OFF.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 5,
+            "description": "Function code 05."
+          },
+          {
+            "name": "coil_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Target coil address."
+          },
+          {
+            "name": "value",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Value 0xFF00 for ON, 0x0000 for OFF."
+          }
+        ],
+        "examples": [
+          "05 00 AC FF 00"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc06_write_single_register",
+        "name": "Write Single Register Request",
+        "role": "request",
+        "description": "Writes a single holding register.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 6,
+            "description": "Function code 06."
+          },
+          {
+            "name": "register_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Target register address."
+          },
+          {
+            "name": "value",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Register value to write."
+          }
+        ],
+        "examples": [
+          "06 00 01 00 03"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc15_write_multiple_coils",
+        "name": "Write Multiple Coils Request",
+        "role": "request",
+        "description": "Writes multiple coils from a packed bitfield.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 15,
+            "description": "Function code 15."
+          },
+          {
+            "name": "starting_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Starting coil address."
+          },
+          {
+            "name": "quantity",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Number of coils to write."
+          },
+          {
+            "name": "byte_count",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "description": "Number of data bytes that follow."
+          },
+          {
+            "name": "coil_values",
+            "start": 6,
+            "field_type": "bytes",
+            "required": true,
+            "description": "Packed coil bit values, least-significant bit first within each byte."
+          }
+        ],
+        "examples": [
+          "0F 00 13 00 0A 02 CD 01"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc16_write_multiple_registers",
+        "name": "Write Multiple Registers Request",
+        "role": "request",
+        "description": "Writes multiple holding registers.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 16,
+            "description": "Function code 16."
+          },
+          {
+            "name": "starting_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Starting register address."
+          },
+          {
+            "name": "quantity",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "required": true,
+            "endian": "big",
+            "description": "Number of registers to write."
+          },
+          {
+            "name": "byte_count",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "description": "Number of data bytes that follow."
+          },
+          {
+            "name": "register_values",
+            "start": 6,
+            "field_type": "bytes",
+            "required": true,
+            "description": "Register values encoded as big-endian 16-bit words."
+          }
+        ],
+        "examples": [
+          "10 00 01 00 02 04 00 0A 01 02"
+        ]
+      },
+      {
+        "message_type_id": "modbus_exception_response",
+        "name": "Modbus Exception Response",
+        "role": "response",
+        "description": "Response indicating an error. The function code has bit 7 set and a single-byte exception code follows.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "description": "Original function code with 0x80 added."
+          },
+          {
+            "name": "exception_code",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "description": "Exception code such as illegal function, illegal data address, or illegal data value."
+          }
+        ],
+        "examples": [
+          "83 02",
+          "86 03"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "modbus_fc01_read_coils",
+        "response_message_type_id": "modbus_response",
+        "relation_type": "request_response",
+        "description": "Read Coils request is followed by a normal Modbus response containing coil status bytes."
+      },
+      {
+        "request_message_type_id": "modbus_fc03_read_holding_registers",
+        "response_message_type_id": "modbus_response",
+        "relation_type": "request_response",
+        "description": "Read Holding Registers request is followed by a normal Modbus response containing register values."
+      },
+      {
+        "request_message_type_id": "modbus_fc04_read_input_registers",
+        "response_message_type_id": "modbus_response",
+        "relation_type": "request_response",
+        "description": "Read Input Registers request is followed by a normal Modbus response containing register values."
+      },
+      {
+        "request_message_type_id": "modbus_fc05_write_single_coil",
+        "response_message_type_id": "modbus_response",
+        "relation_type": "request_response",
+        "description": "Write Single Coil request is typically echoed back in a normal response."
+      },
+      {
+        "request_message_type_id": "modbus_fc06_write_single_register",
+        "response_message_type_id": "modbus_response",
+        "relation_type": "request_response",
+        "description": "Write Single Register request is typically echoed back in a normal response."
+      },
+      {
+        "request_message_type_id": "modbus_fc15_write_multiple_coils",
+        "response_message_type_id": "modbus_response",
+        "relation_type": "request_response",
+        "description": "Write Multiple Coils request is followed by a response confirming starting address and quantity written."
+      },
+      {
+        "request_message_type_id": "modbus_fc16_write_multiple_registers",
+        "response_message_type_id": "modbus_response",
+        "relation_type": "request_response",
+        "description": "Write Multiple Registers request is followed by a response confirming starting address and quantity written."
+      }
+    ]
+  }
+}
