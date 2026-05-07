@@ -114,8 +114,15 @@ class LLMRequestConfig:
     timeout: int = 120
 
 
-def render_analysis_prompt(evidence: Dict[str, Any], template: str = DEFAULT_ANALYSIS_TEMPLATE) -> str:
-    evidence_json = json.dumps(evidence, indent=2, ensure_ascii=False)
+def render_analysis_prompt(
+    evidence: Dict[str, Any],
+    template: str = DEFAULT_ANALYSIS_TEMPLATE,
+    minify_json: bool = False,
+) -> str:
+    if minify_json:
+        evidence_json = json.dumps(evidence, separators=(",", ":"), ensure_ascii=False)
+    else:
+        evidence_json = json.dumps(evidence, indent=2, ensure_ascii=False)
     return (
         template.rstrip()
         + "\n\nProtocol Reverse Engineering Evidence Bundle\n"

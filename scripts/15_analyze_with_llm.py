@@ -67,6 +67,11 @@ def main() -> None:
     evidence = _load_json(args.llm_evidence_json)
     template = _load_template(args.template)
     prompt = render_analysis_prompt(evidence, template=template) if template else render_analysis_prompt(evidence)
+    llm_prompt = (
+        render_analysis_prompt(evidence, template=template, minify_json=True)
+        if template
+        else render_analysis_prompt(evidence, minify_json=True)
+    )
 
     if args.prompt_out:
         Path(args.prompt_out).parent.mkdir(parents=True, exist_ok=True)
@@ -89,7 +94,7 @@ def main() -> None:
         if not api_key and config.get("api_key_required") == "yes":
             raise SystemExit("Error: API key required via OPENAI_API_KEY or LLM_API_KEY. Use --render-only to skip API call.")
         response = call_openai_compatible_chat(
-            prompt,
+            llm_prompt,
             LLMRequestConfig(
                 model=model,
                 base_url=base_url,
