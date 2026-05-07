@@ -96,7 +96,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps>
 ```
 
-This command treats the input folder as an existing normalized PCAP directory, extracts up to 2,000,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_spec.md`, and `output/protocol_report.html`, then prints total execution time and output file paths. Typical runtime for 2 million messages: 30 minutes.
+This command treats the input folder as an existing normalized PCAP directory, extracts up to 2,000,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_report.md`, and `output/protocol_report.html`, then prints total execution time and output file paths. Typical runtime for 2 million messages: 30 minutes.
 
 Useful runner options:
 
@@ -153,7 +153,7 @@ python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_ll
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json
 python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json ground_truth/protocol.json data/15_evaluation_result.json
-python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_report.md --evaluation-json data/11_evaluation.json
 python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 
@@ -175,7 +175,7 @@ python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_ll
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json
 python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json ground_truth/protocol.json data/15_evaluation_result.json
-python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_spec.md --evaluation-json data/11_evaluation.json
+python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_report.md --evaluation-json data/11_evaluation.json
 python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json
 ```
 

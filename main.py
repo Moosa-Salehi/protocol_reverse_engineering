@@ -78,7 +78,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     semantics_json = data_dir / "09_semantics.json"
     model_json = data_dir / "10_protocol_model.json"
     evaluation_json = data_dir / "11_evaluation.json"
-    protocol_spec_md = output_dir / "protocol_spec.md"
+    protocol_spec_md = output_dir / "protocol_report.md"
     llm_evidence_json = data_dir / "12_llm_evidence.json"
     llm_analysis_json = data_dir / "13_llm_analysis.json"
     llm_prompt_md = data_dir / "13_llm_prompt.md"
@@ -494,7 +494,7 @@ def output_paths(args: argparse.Namespace) -> list[Path]:
     paths = [
         # args.data_dir / "10_protocol_model.json",
         # args.data_dir / "11_evaluation.json",
-        args.output_dir / "protocol_spec.md",
+        args.output_dir / "protocol_report.md",
         args.output_dir / "protocol_report.html",
     ]
     # if not args.skip_llm:
