@@ -271,9 +271,13 @@ def _final_evaluation_block(final_evaluation: Optional[Dict[str, Any]]) -> str:
       <div class="metric-grid">
         {_metric('Overall score', summary.get('overall_score', 0.0), str(summary.get('verdict', 'unknown')))}
         {_metric('Matched message types', summary.get('matched_message_type_count', 0), 'of ' + str(summary.get('ground_truth_message_type_count', 0)))}
+        {_metric('Message type accuracy', (metrics.get('message_type_matching', {}) or {}).get('accuracy', 0.0))}
         {_metric('Message type F1', (metrics.get('message_type_matching', {}) or {}).get('f1_score', 0.0))}
+        {_metric('Field boundary accuracy', (metrics.get('field_boundary', {}) or {}).get('accuracy', 0.0))}
         {_metric('Field boundary F1', (metrics.get('field_boundary', {}) or {}).get('f1_score', 0.0))}
+        {_metric('Field semantics accuracy', (metrics.get('field_semantics', {}) or {}).get('accuracy', 0.0))}
         {_metric('Field semantics F1', (metrics.get('field_semantics', {}) or {}).get('f1_score', 0.0))}
+        {_metric('Relation accuracy', (metrics.get('relations', {}) or {}).get('accuracy', 0.0))}
         {_metric('Relation F1', (metrics.get('relations', {}) or {}).get('f1_score', 0.0))}
       </div>
     </section>

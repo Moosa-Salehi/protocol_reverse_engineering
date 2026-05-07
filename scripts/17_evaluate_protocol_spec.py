@@ -28,6 +28,7 @@ def _prf(tp: int, fp: int, fn: int) -> Dict[str, Any]:
         "true_positives": tp,
         "false_positives": fp,
         "false_negatives": fn,
+        "accuracy": _ratio(tp, tp + fp + fn),
         "precision": precision,
         "recall": recall,
         "f1_score": _f1(precision, recall),

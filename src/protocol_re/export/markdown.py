@@ -162,7 +162,8 @@ def _final_evaluation_section(final_evaluation: Optional[Dict[str, object]]) -> 
     ]:
         metric = metrics.get(key, {}) or {}
         lines.append(
-            f"- {label}: precision=`{_fmt_metric(metric.get('precision', 0.0))}` "
+            f"- {label}: accuracy=`{_fmt_metric(metric.get('accuracy', 0.0))}` "
+            f"precision=`{_fmt_metric(metric.get('precision', 0.0))}` "
             f"recall=`{_fmt_metric(metric.get('recall', 0.0))}` f1=`{_fmt_metric(metric.get('f1_score', 0.0))}`"
         )
     lines.append("")

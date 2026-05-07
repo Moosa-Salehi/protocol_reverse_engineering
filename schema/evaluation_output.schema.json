@@ -77,12 +77,13 @@
   "$defs": {
     "prf_metrics": {
       "type": "object",
-      "required": ["true_positives", "false_positives", "false_negatives", "precision", "recall", "f1_score"],
+      "required": ["true_positives", "false_positives", "false_negatives", "accuracy", "precision", "recall", "f1_score"],
       "additionalProperties": true,
       "properties": {
         "true_positives": {"type": "integer", "minimum": 0},
         "false_positives": {"type": "integer", "minimum": 0},
         "false_negatives": {"type": "integer", "minimum": 0},
+        "accuracy": {"type": "number", "minimum": 0, "maximum": 1},
         "precision": {"type": "number", "minimum": 0, "maximum": 1},
         "recall": {"type": "number", "minimum": 0, "maximum": 1},
         "f1_score": {"type": "number", "minimum": 0, "maximum": 1}
