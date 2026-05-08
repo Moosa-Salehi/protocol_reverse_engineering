@@ -1,25 +1,3 @@
-  ### TODO 3. Add relation graph pruning before expensive echo analysis
-
-  - Files
-      - src/protocol_re/inference/request_response_relations.py
-      - scripts/10_infer_relations.py
-  - Tasks
-      - Compute edge-level features before echo detection:
-          - pair_count
-          - support ratio
-          - edge lift over request/response family base rates
-          - direction consistency
-          - temporal/order consistency
-      - Drop edges below minimum support/lift.
-      - Drop self-edges unless strong evidence supports same-family request/response behavior.
-      - Keep top K candidate response families per request family.
-      - Run _echo_candidates() and _length_relations() only on retained edges.
-      - Add CLI thresholds:
-          - --min-edge-pairs
-          - --min-edge-lift
-          - --max-response-families-per-request
-          - --allow-self-relations
-
   ### TODO 4. Preserve or infer direction in legacy JSON mode
 
   - Files

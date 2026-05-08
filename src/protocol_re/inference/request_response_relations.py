@@ -9,6 +9,9 @@ from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
 
 MAX_ECHO_WIDTH = 4
+DEFAULT_MIN_EDGE_PAIRS = 2
+DEFAULT_MIN_EDGE_LIFT = 1.0
+DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST = 5
 
 
 
@@ -31,6 +34,121 @@ def _pair_by_family(pairs: Sequence[PairRecord]) -> Dict[Tuple[str, str], List[P
             continue
         grouped[(req_family, resp_family)].append(pair)
     return grouped
+
+
+def _order_consistent(request: MessageRecord, response: MessageRecord) -> Optional[bool]:
+    if request.timestamp is not None and response.timestamp is not None:
+        return response.timestamp >= request.timestamp
+    if request.session_id == response.session_id:
+        return response.index_in_session >= request.index_in_session
+    return None
+
+
+def _edge_features(
+    request_family: str,
+    response_family: str,
+    family_pairs: Sequence[PairRecord],
+    messages_by_id: Dict[int, MessageRecord],
+    request_totals: Counter[str],
+    response_totals: Counter[str],
+    total_pairs: int,
+) -> Dict[str, object]:
+    pair_count = len(family_pairs)
+    request_total = request_totals.get(request_family, 0)
+    response_total = response_totals.get(response_family, 0)
+    support_ratio = pair_count / request_total if request_total else 0.0
+    expected = (request_total / total_pairs) * (response_total / total_pairs) if total_pairs else 0.0
+    observed = pair_count / total_pairs if total_pairs else 0.0
+    edge_lift = observed / expected if expected > 0.0 else 0.0
+
+    direction_transitions: Counter[str] = Counter()
+    ordered = 0
+    order_usable = 0
+    for pair in family_pairs:
+        request = messages_by_id.get(pair.request_msg_id)
+        response = messages_by_id.get(pair.response_msg_id)
+        if request is None or response is None:
+            continue
+        direction_transitions[f"{request.direction}->{response.direction}"] += 1
+        order_value = _order_consistent(request, response)
+        if order_value is None:
+            continue
+        order_usable += 1
+        if order_value:
+            ordered += 1
+
+    dominant_transition, dominant_count = direction_transitions.most_common(1)[0] if direction_transitions else ("unknown", 0)
+    direction_consistency = dominant_count / pair_count if pair_count else 0.0
+    temporal_order_consistency = ordered / order_usable if order_usable else 0.0
+
+    return {
+        "pair_count": pair_count,
+        "support_ratio": round(support_ratio, 6),
+        "edge_lift": round(edge_lift, 6),
+        "direction_consistency": round(direction_consistency, 6),
+        "dominant_direction": dominant_transition,
+        "temporal_order_consistency": round(temporal_order_consistency, 6),
+        "order_usable_pairs": order_usable,
+    }
+
+
+def _strong_self_relation(features: Dict[str, object], min_edge_pairs: int, min_edge_lift: float) -> bool:
+    return (
+        int(features["pair_count"]) >= max(min_edge_pairs * 3, 10)
+        and float(features["edge_lift"]) >= max(min_edge_lift * 2.0, min_edge_lift)
+        and float(features["direction_consistency"]) >= 0.9
+        and float(features["temporal_order_consistency"]) >= 0.9
+    )
+
+
+def _prune_family_edges(
+    grouped_pairs: Dict[Tuple[str, str], List[PairRecord]],
+    messages_by_id: Dict[int, MessageRecord],
+    min_edge_pairs: int,
+    min_edge_lift: float,
+    max_response_families_per_request: int,
+    allow_self_relations: bool,
+) -> List[Tuple[str, str, List[PairRecord], Dict[str, object]]]:
+    total_pairs = sum(len(family_pairs) for family_pairs in grouped_pairs.values())
+    request_totals: Counter[str] = Counter()
+    response_totals: Counter[str] = Counter()
+    for (request_family, response_family), family_pairs in grouped_pairs.items():
+        request_totals[request_family] += len(family_pairs)
+        response_totals[response_family] += len(family_pairs)
+
+    retained_by_request: Dict[str, List[Tuple[str, str, List[PairRecord], Dict[str, object]]]] = defaultdict(list)
+    for (request_family, response_family), family_pairs in grouped_pairs.items():
+        features = _edge_features(
+            request_family,
+            response_family,
+            family_pairs,
+            messages_by_id,
+            request_totals,
+            response_totals,
+            total_pairs,
+        )
+        if int(features["pair_count"]) < min_edge_pairs:
+            continue
+        if float(features["edge_lift"]) < min_edge_lift:
+            continue
+        if request_family == response_family and not allow_self_relations:
+            if not _strong_self_relation(features, min_edge_pairs, min_edge_lift):
+                continue
+        retained_by_request[request_family].append((request_family, response_family, family_pairs, features))
+
+    retained: List[Tuple[str, str, List[PairRecord], Dict[str, object]]] = []
+    for request_family in sorted(retained_by_request):
+        candidates = sorted(
+            retained_by_request[request_family],
+            key=lambda item: (
+                -int(item[3]["pair_count"]),
+                -float(item[3]["support_ratio"]),
+                -float(item[3]["edge_lift"]),
+                item[1],
+            ),
+        )
+        retained.extend(candidates[:max_response_families_per_request])
+    return retained
 
 
 
@@ -124,6 +242,10 @@ def summarize_family_relations(
     assignments: Sequence[FamilyAssignment],
     min_echo_support: float = 0.9,
     min_length_support: float = 0.9,
+    min_edge_pairs: int = DEFAULT_MIN_EDGE_PAIRS,
+    min_edge_lift: float = DEFAULT_MIN_EDGE_LIFT,
+    max_response_families_per_request: int = DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST,
+    allow_self_relations: bool = False,
 ) -> Dict[str, object]:
     messages_by_id = _message_lookup(records)
     family_by_msg_id = _family_lookup(assignments)
@@ -136,8 +258,17 @@ def summarize_family_relations(
 
     family_edges = []
     family_roles: Dict[str, Counter] = defaultdict(Counter)
+    grouped_pairs = _pair_by_family(pairs)
+    retained_edges = _prune_family_edges(
+        grouped_pairs,
+        messages_by_id,
+        min_edge_pairs=max(1, min_edge_pairs),
+        min_edge_lift=min_edge_lift,
+        max_response_families_per_request=max(1, max_response_families_per_request),
+        allow_self_relations=allow_self_relations,
+    )
 
-    for (request_family, response_family), family_pairs in sorted(_pair_by_family(pairs).items()):
+    for request_family, response_family, family_pairs, edge_features in retained_edges:
         request_payloads = []
         response_payloads = []
         scores = []
@@ -166,7 +297,7 @@ def summarize_family_relations(
             {
                 "request_family_id": request_family,
                 "response_family_id": response_family,
-                "pair_count": len(family_pairs),
+                **edge_features,
                 "avg_pair_score": round(mean(scores), 4) if scores else 0.0,
                 "avg_latency_ms": round(mean(latencies), 4) if latencies else None,
                 "echo_fields": echo_candidates,

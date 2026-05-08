@@ -137,6 +137,12 @@ class FamilyRelation:
     response_family_id: str
     pair_count: int
     avg_pair_score: float
+    support_ratio: float = 0.0
+    edge_lift: float = 0.0
+    direction_consistency: float = 0.0
+    dominant_direction: str = "unknown"
+    temporal_order_consistency: float = 0.0
+    order_usable_pairs: int = 0
     avg_latency_ms: Optional[float] = None
     echo_fields: List[Dict[str, Any]] = field(default_factory=list)
     length_relations: List[Dict[str, Any]] = field(default_factory=list)

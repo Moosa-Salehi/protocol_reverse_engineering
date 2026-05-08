@@ -192,6 +192,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(assignments_json),
                     _path(pairs_json),
                     _path(relations_json),
+                    "--min-edge-pairs",
+                    str(args.min_edge_pairs),
+                    "--min-edge-lift",
+                    str(args.min_edge_lift),
+                    "--max-response-families-per-request",
+                    str(args.max_response_families_per_request),
                 ],
             ),
             (
@@ -250,6 +256,11 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
         ]
     )
+    if args.allow_self_relations:
+        for step_name, step_args in pipeline:
+            if step_name == "10_infer_relations":
+                step_args.append("--allow-self-relations")
+                break
 
     if not args.skip_llm:
         llm_steps = [
@@ -388,6 +399,15 @@ def parse_args() -> argparse.Namespace:
         help="PCAP extraction mode: packet payloads or reconstructed directional TCP streams.",
     )
     parser.add_argument("--family-sample-size", type=int, default=100000, help="Max unique messages for clustering.")
+    parser.add_argument("--min-edge-pairs", type=int, default=2, help="Minimum pair count for relation edge pruning.")
+    parser.add_argument("--min-edge-lift", type=float, default=1.0, help="Minimum lift for relation edge pruning.")
+    parser.add_argument(
+        "--max-response-families-per-request",
+        type=int,
+        default=5,
+        help="Maximum candidate response families to retain per request family before relation analysis.",
+    )
+    parser.add_argument("--allow-self-relations", action="store_true", help="Keep same-family request/response relation candidates.")
     parser.add_argument("--deduplicate-payloads", action="store_true", help="Drop duplicate payloads in --legacy-json mode.")
     parser.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
     parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
@@ -441,6 +461,12 @@ def validate_args(args: argparse.Namespace) -> None:
     args.llm_config = _resolve_under_project(args.llm_config)
     if args.max_messages is not None and args.max_messages <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --max-messages must be greater than 0.")
+    if args.min_edge_pairs <= 0:
+        raise SystemExit(f"{RED}Error:{RESET} --min-edge-pairs must be greater than 0.")
+    if args.min_edge_lift < 0:
+        raise SystemExit(f"{RED}Error:{RESET} --min-edge-lift must be non-negative.")
+    if args.max_response_families_per_request <= 0:
+        raise SystemExit(f"{RED}Error:{RESET} --max-response-families-per-request must be greater than 0.")
     if not args.skip_llm and not args.llm_config.is_file():
         raise SystemExit(f"{RED}Error:{RESET} LLM config file does not exist: {args.llm_config}")
     if not args.skip_llm and args.llm_template:

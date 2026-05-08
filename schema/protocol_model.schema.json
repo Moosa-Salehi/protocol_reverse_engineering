@@ -92,6 +92,12 @@
         "response_family_id": {"type": "string"},
         "pair_count": {"type": "integer", "minimum": 0},
         "avg_pair_score": {"type": "number"},
+        "support_ratio": {"type": "number"},
+        "edge_lift": {"type": "number"},
+        "direction_consistency": {"type": "number"},
+        "dominant_direction": {"type": "string"},
+        "temporal_order_consistency": {"type": "number"},
+        "order_usable_pairs": {"type": "integer", "minimum": 0},
         "avg_latency_ms": {"type": ["number", "null"]},
         "echo_fields": {
           "type": "array",
