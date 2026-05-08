@@ -254,12 +254,6 @@ def render_protocol_model_markdown(
                 f"- Candidate keyword offset: `{int(keyword.get('offset', 0))}` "
                 f"cardinality=`{int(keyword.get('cardinality', 0))}` entropy=`{keyword.get('entropy', 0.0)}`"
             )
-        subcluster_summary = family.get("subcluster_summary") or {}
-        if subcluster_summary:
-            lines.append(
-                f"- Best subcluster strategy: `{subcluster_summary.get('best_strategy', 'unknown')}` "
-                f"formats=`{len(subcluster_summary.get('formats', {}) or {})}`"
-            )
         lines.append("")
 
         segments = family.get("segments", [])

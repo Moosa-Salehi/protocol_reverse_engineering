@@ -73,7 +73,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     families_json = data_dir / "04_families.json"
     pairs_json = data_dir / "05_pairs.json"
     keywords_json = data_dir / "06_keywords.json"
-    subclusters_json = data_dir / "07_subcluster_hypotheses.json"
     relations_json = data_dir / "08_relations.json"
     semantics_json = data_dir / "09_semantics.json"
     model_json = data_dir / "10_protocol_model.json"
@@ -187,16 +186,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "09_compare_subcluster",
-                [
-                    _script("09_compare_subcluster_hypotheses.py"),
-                    _path(messages_jsonl),
-                    _path(subclusters_json),
-                    "--assignments-json",
-                    _path(assignments_json),
-                ],
-            ),
-            (
                 "10_infer_relations",
                 [
                     _script("10_infer_relations.py"),
@@ -220,8 +209,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(family_features_json),
                     "--keywords-json",
                     _path(keywords_json),
-                    "--subclusters-json",
-                    _path(subclusters_json),
                     "--relations-json",
                     _path(relations_json),
                     "--semantics-json",

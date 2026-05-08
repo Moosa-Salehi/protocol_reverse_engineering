@@ -1,11 +1,3 @@
-  ### TODO 1. remove subcluster comparison stage
-
-  - Files
-      - main.py
-      - scripts/09_compare_subcluster_hypotheses.py
-      - src/protocol_re/inference/subcluster_hypotheses.py
-      - scripts/12_build_protocol_model.py
-  
   ### TODO 2. Stop writing per-message feature JSON
 
   - Files

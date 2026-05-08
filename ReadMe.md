@@ -30,10 +30,9 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/06_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json`, it uses family entropy/uniqueness/coverage vectors to refine segment confidence.
 - `scripts/07_pair_requests_responses.py` emits candidate request/response pairs per session.
 - `scripts/08_infer_keywords.py` finds candidate keyword bytes and keyword-based subformats.
-- `scripts/09_compare_subcluster_hypotheses.py` compares keyword-based and length-based subclustering strategies.
 - `scripts/10_infer_relations.py` summarizes family-to-family request/response relations, echo fields, and simple role hints.
 - `scripts/11_infer_semantics.py` attaches semantic field labels using boundary hypotheses plus request/response evidence.
-- `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, keyword, subcluster, relation, and semantic evidence when supplied.
+- `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, keyword, relation, and semantic evidence when supplied.
 - `scripts/13_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, relations, and semantic-label coverage when supplied.
 - `scripts/14_export_llm_evidence.py` renders a schema-shaped compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
 - `scripts/15_analyze_with_llm.py` renders the protocol-analysis prompt and can call an OpenAI-compatible LLM API to write `data/13_llm_analysis.json`.
@@ -47,7 +46,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `message_features.jsonl` contains per-message length, entropy, sparse byte histogram, top byte values, run-length statistics, and repeated n-gram motifs.
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, top n-gram frequency tables, wider repeated motifs, trailing-block/padding hints, length profiles, and recurring fixed-position groups.
 - `scripts/05_extract_features.py` streams `messages.jsonl` and writes message features line by line, so it should not load the whole corpus into memory.
-- `main.py` passes `data/03_features/family_features.json` into boundary inference and passes feature, keyword, subcluster, relation, and semantic artifacts into the protocol-model builder so final models retain the evidence from upstream stages.
+- `main.py` passes `data/03_features/family_features.json` into boundary inference and passes feature, keyword, relation, and semantic artifacts into the protocol-model builder so final models retain the evidence from upstream stages.
 - Evaluation reports distinguish corpus assignment coverage from clustering sample ratio, so the configured 100K clustering sample is reported separately from propagated family assignment coverage.
 
 ## LLM evidence schema
@@ -142,10 +141,9 @@ python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_features -
 python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_features/family_features.json
 python3 scripts/07_pair_requests_responses.py data/01_messages.jsonl data/05_pairs.json --assignments-json data/02_family_assignments.json
 python3 scripts/08_infer_keywords.py data/01_messages.jsonl data/06_keywords.json --assignments-json data/02_family_assignments.json
-python3 scripts/09_compare_subcluster_hypotheses.py data/01_messages.jsonl data/07_subcluster_hypotheses.json --assignments-json data/02_family_assignments.json
 python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assignments.json data/05_pairs.json data/08_relations.json
 python3 scripts/11_infer_semantics.py data/04_families.json data/08_relations.json data/09_semantics.json
-python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --keywords-json data/06_keywords.json --subclusters-json data/07_subcluster_hypotheses.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
+python3 scripts/12_build_protocol_model.py data/04_families.json data/10_protocol_model.json --features-json data/03_features/family_features.json --keywords-json data/06_keywords.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json
 python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/04_families.json data/05_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --config LLM_config.json --prompt-out data/13_llm_prompt.md

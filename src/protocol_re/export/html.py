@@ -122,18 +122,14 @@ def _feature_panel(feature_summary: Dict[str, Any]) -> str:
     )
 
 
-def _format_panel(keyword_summary: Dict[str, Any], subcluster_summary: Dict[str, Any]) -> str:
-    if not keyword_summary and not subcluster_summary:
-        return '<p class="muted">No keyword or subcluster evidence attached.</p>'
+def _format_panel(keyword_summary: Dict[str, Any]) -> str:
+    if not keyword_summary:
+        return '<p class="muted">No keyword evidence attached.</p>'
     keyword = keyword_summary.get("keyword") or {}
-    subformats = keyword_summary.get("subclusters", {}) or {}
-    formats = subcluster_summary.get("formats", {}) or {}
     return (
         '<div class="feature-grid">'
         f'{_metric("Keyword offset", keyword.get("offset", "none"), "candidate discriminator")}'
         f'{_metric("Keyword cardinality", keyword.get("cardinality", 0), "observed values")}'
-        f'{_metric("Subcluster strategy", subcluster_summary.get("best_strategy", "unknown"))}'
-        f'{_metric("Subcluster formats", len(formats), str(len(subformats)) + " keyword formats")}'
         '</div>'
     )
 
@@ -143,7 +139,6 @@ def _family_card(family: Dict[str, Any]) -> str:
     semantic = family.get("semantic_summary") or {}
     feature = family.get("feature_summary") or {}
     keyword = family.get("keyword_summary") or {}
-    subcluster = family.get("subcluster_summary") or {}
     fields = family.get("field_hypotheses", []) or []
     labels = semantic.get("field_labels", []) or []
     role = family.get("role", "unknown")
@@ -182,7 +177,7 @@ def _family_card(family: Dict[str, Any]) -> str:
       <h4>Feature Evidence</h4>
       {_feature_panel(feature)}
       <h4>Format Evidence</h4>
-      {_format_panel(keyword, subcluster)}
+      {_format_panel(keyword)}
       <h4>Related Families</h4>
       <div class="pill-row">{related_html}</div>
     </section>

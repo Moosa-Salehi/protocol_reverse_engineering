@@ -126,10 +126,6 @@
           "type": ["object", "null"],
           "description": "Candidate discriminating keyword bytes and keyword-based subformats from stage 08."
         },
-        "subcluster_summary": {
-          "type": ["object", "null"],
-          "description": "Comparison of single, length-based, and keyword-based subformat hypotheses from stage 09."
-        },
         "related_families": {
           "type": "array",
           "items": {"type": "string"}

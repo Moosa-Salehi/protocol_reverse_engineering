@@ -13,7 +13,6 @@ def main() -> None:
     parser.add_argument("output_json", help="Protocol model output path")
     parser.add_argument("--features-json", help="Optional family feature JSON from 05_extract_features.py")
     parser.add_argument("--keywords-json", help="Optional keyword/subformat JSON from 08_infer_keywords.py")
-    parser.add_argument("--subclusters-json", help="Optional subcluster hypothesis JSON from 09_compare_subcluster_hypotheses.py")
     parser.add_argument("--relations-json", help="Optional output from 10_infer_relations.py")
     parser.add_argument("--semantics-json", help="Optional output from 11_infer_semantics.py")
     args = parser.parse_args()
@@ -31,11 +30,6 @@ def main() -> None:
         with open(args.keywords_json, "r", encoding="utf-8") as handle:
             keywords_payload = json.load(handle)
 
-    subclusters_payload = {}
-    if args.subclusters_json:
-        with open(args.subclusters_json, "r", encoding="utf-8") as handle:
-            subclusters_payload = json.load(handle)
-
     relations_payload = {"family_edges": [], "role_hints": {}}
     if args.relations_json:
         with open(args.relations_json, "r", encoding="utf-8") as handle:
@@ -51,7 +45,6 @@ def main() -> None:
         field_hypotheses = [FieldHypothesis(**field) for field in details.get("field_hypotheses", [])]
         feature_summary = features_payload.get(family_id)
         keyword_summary = keywords_payload.get(family_id)
-        subcluster_summary = subclusters_payload.get(family_id)
         role_hint = relations_payload.get("role_hints", {}).get(family_id, {})
         semantic_summary = semantics_payload.get(family_id)
         related_families = []
@@ -71,12 +64,10 @@ def main() -> None:
                 feature_summary=FamilyFeatureSummary(**feature_summary) if feature_summary else None,
                 semantic_summary=FamilySemanticSummary(**semantic_summary) if semantic_summary else None,
                 keyword_summary=keyword_summary,
-                subcluster_summary=subcluster_summary,
                 related_families=sorted(set(related_families)),
                 evidence={
                     "source": args.family_json,
                     "keyword_evidence_source": args.keywords_json if keyword_summary else None,
-                    "subcluster_evidence_source": args.subclusters_json if subcluster_summary else None,
                     **role_hint,
                 },
             )
@@ -91,7 +82,6 @@ def main() -> None:
             "source_family_summary": args.family_json,
             "source_feature_summary": args.features_json,
             "source_keyword_summary": args.keywords_json,
-            "source_subcluster_summary": args.subclusters_json,
             "source_relations_summary": args.relations_json,
             "source_semantics_summary": args.semantics_json,
             "notes": "Initial auto-generated protocol model assembled from family summaries.",
