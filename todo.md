@@ -1,9 +1,3 @@
-  ### TODO 2. Stop writing per-message feature JSON
-
-  - Files
-      - scripts/05_extract_features.py
-      - src/protocol_re/features/extraction.py
-
   ### TODO 3. Add relation graph pruning before expensive echo analysis
 
   - Files

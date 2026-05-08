@@ -68,8 +68,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
     messages_jsonl = data_dir / "01_messages.jsonl"
     assignments_json = data_dir / "02_family_assignments.json"
-    features_dir = data_dir / "03_features"
-    family_features_json = features_dir / "family_features.json"
+    family_features_json = data_dir / "03_family_features.json"
     families_json = data_dir / "04_families.json"
     pairs_json = data_dir / "05_pairs.json"
     keywords_json = data_dir / "06_keywords.json"
@@ -148,7 +147,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 [
                     _script("05_extract_features.py"),
                     _path(messages_jsonl),
-                    _path(features_dir),
+                    _path(family_features_json),
                     "--assignments-json",
                     _path(assignments_json),
                 ],
@@ -471,7 +470,6 @@ def validate_args(args: argparse.Namespace) -> None:
 
 def prepare_output_dirs(args: argparse.Namespace) -> None:
     args.data_dir.mkdir(parents=True, exist_ok=True)
-    (args.data_dir / "03_features").mkdir(parents=True, exist_ok=True)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     if not args.legacy_json and args.collect:
         args.pcap_dir.mkdir(parents=True, exist_ok=True)
@@ -479,13 +477,9 @@ def prepare_output_dirs(args: argparse.Namespace) -> None:
 
 def output_paths(args: argparse.Namespace) -> list[Path]:
     paths = [
-        # args.data_dir / "10_protocol_model.json",
-        # args.data_dir / "11_evaluation.json",
         args.output_dir / "protocol_report.md",
         args.output_dir / "protocol_report.html",
     ]
-    # if not args.skip_llm:
-    #     paths.extend([args.data_dir / "12_llm_evidence.json", args.data_dir / "13_llm_analysis.json", args.data_dir / "14_evaluation_model_data.json"])
     return paths
 
 

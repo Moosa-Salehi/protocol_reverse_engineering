@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, field
 from math import log2, sqrt
 from statistics import mean
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
@@ -421,18 +421,22 @@ class FamilyFeatureAccumulator:
 
 def stream_feature_artifacts(
     records: Iterable[MessageRecord],
-    message_output_handle,
     assignments: Optional[Sequence[FamilyAssignment]] = None,
     include_unassigned: bool = False,
 ) -> Dict[str, Dict[str, object]]:
     family_by_msg_id = _family_lookup(assignments or [])
     family_accumulators: Dict[str, FamilyFeatureAccumulator] = {}
-    message_count = 0
 
     for record in records:
-        feature_record = message_feature_record(record)
-        message_output_handle.write(__import__("json").dumps(feature_record, sort_keys=True) + "\n")
-        message_count += 1
+        payload = hex_to_bytes(record.payload_hex)
+        values = list(payload)
+        _, trailing_run_length = trailing_run(payload)
+        feature_record = {
+            "byte_entropy": round(shannon_entropy(values), 6),
+            "unique_byte_ratio": round(len(set(values)) / len(values), 6) if values else 0.0,
+            "max_run_length": run_length_stats(payload)["max_run_length"],
+            "trailing_run_length": trailing_run_length,
+        }
 
         if assignments:
             family_id = family_by_msg_id.get(record.msg_id)
@@ -452,15 +456,5 @@ def extract_feature_artifacts(
     records: Sequence[MessageRecord],
     assignments: Optional[Sequence[FamilyAssignment]] = None,
     include_unassigned: bool = False,
-) -> Tuple[List[Dict[str, object]], Dict[str, Dict[str, object]]]:
-    message_features: List[Dict[str, object]] = []
-    from io import StringIO
-
-    buffer = StringIO()
-    family_features = stream_feature_artifacts(records, buffer, assignments=assignments, include_unassigned=include_unassigned)
-    buffer.seek(0)
-    import json
-
-    for line in buffer:
-        message_features.append(json.loads(line))
-    return message_features, family_features
+) -> Dict[str, Dict[str, object]]:
+    return stream_feature_artifacts(records, assignments=assignments, include_unassigned=include_unassigned)
