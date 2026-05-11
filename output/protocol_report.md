@@ -24,16 +24,16 @@ Version: `0.1`
 
 ### Evaluation Top Relation Edges
 
-- `family_8` -> `family_8` | pairs=`12233` avg_score=`3.4449` echo_fields=`20` length_rules=`14`
-- `family_14` -> `family_14` | pairs=`11545` avg_score=`3.4446` echo_fields=`20` length_rules=`14`
-- `family_11` -> `family_11` | pairs=`4230` avg_score=`3.4434` echo_fields=`20` length_rules=`14`
-- `family_8` -> `family_0` | pairs=`2488` avg_score=`3.4664` echo_fields=`20` length_rules=`14`
-- `family_14` -> `family_0` | pairs=`2120` avg_score=`3.4683` echo_fields=`20` length_rules=`14`
-- `family_14` -> `noise` | pairs=`1411` avg_score=`3.4582` echo_fields=`20` length_rules=`14`
-- `family_6` -> `family_8` | pairs=`1010` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `noise` -> `family_11` | pairs=`944` avg_score=`3.4397` echo_fields=`17` length_rules=`0`
-- `noise` -> `family_8` | pairs=`927` avg_score=`3.4531` echo_fields=`20` length_rules=`14`
-- `family_8` -> `family_3` | pairs=`895` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_8` | pairs=`12233` avg_score=`3.4449` support=`0.6798` lift=`2.1907` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_14` | pairs=`11545` avg_score=`3.4446` support=`0.7072` lift=`2.1912` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_11` -> `family_11` | pairs=`4230` avg_score=`3.4434` support=`0.7331` lift=`4.8305` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_0` | pairs=`2488` avg_score=`3.4664` support=`0.1383` lift=`1.2289` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_0` | pairs=`2120` avg_score=`3.4683` support=`0.1299` lift=`1.1542` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_14` -> `noise` | pairs=`1411` avg_score=`3.4582` support=`0.0864` lift=`1.6548` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_6` -> `family_8` | pairs=`1010` avg_score=`3.4688` support=`1` lift=`3.2225` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `noise` -> `family_11` | pairs=`944` avg_score=`3.4397` support=`0.3215` lift=`2.1186` direction=`1` order=`1` echo_fields=`17` length_rules=`0`
+- `noise` -> `family_8` | pairs=`927` avg_score=`3.4531` support=`0.3157` lift=`1.0175` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_3` | pairs=`895` avg_score=`3.4688` support=`0.0497` lift=`2.6525` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
 
 ## Final Ground Truth Evaluation
 
@@ -48,7 +48,7 @@ Version: `0.1`
 ## LLM Analysis
 
 - Model: `deepseek-r1:8b`
-- Prompt size: `148972` bytes, `148972` characters, estimated tokens=`37243`
+- Prompt size: `150733` bytes, `150733` characters, estimated tokens=`37684`
 
 _LLM analysis was skipped because stage 15 ran in render-only mode._
 
@@ -56,31 +56,31 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - Total inferred family edges: `37`
 - Strongest edges:
-- `family_8` -> `family_8` | pairs=`12233` avg_score=`3.4449` echo_fields=`20` length_rules=`14`
-- `family_14` -> `family_14` | pairs=`11545` avg_score=`3.4446` echo_fields=`20` length_rules=`14`
-- `family_11` -> `family_11` | pairs=`4230` avg_score=`3.4434` echo_fields=`20` length_rules=`14`
-- `family_8` -> `family_0` | pairs=`2488` avg_score=`3.4664` echo_fields=`20` length_rules=`14`
-- `family_14` -> `family_0` | pairs=`2120` avg_score=`3.4683` echo_fields=`20` length_rules=`14`
-- `family_14` -> `noise` | pairs=`1411` avg_score=`3.4582` echo_fields=`20` length_rules=`14`
-- `family_6` -> `family_8` | pairs=`1010` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `noise` -> `family_11` | pairs=`944` avg_score=`3.4397` echo_fields=`17`
-- `noise` -> `family_8` | pairs=`927` avg_score=`3.4531` echo_fields=`20` length_rules=`14`
-- `family_8` -> `family_3` | pairs=`895` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_12` -> `family_14` | pairs=`886` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_11` -> `family_0` | pairs=`759` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_7` -> `family_8` | pairs=`642` avg_score=`3.4375` echo_fields=`20` length_rules=`14`
-- `family_9` -> `family_11` | pairs=`529` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_11` -> `family_1` | pairs=`427` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_10` -> `family_11` | pairs=`325` avg_score=`3.4375` echo_fields=`20` length_rules=`14`
-- `family_13` -> `family_14` | pairs=`308` avg_score=`3.4375` echo_fields=`20` length_rules=`14`
-- `family_13` -> `family_11` | pairs=`200` avg_score=`3.25` echo_fields=`20` length_rules=`14`
-- `family_3` -> `family_14` | pairs=`199` avg_score=`3.4688` echo_fields=`20` length_rules=`2`
-- `family_14` -> `family_4` | pairs=`150` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_8` -> `family_13` | pairs=`140` avg_score=`3.25` echo_fields=`20` length_rules=`14`
-- `family_14` -> `family_5` | pairs=`115` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_8` -> `family_12` | pairs=`104` avg_score=`3.25` echo_fields=`20` length_rules=`14`
-- `family_11` -> `family_2` | pairs=`87` avg_score=`3.4688` echo_fields=`20` length_rules=`14`
-- `family_13` -> `family_10` | pairs=`76` avg_score=`3.25` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_8` | pairs=`12233` avg_score=`3.4449` support=`0.6798` lift=`2.1907` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_14` | pairs=`11545` avg_score=`3.4446` support=`0.7072` lift=`2.1912` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_11` -> `family_11` | pairs=`4230` avg_score=`3.4434` support=`0.7331` lift=`4.8305` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_0` | pairs=`2488` avg_score=`3.4664` support=`0.1383` lift=`1.2289` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_0` | pairs=`2120` avg_score=`3.4683` support=`0.1299` lift=`1.1542` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_14` -> `noise` | pairs=`1411` avg_score=`3.4582` support=`0.0864` lift=`1.6548` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_6` -> `family_8` | pairs=`1010` avg_score=`3.4688` support=`1` lift=`3.2225` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `noise` -> `family_11` | pairs=`944` avg_score=`3.4397` support=`0.3215` lift=`2.1186` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`17`
+- `noise` -> `family_8` | pairs=`927` avg_score=`3.4531` support=`0.3157` lift=`1.0175` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_3` | pairs=`895` avg_score=`3.4688` support=`0.0497` lift=`2.6525` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_12` -> `family_14` | pairs=`886` avg_score=`3.4688` support=`0.9877` lift=`3.0607` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_11` -> `family_0` | pairs=`759` avg_score=`3.4688` support=`0.1315` lift=`1.1692` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_7` -> `family_8` | pairs=`642` avg_score=`3.4375` support=`0.6681` lift=`2.1528` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_9` -> `family_11` | pairs=`529` avg_score=`3.4688` support=`1` lift=`6.5892` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_11` -> `family_1` | pairs=`427` avg_score=`3.4688` support=`0.074` lift=`7.92` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_10` -> `family_11` | pairs=`325` avg_score=`3.4375` support=`1` lift=`6.5892` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_13` -> `family_14` | pairs=`308` avg_score=`3.4375` support=`0.4746` lift=`1.4706` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_13` -> `family_11` | pairs=`200` avg_score=`3.25` support=`0.3082` lift=`2.0306` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_3` -> `family_14` | pairs=`199` avg_score=`3.4688` support=`0.9851` lift=`3.0527` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
+- `family_14` -> `family_4` | pairs=`150` avg_score=`3.4688` support=`0.0092` lift=`2.7756` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_13` | pairs=`140` avg_score=`3.25` support=`0.0078` lift=`1.7192` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_5` | pairs=`115` avg_score=`3.4688` support=`0.007` lift=`2.6474` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_12` | pairs=`104` avg_score=`3.25` support=`0.0058` lift=`1.642` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_11` -> `family_2` | pairs=`87` avg_score=`3.4688` support=`0.0151` lift=`8.2724` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
+- `family_13` -> `family_10` | pairs=`76` avg_score=`3.25` support=`0.1171` lift=`30.3781` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`14`
 
 ## Families
 
