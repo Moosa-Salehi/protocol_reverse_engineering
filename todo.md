@@ -1,11 +1,4 @@
-  ### TODO 4. Preserve or infer direction in legacy JSON mode
-
-  - Files
-      - src/protocol_re/corpus/message_corpus.py
-      - scripts/03_alt_build_corpus.py
-      - main.py
-  - Current issue
-      - Legacy mode forces direction="unknown" even when source/destination ports are available.
+  ### TODO 4. remove the legacy json support and related files, the project works only with pcaps from now on.
 
   ### TODO 5. Add protocol-agnostic framing hypothesis module
 
