@@ -1,3 +1,5 @@
+  the F1 and other metrics for final ground truth evaluation are showed as zero in md/html for relations, fix it.
+
   ### TODO 4. remove the legacy json support and related files, the project works only with pcaps from now on.
 
   ### TODO 5. Add protocol-agnostic framing hypothesis module
