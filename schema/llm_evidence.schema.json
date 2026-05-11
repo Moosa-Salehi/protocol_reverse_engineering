@@ -278,6 +278,12 @@
         "response_family_id": {"type": ["string", "null"]},
         "pair_count": {"type": ["integer", "null"], "minimum": 0},
         "avg_pair_score": {"type": ["number", "null"]},
+        "support_ratio": {"type": ["number", "null"]},
+        "edge_lift": {"type": ["number", "null"]},
+        "direction_consistency": {"type": ["number", "null"]},
+        "dominant_direction": {"type": ["string", "null"]},
+        "temporal_order_consistency": {"type": ["number", "null"]},
+        "order_usable_pairs": {"type": ["integer", "null"], "minimum": 0},
         "avg_latency_ms": {"type": ["number", "null"]},
         "echo_fields": {"type": "array", "items": {"type": "object"}},
         "length_relations": {"type": "array", "items": {"type": "object"}}

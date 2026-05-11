@@ -14,7 +14,12 @@ def _families(model: Dict[str, Any], limit: int = 40) -> List[Dict[str, Any]]:
 def _relations(model: Dict[str, Any], limit: int = 20) -> List[Dict[str, Any]]:
     return sorted(
         model.get("relations", []) or [],
-        key=lambda item: (-int(item.get("pair_count", 0) or 0), -float(item.get("avg_pair_score", 0.0) or 0.0)),
+        key=lambda item: (
+            -int(item.get("pair_count", 0) or 0),
+            -float(item.get("support_ratio", 0.0) or 0.0),
+            -float(item.get("edge_lift", 0.0) or 0.0),
+            -float(item.get("avg_pair_score", 0.0) or 0.0),
+        ),
     )[:limit]
 
 
@@ -193,11 +198,16 @@ def _relation_rows(model: Dict[str, Any]) -> str:
             f"<td><code>{_text(relation.get('response_family_id'))}</code></td>"
             f"<td>{_text(relation.get('pair_count', 0))}</td>"
             f"<td>{_text(relation.get('avg_pair_score', 0.0))}</td>"
+            f"<td>{_text(relation.get('support_ratio', 0.0))}</td>"
+            f"<td>{_text(relation.get('edge_lift', 0.0))}</td>"
+            f"<td>{_text(relation.get('direction_consistency', 0.0))}</td>"
+            f"<td>{_text(relation.get('temporal_order_consistency', 0.0))}</td>"
+            f"<td>{_text(relation.get('dominant_direction', 'unknown'))}</td>"
             f"<td>{len(relation.get('echo_fields', []) or [])}</td>"
             f"<td>{len(relation.get('length_relations', []) or [])}</td>"
             "</tr>"
         )
-    return "".join(rows) or '<tr><td colspan="6">No relation evidence.</td></tr>'
+    return "".join(rows) or '<tr><td colspan="11">No relation evidence.</td></tr>'
 
 
 def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
@@ -387,7 +397,7 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
   </section>
   <section class="panel">
     <h2>Strongest Relations</h2>
-    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody>{relation_rows}</tbody></table>
+    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody>{relation_rows}</tbody></table>
   </section>
   <main>
     <section class="panel"><h2>Families</h2><p class="muted">Showing {len(families)} largest families.</p></section>

@@ -3,13 +3,28 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 
+def _sort_float(value: object) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return 0.0
+
+
+def _sort_int(value: object) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return 0
+
 
 def _top_relations(relations: List[Dict[str, object]], limit: int = 25) -> List[Dict[str, object]]:
     return sorted(
         relations,
         key=lambda item: (
-            -int(item.get("pair_count", 0)),
-            -float(item.get("avg_pair_score", 0.0)),
+            -_sort_int(item.get("pair_count", 0)),
+            -_sort_float(item.get("support_ratio", 0.0)),
+            -_sort_float(item.get("edge_lift", 0.0)),
+            -_sort_float(item.get("avg_pair_score", 0.0)),
             item.get("request_family_id", ""),
             item.get("response_family_id", ""),
         ),
@@ -102,6 +117,8 @@ def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
             lines.append(
                 f"- `{edge.get('request_family_id')}` -> `{edge.get('response_family_id')}` | "
                 f"pairs=`{edge.get('pair_count')}` avg_score=`{edge.get('avg_pair_score')}` "
+                f"support=`{_fmt_metric(edge.get('support_ratio', 0.0))}` lift=`{_fmt_metric(edge.get('edge_lift', 0.0))}` "
+                f"direction=`{_fmt_metric(edge.get('direction_consistency', 0.0))}` order=`{_fmt_metric(edge.get('temporal_order_consistency', 0.0))}` "
                 f"echo_fields=`{edge.get('echo_field_count')}` length_rules=`{edge.get('length_relation_count')}`"
             )
         lines.append("")
@@ -204,8 +221,14 @@ def render_protocol_model_markdown(
         for relation in _top_relations(relations):
             desc = (
                 f"- `{relation['request_family_id']}` -> `{relation['response_family_id']}` | "
-                f"pairs=`{relation['pair_count']}` avg_score=`{relation['avg_pair_score']}`"
+                f"pairs=`{relation['pair_count']}` avg_score=`{relation['avg_pair_score']}` "
+                f"support=`{_fmt_metric(relation.get('support_ratio', 0.0))}` "
+                f"lift=`{_fmt_metric(relation.get('edge_lift', 0.0))}` "
+                f"direction=`{_fmt_metric(relation.get('direction_consistency', 0.0))}` "
+                f"order=`{_fmt_metric(relation.get('temporal_order_consistency', 0.0))}`"
             )
+            if relation.get("dominant_direction"):
+                desc += f" flow=`{relation.get('dominant_direction')}`"
             if relation.get("echo_fields"):
                 desc += f" echo_fields=`{len(relation['echo_fields'])}`"
             if relation.get("length_relations"):

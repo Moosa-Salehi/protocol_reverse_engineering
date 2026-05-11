@@ -116,6 +116,12 @@ def _compact_relation(relation: Dict[str, Any]) -> Dict[str, Any]:
         "response_family_id": relation.get("response_family_id"),
         "pair_count": relation.get("pair_count"),
         "avg_pair_score": relation.get("avg_pair_score"),
+        "support_ratio": relation.get("support_ratio"),
+        "edge_lift": relation.get("edge_lift"),
+        "direction_consistency": relation.get("direction_consistency"),
+        "dominant_direction": relation.get("dominant_direction"),
+        "temporal_order_consistency": relation.get("temporal_order_consistency"),
+        "order_usable_pairs": relation.get("order_usable_pairs"),
         "avg_latency_ms": relation.get("avg_latency_ms"),
         "echo_fields": (relation.get("echo_fields", []) or [])[:3],
         "length_relations": (relation.get("length_relations", []) or [])[:3],
@@ -125,7 +131,12 @@ def _compact_relation(relation: Dict[str, Any]) -> Dict[str, Any]:
 def _top_relations(model: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
     relations = sorted(
         model.get("relations", []) or [],
-        key=lambda item: (-_as_int(item.get("pair_count", 0)), -_as_float(item.get("avg_pair_score", 0.0))),
+        key=lambda item: (
+            -_as_int(item.get("pair_count", 0)),
+            -_as_float(item.get("support_ratio", 0.0)),
+            -_as_float(item.get("edge_lift", 0.0)),
+            -_as_float(item.get("avg_pair_score", 0.0)),
+        ),
     )
     return [_compact_relation(relation) for relation in relations[:limit]]
 

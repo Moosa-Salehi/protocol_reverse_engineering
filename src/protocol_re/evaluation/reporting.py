@@ -152,7 +152,15 @@ def relation_summary(relations_payload: Dict[str, Any]) -> Dict[str, Any]:
         for item in (edge.get("length_relations", []) or [])
     ]
     role_hints = Counter((item or {}).get("role_hint", "unknown") for item in (relations_payload.get("role_hints", {}) or {}).values())
-    top_edges = sorted(edges, key=lambda item: (-int(item.get("pair_count", 0) or 0), -float(item.get("avg_pair_score", 0.0) or 0.0)))[:20]
+    top_edges = sorted(
+        edges,
+        key=lambda item: (
+            -int(item.get("pair_count", 0) or 0),
+            -float(item.get("support_ratio", 0.0) or 0.0),
+            -float(item.get("edge_lift", 0.0) or 0.0),
+            -float(item.get("avg_pair_score", 0.0) or 0.0),
+        ),
+    )[:20]
     return {
         "edge_count": len(edges),
         "pair_count_distribution": _quantiles(pair_counts),
@@ -168,6 +176,12 @@ def relation_summary(relations_payload: Dict[str, Any]) -> Dict[str, Any]:
                 "response_family_id": edge.get("response_family_id"),
                 "pair_count": edge.get("pair_count"),
                 "avg_pair_score": edge.get("avg_pair_score"),
+                "support_ratio": edge.get("support_ratio"),
+                "edge_lift": edge.get("edge_lift"),
+                "direction_consistency": edge.get("direction_consistency"),
+                "dominant_direction": edge.get("dominant_direction"),
+                "temporal_order_consistency": edge.get("temporal_order_consistency"),
+                "order_usable_pairs": edge.get("order_usable_pairs"),
                 "echo_field_count": len(edge.get("echo_fields", []) or []),
                 "length_relation_count": len(edge.get("length_relations", []) or []),
             }
