@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import argparse
 
-from protocol_re.io.extract_payloads import extract_messages_from_pcaps, write_messages_jsonl
+from protocol_re.io.extract_payloads import write_messages_from_pcaps_jsonl
 
 
 def main() -> None:
@@ -11,7 +11,6 @@ def main() -> None:
     parser.add_argument("pcap_dir")
     parser.add_argument("output_jsonl")
     parser.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
-    parser.add_argument("--max-workers", type=int, default=4)
     parser.add_argument("--max-messages", type=int, help="Maximum number of messages to extract.")
     parser.add_argument(
         "--reassembly-mode",
@@ -21,15 +20,14 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    messages = extract_messages_from_pcaps(
+    count = write_messages_from_pcaps_jsonl(
         args.pcap_dir,
+        args.output_jsonl,
         service_port=args.service_port,
-        max_workers=args.max_workers,
         reassembly_mode=args.reassembly_mode,
         max_messages=args.max_messages,
     )
-    write_messages_jsonl(messages, args.output_jsonl)
-    print(f"[+] Wrote {len(messages)} extracted messages to {args.output_jsonl}")
+    print(f"[+] Wrote {count} extracted messages to {args.output_jsonl}")
 
 
 if __name__ == "__main__":

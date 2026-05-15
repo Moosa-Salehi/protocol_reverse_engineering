@@ -98,16 +98,9 @@ This command treats the input folder as an existing normalized PCAP directory, e
 Useful runner options:
 
 ```bash
-python main.py <folder-containing-pcaps> --max-workers 4
-python main.py <folder-containing-pcaps> --service-port <port>
-python main.py <folder-containing-pcaps> --reassembly-mode stream
 python main.py files --collect
-python main.py pcaps --max-messages 5000000
+python main.py ../pcaps --service-port 502 --reassembly-mode stream --ground-truth-json ./truth-files/modbus.json --max-messages 100000 --llm-render-only
 python main.py pcaps --skip-llm
-python main.py pcaps --ground-truth-json ground_truth/protocol.json
-python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads
-python main.py --legacy-json archive/protocol-x-payloads --data-dir /tmp/protocol_re_data --output-dir /tmp/protocol_re_output --stop-after 03_alt_build_corpus
-python main.py --legacy-json archive/protocol-x-payloads --deduplicate-payloads --llm-render-only --stop-after 15_analyze_with_llm
 ```
 
 - `--legacy-json <dir>` uses already extracted archive JSON payloads instead of PCAPs.
@@ -133,7 +126,7 @@ export PYTHONPATH=src
 Build from an existing normalized PCAP directory, matching the default `python main.py pcaps` flow:
 
 ```bash
-python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --max-workers 4 --reassembly-mode packet --max-messages 2000000
+python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --reassembly-mode packet --max-messages 2000000
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
 python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json

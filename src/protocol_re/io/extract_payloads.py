@@ -5,15 +5,16 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, Iterator, List, Tuple
 
 from protocol_re.model.schema import MessageRecord
 
 try:
-    from scapy.all import IP, TCP, rdpcap
+    from scapy.all import IP, TCP, PcapReader, rdpcap
 except Exception:  # pragma: no cover - optional dependency at import time
     IP = None
     TCP = None
+    PcapReader = None
     rdpcap = None
 
 
@@ -38,7 +39,7 @@ class TcpChunk:
 
 
 def _require_scapy() -> None:
-    if rdpcap is None or TCP is None or IP is None:
+    if rdpcap is None or PcapReader is None or TCP is None or IP is None:
         raise RuntimeError("Scapy is required for PCAP extraction. Install scapy before running this stage.")
 
 
@@ -68,13 +69,20 @@ def _packet_timestamp(packet) -> float | None:
     return float(packet.time) if hasattr(packet, "time") else None
 
 
-def _packet_payload_messages(file_path: str, service_port: int | None = None) -> List[MessageRecord]:
-    packets = rdpcap(file_path)
+def _iter_pcap_packets(file_path: str):
+    reader = PcapReader(file_path)
+    try:
+        for packet in reader:
+            yield packet
+    finally:
+        reader.close()
+
+
+def _iter_packet_payload_messages(file_path: str, service_port: int | None = None) -> Iterator[MessageRecord]:
     session_counts: Dict[str, int] = defaultdict(int)
-    messages: List[MessageRecord] = []
     source_name = Path(file_path).name
 
-    for packet in packets:
+    for packet in _iter_pcap_packets(file_path):
         if IP not in packet or TCP not in packet:
             continue
         if len(packet[TCP].payload) <= 0:
@@ -91,27 +99,27 @@ def _packet_payload_messages(file_path: str, service_port: int | None = None) ->
         session_index = session_counts[session_key]
         session_id = f"{source_name}:{session_key}"
 
-        messages.append(
-            MessageRecord(
-                msg_id=-1,
-                source_file=source_name,
-                session_id=session_id,
-                session_key=session_key,
-                src_ip=src_ip,
-                src_port=src_port,
-                dst_ip=dst_ip,
-                dst_port=dst_port,
-                direction=_direction(src_port, dst_port, service_port),
-                payload_hex=payload.hex(),
-                payload_len=len(payload),
-                timestamp=_packet_timestamp(packet),
-                index_in_session=session_index,
-                metadata={"service_port": service_port, "extraction_mode": "packet_payload"},
-            )
+        yield MessageRecord(
+            msg_id=-1,
+            source_file=source_name,
+            session_id=session_id,
+            session_key=session_key,
+            src_ip=src_ip,
+            src_port=src_port,
+            dst_ip=dst_ip,
+            dst_port=dst_port,
+            direction=_direction(src_port, dst_port, service_port),
+            payload_hex=payload.hex(),
+            payload_len=len(payload),
+            timestamp=_packet_timestamp(packet),
+            index_in_session=session_index,
+            metadata={"service_port": service_port, "extraction_mode": "packet_payload"},
         )
         session_counts[session_key] += 1
 
-    return messages
+
+def _packet_payload_messages(file_path: str, service_port: int | None = None) -> List[MessageRecord]:
+    return list(_iter_packet_payload_messages(file_path, service_port=service_port))
 
 
 def _reassemble_directional_chunks(segments: List[TcpSegment]) -> List[TcpChunk]:
@@ -208,11 +216,10 @@ def _application_frames_from_stream(stream: bytes) -> List[Tuple[bytes, int, str
 
 
 def _stream_reassembled_messages(file_path: str, service_port: int | None = None) -> List[MessageRecord]:
-    packets = rdpcap(file_path)
     source_name = Path(file_path).name
     segments_by_flow: Dict[FlowKey, List[TcpSegment]] = defaultdict(list)
 
-    for packet in packets:
+    for packet in _iter_pcap_packets(file_path):
         if IP not in packet or TCP not in packet:
             continue
         payload = bytes(packet[TCP].payload)
@@ -343,6 +350,52 @@ def extract_messages_from_pcaps(
     for idx, message in enumerate(all_messages):
         message.msg_id = idx
     return all_messages
+
+
+def iter_messages_from_pcaps(
+    pcap_dir: str,
+    service_port: int | None = None,
+    reassembly_mode: str = "packet",
+    max_messages: int | None = None,
+) -> Iterator[MessageRecord]:
+    _require_scapy()
+    pcap_paths = [str(path) for path in sorted(Path(pcap_dir).iterdir()) if path.suffix.lower() in {".pcap", ".pcapng"}]
+    next_msg_id = 0
+
+    for path in pcap_paths:
+        if reassembly_mode == "packet":
+            messages = _iter_packet_payload_messages(path, service_port=service_port)
+        elif reassembly_mode == "stream":
+            messages = iter(_stream_reassembled_messages(path, service_port=service_port))
+        else:
+            raise ValueError(f"Unsupported reassembly mode: {reassembly_mode}")
+
+        for message in messages:
+            message.msg_id = next_msg_id
+            yield message
+            next_msg_id += 1
+            if max_messages is not None and next_msg_id >= max_messages:
+                return
+
+
+def write_messages_from_pcaps_jsonl(
+    pcap_dir: str,
+    output_path: str,
+    service_port: int | None = None,
+    reassembly_mode: str = "packet",
+    max_messages: int | None = None,
+) -> int:
+    count = 0
+    with open(output_path, "w", encoding="utf-8") as handle:
+        for message in iter_messages_from_pcaps(
+            pcap_dir,
+            service_port=service_port,
+            reassembly_mode=reassembly_mode,
+            max_messages=max_messages,
+        ):
+            handle.write(json.dumps(message.to_dict(), sort_keys=True) + "\n")
+            count += 1
+    return count
 
 
 def write_messages_jsonl(messages: Iterable[MessageRecord], output_path: str) -> None:
