@@ -201,29 +201,65 @@ def _relation_matches(
     predicted_relations: Sequence[Dict[str, Any]],
     truth_relations: Sequence[Dict[str, Any]],
     family_to_truth: Dict[str, str],
+    families_by_id: Dict[str, Dict[str, Any]],
+    truth_by_id: Dict[str, Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
-    truth_pairs = {
-        (str(item.get("request_message_type_id")), str(item.get("response_message_type_id")))
+    truth_items = [
+        (str(item.get("request_message_type_id")), str(item.get("response_message_type_id")), item)
         for item in truth_relations
-    }
-    matches = []
+    ]
+    candidates: List[Tuple[str, str, float]] = []
+    candidate_details: Dict[Tuple[str, str], Dict[str, Any]] = {}
+
+    def compatible_family_endpoint(family_id: str, mapped_truth_id: str | None, truth_id: str) -> float:
+        if mapped_truth_id == truth_id:
+            return 1.0
+        family = families_by_id.get(family_id) or {}
+        truth_type = truth_by_id.get(truth_id) or {}
+        family_role = _norm(family.get("role") or (family.get("semantic_summary") or {}).get("role"))
+        truth_role = _norm(truth_type.get("role"))
+        truth_name = _norm(truth_type.get("name") or "")
+        truth_token = _norm(truth_id)
+        is_generic_endpoint = truth_token in {"request", "response", "modbus_request", "modbus_response"} or (
+            "_fc" not in truth_token and (truth_token.endswith("_request") or truth_token.endswith("_response"))
+        )
+        if mapped_truth_id is not None and not is_generic_endpoint:
+            return 0.0
+        if truth_role and family_role == truth_role and truth_role in {"request", "response"} and (mapped_truth_id is None or is_generic_endpoint):
+            return 0.75
+        if truth_name.endswith("_response") and family_role == "response":
+            return 0.75
+        if truth_name.endswith("_request") and family_role == "request":
+            return 0.75
+        return 0.0
+
     for relation in predicted_relations:
         pred_req = str(relation.get("request_family_id"))
         pred_resp = str(relation.get("response_family_id"))
-        truth_req = family_to_truth.get(pred_req)
-        truth_resp = family_to_truth.get(pred_resp)
-        if truth_req is None or truth_resp is None or (truth_req, truth_resp) not in truth_pairs:
-            continue
-        matches.append(
-            {
+        mapped_req = family_to_truth.get(pred_req)
+        mapped_resp = family_to_truth.get(pred_resp)
+        for truth_req, truth_resp, _truth_relation in truth_items:
+            request_score = compatible_family_endpoint(pred_req, mapped_req, truth_req)
+            response_score = compatible_family_endpoint(pred_resp, mapped_resp, truth_resp)
+            score = round(min(request_score, response_score), 6)
+            if score < 0.5:
+                continue
+            candidate_key = (f"{pred_req}->{pred_resp}", f"{truth_req}->{truth_resp}")
+            candidates.append((candidate_key[0], candidate_key[1], score))
+            candidate_details[candidate_key] = {
                 "predicted_request_family_id": pred_req,
                 "predicted_response_family_id": pred_resp,
                 "ground_truth_request_message_type_id": truth_req,
                 "ground_truth_response_message_type_id": truth_resp,
-                "score": 1.0,
+                "score": score,
+                "request_match": mapped_req or "role_compatible",
+                "response_match": mapped_resp or "role_compatible",
             }
-        )
-    return matches
+
+    return [
+        candidate_details[(predicted_key, truth_key)]
+        for predicted_key, truth_key, _score in _greedy_matches(candidates, 0.5)
+    ]
 
 
 def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict[str, Any]) -> Dict[str, Any]:
@@ -239,7 +275,7 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     truth_by_id = {str(item.get("message_type_id")): item for item in truth_types}
     family_to_truth = {item["predicted_family_id"]: item["ground_truth_message_type_id"] for item in message_matches}
     field_matches = _field_matches(families_by_id, truth_by_id, message_matches)
-    relation_matches = _relation_matches(predicted_relations, truth_relations, family_to_truth)
+    relation_matches = _relation_matches(predicted_relations, truth_relations, family_to_truth, families_by_id, truth_by_id)
 
     predicted_field_total = sum(len((family.get("field_hypotheses", []) or [])) for family in families)
     truth_field_total = sum(len((message_type.get("fields", []) or [])) for message_type in truth_types)
