@@ -244,6 +244,6 @@ def build_evaluation_report(
         "notes": [
             "Metrics are heuristic quality indicators for reverse-engineering workflow triage.",
             "Low assignment coverage usually means clustering sampled fewer messages than the full corpus.",
-            "Direction-unknown pair ratios are expected to be high when legacy JSON payloads are used.",
+            "Direction-unknown pair ratios are expected to be high when no service port is configured.",
         ],
     }

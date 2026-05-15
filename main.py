@@ -86,22 +86,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
     pipeline: list[tuple[str, list[str]]] = []
 
-    if args.use_existing_messages:
-        pass
-    elif args.legacy_json:
-        corpus_step = [
-            _script("03_alt_build_corpus.py"),
-            _path(args.legacy_json),
-            _path(messages_jsonl),
-        ]
-        if args.service_port is not None:
-            corpus_step.extend(["--service-port", str(args.service_port)])
-        if args.deduplicate_payloads:
-            corpus_step.append("--deduplicate-payloads")
-        if args.max_messages is not None:
-            corpus_step.extend(["--max-messages", str(args.max_messages)])
-        pipeline.append(("03_alt_build_corpus", corpus_step))
-    else:
+    if not args.use_existing_messages:
         if args.collect:
             pipeline.extend(
                 [
@@ -380,11 +365,6 @@ def parse_args() -> argparse.Namespace:
         help="Folder containing PCAP files. By default, this is treated as an existing normalized PCAP directory.",
     )
     parser.add_argument(
-        "--legacy-json",
-        type=Path,
-        help="Use an extracted protocol-x-payloads JSON folder instead of PCAP input.",
-    )
-    parser.add_argument(
         "--collect",
         action="store_true",
         help="Collect PCAP files into --pcap-dir and deduplicate before extraction.",
@@ -412,7 +392,6 @@ def parse_args() -> argparse.Namespace:
         help="Maximum candidate response families to retain per request family before relation analysis.",
     )
     parser.add_argument("--allow-self-relations", action="store_true", help="Keep same-family request/response relation candidates.")
-    parser.add_argument("--deduplicate-payloads", action="store_true", help="Drop duplicate payloads in --legacy-json mode.")
     parser.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
     parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
     parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
@@ -488,20 +467,10 @@ def validate_args(args: argparse.Namespace) -> None:
             raise SystemExit(f"{RED}Error:{RESET} existing messages file does not exist: {messages_jsonl}")
         if args.input_folder is not None:
             args.input_folder = args.input_folder.resolve()
-        if args.legacy_json:
-            print(f"{YELLOW}Note:{RESET} ignoring --legacy-json because --use-existing-messages was provided.")
-        return
-
-    if args.legacy_json:
-        args.legacy_json = args.legacy_json.resolve()
-        if not args.legacy_json.is_dir():
-            raise SystemExit(f"{RED}Error:{RESET} legacy JSON folder does not exist: {args.legacy_json}")
-        if args.input_folder is not None:
-            print(f"{YELLOW}Note:{RESET} ignoring input_folder because --legacy-json was provided.")
         return
 
     if args.input_folder is None:
-        raise SystemExit(f"{RED}Error:{RESET} input_folder is required unless --legacy-json is provided.")
+        raise SystemExit(f"{RED}Error:{RESET} input_folder is required unless --use-existing-messages is provided.")
 
     args.input_folder = args.input_folder.resolve()
     if not args.input_folder.is_dir():
@@ -511,7 +480,7 @@ def validate_args(args: argparse.Namespace) -> None:
 def prepare_output_dirs(args: argparse.Namespace) -> None:
     args.data_dir.mkdir(parents=True, exist_ok=True)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    if not args.legacy_json and args.collect:
+    if args.collect:
         args.pcap_dir.mkdir(parents=True, exist_ok=True)
 
 
@@ -537,8 +506,8 @@ def main() -> None:
         source = args.data_dir / "01_messages.jsonl"
         mode = "existing corpus"
     else:
-        source = args.legacy_json if args.legacy_json else args.input_folder
-        mode = "legacy JSON" if args.legacy_json else "PCAP"
+        source = args.input_folder
+        mode = "PCAP"
     logger.info("Input %s folder: %s", mode, source)
     print(f"{GREEN}{mode} input:{RESET} {source}\n")
 

@@ -1,6 +1,6 @@
 # Protocol RE project
 
-This project is a framework for reverse engineering industrial communication protocols from PCAP traffic. The system takes network captures or legacy extracted payload JSON and gradually infers the structure of an unknown protocol.
+This project is a framework for reverse engineering industrial communication protocols from PCAP traffic. The system takes network captures and gradually infers the structure of an unknown protocol.
 
 The pipeline is:
 
@@ -24,7 +24,6 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/01_collect_pcaps.py` collects PCAP files from a source tree into one normalized directory.
 - `scripts/02_dedup_pcaps.py` finds duplicate PCAP files and can remove them.
 - `scripts/03_extract_messages.py` extracts TCP payload messages from PCAPs directly into the canonical JSONL corpus.
-- `scripts/03_alt_build_corpus.py` builds the same canonical corpus from legacy extracted `protocol-x-payloads/*.json` files.
 - `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback; it clusters a unique-message sample and propagates sampled labels to duplicate payloads across the corpus.
 - `scripts/05_extract_features.py` writes reusable per-family feature artifacts.
 - `scripts/06_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json`, it uses family entropy/uniqueness/coverage vectors to refine segment confidence.
@@ -105,7 +104,6 @@ python main.py --use-existing-messages --skip-llm
 ```
 
 - `--use-existing-messages` skips stage 3 corpus extraction/building and uses the existing `data/01_messages.jsonl`; combine with `--data-dir <dir>` if the corpus is elsewhere.
-- `--legacy-json <dir>` uses already extracted archive JSON payloads instead of PCAPs.
 - `--collect` collects PCAP/PCAPNG files into `pcaps/` and removes duplicate captures before extraction.
 - `--max-messages <n>` limits extraction/corpus writing; default is 2,000,000.
 - `--service-port` optionally filters extraction to one TCP port. If omitted, the PCAP extractor treats all TCP payloads as candidate unknown-protocol traffic.
@@ -161,13 +159,6 @@ python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protoco
 python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json --final-evaluation-json data/15_evaluation_result.json
 ```
 
-Build from legacy extracted JSON payloads:
-
-```bash
-python3 scripts/03_alt_build_corpus.py archive/protocol-x-payloads data/01_messages.jsonl --deduplicate-payloads --max-messages 2000000
-(the rest is the same)
-```
-
 Windows PowerShell equivalent for imports:
 
 ```powershell
@@ -176,6 +167,5 @@ $env:PYTHONPATH="src"
 
 ## Compatibility note
 
-- `scripts/03_alt_build_corpus.py` exists so you can keep using the already extracted `protocol-x-payloads/*.json` dataset while migrating to the PCAP workflow.
-- `scripts/03_extract_messages.py` is the preferred path for future runs because it preserves per-message direction and timestamps.
+- `scripts/03_extract_messages.py` preserves per-message direction and timestamps.
 - The PCAP extractor defaults to packet-level TCP payloads. Use `--reassembly-mode stream` for directional raw TCP stream reconstruction; this handles retransmission overlap and stream gaps without assuming a known protocol grammar.
