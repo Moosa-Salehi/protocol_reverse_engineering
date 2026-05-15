@@ -1,3 +1,5 @@
+Read README.md for context. No summarize/explanation needed. Await task.
+
   ### TODO 5. Add protocol-agnostic framing hypothesis module
 
   - Files
