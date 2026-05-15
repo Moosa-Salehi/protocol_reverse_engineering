@@ -101,8 +101,10 @@ Useful runner options:
 python main.py files --collect
 python main.py ../pcaps --service-port 502 --reassembly-mode stream --ground-truth-json ./truth-files/modbus.json --max-messages 100000 --llm-render-only
 python main.py pcaps --skip-llm
+python main.py --use-existing-messages --skip-llm
 ```
 
+- `--use-existing-messages` skips stage 3 corpus extraction/building and uses the existing `data/01_messages.jsonl`; combine with `--data-dir <dir>` if the corpus is elsewhere.
 - `--legacy-json <dir>` uses already extracted archive JSON payloads instead of PCAPs.
 - `--collect` collects PCAP/PCAPNG files into `pcaps/` and removes duplicate captures before extraction.
 - `--max-messages <n>` limits extraction/corpus writing; default is 2,000,000.

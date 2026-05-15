@@ -86,7 +86,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
     pipeline: list[tuple[str, list[str]]] = []
 
-    if args.legacy_json:
+    if args.use_existing_messages:
+        pass
+    elif args.legacy_json:
         corpus_step = [
             _script("03_alt_build_corpus.py"),
             _path(args.legacy_json),
@@ -388,6 +390,11 @@ def parse_args() -> argparse.Namespace:
         help="Collect PCAP files into --pcap-dir and deduplicate before extraction.",
     )
     parser.add_argument("--max-messages", type=int, default=DEFAULT_MAX_MESSAGES, help="Maximum messages to extract/write.")
+    parser.add_argument(
+        "--use-existing-messages",
+        action="store_true",
+        help="Skip corpus extraction/building and use data/01_messages.jsonl from --data-dir.",
+    )
     parser.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
     parser.add_argument(
         "--reassembly-mode",
@@ -456,6 +463,7 @@ def validate_args(args: argparse.Namespace) -> None:
     args.data_dir = _resolve_under_project(args.data_dir)
     args.output_dir = _resolve_under_project(args.output_dir)
     args.llm_config = _resolve_under_project(args.llm_config)
+    messages_jsonl = args.data_dir / "01_messages.jsonl"
     if args.max_messages is not None and args.max_messages <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --max-messages must be greater than 0.")
     if args.min_edge_pairs <= 0:
@@ -474,6 +482,15 @@ def validate_args(args: argparse.Namespace) -> None:
         args.ground_truth_json = args.ground_truth_json.resolve()
         if not args.ground_truth_json.is_file():
             raise SystemExit(f"{RED}Error:{RESET} ground truth JSON file does not exist: {args.ground_truth_json}")
+
+    if args.use_existing_messages:
+        if not messages_jsonl.is_file():
+            raise SystemExit(f"{RED}Error:{RESET} existing messages file does not exist: {messages_jsonl}")
+        if args.input_folder is not None:
+            args.input_folder = args.input_folder.resolve()
+        if args.legacy_json:
+            print(f"{YELLOW}Note:{RESET} ignoring --legacy-json because --use-existing-messages was provided.")
+        return
 
     if args.legacy_json:
         args.legacy_json = args.legacy_json.resolve()
@@ -516,10 +533,14 @@ def main() -> None:
     validate_args(args)
     prepare_output_dirs(args)
 
-    source = args.legacy_json if args.legacy_json else args.input_folder
-    mode = "legacy JSON" if args.legacy_json else "PCAP"
+    if args.use_existing_messages:
+        source = args.data_dir / "01_messages.jsonl"
+        mode = "existing corpus"
+    else:
+        source = args.legacy_json if args.legacy_json else args.input_folder
+        mode = "legacy JSON" if args.legacy_json else "PCAP"
     logger.info("Input %s folder: %s", mode, source)
-    print(f"{GREEN}{mode} input folder:{RESET} {source}\n")
+    print(f"{GREEN}{mode} input:{RESET} {source}\n")
 
     try:
         pipeline = build_pipeline(args)
