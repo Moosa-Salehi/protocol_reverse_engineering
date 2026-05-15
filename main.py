@@ -247,65 +247,64 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_args.append("--allow-self-relations")
                 break
 
-    if not args.skip_llm:
-        llm_steps = [
-            (
-                "14_export_llm_evidence",
-                [
-                    _script("14_export_llm_evidence.py"),
-                    _path(model_json),
-                    _path(llm_evidence_json),
-                    "--evaluation-json",
-                    _path(evaluation_json),
-                ],
-            ),
-            (
-                "15_analyze_with_llm",
-                [
-                    _script("15_analyze_with_llm.py"),
-                    _path(llm_evidence_json),
-                    _path(llm_analysis_json),
-                    "--config",
-                    _path(args.llm_config),
-                    "--prompt-out",
-                    _path(llm_prompt_md),
-                ],
-            ),
-            (
-                "16_prepare_evaluation_data",
-                [
-                    _script("16_prepare_evaluation_data.py"),
-                    _path(model_json),
-                    _path(evaluation_json),
-                    _path(llm_analysis_json),
-                    _path(evaluation_model_data_json),
-                ],
-            ),
-        ]
+    llm_steps = [
+        (
+            "14_export_llm_evidence",
+            [
+                _script("14_export_llm_evidence.py"),
+                _path(model_json),
+                _path(llm_evidence_json),
+                "--evaluation-json",
+                _path(evaluation_json),
+            ],
+        ),
+        (
+            "15_analyze_with_llm",
+            [
+                _script("15_analyze_with_llm.py"),
+                _path(llm_evidence_json),
+                _path(llm_analysis_json),
+                "--config",
+                _path(args.llm_config),
+                "--prompt-out",
+                _path(llm_prompt_md),
+            ],
+        ),
+        (
+            "16_prepare_evaluation_data",
+            [
+                _script("16_prepare_evaluation_data.py"),
+                _path(model_json),
+                _path(evaluation_json),
+                _path(llm_analysis_json),
+                _path(evaluation_model_data_json),
+            ],
+        ),
+    ]
 
-        if args.ground_truth_json:
-            llm_steps.append(
-                (
-                    "17_evaluate_protocol_spec",
-                    [
-                        _script("17_evaluate_protocol_spec.py"),
-                        _path(evaluation_model_data_json),
-                        _path(args.ground_truth_json),
-                        _path(final_evaluation_json),
-                    ],
-                )
+    if args.ground_truth_json:
+        llm_steps.append(
+            (
+                "17_evaluate_protocol_spec",
+                [
+                    _script("17_evaluate_protocol_spec.py"),
+                    _path(evaluation_model_data_json),
+                    _path(args.ground_truth_json),
+                    _path(final_evaluation_json),
+                ],
             )
-        if args.llm_render_only:
-            llm_steps[1][1].append("--render-only")
-        if args.llm_template:
-            llm_steps[1][1].extend(["--template", _path(args.llm_template)])
-        if args.llm_temperature is not None:
-            llm_steps[1][1].extend(["--temperature", str(args.llm_temperature)])
-        if args.llm_max_tokens is not None:
-            llm_steps[1][1].extend(["--max-tokens", str(args.llm_max_tokens)])
-        insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "18_export_markdown")
-        pipeline[insert_at:insert_at] = llm_steps
-        for step_name, step_args in pipeline:
+        )
+    if args.llm_render_only:
+        llm_steps[1][1].append("--render-only")
+    if args.llm_template:
+        llm_steps[1][1].extend(["--template", _path(args.llm_template)])
+    if args.llm_temperature is not None:
+        llm_steps[1][1].extend(["--temperature", str(args.llm_temperature)])
+    if args.llm_max_tokens is not None:
+        llm_steps[1][1].extend(["--max-tokens", str(args.llm_max_tokens)])
+    insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "18_export_markdown")
+    pipeline[insert_at:insert_at] = llm_steps
+    for step_name, step_args in pipeline:
             if step_name in {"18_export_markdown", "19_export_html"}:
                 step_args.extend(["--llm-analysis-json", _path(llm_analysis_json)])
                 if args.ground_truth_json:
@@ -358,51 +357,64 @@ def run_step(name: str, step_args: list[str]) -> bool:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Protocol RE Pipeline Runner")
-    parser.add_argument(
+    runner_group = parser.add_argument_group("Runner - inputs, outputs, and execution control")
+    collect_group = parser.add_argument_group("Stage 01 - collect_pcaps / Stage 02 - dedup_pcaps")
+    extract_group = parser.add_argument_group("Stage 03 - extract_messages")
+    family_group = parser.add_argument_group("Stage 04 - discover_families")
+    relations_group = parser.add_argument_group("Stage 10 - infer_relations")
+    llm_analysis_group = parser.add_argument_group("Stage 15 - analyze_with_llm")
+    final_eval_group = parser.add_argument_group("Stage 17 - evaluate_protocol_spec")
+
+    runner_group.add_argument(
         "input_folder",
         nargs="?",
         type=Path,
         help="Folder containing PCAP files. By default, this is treated as an existing normalized PCAP directory.",
     )
-    parser.add_argument(
-        "--collect",
-        action="store_true",
-        help="Collect PCAP files into --pcap-dir and deduplicate before extraction.",
-    )
-    parser.add_argument("--max-messages", type=int, default=DEFAULT_MAX_MESSAGES, help="Maximum messages to extract/write.")
-    parser.add_argument(
+    runner_group.add_argument(
         "--use-existing-messages",
         action="store_true",
         help="Skip corpus extraction/building and use data/01_messages.jsonl from --data-dir.",
     )
-    parser.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
-    parser.add_argument(
+    runner_group.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
+    runner_group.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
+    runner_group.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
+    runner_group.add_argument("--stop-after", help="Run through the named pipeline step and then stop; useful for smoke tests.")
+
+    collect_group.add_argument(
+        "--collect",
+        action="store_true",
+        help="Collect PCAP files into --pcap-dir and deduplicate before extraction.",
+    )
+
+    extract_group.add_argument("--max-messages", type=int, default=DEFAULT_MAX_MESSAGES, help="Maximum messages to extract/write.")
+    extract_group.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
+    extract_group.add_argument(
         "--reassembly-mode",
         choices=["packet", "stream"],
         default="packet",
         help="PCAP extraction mode: packet payloads or reconstructed directional TCP streams.",
     )
-    parser.add_argument("--family-sample-size", type=int, default=100000, help="Max unique messages for clustering.")
-    parser.add_argument("--min-edge-pairs", type=int, default=2, help="Minimum pair count for relation edge pruning.")
-    parser.add_argument("--min-edge-lift", type=float, default=1.0, help="Minimum lift for relation edge pruning.")
-    parser.add_argument(
+
+    family_group.add_argument("--family-sample-size", type=int, default=100000, help="Max unique messages for clustering.")
+
+    relations_group.add_argument("--min-edge-pairs", type=int, default=2, help="Minimum pair count for relation edge pruning.")
+    relations_group.add_argument("--min-edge-lift", type=float, default=1.0, help="Minimum lift for relation edge pruning.")
+    relations_group.add_argument(
         "--max-response-families-per-request",
         type=int,
         default=5,
         help="Maximum candidate response families to retain per request family before relation analysis.",
     )
-    parser.add_argument("--allow-self-relations", action="store_true", help="Keep same-family request/response relation candidates.")
-    parser.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
-    parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
-    parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
-    parser.add_argument("--llm-config", type=Path, default=Path("LLM_config.json"), help="LLM config JSON for stage 15.")
-    parser.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation stage 17.")
-    parser.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
-    parser.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
-    parser.add_argument("--skip-llm", action="store_true", help="Skip LLM evidence export and analysis stages.")
-    parser.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
-    parser.add_argument("--llm-max-tokens", type=int, default=6000, help="Max output tokens for stage 15 LLM analysis.")
-    parser.add_argument("--stop-after", help="Run through the named pipeline step and then stop; useful for smoke tests.")
+    relations_group.add_argument("--allow-self-relations", action="store_true", help="Keep same-family request/response relation candidates.")
+
+    llm_analysis_group.add_argument("--llm-config", type=Path, default=Path("LLM_config.json"), help="LLM config JSON for stage 15.")
+    llm_analysis_group.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
+    llm_analysis_group.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
+    llm_analysis_group.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
+    llm_analysis_group.add_argument("--llm-max-tokens", type=int, default=6000, help="Max output tokens for stage 15 LLM analysis.")
+
+    final_eval_group.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation.")
     return parser.parse_args()
 
 
@@ -451,9 +463,9 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit(f"{RED}Error:{RESET} --min-edge-lift must be non-negative.")
     if args.max_response_families_per_request <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --max-response-families-per-request must be greater than 0.")
-    if not args.skip_llm and not args.llm_config.is_file():
+    if not args.llm_render_only and not args.llm_config.is_file():
         raise SystemExit(f"{RED}Error:{RESET} LLM config file does not exist: {args.llm_config}")
-    if not args.skip_llm and args.llm_template:
+    if args.llm_template:
         args.llm_template = args.llm_template.resolve()
         if not args.llm_template.is_file():
             raise SystemExit(f"{RED}Error:{RESET} LLM template file does not exist: {args.llm_template}")
