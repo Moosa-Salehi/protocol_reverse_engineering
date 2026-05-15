@@ -13,115 +13,201 @@ Version: `0.1`
 
 ## Evaluation
 
-- Messages: `100000` across `20832` sessions
+- Messages: `200000` across `45340` sessions
 - Corpus assignment coverage: `1` with `16` families
-- Clustering sample: `90619` messages ratio=`0.9062`
+- Clustering sample: `100000` messages ratio=`0.5`
 - Parseable families: `16` of `16`
-- Pair hypotheses: `79168` direction_unknown_ratio=`0`
-- Relation edges: `38` echo_edges=`38` length_relation_edges=`31`
+- Pair hypotheses: `154658` direction_unknown_ratio=`0`
+- Relation edges: `40` echo_edges=`40` length_relation_edges=`26`
 - Semantic coverage: `16` of `16` families ratio=`1`
-- Top semantic labels: `keyword`x46, `echoed_request_field`x42, `response_size_selector`x24, `constant`x18, `blob`x13, `length`x4, `transaction_or_correlation_id`x1
+- Top semantic labels: `keyword`x72, `echoed_request_field`x48, `response_size_selector`x35, `constant`x22, `blob`x9, `length`x7
 
 ### Evaluation Top Relation Edges
 
-- `family_14` -> `family_14` | pairs=`10360` avg_score=`6.4365` support=`0.3662` lift=`2.4364` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
-- `family_12` -> `family_7` | pairs=`6413` avg_score=`4.9455` support=`0.2574` lift=`1.1883` direction=`1` order=`1` echo_fields=`20` length_rules=`0`
-- `family_7` -> `family_7` | pairs=`6406` avg_score=`6.4417` support=`0.7548` lift=`3.4839` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
-- `family_13` -> `family_12` | pairs=`2761` avg_score=`4.9688` support=`0.8569` lift=`2.1617` direction=`1` order=`1` echo_fields=`20` length_rules=`2`
-- `family_14` -> `family_13` | pairs=`2391` avg_score=`6.4622` support=`0.0845` lift=`2.0093` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
-- `family_12` -> `family_0` | pairs=`2146` avg_score=`6.4611` support=`0.0862` lift=`1.2827` direction=`0.9958` order=`1` echo_fields=`20` length_rules=`14`
-- `family_14` -> `family_0` | pairs=`2119` avg_score=`6.456` support=`0.0749` lift=`1.1152` direction=`0.9924` order=`1` echo_fields=`20` length_rules=`14`
-- `family_12` -> `noise` | pairs=`1555` avg_score=`5.767` support=`0.0624` lift=`1.1286` direction=`0.5395` order=`1` echo_fields=`17` length_rules=`0`
-- `family_0` -> `family_12` | pairs=`1545` avg_score=`4.9693` support=`0.515` lift=`1.2992` direction=`1` order=`1` echo_fields=`20` length_rules=`4`
-- `noise` -> `family_7` | pairs=`1299` avg_score=`6.0546` support=`0.2659` lift=`1.2271` direction=`0.7321` order=`1` echo_fields=`17` length_rules=`0`
+- `family_8` -> `family_8` | pairs=`18535` avg_score=`6.4423` support=`0.3692` lift=`2.145` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_14` | pairs=`17047` avg_score=`4.9454` support=`0.3396` lift=`1.1597` direction=`1` order=`1` echo_fields=`20` length_rules=`0`
+- `family_11` -> `family_11` | pairs=`9256` avg_score=`6.4422` support=`0.7497` lift=`4.4732` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_11` | pairs=`8077` avg_score=`4.9465` support=`0.2359` lift=`1.4077` direction=`0.9986` order=`1` echo_fields=`20` length_rules=`0`
+- `family_5` -> `family_5` | pairs=`4768` avg_score=`6.3616` support=`0.422` lift=`8.9512` direction=`0.9434` order=`1` echo_fields=`20` length_rules=`20`
+- `family_2` -> `family_2` | pairs=`3984` avg_score=`6.4465` support=`0.6847` lift=`10.8647` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_7` -> `family_8` | pairs=`3632` avg_score=`6.4385` support=`0.9409` lift=`5.4667` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_0` | pairs=`3248` avg_score=`6.46` support=`0.0949` lift=`1.1738` direction=`0.9951` order=`1` echo_fields=`20` length_rules=`14`
+- `family_13` -> `family_14` | pairs=`2594` avg_score=`6.4364` support=`0.8477` lift=`2.8952` direction=`1` order=`1` echo_fields=`20` length_rules=`14`
+- `family_0` -> `family_14` | pairs=`2392` avg_score=`4.9692` support=`0.3243` lift=`1.1077` direction=`1` order=`1` echo_fields=`20` length_rules=`4`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.3849`
+- Overall score: `0.354`
 - Verdict: `fail`
 - Matched message types: `11` of `11`
 - Message type matching: accuracy=`0.6875` precision=`0.6875` recall=`1` f1=`0.8148`
-- Field boundary: accuracy=`0.2609` precision=`0.2963` recall=`0.6857` f1=`0.4138`
+- Field boundary: accuracy=`0.1789` precision=`0.2` recall=`0.6286` f1=`0.3034`
 - Field semantics: accuracy=`0` precision=`0` recall=`0` f1=`0`
-- Relations: accuracy=`0.1842` precision=`0.1842` recall=`1` f1=`0.3111`
+- Relations: accuracy=`0.175` precision=`0.175` recall=`1` f1=`0.2979`
 
 ## LLM Analysis
 
 - Model: `deepseek-r1:8b`
-- Prompt size: `148707` bytes, `148707` characters, estimated tokens=`37177`
+- Token usage: `prompt_tokens`=`4096`, `completion_tokens`=`2818`, `total_tokens`=`6914`
+- Prompt size: `175102` bytes, `175102` characters, estimated tokens=`43776`
 
-_LLM analysis was skipped because stage 15 ran in render-only mode._
+To analyze the provided JSON data, we can extract the following information:
+
+### 1. **Roles of Each Family**
+- **family_0**: Request
+- **family_1**: Response
+- **family_2**: Request
+
+### 2. **Byte Length of Each Family**
+- **family_0**: 12 bytes
+- **family_1**: 11 bytes
+- **family_2**: 12 bytes
+
+### 3. **Prefix of Each Family**
+- **family_0**: `?? ?? 00 00 00 05`
+- **family_1**: `?? ?? 00 00 00 05`
+- **family_2**: `?? ?? 00 00 00 05`
+
+### 4. **Related Family IDs**
+- **family_0**: `["family_11", "family_11"]`
+- **family_1**: `["family_11"]`
+- **family_2**: `["family_11", "family_11", "family_11"]`
+
+### 5. **Field Boundaries**
+- **family_0**:
+  - Field 0: `0-1` (Keyword)
+  - Field 1: `2-3` (Variable)
+  - Field 2: `4-5` (Variable)
+  - Field 3: `6-7` (Variable)
+  - Field 4: `8-9` (Variable)
+  - Field 5: `10-11` (Variable)
+- **family_1**:
+  - Field 0: `0-1` (Keyword)
+  - Field 1: `2-3` (Variable)
+  - Field 2: `4-5` (Variable)
+  - Field 3: `6-7` (Variable)
+  - Field 4: `8-9` (Variable)
+  - Field 5: `10-11` (Variable)
+- **family_2**:
+  - Field 0: `0-1` (Keyword)
+  - Field 1: `2-3` (Variable)
+  - Field 2: `4-5` (Variable)
+  - Field 3: `6-7` (Variable)
+  - Field 4: `8-9` (Variable)
+  - Field 5: `10-11` (Variable)
+
+### 6. **Field Labels**
+- **family_0**:
+  - Field 0: `keyword`
+  - Fields 1-5: `blob`
+- **family_1**:
+  - Field 0: `keyword`
+  - Fields 1-5: `blob`
+- **family_2**:
+  - Field 0: `keyword`
+  - Fields 1-5: `blob`
+
+### 7. **Confidence Scores**
+- **family_0**:
+  - Field 0: `0.97`
+  - Fields 1-5: `0.97`
+- **family_1**:
+  - Field 0: `0.97`
+  - Fields 1-5: `0.97`
+- **family_2**:
+  - Field 0: `0.97`
+  - Fields 1-5: `0.97`
+
+### 8. **Confidence Notes**
+- **family_0**: `["Confidence score: 0.97"]`
+- **family_1**: `["Confidence score: 0.97"]`
+- **family_2**: `["Confidence score: 0.97"]`
+
+### 9. **Open Questions**
+- **Open Questions**: The JSON includes an array of open questions, such as:
+  - "What are the roles (request or response) of each family?"
+  - "What is the byte length of each family?"
+  - "What is the prefix (first 6 bytes) of each family?"
+  - "What are the related family IDs for each family?"
+  - "What are the field boundaries (start and end indices) for each family?"
+  - "What are the labels (e.g., keyword, blob) for each field in each family?"
+  - "What are the confidence scores for each field in each family?"
+  - "What are the confidence notes for each family?"
+  - "What are the open questions?"
+
+### Summary
+The JSON data describes three families (two requests and one response) with similar structures. Each family has a keyword field (confidence 0.97) followed by five variable-length fields (confidence 0.97). The relationships between families are indicated by shared IDs (`family_11`). The open questions provide a structured way to explore the binary's functionality further.
 
 ## Family Relations
 
-- Total inferred family edges: `38`
+- Total inferred family edges: `40`
 - Strongest edges:
-- `family_14` -> `family_14` | pairs=`10360` avg_score=`6.4365` support=`0.3662` lift=`2.4364` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_12` -> `family_7` | pairs=`6413` avg_score=`4.9455` support=`0.2574` lift=`1.1883` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
-- `family_7` -> `family_7` | pairs=`6406` avg_score=`6.4417` support=`0.7548` lift=`3.4839` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_13` -> `family_12` | pairs=`2761` avg_score=`4.9688` support=`0.8569` lift=`2.1617` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`2`
-- `family_14` -> `family_13` | pairs=`2391` avg_score=`6.4622` support=`0.0845` lift=`2.0093` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_12` -> `family_0` | pairs=`2146` avg_score=`6.4611` support=`0.0862` lift=`1.2827` direction=`0.9958` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_14` -> `family_0` | pairs=`2119` avg_score=`6.456` support=`0.0749` lift=`1.1152` direction=`0.9924` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_12` -> `noise` | pairs=`1555` avg_score=`5.767` support=`0.0624` lift=`1.1286` direction=`0.5395` order=`1` flow=`client_to_server->server_to_client` echo_fields=`17`
-- `family_0` -> `family_12` | pairs=`1545` avg_score=`4.9693` support=`0.515` lift=`1.2992` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`4`
-- `noise` -> `family_7` | pairs=`1299` avg_score=`6.0546` support=`0.2659` lift=`1.2271` direction=`0.7321` order=`1` flow=`client_to_server->server_to_client` echo_fields=`17`
-- `family_14` -> `family_4` | pairs=`1198` avg_score=`6.4662` support=`0.0423` lift=`2.7983` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_4` -> `family_12` | pairs=`1119` avg_score=`4.9688` support=`0.9833` lift=`2.4805` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`2`
-- `family_7` -> `family_0` | pairs=`979` avg_score=`6.4678` support=`0.1154` lift=`1.7176` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_12` -> `family_1` | pairs=`888` avg_score=`6.4663` support=`0.0356` lift=`3.1782` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_10` -> `family_12` | pairs=`858` avg_score=`6.4683` support=`1` lift=`2.5226` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_9` -> `family_14` | pairs=`809` avg_score=`6.437` support=`1` lift=`6.6533` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_11` -> `family_12` | pairs=`761` avg_score=`6.437` support=`1` lift=`2.5226` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_0` -> `family_7` | pairs=`750` avg_score=`4.9693` support=`0.25` lift=`1.1539` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`4`
-- `family_8` -> `family_13` | pairs=`720` avg_score=`6.4683` support=`0.8431` lift=`20.0438` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_5` -> `family_7` | pairs=`692` avg_score=`6.4683` support=`1` lift=`4.6157` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_7` -> `family_2` | pairs=`645` avg_score=`6.4671` support=`0.076` lift=`9.3281` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_6` -> `family_7` | pairs=`644` avg_score=`6.437` support=`1` lift=`4.6157` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
-- `family_1` -> `family_7` | pairs=`549` avg_score=`4.9688` support=`0.8912` lift=`4.1136` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`2`
-- `family_12` -> `family_5` | pairs=`495` avg_score=`4.9464` support=`0.0199` lift=`2.28` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
-- `family_14` -> `family_10` | pairs=`457` avg_score=`4.9388` support=`0.0162` lift=`1.5749` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
+- `family_8` -> `family_8` | pairs=`18535` avg_score=`6.4423` support=`0.3692` lift=`2.145` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_14` | pairs=`17047` avg_score=`4.9454` support=`0.3396` lift=`1.1597` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
+- `family_11` -> `family_11` | pairs=`9256` avg_score=`6.4422` support=`0.7497` lift=`4.4732` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_11` | pairs=`8077` avg_score=`4.9465` support=`0.2359` lift=`1.4077` direction=`0.9986` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
+- `family_5` -> `family_5` | pairs=`4768` avg_score=`6.3616` support=`0.422` lift=`8.9512` direction=`0.9434` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`20`
+- `family_2` -> `family_2` | pairs=`3984` avg_score=`6.4465` support=`0.6847` lift=`10.8647` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_7` -> `family_8` | pairs=`3632` avg_score=`6.4385` support=`0.9409` lift=`5.4667` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_14` -> `family_0` | pairs=`3248` avg_score=`6.46` support=`0.0949` lift=`1.1738` direction=`0.9951` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_13` -> `family_14` | pairs=`2594` avg_score=`6.4364` support=`0.8477` lift=`2.8952` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_0` -> `family_14` | pairs=`2392` avg_score=`4.9692` support=`0.3243` lift=`1.1077` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`4`
+- `family_14` -> `noise` | pairs=`2287` avg_score=`5.9793` support=`0.0668` lift=`2.1997` direction=`0.6791` order=`1` flow=`client_to_server->server_to_client` echo_fields=`17`
+- `family_5` -> `family_2` | pairs=`2250` avg_score=`4.9482` support=`0.1991` lift=`3.16` direction=`0.9996` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
+- `family_5` -> `family_4` | pairs=`1858` avg_score=`4.9485` support=`0.1644` lift=`1.812` direction=`0.9995` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
+- `family_8` -> `family_13` | pairs=`1777` avg_score=`4.9454` support=`0.0354` lift=`2.3545` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20`
+- `family_11` -> `family_0` | pairs=`1726` avg_score=`6.4671` support=`0.1398` lift=`1.7296` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_10` -> `family_11` | pairs=`1664` avg_score=`6.4365` support=`0.9369` lift=`5.5902` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `noise` -> `family_11` | pairs=`1623` avg_score=`5.8674` support=`0.3438` lift=`2.0512` direction=`0.6057` order=`1` flow=`client_to_server->server_to_client` echo_fields=`17`
+- `noise` -> `family_14` | pairs=`1559` avg_score=`5.9374` support=`0.3302` lift=`1.1278` direction=`0.6543` order=`1` flow=`client_to_server->server_to_client` echo_fields=`17`
+- `family_4` -> `family_0` | pairs=`1559` avg_score=`6.4645` support=`0.1048` lift=`1.2968` direction=`0.9981` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_8` -> `noise` | pairs=`1536` avg_score=`5.5873` support=`0.0306` lift=`1.0074` direction=`0.5781` order=`1` flow=`server_to_client->client_to_server` echo_fields=`17`
+- `family_0` -> `family_11` | pairs=`1388` avg_score=`4.9691` support=`0.1882` lift=`1.1229` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`4`
+- `family_6` -> `family_8` | pairs=`1367` avg_score=`6.4662` support=`0.9942` lift=`5.776` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_12` -> `family_14` | pairs=`1316` avg_score=`6.4683` support=`0.8934` lift=`3.0513` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_8` -> `family_3` | pairs=`1275` avg_score=`6.4662` support=`0.0254` lift=`2.8096` direction=`1` order=`1` flow=`client_to_server->server_to_client` echo_fields=`20` length_rules=`14`
+- `family_3` -> `family_14` | pairs=`1125` avg_score=`4.9688` support=`0.8402` lift=`2.8695` direction=`1` order=`1` flow=`server_to_client->client_to_server` echo_fields=`20` length_rules=`2`
 
 ## Families
 
 - Total families: `16`
 - Families shown below: `16`
 
-### family_12
+### family_8
 
 - Role: `request`
-- Messages: `32401`
+- Messages: `51024`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
-- Related families: `family_0`, `family_1`, `family_10`, `family_11`, `family_13`, `family_4`, `family_5`, `family_7`, `noise`
+- Related families: `family_13`, `family_14`, `family_3`, `family_6`, `family_7`, `family_8`, `noise`
 - Role hint: `request`
-- Semantic confidence: `0.6201`
+- Semantic confidence: `0.62`
 - Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.31869`
-- Candidate keyword offset: `9` cardinality=`7` entropy=`2.0917`
+- Entropy summary: min=`1.521928` max=`2.732159` mean=`2.3074`
+- Candidate keyword offset: `9` cardinality=`7` entropy=`1.9916`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7075`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6429`
+- bytes `0`..`0` | kind=`variable` confidence=`0.6939`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6424`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7888`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7881`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7782`
-- bytes `8`..`8` | kind=`variable` confidence=`0.7888`
-- bytes `9`..`9` | kind=`variable` confidence=`0.773`
-- bytes `10`..`10` | kind=`variable` confidence=`0.761`
-- bytes `11`..`11` | kind=`variable` confidence=`0.7763`
+- bytes `7`..`7` | kind=`variable` confidence=`0.778`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7881`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7752`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7537`
+- bytes `11`..`11` | kind=`variable` confidence=`0.773`
 
 #### Field Hypotheses
 
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `7`..`7` | type=`keyword` confidence=`0.9999`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9999`
-- bytes `7`..`7` | type=`keyword` confidence=`0.9998`
-- bytes `9`..`9` | type=`keyword` confidence=`0.9998`
-- bytes `11`..`11` | type=`keyword` confidence=`0.9998`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9999`
+- bytes `11`..`11` | type=`keyword` confidence=`0.9999`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9997`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9989`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9921`
+- bytes `0`..`0` | type=`keyword` confidence=`0.999`
+- bytes `1`..`1` | type=`keyword` confidence=`0.995`
 - bytes `2`..`4` | type=`constant` confidence=`0.99`
 - bytes `6`..`6` | type=`constant` confidence=`0.99`
 
@@ -136,7 +222,137 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `8`..`8` | label=`response_size_selector` confidence=`1.0`
 - bytes `10`..`10` | label=`response_size_selector` confidence=`1.0`
 - bytes `11`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9999`
+
+#### Notes
+
+- Echoes request fields from family_6 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_6.
+- Echoes request fields from family_7 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_7.
+- Echoes request fields from family_8 with up to 20 strong offset matches.
+
+#### Feature Summary
+
+- Messages with repetition: `51024` (`1.0`)
+- Repeated n-gram instances: `65546`
+- Top motifs: `0000`x102459, `000000`x51178, `0101`x35363, `0100`x28140, `0006`x24654
+
+### family_14
+
+- Role: `response`
+- Messages: `46674`
+- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
+- Related families: `family_0`, `family_10`, `family_11`, `family_12`, `family_13`, `family_3`, `family_8`, `family_9`, `noise`
+- Role hint: `response`
+- Semantic confidence: `0.6349`
+- Length stats: min=`10` max=`12` distinct=`3`
+- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.318024`
+- Candidate keyword offset: `9` cardinality=`7` entropy=`2.0048`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.6966`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6425`
+- bytes `2`..`4` | kind=`constant` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7883`
+- bytes `6`..`6` | kind=`constant` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7781`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7883`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7749`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7555`
+- bytes `11`..`11` | kind=`variable` confidence=`0.7736`
+
+#### Field Hypotheses
+
+- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `7`..`7` | type=`keyword` confidence=`0.9999`
+- bytes `8`..`8` | type=`keyword` confidence=`0.9999`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9999`
+- bytes `11`..`11` | type=`keyword` confidence=`0.9998`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9997`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9989`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9945`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
+
+#### Semantic Labels
+
+- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
+- bytes `5`..`5` | label=`length` confidence=`1.0`
+- bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `11`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9999`
 - bytes `8`..`8` | label=`keyword` confidence=`0.9999`
+- bytes `9`..`9` | label=`keyword` confidence=`0.9999`
+- bytes `11`..`11` | label=`keyword` confidence=`0.9998`
+- bytes `10`..`10` | label=`keyword` confidence=`0.9997`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9989`
+
+#### Notes
+
+- Echoes request fields from family_0 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_0.
+- Echoes request fields from family_12 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_12.
+- Echoes request fields from family_13 with up to 20 strong offset matches.
+
+#### Feature Summary
+
+- Messages with repetition: `46674` (`1.0`)
+- Repeated n-gram instances: `59917`
+- Top motifs: `0000`x93669, `000000`x46817, `0101`x32515, `0100`x25931, `0006`x23060
+
+### family_11
+
+- Role: `response`
+- Messages: `26018`
+- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
+- Related families: `family_0`, `family_1`, `family_10`, `family_11`, `family_14`, `family_9`, `noise`
+- Role hint: `response`
+- Semantic confidence: `0.6596`
+- Length stats: min=`10` max=`12` distinct=`3`
+- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.320438`
+- Candidate keyword offset: `9` cardinality=`7` entropy=`1.9965`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.7114`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6454`
+- bytes `2`..`4` | kind=`constant` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7881`
+- bytes `6`..`6` | kind=`constant` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7779`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7881`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7752`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7557`
+- bytes `11`..`11` | kind=`variable` confidence=`0.7724`
+
+#### Field Hypotheses
+
+- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `8`..`8` | type=`keyword` confidence=`0.9999`
+- bytes `7`..`7` | type=`keyword` confidence=`0.9998`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9997`
+- bytes `11`..`11` | type=`keyword` confidence=`0.9997`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9996`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9987`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9902`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
+
+#### Semantic Labels
+
+- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
+- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`4` | label=`response_size_selector` confidence=`1.0`
+- bytes `5`..`5` | label=`length` confidence=`1.0`
+- bytes `8`..`8` | label=`response_size_selector` confidence=`1.0`
+- bytes `10`..`10` | label=`response_size_selector` confidence=`1.0`
+- bytes `8`..`8` | label=`keyword` confidence=`0.9999`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9998`
+- bytes `9`..`9` | label=`keyword` confidence=`0.9997`
 
 #### Notes
 
@@ -148,96 +364,34 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Feature Summary
 
-- Messages with repetition: `32401` (`1.0`)
-- Repeated n-gram instances: `41062`
-- Top motifs: `0000`x65061, `000000`x32524, `0101`x22118, `0100`x18033, `0006`x16938
+- Messages with repetition: `26018` (`1.0`)
+- Repeated n-gram instances: `33345`
+- Top motifs: `0000`x52211, `000000`x26091, `0101`x18027, `0100`x14342, `0006`x12475
 
-### family_14
-
-- Role: `request`
-- Messages: `28629`
-- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? 00 01`
-- Related families: `family_0`, `family_10`, `family_13`, `family_14`, `family_4`, `family_9`
-- Role hint: `request`
-- Semantic confidence: `0.5967`
-- Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.521928` max=`2.450826` mean=`2.264221`
-- Candidate keyword offset: `9` cardinality=`7` entropy=`2.2076`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.7075`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6433`
-- bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7971`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7811`
-- bytes `8`..`8` | kind=`variable` confidence=`0.7971`
-- bytes `9`..`9` | kind=`variable` confidence=`0.7704`
-- bytes `10`..`11` | kind=`variable` confidence=`0.5079`
-
-#### Field Hypotheses
-
-- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `8`..`8` | type=`keyword` confidence=`0.9999`
-- bytes `10`..`11` | type=`keyword` confidence=`0.9999`
-- bytes `7`..`7` | type=`keyword` confidence=`0.9998`
-- bytes `9`..`9` | type=`keyword` confidence=`0.9998`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9987`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9911`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
-
-#### Semantic Labels
-
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`4` | label=`response_size_selector` confidence=`1.0`
-- bytes `5`..`5` | label=`length` confidence=`1.0`
-- bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `8`..`8` | label=`response_size_selector` confidence=`1.0`
-- bytes `9`..`9` | label=`echoed_request_field` confidence=`1.0`
-- bytes `10`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `10`..`11` | label=`response_size_selector` confidence=`1.0`
-
-#### Notes
-
-- Echoes request fields from family_14 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_14.
-- Echoes request fields from family_9 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_9.
-
-#### Feature Summary
-
-- Messages with repetition: `28629` (`1.0`)
-- Repeated n-gram instances: `37047`
-- Top motifs: `0000`x57527, `000000`x28742, `0101`x22129, `0100`x17955, `0601`x16733
-
-### family_7
+### family_4
 
 - Role: `response`
-- Messages: `17180`
+- Messages: `18323`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
-- Related families: `family_0`, `family_1`, `family_12`, `family_2`, `family_3`, `family_5`, `family_6`, `family_7`, `noise`
+- Related families: `family_0`, `family_10`, `family_5`
 - Role hint: `response`
-- Semantic confidence: `0.673`
+- Semantic confidence: `0.6207`
 - Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.321538`
-- Candidate keyword offset: `9` cardinality=`7` entropy=`2.1007`
+- Entropy summary: min=`1.685475` max=`3.027169` mean=`2.361278`
+- Candidate keyword offset: `9` cardinality=`16` entropy=`2.649`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7261`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6454`
+- bytes `0`..`0` | kind=`variable` confidence=`0.6824`
+- bytes `1`..`1` | kind=`variable` confidence=`0.683`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7882`
+- bytes `5`..`5` | kind=`variable` confidence=`0.789`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7782`
-- bytes `8`..`8` | kind=`variable` confidence=`0.7882`
-- bytes `9`..`9` | kind=`variable` confidence=`0.7729`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7599`
-- bytes `11`..`11` | kind=`variable` confidence=`0.7743`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7771`
+- bytes `8`..`8` | kind=`variable` confidence=`0.789`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7607`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7616`
+- bytes `11`..`11` | kind=`variable` confidence=`0.7824`
 
 #### Field Hypotheses
 
@@ -245,12 +399,190 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `8`..`8` | type=`keyword` confidence=`0.9998`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9998`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9997`
-- bytes `9`..`9` | type=`keyword` confidence=`0.9996`
-- bytes `10`..`10` | type=`keyword` confidence=`0.9995`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9987`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9991`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9978`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9949`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9942`
 - bytes `2`..`4` | type=`constant` confidence=`0.99`
 - bytes `6`..`6` | type=`constant` confidence=`0.99`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9851`
+
+#### Semantic Labels
+
+- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
+- bytes `5`..`5` | label=`length` confidence=`1.0`
+- bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `9`..`9` | label=`echoed_request_field` confidence=`1.0`
+- bytes `11`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `8`..`8` | label=`keyword` confidence=`0.9998`
+- bytes `11`..`11` | label=`keyword` confidence=`0.9998`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9997`
+- bytes `9`..`9` | label=`keyword` confidence=`0.9991`
+- bytes `10`..`10` | label=`response_size_selector` confidence=`0.9987`
+
+#### Notes
+
+- Echoes request fields from family_0 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_0.
+- Echoes request fields from family_5 with up to 20 strong offset matches.
+
+#### Feature Summary
+
+- Messages with repetition: `18323` (`1.0`)
+- Repeated n-gram instances: `21509`
+- Top motifs: `0000`x36685, `000000`x18323, `0006`x10895, `000006`x10686, `000601`x10686
+
+### family_0
+
+- Role: `response`
+- Messages: `15624`
+- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00`
+- Related families: `family_11`, `family_13`, `family_14`, `family_2`, `family_4`, `family_5`
+- Role hint: `response`
+- Semantic confidence: `0.5752`
+- Length stats: min=`11` max=`12` distinct=`2`
+- Entropy summary: min=`1.947339` max=`3.027169` mean=`2.86454`
+- Candidate keyword offset: `10` cardinality=`75` entropy=`4.7098`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.6721`
+- bytes `1`..`1` | kind=`variable` confidence=`0.646`
+- bytes `2`..`9` | kind=`variable` confidence=`0.4314`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7158`
+- bytes `11`..`11` | kind=`constant` confidence=`0.8935`
+
+#### Field Hypotheses
+
+- bytes `10`..`10` | type=`keyword` confidence=`0.9952`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9917`
+- bytes `11`..`11` | type=`constant` confidence=`0.99`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9836`
+- bytes `2`..`9` | type=`blob` confidence=`0.5`
+
+#### Semantic Labels
+
+- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
+- bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `10`..`10` | label=`keyword` confidence=`0.9952`
+- bytes `2`..`9` | label=`response_size_selector` confidence=`0.9929`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9917`
+- bytes `11`..`11` | label=`constant` confidence=`0.99`
+- bytes `1`..`1` | label=`keyword` confidence=`0.9836`
+- bytes `2`..`9` | label=`blob` confidence=`0.5`
+
+#### Notes
+
+- Echoes request fields from family_11 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_11.
+- Echoes request fields from family_14 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_14.
+- Echoes request fields from family_2 with up to 20 strong offset matches.
+
+#### Feature Summary
+
+- Messages with repetition: `15624` (`1.0`)
+- Repeated n-gram instances: `18861`
+- Top motifs: `0000`x34383, `000000`x15688, `000005`x12329, `000501`x12329, `010402`x12329
+
+### family_5
+
+- Role: `request`
+- Messages: `11696`
+- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01 00 04 00 00 00 06 01 01 00 0e 00 01`
+- Related families: `family_0`, `family_2`, `family_4`, `family_5`
+- Role hint: `request`
+- Semantic confidence: `0.6762`
+- Length stats: min=`10` max=`24` distinct=`4`
+- Entropy summary: min=`1.360964` max=`3.027169` mean=`2.342643`
+- Candidate keyword offset: `9` cardinality=`15` entropy=`2.6319`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.6978`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6817`
+- bytes `2`..`4` | kind=`constant` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7887`
+- bytes `6`..`6` | kind=`constant` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.777`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7887`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7612`
+- bytes `10`..`10` | kind=`variable` confidence=`0.762`
+- bytes `11`..`23` | kind=`constant` confidence=`0.505`
+
+#### Field Hypotheses
+
+- bytes `5`..`5` | type=`length` confidence=`0.9999` endian=`big`
+- bytes `8`..`8` | type=`keyword` confidence=`0.9997`
+- bytes `7`..`7` | type=`keyword` confidence=`0.9996`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9987`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9965`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9939`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
+- bytes `11`..`23` | type=`constant` confidence=`0.99`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9894`
+
+#### Semantic Labels
+
+- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `11`..`23` | label=`echoed_request_field` confidence=`1.0`
+- bytes `11`..`23` | label=`response_size_selector` confidence=`1.0`
+- bytes `5`..`5` | label=`length` confidence=`0.9999`
+- bytes `8`..`8` | label=`keyword` confidence=`0.9997`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9996`
+- bytes `9`..`9` | label=`keyword` confidence=`0.9987`
+- bytes `10`..`10` | label=`echoed_request_field` confidence=`0.9972`
+- bytes `10`..`10` | label=`response_size_selector` confidence=`0.9972`
+
+#### Notes
+
+- Echoes request fields from family_5 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_5.
+
+#### Feature Summary
+
+- Messages with repetition: `11696` (`1.0`)
+- Repeated n-gram instances: `14384`
+- Top motifs: `0000`x23595, `000000`x11864, `0006`x6977, `0601`x6755, `000006`x6751
+
+### family_2
+
+- Role: `response`
+- Messages: `9951`
+- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
+- Related families: `family_0`, `family_2`, `family_5`
+- Role hint: `response`
+- Semantic confidence: `0.6045`
+- Length stats: min=`10` max=`12` distinct=`3`
+- Entropy summary: min=`1.685475` max=`3.027169` mean=`2.352236`
+- Candidate keyword offset: `9` cardinality=`11` entropy=`2.6579`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.711`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6787`
+- bytes `2`..`4` | kind=`constant` confidence=`1.0`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7893`
+- bytes `6`..`6` | kind=`constant` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7773`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7893`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7606`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7661`
+- bytes `11`..`11` | kind=`variable` confidence=`0.7826`
+
+#### Field Hypotheses
+
+- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `8`..`8` | type=`keyword` confidence=`0.9997`
+- bytes `11`..`11` | type=`keyword` confidence=`0.9996`
+- bytes `7`..`7` | type=`keyword` confidence=`0.9995`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9989`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9984`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9962`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9891`
 
 #### Semantic Labels
 
@@ -261,61 +593,61 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `5`..`5` | label=`length` confidence=`1.0`
 - bytes `8`..`8` | label=`response_size_selector` confidence=`1.0`
 - bytes `10`..`10` | label=`response_size_selector` confidence=`1.0`
-- bytes `8`..`8` | label=`keyword` confidence=`0.9998`
-- bytes `11`..`11` | label=`keyword` confidence=`0.9998`
-- bytes `7`..`7` | label=`keyword` confidence=`0.9997`
+- bytes `8`..`8` | label=`keyword` confidence=`0.9997`
+- bytes `11`..`11` | label=`keyword` confidence=`0.9996`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9995`
 
 #### Notes
 
 - Echoes request fields from family_0 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_0.
-- Echoes request fields from family_1 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_1.
-- Echoes request fields from family_12 with up to 20 strong offset matches.
+- Echoes request fields from family_2 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_2.
+- Echoes request fields from family_5 with up to 20 strong offset matches.
 
 #### Feature Summary
 
-- Messages with repetition: `17180` (`1.0`)
-- Repeated n-gram instances: `21828`
-- Top motifs: `0000`x34499, `000000`x17247, `0101`x11817, `0100`x9564, `0006`x8609
+- Messages with repetition: `9951` (`1.0`)
+- Repeated n-gram instances: `12144`
+- Top motifs: `0000`x20069, `000000`x10070, `0101`x5869, `000006`x5823, `000601`x5823
 
 ### noise
 
-- Role: `response`
-- Messages: `5658`
+- Role: `request`
+- Messages: `5882`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? ??`
-- Related families: `family_0`, `family_10`, `family_12`, `family_13`, `family_5`, `family_6`, `family_7`, `family_8`
-- Role hint: `response`
-- Semantic confidence: `0.5348`
+- Related families: `family_10`, `family_11`, `family_14`, `family_8`, `family_9`
+- Role hint: `request`
+- Semantic confidence: `0.5364`
 - Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`1.729574` max=`3.027169` mean=`2.538388`
-- Candidate keyword offset: `10` cardinality=`45` entropy=`2.3311`
+- Entropy summary: min=`1.729574` max=`3.027169` mean=`2.607803`
+- Candidate keyword offset: `10` cardinality=`50` entropy=`2.594`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.6913`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6576`
+- bytes `0`..`0` | kind=`variable` confidence=`0.6871`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6568`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7983`
+- bytes `5`..`5` | kind=`variable` confidence=`0.7979`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7809`
-- bytes `8`..`8` | kind=`variable` confidence=`0.7983`
-- bytes `9`..`9` | kind=`variable` confidence=`0.7704`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7704`
-- bytes `11`..`11` | kind=`variable` confidence=`0.7765`
+- bytes `7`..`7` | kind=`variable` confidence=`0.7817`
+- bytes `8`..`8` | kind=`variable` confidence=`0.7979`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7786`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7647`
+- bytes `11`..`11` | kind=`variable` confidence=`0.7725`
 
 #### Field Hypotheses
 
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `8`..`8` | type=`keyword` confidence=`0.9996`
-- bytes `7`..`7` | type=`keyword` confidence=`0.9991`
-- bytes `11`..`11` | type=`keyword` confidence=`0.9984`
-- bytes `9`..`9` | type=`keyword` confidence=`0.9968`
-- bytes `10`..`10` | type=`keyword` confidence=`0.992`
+- bytes `8`..`8` | type=`keyword` confidence=`0.9997`
+- bytes `7`..`7` | type=`keyword` confidence=`0.9993`
+- bytes `11`..`11` | type=`keyword` confidence=`0.9981`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9971`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9915`
 - bytes `2`..`4` | type=`constant` confidence=`0.99`
 - bytes `6`..`6` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9834`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9548`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9825`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9565`
 
 #### Semantic Labels
 
@@ -325,330 +657,204 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `2`..`4` | label=`response_size_selector` confidence=`1.0`
 - bytes `5`..`5` | label=`length` confidence=`1.0`
 - bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`6` | label=`response_size_selector` confidence=`1.0`
 - bytes `8`..`8` | label=`response_size_selector` confidence=`1.0`
 - bytes `10`..`10` | label=`response_size_selector` confidence=`1.0`
-- bytes `8`..`8` | label=`keyword` confidence=`0.9996`
+- bytes `8`..`8` | label=`keyword` confidence=`0.9997`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9993`
+
+#### Notes
+
+- Echoes request fields from family_14 with up to 17 strong offset matches.
+- Echoes request fields from family_8 with up to 17 strong offset matches.
+
+#### Feature Summary
+
+- Messages with repetition: `5882` (`1.0`)
+- Repeated n-gram instances: `6046`
+- Top motifs: `0000`x11821, `000000`x5939, `0006`x3326, `000006`x3324, `000601`x3324
+
+### family_7
+
+- Role: `request`
+- Messages: `3860`
+- Template: `?? ?? 00 00 00 06 01 ?? 00 ?? 00 01`
+- Related families: `family_3`, `family_8`
+- Role hint: `request`
+- Semantic confidence: `1.0`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`1.825011` max=`2.450826` mean=`2.201685`
+- Candidate keyword offset: `9` cardinality=`7` entropy=`2.246`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.7166`
+- bytes `1`..`1` | kind=`variable` confidence=`0.6717`
+- bytes `2`..`6` | kind=`constant` confidence=`0.682`
+- bytes `7`..`7` | kind=`variable` confidence=`0.797`
+- bytes `8`..`8` | kind=`constant` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7701`
+- bytes `10`..`11` | kind=`variable` confidence=`0.5451`
+
+#### Field Hypotheses
+
+- bytes `10`..`11` | type=`keyword` confidence=`0.9995`
+- bytes `7`..`7` | type=`keyword` confidence=`0.9987`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9982`
+- bytes `2`..`6` | type=`constant` confidence=`0.99`
+- bytes `8`..`8` | type=`constant` confidence=`0.99`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9891`
+- bytes `1`..`1` | type=`keyword` confidence=`0.936`
+
+#### Semantic Labels
+
+- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
+- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`6` | label=`response_size_selector` confidence=`1.0`
+- bytes `8`..`8` | label=`response_size_selector` confidence=`1.0`
+- bytes `10`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `10`..`11` | label=`keyword` confidence=`0.9995`
+- bytes `7`..`7` | label=`keyword` confidence=`0.9987`
+- bytes `9`..`9` | label=`keyword` confidence=`0.9982`
+- bytes `2`..`6` | label=`constant` confidence=`0.99`
+
+#### Feature Summary
+
+- Messages with repetition: `3860` (`1.0`)
+- Repeated n-gram instances: `3863`
+- Top motifs: `0000`x7720, `000000`x3860, `000006`x3860, `000601`x3860, `0006`x3860
+
+### family_13
+
+- Role: `request`
+- Messages: `3060`
+- Template: `?? ?? 00 00 00 06 01 01 00 ?? 00 01`
+- Related families: `family_0`, `family_14`, `family_3`, `family_8`
+- Role hint: `request`
+- Semantic confidence: `0.5364`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.054585` max=`2.450826` mean=`2.231006`
+- Candidate keyword offset: `9` cardinality=`5` entropy=`1.9247`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.7091`
+- bytes `1`..`1` | kind=`variable` confidence=`0.682`
+- bytes `2`..`8` | kind=`variable` confidence=`0.4991`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7773`
+- bytes `10`..`11` | kind=`constant` confidence=`0.725`
+
+#### Field Hypotheses
+
+- bytes `9`..`9` | type=`keyword` confidence=`0.9984`
+- bytes `10`..`11` | type=`constant` confidence=`0.99`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9843`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9193`
+- bytes `2`..`8` | type=`blob` confidence=`0.5`
+
+#### Semantic Labels
+
+- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
+- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`8` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`8` | label=`response_size_selector` confidence=`1.0`
+- bytes `10`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `9`..`9` | label=`keyword` confidence=`0.9984`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9843`
+- bytes `1`..`1` | label=`keyword` confidence=`0.9193`
+- bytes `2`..`8` | label=`blob` confidence=`0.5`
 
 #### Notes
 
 - Echoes request fields from family_0 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_0.
-- Echoes request fields from family_12 with up to 17 strong offset matches.
+- Echoes request fields from family_3 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_3.
 - Echoes request fields from family_8 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_8.
 
 #### Feature Summary
 
-- Messages with repetition: `5658` (`1.0`)
-- Repeated n-gram instances: `5835`
-- Top motifs: `0000`x11378, `000000`x5720, `000006`x3418, `000601`x3418, `0006`x3418
-
-### family_0
-
-- Role: `response`
-- Messages: `5343`
-- Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
-- Related families: `family_10`, `family_11`, `family_12`, `family_14`, `family_7`, `noise`
-- Role hint: `response`
-- Semantic confidence: `0.6464`
-- Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.450826` max=`3.027169` mean=`3.007968`
-- Candidate keyword offset: `10` cardinality=`56` entropy=`4.382`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.6858`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6574`
-- bytes `2`..`9` | kind=`variable` confidence=`0.4297`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7252`
-- bytes `11`..`11` | kind=`constant` confidence=`0.8681`
-
-#### Field Hypotheses
-
-- bytes `11`..`11` | type=`constant` confidence=`0.99`
-- bytes `10`..`10` | type=`keyword` confidence=`0.9895`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9833`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9521`
-- bytes `2`..`9` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
-- bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `2`..`9` | label=`response_size_selector` confidence=`0.9968`
-- bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `10`..`10` | label=`keyword` confidence=`0.9895`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9833`
-- bytes `1`..`1` | label=`keyword` confidence=`0.9521`
-- bytes `2`..`9` | label=`blob` confidence=`0.5`
-
-#### Notes
-
-- Echoes request fields from family_12 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_12.
-- Echoes request fields from family_14 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_14.
-- Echoes request fields from family_7 with up to 20 strong offset matches.
-
-#### Feature Summary
-
-- Messages with repetition: `5343` (`1.0`)
-- Repeated n-gram instances: `5389`
-- Top motifs: `0000`x10708, `000000`x5365, `000005`x5221, `000501`x5221, `010402`x5221
-
-### family_13
-
-- Role: `response`
-- Messages: `3331`
-- Template: `?? ?? 00 00 00 05 01 03 02 00 ??`
-- Related families: `family_10`, `family_11`, `family_12`, `family_14`, `family_8`, `noise`
-- Role hint: `response`
-- Semantic confidence: `0.5229`
-- Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.40401` max=`2.732159` mean=`2.724919`
-- Candidate keyword offset: `10` cardinality=`8` entropy=`2.8615`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.7163`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6688`
-- bytes `2`..`9` | kind=`constant` confidence=`0.6333`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7565`
-
-#### Field Hypotheses
-
-- bytes `10`..`10` | type=`keyword` confidence=`0.9976`
-- bytes `0`..`0` | type=`keyword` confidence=`0.991`
-- bytes `2`..`9` | type=`constant` confidence=`0.99`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9231`
-
-#### Semantic Labels
-
-- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`9` | label=`response_size_selector` confidence=`1.0`
-- bytes `10`..`10` | label=`keyword` confidence=`0.9976`
-- bytes `0`..`0` | label=`keyword` confidence=`0.991`
-- bytes `2`..`9` | label=`constant` confidence=`0.99`
-- bytes `1`..`1` | label=`keyword` confidence=`0.9231`
-
-#### Notes
-
-- Echoes request fields from family_14 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_14.
-- Echoes request fields from family_8 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_8.
-- Echoes request fields from noise with up to 20 strong offset matches.
-
-#### Feature Summary
-
-- Messages with repetition: `3331` (`1.0`)
-- Repeated n-gram instances: `3356`
-- Top motifs: `0000`x6669, `0200`x3342, `000000`x3338, `000005`x3331, `000501`x3331
-
-### family_4
-
-- Role: `response`
-- Messages: `1198`
-- Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
-- Related families: `family_12`, `family_14`
-- Role hint: `response`
-- Semantic confidence: `0.517`
-- Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.594907` max=`3.027169` mean=`3.014724`
-- Candidate keyword offset: `10` cardinality=`8` entropy=`2.4662`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.7379`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7189`
-- bytes `2`..`9` | kind=`variable` confidence=`0.4318`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7669`
-
-#### Field Hypotheses
-
-- bytes `10`..`10` | type=`keyword` confidence=`0.9933`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9866`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-- bytes `2`..`9` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`9` | label=`response_size_selector` confidence=`1.0`
-- bytes `10`..`10` | label=`keyword` confidence=`0.9933`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9866`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
-- bytes `2`..`9` | label=`blob` confidence=`0.5`
-
-#### Notes
-
-- Echoes request fields from family_14 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_14.
-
-#### Feature Summary
-
-- Messages with repetition: `1198` (`1.0`)
-- Repeated n-gram instances: `1200`
-- Top motifs: `0000`x2397, `000000`x1199, `000005`x1198, `000501`x1198, `010402`x1198
-
-### family_1
-
-- Role: `response`
-- Messages: `888`
-- Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
-- Related families: `family_12`, `family_5`, `family_6`, `family_7`
-- Role hint: `response`
-- Semantic confidence: `0.5916`
-- Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023151`
-- Candidate keyword offset: `10` cardinality=`10` entropy=`2.0379`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.7402`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7454`
-- bytes `2`..`9` | kind=`variable` confidence=`0.4319`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7782`
-
-#### Field Hypotheses
-
-- bytes `10`..`10` | type=`keyword` confidence=`0.9887`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9809`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-- bytes `2`..`9` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`9` | label=`response_size_selector` confidence=`1.0`
-- bytes `10`..`10` | label=`keyword` confidence=`0.9887`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9809`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
-- bytes `2`..`9` | label=`blob` confidence=`0.5`
-
-#### Notes
-
-- Echoes request fields from family_12 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_12.
-
-#### Feature Summary
-
-- Messages with repetition: `888` (`1.0`)
-- Repeated n-gram instances: `890`
-- Top motifs: `0000`x1777, `000000`x889, `000005`x888, `000501`x888, `010402`x888
+- Messages with repetition: `3060` (`1.0`)
+- Repeated n-gram instances: `3064`
+- Top motifs: `0000`x6120, `000000`x3060, `000006`x3060, `000601`x3060, `0001`x3060
 
 ### family_10
 
 - Role: `request`
-- Messages: `858`
-- Template: `?? ?? 00 00 00 06 01 03 00 23 00 01`
-- Related families: `family_0`, `family_12`, `family_13`, `family_14`, `noise`
+- Messages: `1776`
+- Template: `?? ?? 00 00 00 06 01 01 00 ?? 00 01`
+- Related families: `family_11`, `family_14`, `family_4`, `noise`
 - Role hint: `request`
-- Semantic confidence: `0.5138`
+- Semantic confidence: `0.6036`
 - Length stats: min=`12` max=`12` distinct=`1`
-- Entropy summary: min=`2.284159` max=`2.450826` mean=`2.448301`
-- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Entropy summary: min=`2.054585` max=`2.221252` mean=`2.21975`
+- Candidate keyword offset: `9` cardinality=`4` entropy=`1.6385`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7333`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7476`
-- bytes `2`..`11` | kind=`constant` confidence=`0.6358`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7177`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7007`
+- bytes `2`..`8` | kind=`constant` confidence=`0.6812`
+- bytes `9`..`9` | kind=`variable` confidence=`0.7839`
+- bytes `10`..`11` | kind=`constant` confidence=`0.725`
 
 #### Field Hypotheses
 
-- bytes `2`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9767`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
+- bytes `9`..`9` | type=`keyword` confidence=`0.9977`
+- bytes `2`..`8` | type=`constant` confidence=`0.99`
+- bytes `10`..`11` | type=`constant` confidence=`0.99`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9814`
+- bytes `1`..`1` | type=`keyword` confidence=`0.8615`
 
 #### Semantic Labels
 
 - bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `2`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9767`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
+- bytes `2`..`8` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`8` | label=`response_size_selector` confidence=`1.0`
+- bytes `10`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `9`..`9` | label=`keyword` confidence=`0.9977`
+- bytes `2`..`8` | label=`constant` confidence=`0.99`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9814`
+- bytes `1`..`1` | label=`keyword` confidence=`0.8615`
 
 #### Notes
 
-- Echoes request fields from family_0 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_0.
-- Echoes request fields from family_13 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_13.
 - Echoes request fields from family_14 with up to 20 strong offset matches.
+- Echoes request fields from family_4 with up to 20 strong offset matches.
+- Echoes request fields from noise with up to 20 strong offset matches.
 
 #### Feature Summary
 
-- Messages with repetition: `858` (`1.0`)
-- Repeated n-gram instances: `864`
-- Top motifs: `0000`x1716, `2300`x864, `000000`x858, `000006`x858, `000601`x858
+- Messages with repetition: `1776` (`1.0`)
+- Repeated n-gram instances: `1779`
+- Top motifs: `0000`x3552, `000000`x1776, `000006`x1776, `000601`x1776, `010100`x1776
 
-### family_8
+### family_12
 
 - Role: `request`
-- Messages: `854`
+- Messages: `1506`
 - Template: `?? ?? 00 00 00 06 01 03 00 23 00 01`
-- Related families: `family_13`, `noise`
-- Role hint: `request`
-- Semantic confidence: `1.0`
-- Length stats: min=`12` max=`12` distinct=`1`
-- Entropy summary: min=`2.284159` max=`2.450826` mean=`2.448094`
-- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.734`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7479`
-- bytes `2`..`11` | kind=`constant` confidence=`0.6358`
-
-#### Field Hypotheses
-
-- bytes `2`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9789`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `2`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9789`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
-
-#### Feature Summary
-
-- Messages with repetition: `854` (`1.0`)
-- Repeated n-gram instances: `859`
-- Top motifs: `0000`x1708, `2300`x859, `000000`x854, `000006`x854, `000601`x854
-
-### family_9
-
-- Role: `request`
-- Messages: `809`
-- Template: `?? ?? 00 00 00 06 01 01 00 19 00 01`
 - Related families: `family_14`
 - Role hint: `request`
 - Semantic confidence: `1.0`
-- Length stats: min=`12` max=`12` distinct=`1`
-- Entropy summary: min=`1.825011` max=`2.221252` mean=`2.217672`
-- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Length stats: min=`11` max=`12` distinct=`2`
+- Entropy summary: min=`2.284159` max=`3.027169` mean=`2.472511`
+- Candidate keyword offset: `10` cardinality=`4` entropy=`0.306`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7352`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7543`
-- bytes `2`..`11` | kind=`constant` confidence=`0.6548`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7109`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7038`
+- bytes `2`..`11` | kind=`variable` confidence=`0.4529`
 
 #### Field Hypotheses
 
-- bytes `2`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9778`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9688`
+- bytes `1`..`1` | type=`keyword` confidence=`0.8353`
+- bytes `2`..`11` | type=`blob` confidence=`0.5`
 
 #### Semantic Labels
 
@@ -656,237 +862,192 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `2`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9778`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9688`
+- bytes `1`..`1` | label=`keyword` confidence=`0.8353`
+- bytes `2`..`11` | label=`blob` confidence=`0.5`
 
 #### Feature Summary
 
-- Messages with repetition: `809` (`1.0`)
-- Repeated n-gram instances: `811`
-- Top motifs: `0000`x1618, `1900`x811, `000000`x809, `000006`x809, `000601`x809
-
-### family_11
-
-- Role: `request`
-- Messages: `761`
-- Template: `?? ?? 00 00 00 06 01 01 00 19 00 01`
-- Related families: `family_0`, `family_12`, `family_13`
-- Role hint: `request`
-- Semantic confidence: `0.7625`
-- Length stats: min=`12` max=`12` distinct=`1`
-- Entropy summary: min=`2.054585` max=`2.221252` mean=`2.219719`
-- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.7372`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7605`
-- bytes `2`..`11` | kind=`constant` confidence=`0.6548`
-
-#### Field Hypotheses
-
-- bytes `2`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9763`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `2`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9763`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
-
-#### Notes
-
-- Echoes request fields from family_0 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_0.
-- Echoes request fields from family_13 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_13.
-
-#### Feature Summary
-
-- Messages with repetition: `761` (`1.0`)
-- Repeated n-gram instances: `764`
-- Top motifs: `0000`x1522, `1900`x764, `000000`x761, `000006`x761, `000601`x761
-
-### family_5
-
-- Role: `request`
-- Messages: `692`
-- Template: `?? ?? 00 00 00 06 01 03 00 23 00 01`
-- Related families: `family_1`, `family_12`, `family_7`, `noise`
-- Role hint: `request`
-- Semantic confidence: `0.5282`
-- Length stats: min=`12` max=`12` distinct=`1`
-- Entropy summary: min=`2.284159` max=`2.450826` mean=`2.44914`
-- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.74`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7723`
-- bytes `2`..`11` | kind=`constant` confidence=`0.6358`
-
-#### Field Hypotheses
-
-- bytes `2`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9769`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `2`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9769`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
-
-#### Notes
-
-- Echoes request fields from family_1 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_1.
-- Echoes request fields from family_12 with up to 20 strong offset matches.
-- Echoes request fields from noise with up to 20 strong offset matches.
-
-#### Feature Summary
-
-- Messages with repetition: `692` (`1.0`)
-- Repeated n-gram instances: `694`
-- Top motifs: `0000`x1384, `2300`x694, `000000`x692, `000006`x692, `000601`x692
-
-### family_2
-
-- Role: `response`
-- Messages: `645`
-- Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
-- Related families: `family_7`
-- Role hint: `response`
-- Semantic confidence: `1.0`
-- Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.023786`
-- Candidate keyword offset: `10` cardinality=`3` entropy=`1.3759`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.7506`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7813`
-- bytes `2`..`9` | kind=`constant` confidence=`0.6115`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7907`
-
-#### Field Hypotheses
-
-- bytes `10`..`10` | type=`keyword` confidence=`0.9953`
-- bytes `2`..`9` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9829`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `10`..`10` | label=`keyword` confidence=`0.9953`
-- bytes `2`..`9` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9829`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
-
-#### Notes
-
-- Echoes request fields from family_7 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_7.
-
-#### Feature Summary
-
-- Messages with repetition: `645` (`1.0`)
-- Repeated n-gram instances: `645`
-- Top motifs: `0000`x1290, `000000`x645, `000005`x645, `000501`x645, `010402`x645
-
-### family_6
-
-- Role: `request`
-- Messages: `644`
-- Template: `?? ?? 00 00 00 06 01 01 00 19 00 01`
-- Related families: `family_1`, `family_7`, `noise`
-- Role hint: `request`
-- Semantic confidence: `0.8552`
-- Length stats: min=`12` max=`12` distinct=`1`
-- Entropy summary: min=`2.054585` max=`2.221252` mean=`2.21944`
-- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
-
-#### Segments
-
-- bytes `0`..`0` | kind=`variable` confidence=`0.7435`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7799`
-- bytes `2`..`11` | kind=`constant` confidence=`0.6548`
-
-#### Field Hypotheses
-
-- bytes `2`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9767`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-
-#### Semantic Labels
-
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `2`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9767`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
-
-#### Notes
-
-- Echoes request fields from family_1 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_1.
-- Echoes request fields from noise with up to 20 strong offset matches.
-
-#### Feature Summary
-
-- Messages with repetition: `644` (`1.0`)
-- Repeated n-gram instances: `647`
-- Top motifs: `0000`x1288, `1900`x647, `000000`x644, `000006`x644, `000601`x644
+- Messages with repetition: `1506` (`1.0`)
+- Repeated n-gram instances: `1512`
+- Top motifs: `0000`x3012, `000000`x1506, `2300`x1451, `000006`x1445, `000601`x1445
 
 ### family_3
 
 - Role: `response`
-- Messages: `109`
-- Template: `?? ?? 00 00 00 05 01 04 02 2d 11`
-- Related families: `family_7`
+- Messages: `1409`
+- Template: `?? ?? 00 00 00 05 01 04 02 2d ?? 01`
+- Related families: `family_13`, `family_14`, `family_7`, `family_8`
 - Role hint: `response`
-- Semantic confidence: `1.0`
-- Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.023833`
-- Candidate keyword offset: `4` cardinality=`1` entropy=`-0.0`
+- Semantic confidence: `0.5303`
+- Length stats: min=`11` max=`12` distinct=`2`
+- Entropy summary: min=`2.450826` max=`3.027169` mean=`2.987634`
+- Candidate keyword offset: `10` cardinality=`12` entropy=`2.8312`
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7818`
-- bytes `1`..`1` | kind=`variable` confidence=`0.8543`
-- bytes `2`..`10` | kind=`constant` confidence=`0.601`
+- bytes `0`..`0` | kind=`variable` confidence=`0.7276`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7078`
+- bytes `2`..`9` | kind=`variable` confidence=`0.4313`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7594`
+- bytes `11`..`11` | kind=`constant` confidence=`0.8661`
 
 #### Field Hypotheses
 
-- bytes `2`..`10` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.945`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9915`
+- bytes `11`..`11` | type=`constant` confidence=`0.99`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9723`
+- bytes `1`..`1` | type=`keyword` confidence=`0.8183`
+- bytes `2`..`9` | type=`blob` confidence=`0.5`
 
 #### Semantic Labels
 
-- bytes `2`..`10` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.945`
-- bytes `1`..`1` | label=`blob` confidence=`0.5`
+- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`9` | label=`response_size_selector` confidence=`1.0`
+- bytes `10`..`10` | label=`keyword` confidence=`0.9915`
+- bytes `11`..`11` | label=`constant` confidence=`0.99`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9723`
+- bytes `1`..`1` | label=`keyword` confidence=`0.8183`
+- bytes `2`..`9` | label=`blob` confidence=`0.5`
 
 #### Notes
 
 - Echoes request fields from family_7 with up to 20 strong offset matches.
 - Response size is tied to request fields from family_7.
+- Echoes request fields from family_8 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_8.
 
 #### Feature Summary
 
-- Messages with repetition: `109` (`1.0`)
-- Repeated n-gram instances: `109`
-- Top motifs: `0000`x218, `000000`x109, `000005`x109, `000501`x109, `010402`x109
+- Messages with repetition: `1409` (`1.0`)
+- Repeated n-gram instances: `1411`
+- Top motifs: `0000`x2819, `000000`x1410, `000005`x1398, `000501`x1398, `010402`x1398
+
+### family_6
+
+- Role: `request`
+- Messages: `1375`
+- Template: `?? ?? 00 00 00 06 01 ?? 00 ?? 00 01`
+- Related families: `family_8`
+- Role hint: `request`
+- Semantic confidence: `1.0`
+- Length stats: min=`11` max=`12` distinct=`2`
+- Entropy summary: min=`1.896241` max=`2.845351` mean=`2.418458`
+- Candidate keyword offset: `9` cardinality=`3` entropy=`0.3997`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.715`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7088`
+- bytes `2`..`11` | kind=`variable` confidence=`0.4552`
+
+#### Field Hypotheses
+
+- bytes `0`..`0` | type=`keyword` confidence=`0.9724`
+- bytes `1`..`1` | type=`keyword` confidence=`0.8196`
+- bytes `2`..`11` | type=`blob` confidence=`0.5`
+
+#### Semantic Labels
+
+- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
+- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9724`
+- bytes `1`..`1` | label=`keyword` confidence=`0.8196`
+- bytes `2`..`11` | label=`blob` confidence=`0.5`
+
+#### Feature Summary
+
+- Messages with repetition: `1375` (`1.0`)
+- Repeated n-gram instances: `1380`
+- Top motifs: `0000`x2750, `000000`x1375, `000006`x1367, `000601`x1367, `0001`x1367
+
+### family_9
+
+- Role: `request`
+- Messages: `936`
+- Template: `?? ?? 00 00 00 06 01 03 00 23 00 01`
+- Related families: `family_11`, `family_14`, `noise`
+- Role hint: `request`
+- Semantic confidence: `0.5701`
+- Length stats: min=`11` max=`12` distinct=`2`
+- Entropy summary: min=`2.284159` max=`3.027169` mean=`2.468117`
+- Candidate keyword offset: `7` cardinality=`3` entropy=`0.2317`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.7265`
+- bytes `1`..`1` | kind=`variable` confidence=`0.74`
+- bytes `2`..`11` | kind=`variable` confidence=`0.4537`
+
+#### Field Hypotheses
+
+- bytes `0`..`0` | type=`keyword` confidence=`0.9658`
+- bytes `1`..`1` | type=`blob` confidence=`0.5`
+- bytes `2`..`11` | type=`blob` confidence=`0.5`
+
+#### Semantic Labels
+
+- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
+- bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9658`
+- bytes `1`..`1` | label=`blob` confidence=`0.5`
+- bytes `2`..`11` | label=`blob` confidence=`0.5`
+
+#### Notes
+
+- Echoes request fields from family_14 with up to 20 strong offset matches.
+- Echoes request fields from noise with up to 20 strong offset matches.
+
+#### Feature Summary
+
+- Messages with repetition: `936` (`1.0`)
+- Repeated n-gram instances: `938`
+- Top motifs: `0000`x1872, `000000`x936, `2300`x907, `000006`x905, `000601`x905
+
+### family_1
+
+- Role: `response`
+- Messages: `886`
+- Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
+- Related families: `family_11`
+- Role hint: `response`
+- Semantic confidence: `1.0`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.024296`
+- Candidate keyword offset: `10` cardinality=`11` entropy=`2.0942`
+
+#### Segments
+
+- bytes `0`..`0` | kind=`variable` confidence=`0.7336`
+- bytes `1`..`1` | kind=`variable` confidence=`0.7455`
+- bytes `2`..`9` | kind=`variable` confidence=`0.432`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7774`
+
+#### Field Hypotheses
+
+- bytes `10`..`10` | type=`keyword` confidence=`0.9876`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9707`
+- bytes `1`..`1` | type=`blob` confidence=`0.5`
+- bytes `2`..`9` | type=`blob` confidence=`0.5`
+
+#### Semantic Labels
+
+- bytes `10`..`10` | label=`keyword` confidence=`0.9876`
+- bytes `0`..`0` | label=`keyword` confidence=`0.9707`
+- bytes `1`..`1` | label=`blob` confidence=`0.5`
+- bytes `2`..`9` | label=`blob` confidence=`0.5`
+
+#### Notes
+
+- Echoes request fields from family_11 with up to 20 strong offset matches.
+- Response size is tied to request fields from family_11.
+
+#### Feature Summary
+
+- Messages with repetition: `886` (`1.0`)
+- Repeated n-gram instances: `886`
+- Top motifs: `0000`x1772, `000000`x886, `000005`x886, `000501`x886, `010402`x886
