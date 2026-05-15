@@ -40,7 +40,7 @@ except Exception:
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 SRC_PATH = PROJECT_ROOT / "src"
-DEFAULT_MAX_MESSAGES = 2_000_000
+DEFAULT_MAX_MESSAGES = 200_000
 
 # Ensure child scripts can import the local package without installation.
 os.environ["PYTHONPATH"] = str(SRC_PATH)
