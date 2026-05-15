@@ -52,7 +52,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 
 ## LLM protocol analysis
 
-`scripts/15_analyze_with_llm.py` reads `data/12_llm_evidence.json`, renders a protocol reverse-engineering prompt, and can call an OpenAI-compatible `/chat/completions` API. Configure the API base URL and model in `LLM_config.json`; keep the API key only in an environment variable:
+`scripts/15_analyze_with_llm.py` reads `data/12_llm_evidence.json`, renders a protocol reverse-engineering prompt, and call an OpenAI-compatible API. Configure the API base URL and model in `LLM_config.json`; keep the API key only in an environment variable. When using `--render-only`, no config is needed.
 
 ```json
 {
@@ -70,7 +70,7 @@ export OPENAI_API_KEY=<api-key>
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 ```
 
-Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. The runner exposes the same workflow with `--llm-config`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, `--llm-max-tokens`, and `--skip-llm`.
+Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. The runner exposes the same workflow with `--llm-config`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, `--llm-max-tokens`.
 
 ## Required system
 
@@ -89,31 +89,18 @@ pip install -r requirements.txt
 Default PCAP workflow:
 
 ```bash
-python main.py <folder-containing-pcaps>
+python main.py <folder-containing-pcaps> --service-port <service-port>
 ```
 
-This command treats the input folder as an existing normalized PCAP directory, extracts up to 2,000,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `data/13_llm_analysis.json`, `output/protocol_report.md`, and `output/protocol_report.html`, then prints total execution time and output file paths. Typical runtime for 2 million messages: 30 minutes.
+This command treats the input folder as an existing normalized PCAP directory, extracts up to 200,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_report.md` and `output/protocol_report.html`. Typical runtime for 200,000 messages: 6 minutes. (3 minutes for message extraction in stream mode, 2 minutes waiting for llm response).
 
 Useful runner options:
 
 ```bash
 python main.py files --collect
-python main.py ../pcaps --service-port 502 --reassembly-mode stream --ground-truth-json ./truth-files/modbus.json --max-messages 100000 --llm-render-only
-python main.py pcaps --skip-llm
-python main.py --use-existing-messages --skip-llm
+python main.py ../pcaps --service-port 502 --ground-truth-json ./truth-files/modbus.json
+python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
 ```
-
-- `--use-existing-messages` skips stage 3 corpus extraction/building and uses the existing `data/01_messages.jsonl`; combine with `--data-dir <dir>` if the corpus is elsewhere.
-- `--collect` collects PCAP/PCAPNG files into `pcaps/` and removes duplicate captures before extraction.
-- `--max-messages <n>` limits extraction/corpus writing; default is 2,000,000.
-- `--service-port` optionally filters extraction to one TCP port. If omitted, the PCAP extractor treats all TCP payloads as candidate unknown-protocol traffic.
-- `--reassembly-mode packet` keeps the fast packet-payload extractor; `--reassembly-mode stream` reconstructs directional raw TCP byte streams without assuming any application protocol framing.
-- `--data-dir`, `--pcap-dir`, and `--output-dir` override artifact locations.
-- `--llm-config <file>` points stage 15 at an LLM config JSON; by default it uses `LLM_config.json`.
-- `--llm-render-only` renders `data/13_llm_prompt.md` and `data/13_llm_analysis.json` metadata without calling an API.
-- `--skip-llm` skips LLM evidence export and analysis stages.
-- `--ground-truth-json <file>` runs final protocol-spec evaluation and writes `data/15_evaluation_result.json`.
-- `--stop-after <step>` is useful for smoke tests and partial runs.
 
 ## Running step by step
 
@@ -122,11 +109,14 @@ Set imports first:
 ```bash
 export PYTHONPATH=src
 ```
+```powershell
+$env:PYTHONPATH="src"
+```
 
 Build from an existing normalized PCAP directory, matching the default `python main.py pcaps` flow:
 
 ```bash
-python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --reassembly-mode packet --max-messages 2000000
+python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --reassembly-mode stream --max-messages 200000
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000
 python3 scripts/05_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
 python3 scripts/06_infer_boundaries.py data/01_messages.jsonl data/04_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json
@@ -158,14 +148,3 @@ python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json 
 python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_report.md --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json --final-evaluation-json data/15_evaluation_result.json
 python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json --final-evaluation-json data/15_evaluation_result.json
 ```
-
-Windows PowerShell equivalent for imports:
-
-```powershell
-$env:PYTHONPATH="src"
-```
-
-## Compatibility note
-
-- `scripts/03_extract_messages.py` preserves per-message direction and timestamps.
-- The PCAP extractor defaults to packet-level TCP payloads. Use `--reassembly-mode stream` for directional raw TCP stream reconstruction; this handles retransmission overlap and stream gaps without assuming a known protocol grammar.
