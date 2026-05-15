@@ -53,16 +53,18 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, help="Override timeout from LLM_config.json")
     args = parser.parse_args()
 
-    config = _load_config(args.config)
-    model = config.get("model")
-    base_url = config.get("openai_base_url")
-    if not model:
-        raise SystemExit("Error: LLM_config.json must define model.")
-    if not base_url:
-        raise SystemExit("Error: LLM_config.json must define openai_base_url.")
-    temperature = args.temperature if args.temperature is not None else float(config.get("temperature", 0.1))
-    max_tokens = args.max_tokens if args.max_tokens is not None else int(config.get("max_tokens", 6000))
-    timeout = args.timeout if args.timeout is not None else int(config.get("timeout", 120))
+    model = ''
+    if not args.render_only:
+        config = _load_config(args.config)
+        model = config.get("model")
+        base_url = config.get("openai_base_url")
+        if not model:
+            raise SystemExit("Error: LLM_config.json must define model.")
+        if not base_url:
+            raise SystemExit("Error: LLM_config.json must define openai_base_url.")
+        temperature = args.temperature if args.temperature is not None else float(config.get("temperature", 0.1))
+        max_tokens = args.max_tokens if args.max_tokens is not None else int(config.get("max_tokens", 6000))
+        timeout = args.timeout if args.timeout is not None else int(config.get("timeout", 120))
 
     evidence = _load_json(args.llm_evidence_json)
     template = _load_template(args.template)
