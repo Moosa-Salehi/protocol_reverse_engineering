@@ -392,7 +392,7 @@ def parse_args() -> argparse.Namespace:
     extract_group.add_argument(
         "--reassembly-mode",
         choices=["packet", "stream"],
-        default="packet",
+        default="stream",
         help="PCAP extraction mode: packet payloads or reconstructed directional TCP streams.",
     )
 
