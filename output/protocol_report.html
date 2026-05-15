@@ -101,12 +101,12 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
     <section class="panel eval-panel">
       <h2>Final Ground Truth Evaluation</h2>
       <div class="metric-grid">
-        <article class="metric"><strong>0.354034</strong><span>Overall score</span><small>fail</small></article>
-        <article class="metric"><strong>11</strong><span>Matched message types</span><small>of 11</small></article>
-        <article class="metric"><strong>0.6875</strong><span>Message type accuracy</span></article>
-        <article class="metric"><strong>0.814815</strong><span>Message type F1</span></article>
-        <article class="metric"><strong>0.178862</strong><span>Field boundary accuracy</span></article>
-        <article class="metric"><strong>0.303448</strong><span>Field boundary F1</span></article>
+        <article class="metric"><strong>0.321885</strong><span>Overall score</span><small>fail</small></article>
+        <article class="metric"><strong>10</strong><span>Matched message types</span><small>of 11</small></article>
+        <article class="metric"><strong>0.588235</strong><span>Message type accuracy</span></article>
+        <article class="metric"><strong>0.740741</strong><span>Message type F1</span></article>
+        <article class="metric"><strong>0.142157</strong><span>Field boundary accuracy</span></article>
+        <article class="metric"><strong>0.248928</strong><span>Field boundary F1</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics accuracy</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics F1</span></article>
         <article class="metric"><strong>0.175</strong><span>Relation accuracy</span></article>
@@ -117,98 +117,13 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
   
     <section class="panel llm-panel">
       <h2>LLM Analysis</h2>
-      <div class="metric-grid"><article class="metric"><strong>deepseek-r1:8b</strong><span>Model</span></article><article class="metric"><strong>175102</strong><span>Prompt bytes</span><small>D:\tez\practical\protocol_re\data\13_llm_prompt.md</small></article><article class="metric"><strong>175102</strong><span>Prompt chars</span></article><article class="metric"><strong>43776</strong><span>Prompt est. tokens</span></article><article class="metric"><strong>4096</strong><span>prompt_tokens</span></article><article class="metric"><strong>2818</strong><span>completion_tokens</span></article><article class="metric"><strong>6914</strong><span>total_tokens</span></article></div>
-      <pre>To analyze the provided JSON data, we can extract the following information:
-
-### 1. **Roles of Each Family**
-- **family_0**: Request
-- **family_1**: Response
-- **family_2**: Request
-
-### 2. **Byte Length of Each Family**
-- **family_0**: 12 bytes
-- **family_1**: 11 bytes
-- **family_2**: 12 bytes
-
-### 3. **Prefix of Each Family**
-- **family_0**: `?? ?? 00 00 00 05`
-- **family_1**: `?? ?? 00 00 00 05`
-- **family_2**: `?? ?? 00 00 00 05`
-
-### 4. **Related Family IDs**
-- **family_0**: `[&quot;family_11&quot;, &quot;family_11&quot;]`
-- **family_1**: `[&quot;family_11&quot;]`
-- **family_2**: `[&quot;family_11&quot;, &quot;family_11&quot;, &quot;family_11&quot;]`
-
-### 5. **Field Boundaries**
-- **family_0**:
-  - Field 0: `0-1` (Keyword)
-  - Field 1: `2-3` (Variable)
-  - Field 2: `4-5` (Variable)
-  - Field 3: `6-7` (Variable)
-  - Field 4: `8-9` (Variable)
-  - Field 5: `10-11` (Variable)
-- **family_1**:
-  - Field 0: `0-1` (Keyword)
-  - Field 1: `2-3` (Variable)
-  - Field 2: `4-5` (Variable)
-  - Field 3: `6-7` (Variable)
-  - Field 4: `8-9` (Variable)
-  - Field 5: `10-11` (Variable)
-- **family_2**:
-  - Field 0: `0-1` (Keyword)
-  - Field 1: `2-3` (Variable)
-  - Field 2: `4-5` (Variable)
-  - Field 3: `6-7` (Variable)
-  - Field 4: `8-9` (Variable)
-  - Field 5: `10-11` (Variable)
-
-### 6. **Field Labels**
-- **family_0**:
-  - Field 0: `keyword`
-  - Fields 1-5: `blob`
-- **family_1**:
-  - Field 0: `keyword`
-  - Fields 1-5: `blob`
-- **family_2**:
-  - Field 0: `keyword`
-  - Fields 1-5: `blob`
-
-### 7. **Confidence Scores**
-- **family_0**:
-  - Field 0: `0.97`
-  - Fields 1-5: `0.97`
-- **family_1**:
-  - Field 0: `0.97`
-  - Fields 1-5: `0.97`
-- **family_2**:
-  - Field 0: `0.97`
-  - Fields 1-5: `0.97`
-
-### 8. **Confidence Notes**
-- **family_0**: `[&quot;Confidence score: 0.97&quot;]`
-- **family_1**: `[&quot;Confidence score: 0.97&quot;]`
-- **family_2**: `[&quot;Confidence score: 0.97&quot;]`
-
-### 9. **Open Questions**
-- **Open Questions**: The JSON includes an array of open questions, such as:
-  - &quot;What are the roles (request or response) of each family?&quot;
-  - &quot;What is the byte length of each family?&quot;
-  - &quot;What is the prefix (first 6 bytes) of each family?&quot;
-  - &quot;What are the related family IDs for each family?&quot;
-  - &quot;What are the field boundaries (start and end indices) for each family?&quot;
-  - &quot;What are the labels (e.g., keyword, blob) for each field in each family?&quot;
-  - &quot;What are the confidence scores for each field in each family?&quot;
-  - &quot;What are the confidence notes for each family?&quot;
-  - &quot;What are the open questions?&quot;
-
-### Summary
-The JSON data describes three families (two requests and one response) with similar structures. Each family has a keyword field (confidence 0.97) followed by five variable-length fields (confidence 0.97). The relationships between families are indicated by shared IDs (`family_11`). The open questions provide a structured way to explore the binary&#x27;s functionality further.</pre>
+      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>263979</strong><span>Prompt bytes</span><small>D:\tez\practical\protocol_re\data\13_llm_prompt.md</small></article><article class="metric"><strong>263979</strong><span>Prompt chars</span></article><article class="metric"><strong>65995</strong><span>Prompt est. tokens</span></article></div>
+      <p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>
     </section>
     
   <section class="panel">
     <h2>Metadata</h2>
-    <table class="meta-table"><tbody><tr><th>source_family_summary</th><td>D:\tez\practical\protocol_re\data\04_families.json</td></tr><tr><th>source_feature_summary</th><td>D:\tez\practical\protocol_re\data\03_family_features.json</td></tr><tr><th>source_keyword_summary</th><td>D:\tez\practical\protocol_re\data\06_keywords.json</td></tr><tr><th>source_relations_summary</th><td>D:\tez\practical\protocol_re\data\08_relations.json</td></tr><tr><th>source_semantics_summary</th><td>D:\tez\practical\protocol_re\data\09_semantics.json</td></tr><tr><th>notes</th><td>Initial auto-generated protocol model assembled from family summaries.</td></tr></tbody></table>
+    <table class="meta-table"><tbody><tr><th>source_family_summary</th><td>D:\tez\practical\protocol_re\data\05_families.json</td></tr><tr><th>source_feature_summary</th><td>D:\tez\practical\protocol_re\data\03_family_features.json</td></tr><tr><th>source_keyword_summary</th><td>D:\tez\practical\protocol_re\data\07_keywords.json</td></tr><tr><th>source_framing_summary</th><td>D:\tez\practical\protocol_re\data\04_framing.json</td></tr><tr><th>source_relations_summary</th><td>D:\tez\practical\protocol_re\data\08_relations.json</td></tr><tr><th>source_semantics_summary</th><td>D:\tez\practical\protocol_re\data\09_semantics.json</td></tr><tr><th>framing_global_summary</th><td>{&#x27;common_header_ends&#x27;: [{&#x27;header_end&#x27;: 6, &#x27;family_count&#x27;: 14, &#x27;family_ratio&#x27;: 0.875}, {&#x27;header_end&#x27;: 12, &#x27;family_count&#x27;: 1, &#x27;family_ratio&#x27;: 0.0625}, {&#x27;header_end&#x27;: 7, &#x27;family_count&#x27;: 1, &#x27;family_ratio&#x27;: 0.0625}], &#x27;field_type_counts&#x27;: {&#x27;length&#x27;: 49, &#x27;transaction_or_counter&#x27;: 18, &#x27;discriminator&#x27;: 11, &#x27;constant&#x27;: 10}, &#x27;mean_best_confidence&#x27;: 1.0, &#x27;families_with_header_candidate&#x27;: 16}</td></tr><tr><th>notes</th><td>Initial auto-generated protocol model assembled from family summaries.</td></tr></tbody></table>
   </section>
   <section class="panel">
     <h2>Strongest Relations</h2>
@@ -236,7 +151,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.999</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.995</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -247,6 +162,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.3074</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x102459</span><span class="pill motif">000000 x51178</span><span class="pill motif">0101 x35363</span><span class="pill motif">0100 x28140</span><span class="pill motif">0006 x24654</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x24410</span><span class="pill wide">00000006 x24410</span><span class="pill wide">00000601 x24410</span><span class="pill wide">0000000401 x20076</span><span class="pill wide">00000004 x20076</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_3</span><span class="pill related">family_6</span><span class="pill related">family_7</span><span class="pill related">family_8</span><span class="pill related">noise</span></div>
     </section>
@@ -271,7 +188,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9945</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -282,6 +199,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.318024</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x93669</span><span class="pill motif">000000 x46817</span><span class="pill motif">0101 x32515</span><span class="pill motif">0100 x25931</span><span class="pill motif">0006 x23060</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x22737</span><span class="pill wide">00000006 x22737</span><span class="pill wide">00000601 x22737</span><span class="pill wide">0000000401 x18173</span><span class="pill wide">00000004 x18173</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_12</span><span class="pill related">family_13</span><span class="pill related">family_3</span><span class="pill related">family_8</span><span class="pill related">family_9</span></div>
     </section>
@@ -306,7 +225,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9902</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9997</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -317,6 +236,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.320438</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x52211</span><span class="pill motif">000000 x26091</span><span class="pill motif">0101 x18027</span><span class="pill motif">0100 x14342</span><span class="pill motif">0006 x12475</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x12358</span><span class="pill wide">00000006 x12358</span><span class="pill wide">00000601 x12358</span><span class="pill wide">0000000401 x10333</span><span class="pill wide">00000004 x10333</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_1</span><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_9</span><span class="pill related">noise</span></div>
     </section>
@@ -341,7 +262,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9991</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9978</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9949</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9942</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9997</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -352,6 +273,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.361278</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x36685</span><span class="pill motif">000000 x18323</span><span class="pill motif">0006 x10895</span><span class="pill motif">000006 x10686</span><span class="pill motif">000601 x10686</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x10686</span><span class="pill wide">00000006 x10686</span><span class="pill wide">00000601 x10686</span><span class="pill wide">0000000401 x4714</span><span class="pill wide">00000004 x4714</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>16.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_10</span><span class="pill related">family_5</span></div>
     </section>
@@ -376,7 +299,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9836</td></tr><tr><td><code>2..9</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9836</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -387,6 +310,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.86454</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x34383</span><span class="pill motif">000000 x15688</span><span class="pill motif">000005 x12329</span><span class="pill motif">000501 x12329</span><span class="pill motif">010402 x12329</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x12329</span><span class="pill wide">000005010402 x12329</span><span class="pill wide">0000000501 x12329</span><span class="pill wide">0000050104 x12329</span><span class="pill wide">0005010402 x12329</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>75.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_2</span><span class="pill related">family_4</span><span class="pill related">family_5</span></div>
     </section>
@@ -411,7 +336,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9939</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>0.9999</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>0.9999</td></tr><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -422,6 +347,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.342643</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>3</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x23595</span><span class="pill motif">000000 x11864</span><span class="pill motif">0006 x6977</span><span class="pill motif">0601 x6755</span><span class="pill motif">000006 x6751</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x6751</span><span class="pill wide">00000006 x6751</span><span class="pill wide">00000601 x6751</span><span class="pill wide">0000000401 x2960</span><span class="pill wide">00000004 x2960</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>15.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>12</strong><span>Header end</span><small>body starts 12</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span><span class="pill field">6..6 constant</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_2</span><span class="pill related">family_4</span><span class="pill related">family_5</span></div>
     </section>
@@ -446,7 +373,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9962</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9995</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -457,6 +384,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.352236</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x20069</span><span class="pill motif">000000 x10070</span><span class="pill motif">0101 x5869</span><span class="pill motif">000006 x5823</span><span class="pill motif">000601 x5823</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x5823</span><span class="pill wide">00000006 x5823</span><span class="pill wide">00000601 x5823</span><span class="pill wide">0000000401 x2649</span><span class="pill wide">00000004 x2649</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>11.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_2</span><span class="pill related">family_5</span></div>
     </section>
@@ -481,7 +410,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9993</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9981</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9971</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9993</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9981</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -492,6 +421,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.607803</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x11821</span><span class="pill motif">000000 x5939</span><span class="pill motif">0006 x3326</span><span class="pill motif">000006 x3324</span><span class="pill motif">000601 x3324</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3324</span><span class="pill wide">00000006 x3324</span><span class="pill wide">00000601 x3324</span><span class="pill wide">0000000501 x2558</span><span class="pill wide">00000005 x2558</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>50.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_8</span><span class="pill related">family_9</span></div>
     </section>
@@ -516,7 +447,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..11</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9982</td></tr><tr><td><code>2..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9891</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.936</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9982</td></tr><tr><td><code>2..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -527,6 +458,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.201685</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x7720</span><span class="pill motif">000000 x3860</span><span class="pill motif">000006 x3860</span><span class="pill motif">000601 x3860</span><span class="pill motif">0006 x3860</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3860</span><span class="pill wide">00000006 x3860</span><span class="pill wide">00000601 x3860</span><span class="pill wide">000000060101 x3085</span><span class="pill wide">000006010100 x3085</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">2..6 constant</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_3</span><span class="pill related">family_8</span></div>
     </section>
@@ -551,7 +484,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9843</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9193</td></tr><tr><td><code>2..8</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9843</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9193</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.7023</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -562,6 +495,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.231006</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x6120</span><span class="pill motif">000000 x3060</span><span class="pill motif">000006 x3060</span><span class="pill motif">000601 x3060</span><span class="pill motif">0001 x3060</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3060</span><span class="pill wide">00000006 x3060</span><span class="pill wide">00000601 x3060</span><span class="pill wide">000000060101 x2922</span><span class="pill wide">000006010100 x2922</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>5.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_14</span><span class="pill related">family_3</span><span class="pill related">family_8</span></div>
     </section>
@@ -586,7 +521,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>2..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9814</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8615</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>2..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9814</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8615</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -597,6 +532,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.21975</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x3552</span><span class="pill motif">000000 x1776</span><span class="pill motif">000006 x1776</span><span class="pill motif">000601 x1776</span><span class="pill motif">010100 x1776</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000060101 x1776</span><span class="pill wide">000006010100 x1776</span><span class="pill wide">0000000601 x1776</span><span class="pill wide">0000060101 x1776</span><span class="pill wide">0006010100 x1776</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>4.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_4</span><span class="pill related">noise</span></div>
     </section>
@@ -621,7 +558,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8353</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8353</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.8013</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.79</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -632,6 +569,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.472511</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x3012</span><span class="pill motif">000000 x1506</span><span class="pill motif">2300 x1451</span><span class="pill motif">000006 x1445</span><span class="pill motif">000601 x1445</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x1445</span><span class="pill wide">00000006 x1445</span><span class="pill wide">00000601 x1445</span><span class="pill wide">0000000601030023 x1443</span><span class="pill wide">0000060103002300 x1443</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>4.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_14</span></div>
     </section>
@@ -656,7 +595,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8183</td></tr><tr><td><code>2..9</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8183</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.6563</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -667,6 +606,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.987634</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2819</span><span class="pill motif">000000 x1410</span><span class="pill motif">000005 x1398</span><span class="pill motif">000501 x1398</span><span class="pill motif">010402 x1398</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x1398</span><span class="pill wide">000005010402 x1398</span><span class="pill wide">0000000501 x1398</span><span class="pill wide">0000050104 x1398</span><span class="pill wide">0005010402 x1398</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>12.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_7</span><span class="pill related">family_8</span></div>
     </section>
@@ -691,7 +632,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8196</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.8246</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8196</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.7992</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -702,6 +643,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.418458</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2750</span><span class="pill motif">000000 x1375</span><span class="pill motif">000006 x1367</span><span class="pill motif">000601 x1367</span><span class="pill motif">0001 x1367</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x1367</span><span class="pill wide">00000006 x1367</span><span class="pill wide">00000601 x1367</span><span class="pill wide">0000000601030023 x1277</span><span class="pill wide">0000060103002300 x1277</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>3.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_8</span></div>
     </section>
@@ -726,7 +669,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.812</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.799</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -737,6 +680,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.468117</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x1872</span><span class="pill motif">000000 x936</span><span class="pill motif">2300 x907</span><span class="pill motif">000006 x905</span><span class="pill motif">000601 x905</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x905</span><span class="pill wide">00000006 x905</span><span class="pill wide">00000601 x905</span><span class="pill wide">0000000601030023 x903</span><span class="pill wide">0000060103002300 x903</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>3.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">noise</span></div>
     </section>
@@ -761,7 +706,7 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..10</code></td><td>keyword</td><td>0.9876</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9707</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>2..9</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9876</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9707</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.7267</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.7143</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -772,6 +717,8 @@ The JSON data describes three families (two requests and one response) with simi
       <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>3.024296</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x1772</span><span class="pill motif">000000 x886</span><span class="pill motif">000005 x886</span><span class="pill motif">000501 x886</span><span class="pill motif">010402 x886</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x886</span><span class="pill wide">000005010402 x886</span><span class="pill wide">0000000501 x886</span><span class="pill wide">0000050104 x886</span><span class="pill wide">0005010402 x886</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>11.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_11</span></div>
     </section>

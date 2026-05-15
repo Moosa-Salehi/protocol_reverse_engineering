@@ -13,7 +13,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize request-response relations between discovered message families.")
     parser.add_argument("input_jsonl", help="Canonical message corpus JSONL")
     parser.add_argument("assignments_json", help="Output from 04_discover_families.py")
-    parser.add_argument("pairs_json", help="Output from 07_pair_requests_responses.py")
+    parser.add_argument("pairs_json", help="Output from 08_pair_requests_responses.py")
     parser.add_argument("output_json", help="Output JSON file for inferred family relations")
     parser.add_argument("--min-echo-support", type=float, default=0.9)
     parser.add_argument("--min-length-support", type=float, default=0.9)

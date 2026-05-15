@@ -4,11 +4,13 @@ Version: `0.1`
 
 ## Metadata
 
-- **source_family_summary**: D:\tez\practical\protocol_re\data\04_families.json
+- **source_family_summary**: D:\tez\practical\protocol_re\data\05_families.json
 - **source_feature_summary**: D:\tez\practical\protocol_re\data\03_family_features.json
-- **source_keyword_summary**: D:\tez\practical\protocol_re\data\06_keywords.json
+- **source_keyword_summary**: D:\tez\practical\protocol_re\data\07_keywords.json
+- **source_framing_summary**: D:\tez\practical\protocol_re\data\04_framing.json
 - **source_relations_summary**: D:\tez\practical\protocol_re\data\08_relations.json
 - **source_semantics_summary**: D:\tez\practical\protocol_re\data\09_semantics.json
+- **framing_global_summary**: {'common_header_ends': [{'header_end': 6, 'family_count': 14, 'family_ratio': 0.875}, {'header_end': 12, 'family_count': 1, 'family_ratio': 0.0625}, {'header_end': 7, 'family_count': 1, 'family_ratio': 0.0625}], 'field_type_counts': {'length': 49, 'transaction_or_counter': 18, 'discriminator': 11, 'constant': 10}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 16}
 - **notes**: Initial auto-generated protocol model assembled from family summaries.
 
 ## Evaluation
@@ -21,6 +23,7 @@ Version: `0.1`
 - Relation edges: `40` echo_edges=`40` length_relation_edges=`26`
 - Semantic coverage: `16` of `16` families ratio=`1`
 - Top semantic labels: `keyword`x72, `echoed_request_field`x48, `response_size_selector`x35, `constant`x22, `blob`x9, `length`x7
+- Framing coverage: `16` of `16` families ratio=`1`
 
 ### Evaluation Top Relation Edges
 
@@ -37,106 +40,19 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.354`
+- Overall score: `0.3219`
 - Verdict: `fail`
-- Matched message types: `11` of `11`
-- Message type matching: accuracy=`0.6875` precision=`0.6875` recall=`1` f1=`0.8148`
-- Field boundary: accuracy=`0.1789` precision=`0.2` recall=`0.6286` f1=`0.3034`
+- Matched message types: `10` of `11`
+- Message type matching: accuracy=`0.5882` precision=`0.625` recall=`0.9091` f1=`0.7407`
+- Field boundary: accuracy=`0.1422` precision=`0.1465` recall=`0.8286` f1=`0.2489`
 - Field semantics: accuracy=`0` precision=`0` recall=`0` f1=`0`
 - Relations: accuracy=`0.175` precision=`0.175` recall=`1` f1=`0.2979`
 
 ## LLM Analysis
 
-- Model: `deepseek-r1:8b`
-- Token usage: `prompt_tokens`=`4096`, `completion_tokens`=`2818`, `total_tokens`=`6914`
-- Prompt size: `175102` bytes, `175102` characters, estimated tokens=`43776`
+- Prompt size: `263979` bytes, `263979` characters, estimated tokens=`65995`
 
-To analyze the provided JSON data, we can extract the following information:
-
-### 1. **Roles of Each Family**
-- **family_0**: Request
-- **family_1**: Response
-- **family_2**: Request
-
-### 2. **Byte Length of Each Family**
-- **family_0**: 12 bytes
-- **family_1**: 11 bytes
-- **family_2**: 12 bytes
-
-### 3. **Prefix of Each Family**
-- **family_0**: `?? ?? 00 00 00 05`
-- **family_1**: `?? ?? 00 00 00 05`
-- **family_2**: `?? ?? 00 00 00 05`
-
-### 4. **Related Family IDs**
-- **family_0**: `["family_11", "family_11"]`
-- **family_1**: `["family_11"]`
-- **family_2**: `["family_11", "family_11", "family_11"]`
-
-### 5. **Field Boundaries**
-- **family_0**:
-  - Field 0: `0-1` (Keyword)
-  - Field 1: `2-3` (Variable)
-  - Field 2: `4-5` (Variable)
-  - Field 3: `6-7` (Variable)
-  - Field 4: `8-9` (Variable)
-  - Field 5: `10-11` (Variable)
-- **family_1**:
-  - Field 0: `0-1` (Keyword)
-  - Field 1: `2-3` (Variable)
-  - Field 2: `4-5` (Variable)
-  - Field 3: `6-7` (Variable)
-  - Field 4: `8-9` (Variable)
-  - Field 5: `10-11` (Variable)
-- **family_2**:
-  - Field 0: `0-1` (Keyword)
-  - Field 1: `2-3` (Variable)
-  - Field 2: `4-5` (Variable)
-  - Field 3: `6-7` (Variable)
-  - Field 4: `8-9` (Variable)
-  - Field 5: `10-11` (Variable)
-
-### 6. **Field Labels**
-- **family_0**:
-  - Field 0: `keyword`
-  - Fields 1-5: `blob`
-- **family_1**:
-  - Field 0: `keyword`
-  - Fields 1-5: `blob`
-- **family_2**:
-  - Field 0: `keyword`
-  - Fields 1-5: `blob`
-
-### 7. **Confidence Scores**
-- **family_0**:
-  - Field 0: `0.97`
-  - Fields 1-5: `0.97`
-- **family_1**:
-  - Field 0: `0.97`
-  - Fields 1-5: `0.97`
-- **family_2**:
-  - Field 0: `0.97`
-  - Fields 1-5: `0.97`
-
-### 8. **Confidence Notes**
-- **family_0**: `["Confidence score: 0.97"]`
-- **family_1**: `["Confidence score: 0.97"]`
-- **family_2**: `["Confidence score: 0.97"]`
-
-### 9. **Open Questions**
-- **Open Questions**: The JSON includes an array of open questions, such as:
-  - "What are the roles (request or response) of each family?"
-  - "What is the byte length of each family?"
-  - "What is the prefix (first 6 bytes) of each family?"
-  - "What are the related family IDs for each family?"
-  - "What are the field boundaries (start and end indices) for each family?"
-  - "What are the labels (e.g., keyword, blob) for each field in each family?"
-  - "What are the confidence scores for each field in each family?"
-  - "What are the confidence notes for each family?"
-  - "What are the open questions?"
-
-### Summary
-The JSON data describes three families (two requests and one response) with similar structures. Each family has a keyword field (confidence 0.97) followed by five variable-length fields (confidence 0.97). The relationships between families are indicated by shared IDs (`family_11`). The open questions provide a structured way to explore the binary's functionality further.
+_LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ## Family Relations
 
@@ -184,6 +100,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.521928` max=`2.732159` mean=`2.3074`
 - Candidate keyword offset: `9` cardinality=`7` entropy=`1.9916`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -200,16 +117,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9999`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9999`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9999`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9999`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9997`
-- bytes `0`..`0` | type=`keyword` confidence=`0.999`
-- bytes `1`..`1` | type=`keyword` confidence=`0.995`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
 
 #### Semantic Labels
 
@@ -249,6 +172,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.318024`
 - Candidate keyword offset: `9` cardinality=`7` entropy=`2.0048`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -265,16 +189,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9999`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9999`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9999`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9998`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9997`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9989`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9945`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
 
 #### Semantic Labels
 
@@ -314,6 +244,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.320438`
 - Candidate keyword offset: `9` cardinality=`7` entropy=`1.9965`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -330,16 +261,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9999`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9998`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9997`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9997`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9996`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9987`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9902`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
 
 #### Semantic Labels
 
@@ -379,6 +316,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`3.027169` mean=`2.361278`
 - Candidate keyword offset: `9` cardinality=`16` entropy=`2.649`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -395,16 +333,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9998`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9998`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9997`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9991`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9978`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9949`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9942`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
 
 #### Semantic Labels
 
@@ -442,6 +386,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`1.947339` max=`3.027169` mean=`2.86454`
 - Candidate keyword offset: `10` cardinality=`75` entropy=`4.7098`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -453,11 +398,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9952`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9917`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
 - bytes `1`..`1` | type=`keyword` confidence=`0.9836`
-- bytes `2`..`9` | type=`blob` confidence=`0.5`
+- bytes `5`..`5` | type=`framing_discriminator` confidence=`0.825`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.6258` endian=`big`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
 
 #### Semantic Labels
 
@@ -495,6 +451,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`10` max=`24` distinct=`4`
 - Entropy summary: min=`1.360964` max=`3.027169` mean=`2.342643`
 - Candidate keyword offset: `9` cardinality=`15` entropy=`2.6319`
+- Framing hypothesis: header=`0`..`11` body_start=`12` confidence=`1.0`
 
 #### Segments
 
@@ -511,16 +468,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `6`..`6` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`0.9999` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`0.9999` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`0.9999` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`0.9999` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9997`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9996`
+- bytes `11`..`11` | type=`framing_length` confidence=`0.9988` endian=`big`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9987`
-- bytes `10`..`10` | type=`keyword` confidence=`0.9965`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9939`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
-- bytes `11`..`23` | type=`constant` confidence=`0.99`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9894`
+
+#### Framing Hypotheses
+
+- header_end=`12` body_start=`12` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
+- header_end=`13` body_start=`13` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
+- header_end=`18` body_start=`18` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
 
 #### Semantic Labels
 
@@ -557,6 +520,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`3.027169` mean=`2.352236`
 - Candidate keyword offset: `9` cardinality=`11` entropy=`2.6579`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -573,16 +537,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9997`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9996`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9995`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9989`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9984`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9962`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9891`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
 
 #### Semantic Labels
 
@@ -622,6 +592,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`1.729574` max=`3.027169` mean=`2.607803`
 - Candidate keyword offset: `10` cardinality=`50` entropy=`2.594`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -638,16 +609,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9997`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9993`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9981`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9971`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9915`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
-- bytes `6`..`6` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9825`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9565`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
@@ -684,6 +661,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`1.825011` max=`2.450826` mean=`2.201685`
 - Candidate keyword offset: `9` cardinality=`7` entropy=`2.246`
+- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
@@ -697,13 +675,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `2`..`6` | type=`framing_constant` confidence=`1.0`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `10`..`11` | type=`keyword` confidence=`0.9995`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9987`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9982`
 - bytes `2`..`6` | type=`constant` confidence=`0.99`
 - bytes `8`..`8` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9891`
-- bytes `1`..`1` | type=`keyword` confidence=`0.936`
+
+#### Framing Hypotheses
+
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `2`..`5` length, `2`..`6` constant, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `2`..`5` length, `2`..`6` constant, `4`..`5` length, `5`..`5` length, `7`..`7` discriminator
+- header_end=`9` body_start=`9` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `2`..`5` length, `2`..`6` constant, `4`..`5` length, `5`..`5` length, `7`..`7` discriminator
 
 #### Semantic Labels
 
@@ -735,6 +722,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.450826` mean=`2.231006`
 - Candidate keyword offset: `9` cardinality=`5` entropy=`1.9247`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -746,11 +734,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9984`
 - bytes `10`..`11` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9843`
 - bytes `1`..`1` | type=`keyword` confidence=`0.9193`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.7023` endian=`big`
+- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.6478` endian=`big`
 - bytes `2`..`8` | type=`blob` confidence=`0.5`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
@@ -790,6 +789,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.221252` mean=`2.21975`
 - Candidate keyword offset: `9` cardinality=`4` entropy=`1.6385`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -801,11 +801,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9977`
 - bytes `2`..`8` | type=`constant` confidence=`0.99`
 - bytes `10`..`11` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9814`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8615`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.7025` endian=`big`
+- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.6552` endian=`big`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
@@ -843,6 +854,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.284159` max=`3.027169` mean=`2.472511`
 - Candidate keyword offset: `10` cardinality=`4` entropy=`0.306`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -852,9 +864,20 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9688`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8353`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.8013` endian=`big`
+- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.79` endian=`big`
 - bytes `2`..`11` | type=`blob` confidence=`0.5`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
@@ -883,6 +906,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.450826` max=`3.027169` mean=`2.987634`
 - Candidate keyword offset: `10` cardinality=`12` entropy=`2.8312`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -894,11 +918,22 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9915`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9723`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8183`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.6563` endian=`big`
+- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.6563` endian=`big`
 - bytes `2`..`9` | type=`blob` confidence=`0.5`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length, `7`..`7` length
 
 #### Semantic Labels
 
@@ -934,6 +969,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`1.896241` max=`2.845351` mean=`2.418458`
 - Candidate keyword offset: `9` cardinality=`3` entropy=`0.3997`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -943,9 +979,20 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9724`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.8246` endian=`big`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8196`
+- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.7992` endian=`big`
 - bytes `2`..`11` | type=`blob` confidence=`0.5`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `2`..`6` constant, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `2`..`6` constant, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
@@ -974,6 +1021,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.284159` max=`3.027169` mean=`2.468117`
 - Candidate keyword offset: `7` cardinality=`3` entropy=`0.2317`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -983,9 +1031,20 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9658`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.812` endian=`big`
+- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.799` endian=`big`
 - bytes `1`..`1` | type=`blob` confidence=`0.5`
 - bytes `2`..`11` | type=`blob` confidence=`0.5`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
@@ -1019,6 +1078,7 @@ The JSON data describes three families (two requests and one response) with simi
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.024296`
 - Candidate keyword offset: `10` cardinality=`11` entropy=`2.0942`
+- Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
 
@@ -1029,10 +1089,21 @@ The JSON data describes three families (two requests and one response) with simi
 
 #### Field Hypotheses
 
+- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9876`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9707`
+- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.7267` endian=`big`
+- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.7143` endian=`big`
 - bytes `1`..`1` | type=`blob` confidence=`0.5`
 - bytes `2`..`9` | type=`blob` confidence=`0.5`
+
+#### Framing Hypotheses
+
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length, `7`..`7` length
 
 #### Semantic Labels
 

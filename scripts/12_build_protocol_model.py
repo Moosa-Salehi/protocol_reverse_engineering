@@ -5,16 +5,18 @@ import argparse
 import json
 
 from protocol_re.model.schema import FamilyFeatureSummary, FamilyModel, FamilyRelation, FamilySemanticSummary, FieldHypothesis, ProtocolModel, Segment
+from protocol_re.inference.framing import framing_fields_to_field_hypotheses
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Assemble a protocol-model JSON document from inferred family summaries.")
-    parser.add_argument("family_json", help="Output from 06_infer_boundaries.py")
+    parser.add_argument("family_json", help="Output from 07_infer_boundaries.py")
     parser.add_argument("output_json", help="Protocol model output path")
-    parser.add_argument("--features-json", help="Optional family feature JSON from 05_extract_features.py")
-    parser.add_argument("--keywords-json", help="Optional keyword/subformat JSON from 08_infer_keywords.py")
+    parser.add_argument("--features-json", help="Optional family feature JSON from 06_extract_features.py")
+    parser.add_argument("--keywords-json", help="Optional keyword/subformat JSON from 09_infer_keywords.py")
     parser.add_argument("--relations-json", help="Optional output from 10_infer_relations.py")
     parser.add_argument("--semantics-json", help="Optional output from 11_infer_semantics.py")
+    parser.add_argument("--framing-json", help="Optional framing hypotheses from 05_infer_framing.py")
     args = parser.parse_args()
 
     with open(args.family_json, "r", encoding="utf-8") as handle:
@@ -38,6 +40,10 @@ def main() -> None:
     if args.semantics_json:
         with open(args.semantics_json, "r", encoding="utf-8") as handle:
             semantics_payload = json.load(handle)
+    framing_payload = {"families": {}, "global": {}}
+    if args.framing_json:
+        with open(args.framing_json, "r", encoding="utf-8") as handle:
+            framing_payload = json.load(handle)
 
     families = []
     for family_id, details in family_data.items():
@@ -45,6 +51,14 @@ def main() -> None:
         field_hypotheses = [FieldHypothesis(**field) for field in details.get("field_hypotheses", [])]
         feature_summary = features_payload.get(family_id)
         keyword_summary = keywords_payload.get(family_id)
+        framing_summary = (framing_payload.get("families") or {}).get(family_id)
+        if framing_summary:
+            existing = {(field.start, field.length, field.field_type) for field in field_hypotheses}
+            for framing_field in framing_fields_to_field_hypotheses(family_id, framing_summary):
+                key = (framing_field.start, framing_field.length, framing_field.field_type)
+                if key not in existing:
+                    field_hypotheses.append(framing_field)
+                    existing.add(key)
         role_hint = relations_payload.get("role_hints", {}).get(family_id, {})
         semantic_summary = semantics_payload.get(family_id)
         related_families = []
@@ -64,10 +78,12 @@ def main() -> None:
                 feature_summary=FamilyFeatureSummary(**feature_summary) if feature_summary else None,
                 semantic_summary=FamilySemanticSummary(**semantic_summary) if semantic_summary else None,
                 keyword_summary=keyword_summary,
+                framing_summary=framing_summary,
                 related_families=sorted(set(related_families)),
                 evidence={
                     "source": args.family_json,
                     "keyword_evidence_source": args.keywords_json if keyword_summary else None,
+                    "framing_evidence_source": args.framing_json if framing_summary else None,
                     **role_hint,
                 },
             )
@@ -82,8 +98,10 @@ def main() -> None:
             "source_family_summary": args.family_json,
             "source_feature_summary": args.features_json,
             "source_keyword_summary": args.keywords_json,
+            "source_framing_summary": args.framing_json,
             "source_relations_summary": args.relations_json,
             "source_semantics_summary": args.semantics_json,
+            "framing_global_summary": framing_payload.get("global", {}),
             "notes": "Initial auto-generated protocol model assembled from family summaries.",
         },
     )

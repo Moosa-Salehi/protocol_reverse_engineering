@@ -139,11 +139,32 @@ def _format_panel(keyword_summary: Dict[str, Any]) -> str:
     )
 
 
+def _framing_panel(framing_summary: Dict[str, Any]) -> str:
+    layouts = framing_summary.get("layout_hypotheses", []) if framing_summary else []
+    if not layouts:
+        return '<p class="muted">No framing hypotheses attached.</p>'
+    best = layouts[0]
+    fields = best.get("field_regions", []) or []
+    field_html = "".join(
+        _pill(f"{field.get('start')}..{int(field.get('end', 0) or 0) - 1} {field.get('field_type')}", "field")
+        for field in fields[:6]
+    ) or '<span class="muted">No header fields</span>'
+    return (
+        '<div class="feature-grid">'
+        f'{_metric("Header end", best.get("header_end", 0), "body starts " + str(best.get("body_start", 0)))}'
+        f'{_metric("Framing confidence", best.get("confidence", 0.0))}'
+        f'{_metric("Hypotheses", len(layouts))}'
+        '</div>'
+        f'<div class="motif-row"><b>Header fields</b>{field_html}</div>'
+    )
+
+
 def _family_card(family: Dict[str, Any]) -> str:
     family_id = family.get("family_id", "unknown")
     semantic = family.get("semantic_summary") or {}
     feature = family.get("feature_summary") or {}
     keyword = family.get("keyword_summary") or {}
+    framing = family.get("framing_summary") or {}
     fields = family.get("field_hypotheses", []) or []
     labels = semantic.get("field_labels", []) or []
     role = family.get("role", "unknown")
@@ -183,6 +204,8 @@ def _family_card(family: Dict[str, Any]) -> str:
       {_feature_panel(feature)}
       <h4>Format Evidence</h4>
       {_format_panel(keyword)}
+      <h4>Framing Evidence</h4>
+      {_framing_panel(framing)}
       <h4>Related Families</h4>
       <div class="pill-row">{related_html}</div>
     </section>

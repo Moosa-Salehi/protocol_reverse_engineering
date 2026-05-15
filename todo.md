@@ -1,38 +1,5 @@
 Read README.md for context. No summarize/explanation needed. Await task.
 
-  ### TODO 5. Add protocol-agnostic framing hypothesis module
-
-  - Files
-      - New: src/protocol_re/inference/framing.py
-      - New optional script: scripts/04_infer_framing.py
-      - Integrate with other files
-      - update script's number accordingly
-        
-  - Current issue
-      - The pipeline assumes each payload is already the semantic protocol body.
-  - Tasks
-      - Infer candidate common header regions using:
-          - stable prefixes
-          - recurring constants
-          - length fields
-          - transaction/correlation fields
-          - sequence/counter-like fields
-          - low-cardinality discriminator fields
-          - payload-tail variability
-      - Emit multiple scored layout hypotheses:
-          - header start/end
-          - body start/end
-          - candidate field regions
-          - confidence
-          - supporting evidence
-      - Do not hard-code any protocol.
-      - Store hypothesis metadata per family and globally.
-  - Expected impact
-      - Accuracy: ↑↑
-      - Runtime: neutral initially, ↓ downstream after pruning
-  - Risk
-      - Medium-high. Needs robust scoring and fallback behavior.
-
   ### TODO 6. Add generic length-field detection
 
   - Files

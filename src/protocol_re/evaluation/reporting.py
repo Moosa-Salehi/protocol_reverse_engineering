@@ -223,6 +223,38 @@ def semantics_summary(semantics_payload: Dict[str, Any], family_count: int) -> D
     }
 
 
+def framing_summary(framing_payload: Dict[str, Any], family_count: int) -> Dict[str, Any]:
+    family_items = (framing_payload or {}).get("families", {}) or {}
+    best_confidences: List[float] = []
+    header_ends: Counter[Any] = Counter()
+    field_types: Counter[Any] = Counter()
+    usable_family_count = 0
+
+    for item in family_items.values():
+        layouts = item.get("layout_hypotheses", []) or []
+        if not layouts:
+            continue
+        best = layouts[0]
+        confidence = float(best.get("confidence", 0.0) or 0.0)
+        best_confidences.append(confidence)
+        if confidence > 0.0:
+            usable_family_count += 1
+        header_ends[int(best.get("header_end", 0) or 0)] += 1
+        for field in best.get("field_regions", []) or []:
+            field_types[field.get("field_type", "unknown")] += 1
+
+    return {
+        "family_count": family_count,
+        "framing_family_count": len(family_items),
+        "usable_family_count": usable_family_count,
+        "usable_family_ratio": round(usable_family_count / family_count, 6) if family_count else 0.0,
+        "best_confidence_distribution": _quantiles(best_confidences),
+        "top_header_ends": _top_counter(header_ends, 10),
+        "field_type_counts": dict(sorted(field_types.items())),
+        "global": (framing_payload or {}).get("global", {}),
+    }
+
+
 def build_evaluation_report(
     records: Sequence[MessageRecord],
     assignments_payload: Dict[str, Any],
@@ -230,6 +262,7 @@ def build_evaluation_report(
     pairs_payload: Sequence[Dict[str, Any]],
     relations_payload: Dict[str, Any],
     semantics_payload: Dict[str, Any] | None = None,
+    framing_payload: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     total_messages = len(records)
     family_count = len(families_payload)
@@ -241,6 +274,7 @@ def build_evaluation_report(
         "pairs": pair_summary(pairs_payload),
         "relations": relation_summary(relations_payload),
         "semantics": semantics_summary(semantics_payload or {}, family_count),
+        "framing": framing_summary(framing_payload or {}, family_count),
         "notes": [
             "Metrics are heuristic quality indicators for reverse-engineering workflow triage.",
             "Low assignment coverage usually means clustering sampled fewer messages than the full corpus.",

@@ -69,9 +69,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     messages_jsonl = data_dir / "01_messages.jsonl"
     assignments_json = data_dir / "02_family_assignments.json"
     family_features_json = data_dir / "03_family_features.json"
-    families_json = data_dir / "04_families.json"
-    pairs_json = data_dir / "05_pairs.json"
-    keywords_json = data_dir / "06_keywords.json"
+    framing_json = data_dir / "04_framing.json"
+    families_json = data_dir / "05_families.json"
+    pairs_json = data_dir / "06_pairs.json"
+    keywords_json = data_dir / "07_keywords.json"
     relations_json = data_dir / "08_relations.json"
     semantics_json = data_dir / "09_semantics.json"
     model_json = data_dir / "10_protocol_model.json"
@@ -128,9 +129,18 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "05_extract_features",
+                "05_infer_framing",
                 [
-                    _script("05_extract_features.py"),
+                    _script("05_infer_framing.py"),
+                    _path(messages_jsonl),
+                    _path(assignments_json),
+                    _path(framing_json),
+                ],
+            ),
+            (
+                "06_extract_features",
+                [
+                    _script("06_extract_features.py"),
                     _path(messages_jsonl),
                     _path(family_features_json),
                     "--assignments-json",
@@ -138,9 +148,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "06_infer_boundaries",
+                "07_infer_boundaries",
                 [
-                    _script("06_infer_boundaries.py"),
+                    _script("07_infer_boundaries.py"),
                     _path(messages_jsonl),
                     _path(families_json),
                     "--assignments-json",
@@ -150,9 +160,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "07_pair_requests_responses",
+                "08_pair_requests_responses",
                 [
-                    _script("07_pair_requests_responses.py"),
+                    _script("08_pair_requests_responses.py"),
                     _path(messages_jsonl),
                     _path(pairs_json),
                     "--assignments-json",
@@ -160,9 +170,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ],
             ),
             (
-                "08_infer_keywords",
+                "09_infer_keywords",
                 [
-                    _script("08_infer_keywords.py"),
+                    _script("09_infer_keywords.py"),
                     _path(messages_jsonl),
                     _path(keywords_json),
                     "--assignments-json",
@@ -203,6 +213,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(relations_json),
                     "--semantics-json",
                     _path(semantics_json),
+                    "--framing-json",
+                    _path(framing_json),
                 ],
             ),
             (
@@ -217,6 +229,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(evaluation_json),
                     "--semantics-json",
                     _path(semantics_json),
+                    "--framing-json",
+                    _path(framing_json),
                 ],
             ),
             (

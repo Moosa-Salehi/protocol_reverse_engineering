@@ -73,6 +73,7 @@ def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
     pairs = evaluation.get("pairs", {}) or {}
     relations = evaluation.get("relations", {}) or {}
     semantics = evaluation.get("semantics", {}) or {}
+    framing = evaluation.get("framing", {}) or {}
 
     lines.append(f"- Messages: `{corpus.get('message_count', 0)}` across `{corpus.get('session_count', 0)}` sessions")
     lines.append(
@@ -107,6 +108,12 @@ def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
         if top_labels:
             labels = ", ".join(f"`{item.get('value')}`x{item.get('count')}" for item in top_labels[:8])
             lines.append(f"- Top semantic labels: {labels}")
+    if framing:
+        lines.append(
+            f"- Framing coverage: `{framing.get('usable_family_count', 0)}` "
+            f"of `{framing.get('family_count', 0)}` families "
+            f"ratio=`{_fmt_metric(framing.get('usable_family_ratio', 0.0))}`"
+        )
     lines.append("")
 
     top_edges = relations.get("top_edges", []) or []
@@ -277,6 +284,14 @@ def render_protocol_model_markdown(
                 f"- Candidate keyword offset: `{int(keyword.get('offset', 0))}` "
                 f"cardinality=`{int(keyword.get('cardinality', 0))}` entropy=`{keyword.get('entropy', 0.0)}`"
             )
+        framing_summary = family.get("framing_summary") or {}
+        layouts = framing_summary.get("layout_hypotheses", []) if isinstance(framing_summary, dict) else []
+        if layouts:
+            best_layout = layouts[0]
+            lines.append(
+                f"- Framing hypothesis: header=`{best_layout.get('header_start', 0)}`..`{int(best_layout.get('header_end', 0) or 0) - 1}` "
+                f"body_start=`{best_layout.get('body_start', 0)}` confidence=`{best_layout.get('confidence', 0.0)}`"
+            )
         lines.append("")
 
         segments = family.get("segments", [])
@@ -302,6 +317,21 @@ def render_protocol_model_markdown(
                 if field.get("endian"):
                     desc += f" endian=`{field['endian']}`"
                 lines.append(desc)
+            lines.append("")
+
+        if layouts:
+            lines.append("#### Framing Hypotheses")
+            lines.append("")
+            for layout in layouts[:3]:
+                fields = layout.get("field_regions", []) or []
+                field_text = ", ".join(
+                    f"`{field.get('start')}`..`{int(field.get('end', 0) or 0) - 1}` {field.get('field_type')}"
+                    for field in fields[:6]
+                ) or "none"
+                lines.append(
+                    f"- header_end=`{layout.get('header_end', 0)}` body_start=`{layout.get('body_start', 0)}` "
+                    f"confidence=`{layout.get('confidence', 0.0)}` fields={field_text}"
+                )
             lines.append("")
 
         if semantic_summary:

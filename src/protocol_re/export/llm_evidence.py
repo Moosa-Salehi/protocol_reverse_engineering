@@ -151,6 +151,7 @@ def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     pairs = evaluation.get("pairs", {}) or {}
     relations = evaluation.get("relations", {}) or {}
     semantics = evaluation.get("semantics", {}) or {}
+    framing = evaluation.get("framing", {}) or {}
 
     return {
         "corpus": {
@@ -192,6 +193,13 @@ def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             "role_counts": semantics.get("role_counts", {}),
             "top_field_labels": (semantics.get("top_field_labels", []) or [])[:10],
         },
+        "framing": {
+            "usable_family_ratio": framing.get("usable_family_ratio"),
+            "usable_family_count": framing.get("usable_family_count"),
+            "best_confidence_distribution": framing.get("best_confidence_distribution", {}),
+            "top_header_ends": (framing.get("top_header_ends", []) or [])[:10],
+            "field_type_counts": framing.get("field_type_counts", {}),
+        },
     }
 
 
@@ -226,12 +234,42 @@ def _compact_family(family: Dict[str, Any], field_limit: int) -> Dict[str, Any]:
         "message_count": family.get("message_count", 0),
         "template": _template_digest(family.get("template", "")),
         "related_family_ids": family.get("related_families", [])[:10],
+        "framing": _compact_framing_summary(family.get("framing_summary") or {}),
         "segments": [_compact_segment(segment) for segment in sorted(segments, key=lambda item: (_as_int(item.get("start", 0)), _as_int(item.get("end", 0))))[:12]],
         "fields": [_compact_field(field) for field in _top_items(fields, field_limit)],
         "semantic_labels": [_compact_label(label) for label in _top_items(labels, field_limit)],
         "features": _compact_feature_summary(feature_summary),
         "confidence_notes": _family_confidence_notes(family),
     }
+
+
+def _compact_framing_summary(framing: Dict[str, Any]) -> Dict[str, Any]:
+    if not framing:
+        return {}
+    layouts = framing.get("layout_hypotheses", []) or []
+    compact_layouts = []
+    for layout in layouts[:3]:
+        compact_layouts.append(
+            {
+                "header": [layout.get("header_start", 0), layout.get("header_end", 0)],
+                "body_start": layout.get("body_start", 0),
+                "confidence": layout.get("confidence", 0.0),
+                "field_regions": [
+                    {
+                        "range": [field.get("start", 0), field.get("end", 0)],
+                        "type": field.get("field_type", "unknown"),
+                        "confidence": field.get("confidence", 0.0),
+                    }
+                    for field in (layout.get("field_regions", []) or [])[:8]
+                ],
+                "support": {
+                    "score": (layout.get("evidence") or {}).get("score"),
+                    "field_types": (layout.get("evidence") or {}).get("field_support_types", []),
+                    "tail_variability_jump": (layout.get("evidence") or {}).get("tail_variability_jump"),
+                },
+            }
+        )
+    return {"length_stats": framing.get("length_stats", {}), "layout_hypotheses": compact_layouts}
 
 
 def _global_candidates(families: List[Dict[str, Any]], field_limit: int) -> Dict[str, Any]:
@@ -268,6 +306,7 @@ def _coverage(bundle: Dict[str, Any]) -> Dict[str, Any]:
         "evaluation",
         "families",
         "relations",
+        "metadata.framing_global_summary",
         "global_hypotheses.length_candidates",
         "global_hypotheses.opcode_candidates",
         "global_hypotheses.constants",
@@ -336,6 +375,9 @@ def build_llm_evidence_bundle(
         "evaluation": _compact_evaluation(evaluation),
         "relations": relations,
         "global_hypotheses": candidates,
+        "metadata": {
+            "framing_global_summary": (model.get("metadata") or {}).get("framing_global_summary", {}),
+        },
         "families": [_compact_family(family, field_limit=field_limit) for family in families],
         "open_questions": [
             "Which fields are likely operation selectors, transaction identifiers, lengths, status codes, or payload values?",

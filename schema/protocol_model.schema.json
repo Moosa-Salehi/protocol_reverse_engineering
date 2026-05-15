@@ -130,7 +130,11 @@
         "semantic_summary": {"$ref": "#/$defs/family_semantic_summary"},
         "keyword_summary": {
           "type": ["object", "null"],
-          "description": "Candidate discriminating keyword bytes and keyword-based subformats from stage 08."
+          "description": "Candidate discriminating keyword bytes and keyword-based subformats from stage 09."
+        },
+        "framing_summary": {
+          "type": ["object", "null"],
+          "description": "Protocol-agnostic framing/header layout hypotheses from stage 04."
         },
         "related_families": {
           "type": "array",

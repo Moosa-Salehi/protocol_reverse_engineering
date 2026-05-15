@@ -118,6 +118,7 @@ class FamilyModel:
     feature_summary: Optional[FamilyFeatureSummary] = None
     semantic_summary: Optional[FamilySemanticSummary] = None
     keyword_summary: Optional[Dict[str, Any]] = None
+    framing_summary: Optional[Dict[str, Any]] = None
     related_families: List[str] = field(default_factory=list)
     examples: List[int] = field(default_factory=list)
     evidence: Dict[str, Any] = field(default_factory=dict)
