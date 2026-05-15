@@ -5,7 +5,6 @@ import argparse
 import json
 
 from protocol_re.model.schema import FamilyFeatureSummary, FamilyModel, FamilyRelation, FamilySemanticSummary, FieldHypothesis, ProtocolModel, Segment
-from protocol_re.inference.framing import framing_fields_to_field_hypotheses
 
 
 def main() -> None:
@@ -52,13 +51,6 @@ def main() -> None:
         feature_summary = features_payload.get(family_id)
         keyword_summary = keywords_payload.get(family_id)
         framing_summary = (framing_payload.get("families") or {}).get(family_id)
-        if framing_summary:
-            existing = {(field.start, field.length, field.field_type) for field in field_hypotheses}
-            for framing_field in framing_fields_to_field_hypotheses(family_id, framing_summary):
-                key = (framing_field.start, framing_field.length, framing_field.field_type)
-                if key not in existing:
-                    field_hypotheses.append(framing_field)
-                    existing.add(key)
         role_hint = relations_payload.get("role_hints", {}).get(family_id, {})
         semantic_summary = semantics_payload.get(family_id)
         related_families = []

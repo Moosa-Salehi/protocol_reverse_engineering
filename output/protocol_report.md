@@ -22,7 +22,7 @@ Version: `0.1`
 - Pair hypotheses: `154658` direction_unknown_ratio=`0`
 - Relation edges: `40` echo_edges=`40` length_relation_edges=`26`
 - Semantic coverage: `16` of `16` families ratio=`1`
-- Top semantic labels: `keyword`x72, `echoed_request_field`x48, `response_size_selector`x35, `constant`x22, `blob`x9, `length`x7
+- Top semantic labels: `keyword`x76, `echoed_request_field`x54, `response_size_selector`x40, `constant`x25, `length`x12, `transaction_or_correlation_id`x7, `blob`x6
 - Framing coverage: `16` of `16` families ratio=`1`
 
 ### Evaluation Top Relation Edges
@@ -40,17 +40,17 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.3219`
+- Overall score: `0.3756`
 - Verdict: `fail`
-- Matched message types: `10` of `11`
-- Message type matching: accuracy=`0.5882` precision=`0.625` recall=`0.9091` f1=`0.7407`
-- Field boundary: accuracy=`0.1422` precision=`0.1465` recall=`0.8286` f1=`0.2489`
+- Matched message types: `11` of `11`
+- Message type matching: accuracy=`0.6875` precision=`0.6875` recall=`1` f1=`0.8148`
+- Field boundary: accuracy=`0.2419` precision=`0.2521` recall=`0.8571` f1=`0.3896`
 - Field semantics: accuracy=`0` precision=`0` recall=`0` f1=`0`
 - Relations: accuracy=`0.175` precision=`0.175` recall=`1` f1=`0.2979`
 
 ## LLM Analysis
 
-- Prompt size: `263979` bytes, `263979` characters, estimated tokens=`65995`
+- Prompt size: `259364` bytes, `259364` characters, estimated tokens=`64841`
 
 _LLM analysis was skipped because stage 15 ran in render-only mode._
 
@@ -107,7 +107,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `0`..`0` | kind=`variable` confidence=`0.6939`
 - bytes `1`..`1` | kind=`variable` confidence=`0.6424`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7881`
+- bytes `5`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.778`
 - bytes `8`..`8` | kind=`variable` confidence=`0.7881`
@@ -117,16 +117,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9999`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9999`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9999`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9999`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9997`
+- bytes `0`..`0` | type=`keyword` confidence=`0.999`
+- bytes `1`..`1` | type=`keyword` confidence=`0.995`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
 
 #### Framing Hypotheses
 
@@ -179,7 +179,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `0`..`0` | kind=`variable` confidence=`0.6966`
 - bytes `1`..`1` | kind=`variable` confidence=`0.6425`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7883`
+- bytes `5`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.7781`
 - bytes `8`..`8` | kind=`variable` confidence=`0.7883`
@@ -189,16 +189,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9999`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9999`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9999`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9998`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9997`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9989`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9945`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
 
 #### Framing Hypotheses
 
@@ -251,7 +251,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `0`..`0` | kind=`variable` confidence=`0.7114`
 - bytes `1`..`1` | kind=`variable` confidence=`0.6454`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7881`
+- bytes `5`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.7779`
 - bytes `8`..`8` | kind=`variable` confidence=`0.7881`
@@ -261,16 +261,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9999`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9998`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9997`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9997`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9996`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9987`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9902`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
 
 #### Framing Hypotheses
 
@@ -323,7 +323,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `0`..`0` | kind=`variable` confidence=`0.6824`
 - bytes `1`..`1` | kind=`variable` confidence=`0.683`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.789`
+- bytes `5`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.7771`
 - bytes `8`..`8` | kind=`variable` confidence=`0.789`
@@ -333,16 +333,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9998`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9998`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9997`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9991`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9978`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9949`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9942`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
 
 #### Framing Hypotheses
 
@@ -392,22 +392,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.6721`
 - bytes `1`..`1` | kind=`variable` confidence=`0.646`
-- bytes `2`..`9` | kind=`variable` confidence=`0.4314`
+- bytes `2`..`5` | kind=`variable` confidence=`0.85`
+- bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7158`
 - bytes `11`..`11` | kind=`constant` confidence=`0.8935`
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `6`..`9` | type=`keyword` confidence=`0.9987`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9952`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9917`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
 - bytes `1`..`1` | type=`keyword` confidence=`0.9836`
-- bytes `5`..`5` | type=`framing_discriminator` confidence=`0.825`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.6258` endian=`big`
 
 #### Framing Hypotheses
 
@@ -417,14 +414,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
 - bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `6`..`9` | label=`keyword` confidence=`0.9987`
 - bytes `10`..`10` | label=`keyword` confidence=`0.9952`
-- bytes `2`..`9` | label=`response_size_selector` confidence=`0.9929`
+- bytes `6`..`9` | label=`response_size_selector` confidence=`0.9929`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9917`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
 - bytes `1`..`1` | label=`keyword` confidence=`0.9836`
-- bytes `2`..`9` | label=`blob` confidence=`0.5`
+- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.9500000000000001`
 
 #### Notes
 
@@ -464,20 +463,20 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `8`..`8` | kind=`variable` confidence=`0.7887`
 - bytes `9`..`9` | kind=`variable` confidence=`0.7612`
 - bytes `10`..`10` | kind=`variable` confidence=`0.762`
-- bytes `11`..`23` | kind=`constant` confidence=`0.505`
+- bytes `11`..`11` | kind=`variable` confidence=`0.85`
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `6`..`6` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`0.9999` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`0.9999` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`0.9999` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`0.9999` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9997`
+- bytes `11`..`11` | type=`keyword` confidence=`0.9997`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9996`
-- bytes `11`..`11` | type=`framing_length` confidence=`0.9988` endian=`big`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9987`
+- bytes `10`..`10` | type=`keyword` confidence=`0.9965`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9939`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
+- bytes `12`..`23` | type=`constant` confidence=`0.99`
 
 #### Framing Hypotheses
 
@@ -489,14 +488,14 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
 - bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `11`..`23` | label=`echoed_request_field` confidence=`1.0`
-- bytes `11`..`23` | label=`response_size_selector` confidence=`1.0`
+- bytes `11`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `12`..`23` | label=`echoed_request_field` confidence=`1.0`
+- bytes `12`..`23` | label=`response_size_selector` confidence=`1.0`
 - bytes `5`..`5` | label=`length` confidence=`0.9999`
 - bytes `8`..`8` | label=`keyword` confidence=`0.9997`
+- bytes `11`..`11` | label=`keyword` confidence=`0.9997`
 - bytes `7`..`7` | label=`keyword` confidence=`0.9996`
 - bytes `9`..`9` | label=`keyword` confidence=`0.9987`
-- bytes `10`..`10` | label=`echoed_request_field` confidence=`0.9972`
-- bytes `10`..`10` | label=`response_size_selector` confidence=`0.9972`
 
 #### Notes
 
@@ -527,7 +526,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `0`..`0` | kind=`variable` confidence=`0.711`
 - bytes `1`..`1` | kind=`variable` confidence=`0.6787`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7893`
+- bytes `5`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.7773`
 - bytes `8`..`8` | kind=`variable` confidence=`0.7893`
@@ -537,16 +536,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9997`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9996`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9995`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9989`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9984`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9962`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9891`
 
 #### Framing Hypotheses
 
@@ -599,7 +598,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `0`..`0` | kind=`variable` confidence=`0.6871`
 - bytes `1`..`1` | kind=`variable` confidence=`0.6568`
 - bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.7979`
+- bytes `5`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.7817`
 - bytes `8`..`8` | kind=`variable` confidence=`0.7979`
@@ -609,16 +608,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Field Hypotheses
 
-- bytes `2`..`4` | type=`framing_constant` confidence=`1.0`
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `8`..`8` | type=`keyword` confidence=`0.9997`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9993`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9981`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9971`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9915`
+- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `6`..`6` | type=`constant` confidence=`0.99`
+- bytes `0`..`0` | type=`keyword` confidence=`0.9825`
+- bytes `1`..`1` | type=`keyword` confidence=`0.9565`
 
 #### Framing Hypotheses
 
@@ -667,24 +666,21 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.7166`
 - bytes `1`..`1` | kind=`variable` confidence=`0.6717`
-- bytes `2`..`6` | kind=`constant` confidence=`0.682`
-- bytes `7`..`7` | kind=`variable` confidence=`0.797`
+- bytes `2`..`6` | kind=`constant` confidence=`0.85`
+- bytes `7`..`7` | kind=`variable` confidence=`0.85`
 - bytes `8`..`8` | kind=`constant` confidence=`1.0`
 - bytes `9`..`9` | kind=`variable` confidence=`0.7701`
 - bytes `10`..`11` | kind=`variable` confidence=`0.5451`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `2`..`6` | type=`framing_constant` confidence=`1.0`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `10`..`11` | type=`keyword` confidence=`0.9995`
 - bytes `7`..`7` | type=`keyword` confidence=`0.9987`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9982`
 - bytes `2`..`6` | type=`constant` confidence=`0.99`
 - bytes `8`..`8` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9891`
+- bytes `1`..`1` | type=`keyword` confidence=`0.936`
 
 #### Framing Hypotheses
 
@@ -728,22 +724,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.7091`
 - bytes `1`..`1` | kind=`variable` confidence=`0.682`
-- bytes `2`..`8` | kind=`variable` confidence=`0.4991`
+- bytes `2`..`5` | kind=`constant` confidence=`0.85`
+- bytes `6`..`8` | kind=`variable` confidence=`0.85`
 - bytes `9`..`9` | kind=`variable` confidence=`0.7773`
 - bytes `10`..`11` | kind=`constant` confidence=`0.725`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9984`
+- bytes `2`..`5` | type=`constant` confidence=`0.99`
 - bytes `10`..`11` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9843`
 - bytes `1`..`1` | type=`keyword` confidence=`0.9193`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.7023` endian=`big`
-- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.6478` endian=`big`
-- bytes `2`..`8` | type=`blob` confidence=`0.5`
+- bytes `6`..`8` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -755,14 +748,14 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`8` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`8` | label=`response_size_selector` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`response_size_selector` confidence=`1.0`
+- bytes `6`..`8` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`8` | label=`response_size_selector` confidence=`1.0`
 - bytes `10`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `9`..`9` | label=`keyword` confidence=`0.9984`
+- bytes `2`..`5` | label=`constant` confidence=`0.99`
 - bytes `10`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9843`
-- bytes `1`..`1` | label=`keyword` confidence=`0.9193`
-- bytes `2`..`8` | label=`blob` confidence=`0.5`
 
 #### Notes
 
@@ -795,22 +788,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.7177`
 - bytes `1`..`1` | kind=`variable` confidence=`0.7007`
-- bytes `2`..`8` | kind=`constant` confidence=`0.6812`
+- bytes `2`..`5` | kind=`constant` confidence=`0.85`
+- bytes `6`..`8` | kind=`constant` confidence=`0.85`
 - bytes `9`..`9` | kind=`variable` confidence=`0.7839`
 - bytes `10`..`11` | kind=`constant` confidence=`0.725`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
 - bytes `9`..`9` | type=`keyword` confidence=`0.9977`
-- bytes `2`..`8` | type=`constant` confidence=`0.99`
+- bytes `2`..`5` | type=`constant` confidence=`0.99`
+- bytes `6`..`8` | type=`constant` confidence=`0.99`
 - bytes `10`..`11` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9814`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8615`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.7025` endian=`big`
-- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.6552` endian=`big`
 
 #### Framing Hypotheses
 
@@ -822,14 +812,14 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`8` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`8` | label=`response_size_selector` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`response_size_selector` confidence=`1.0`
+- bytes `6`..`8` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`8` | label=`response_size_selector` confidence=`1.0`
 - bytes `10`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `9`..`9` | label=`keyword` confidence=`0.9977`
-- bytes `2`..`8` | label=`constant` confidence=`0.99`
-- bytes `10`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`keyword` confidence=`0.9814`
-- bytes `1`..`1` | label=`keyword` confidence=`0.8615`
+- bytes `2`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`8` | label=`constant` confidence=`0.99`
 
 #### Notes
 
@@ -860,18 +850,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.7109`
 - bytes `1`..`1` | kind=`variable` confidence=`0.7038`
-- bytes `2`..`11` | kind=`variable` confidence=`0.4529`
+- bytes `2`..`5` | kind=`variable` confidence=`0.85`
+- bytes `6`..`11` | kind=`variable` confidence=`0.85`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9688`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8353`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.8013` endian=`big`
-- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.79` endian=`big`
-- bytes `2`..`11` | type=`blob` confidence=`0.5`
+- bytes `6`..`11` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -883,11 +870,14 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
+- bytes `2`..`5` | label=`response_size_selector` confidence=`1.0`
+- bytes `6`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9688`
+- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.9500000000000001`
 - bytes `1`..`1` | label=`keyword` confidence=`0.8353`
-- bytes `2`..`11` | label=`blob` confidence=`0.5`
 
 #### Feature Summary
 
@@ -912,22 +902,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.7276`
 - bytes `1`..`1` | kind=`variable` confidence=`0.7078`
-- bytes `2`..`9` | kind=`variable` confidence=`0.4313`
+- bytes `2`..`5` | kind=`variable` confidence=`0.85`
+- bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7594`
 - bytes `11`..`11` | kind=`constant` confidence=`0.8661`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
+- bytes `6`..`9` | type=`keyword` confidence=`0.9972`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9915`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9723`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8183`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.6563` endian=`big`
-- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.6563` endian=`big`
-- bytes `2`..`9` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -937,13 +924,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`9` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`9` | label=`response_size_selector` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
+- bytes `6`..`9` | label=`response_size_selector` confidence=`1.0`
+- bytes `6`..`9` | label=`keyword` confidence=`0.9972`
 - bytes `10`..`10` | label=`keyword` confidence=`0.9915`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9723`
+- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.9500000000000001`
 - bytes `1`..`1` | label=`keyword` confidence=`0.8183`
-- bytes `2`..`9` | label=`blob` confidence=`0.5`
 
 #### Notes
 
@@ -975,18 +964,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.715`
 - bytes `1`..`1` | kind=`variable` confidence=`0.7088`
-- bytes `2`..`11` | kind=`variable` confidence=`0.4552`
+- bytes `2`..`5` | kind=`variable` confidence=`0.85`
+- bytes `6`..`11` | kind=`variable` confidence=`0.85`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9724`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.8246` endian=`big`
 - bytes `1`..`1` | type=`keyword` confidence=`0.8196`
-- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.7992` endian=`big`
-- bytes `2`..`11` | type=`blob` confidence=`0.5`
+- bytes `6`..`11` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -998,11 +984,14 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
+- bytes `2`..`5` | label=`response_size_selector` confidence=`1.0`
+- bytes `6`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9724`
+- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.9500000000000001`
 - bytes `1`..`1` | label=`keyword` confidence=`0.8196`
-- bytes `2`..`11` | label=`blob` confidence=`0.5`
 
 #### Feature Summary
 
@@ -1027,18 +1016,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.7265`
 - bytes `1`..`1` | kind=`variable` confidence=`0.74`
-- bytes `2`..`11` | kind=`variable` confidence=`0.4537`
+- bytes `2`..`5` | kind=`variable` confidence=`0.85`
+- bytes `6`..`11` | kind=`variable` confidence=`0.85`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9658`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.812` endian=`big`
-- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.799` endian=`big`
 - bytes `1`..`1` | type=`blob` confidence=`0.5`
-- bytes `2`..`11` | type=`blob` confidence=`0.5`
+- bytes `6`..`11` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -1050,11 +1036,14 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `1`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`11` | label=`response_size_selector` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
+- bytes `2`..`5` | label=`response_size_selector` confidence=`1.0`
+- bytes `6`..`11` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9658`
+- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.9500000000000001`
 - bytes `1`..`1` | label=`blob` confidence=`0.5`
-- bytes `2`..`11` | label=`blob` confidence=`0.5`
 
 #### Notes
 
@@ -1084,20 +1073,17 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `0`..`0` | kind=`variable` confidence=`0.7336`
 - bytes `1`..`1` | kind=`variable` confidence=`0.7455`
-- bytes `2`..`9` | kind=`variable` confidence=`0.432`
+- bytes `2`..`5` | kind=`constant` confidence=`0.85`
+- bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7774`
 
 #### Field Hypotheses
 
-- bytes `2`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `4`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
-- bytes `5`..`5` | type=`framing_length` confidence=`1.0` endian=`big`
+- bytes `6`..`9` | type=`keyword` confidence=`0.9944`
+- bytes `2`..`5` | type=`constant` confidence=`0.99`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9876`
 - bytes `0`..`0` | type=`keyword` confidence=`0.9707`
-- bytes `0`..`1` | type=`framing_transaction_or_counter` confidence=`0.7267` endian=`big`
-- bytes `0`..`3` | type=`framing_transaction_or_counter` confidence=`0.7143` endian=`big`
 - bytes `1`..`1` | type=`blob` confidence=`0.5`
-- bytes `2`..`9` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -1107,10 +1093,11 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
+- bytes `6`..`9` | label=`keyword` confidence=`0.9944`
+- bytes `2`..`5` | label=`constant` confidence=`0.99`
 - bytes `10`..`10` | label=`keyword` confidence=`0.9876`
 - bytes `0`..`0` | label=`keyword` confidence=`0.9707`
 - bytes `1`..`1` | label=`blob` confidence=`0.5`
-- bytes `2`..`9` | label=`blob` confidence=`0.5`
 
 #### Notes
 

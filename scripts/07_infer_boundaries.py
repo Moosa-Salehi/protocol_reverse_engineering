@@ -18,6 +18,7 @@ def main() -> None:
     parser.add_argument("--family-mode", choices=["length", "prefix2"], default="length", help="Cheap family grouping heuristic")
     parser.add_argument("--score-threshold", type=float, default=1.5, help="Boundary score threshold")
     parser.add_argument("--features-json", help="Optional family feature JSON from 06_extract_features.py")
+    parser.add_argument("--framing-json", help="Optional framing hypotheses from 05_infer_framing.py")
     args = parser.parse_args()
 
     records = load_corpus_jsonl(args.input_jsonl)
@@ -25,6 +26,11 @@ def main() -> None:
     if args.features_json:
         with open(args.features_json, "r", encoding="utf-8") as handle:
             feature_by_family = json.load(handle)
+    framing_by_family = {}
+    if args.framing_json:
+        with open(args.framing_json, "r", encoding="utf-8") as handle:
+            framing_payload = json.load(handle)
+        framing_by_family = framing_payload.get("families", {}) or {}
 
     grouped = defaultdict(list)
     if args.assignments_json:
@@ -50,6 +56,7 @@ def main() -> None:
             messages_hex,
             score_threshold=args.score_threshold,
             family_features=feature_by_family.get(family_id),
+            framing_summary=framing_by_family.get(family_id),
         )
         hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
         result[family_id] = {

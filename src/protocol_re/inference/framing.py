@@ -6,7 +6,6 @@ from math import log2
 from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from protocol_re.model.schema import FieldHypothesis
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
 
@@ -170,32 +169,6 @@ def infer_family_framing(
         "layout_hypotheses": [layout.to_dict() for layout in layouts],
         "position_evidence": _compact_position_evidence(position_stats),
     }
-
-
-def framing_fields_to_field_hypotheses(family_id: str, framing_family: Dict[str, Any]) -> List[FieldHypothesis]:
-    hypotheses: List[FieldHypothesis] = []
-    best = (framing_family.get("layout_hypotheses") or [{}])[0]
-    if not best or float(best.get("confidence", 0.0) or 0.0) <= 0.0:
-        return hypotheses
-    layout_confidence = float(best.get("confidence", 0.0) or 0.0)
-    for region in best.get("field_regions", []) or []:
-        start = int(region.get("start", 0) or 0)
-        end = int(region.get("end", start) or start)
-        if end <= start:
-            continue
-        hypotheses.append(
-            FieldHypothesis(
-                family_id=family_id,
-                start=start,
-                length=end - start,
-                field_type="framing_" + str(region.get("field_type", "unknown")),
-                confidence=round(min(layout_confidence, float(region.get("confidence", 0.0) or 0.0)), 4),
-                endian=(region.get("evidence") or {}).get("endian"),
-                evidence={"source": "framing", **(region.get("evidence") or {})},
-                attributes={"layout_header_end": best.get("header_end")},
-            )
-        )
-    return hypotheses
 
 
 def _fallback_result(family_id: str, messages: Sequence[bytes], reason: str) -> Dict[str, Any]:

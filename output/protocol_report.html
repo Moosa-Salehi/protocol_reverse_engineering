@@ -101,12 +101,12 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
     <section class="panel eval-panel">
       <h2>Final Ground Truth Evaluation</h2>
       <div class="metric-grid">
-        <article class="metric"><strong>0.321885</strong><span>Overall score</span><small>fail</small></article>
-        <article class="metric"><strong>10</strong><span>Matched message types</span><small>of 11</small></article>
-        <article class="metric"><strong>0.588235</strong><span>Message type accuracy</span></article>
-        <article class="metric"><strong>0.740741</strong><span>Message type F1</span></article>
-        <article class="metric"><strong>0.142157</strong><span>Field boundary accuracy</span></article>
-        <article class="metric"><strong>0.248928</strong><span>Field boundary F1</span></article>
+        <article class="metric"><strong>0.375575</strong><span>Overall score</span><small>fail</small></article>
+        <article class="metric"><strong>11</strong><span>Matched message types</span><small>of 11</small></article>
+        <article class="metric"><strong>0.6875</strong><span>Message type accuracy</span></article>
+        <article class="metric"><strong>0.814815</strong><span>Message type F1</span></article>
+        <article class="metric"><strong>0.241935</strong><span>Field boundary accuracy</span></article>
+        <article class="metric"><strong>0.389611</strong><span>Field boundary F1</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics accuracy</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics F1</span></article>
         <article class="metric"><strong>0.175</strong><span>Relation accuracy</span></article>
@@ -117,7 +117,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
   
     <section class="panel llm-panel">
       <h2>LLM Analysis</h2>
-      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>263979</strong><span>Prompt bytes</span><small>D:\tez\practical\protocol_re\data\13_llm_prompt.md</small></article><article class="metric"><strong>263979</strong><span>Prompt chars</span></article><article class="metric"><strong>65995</strong><span>Prompt est. tokens</span></article></div>
+      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>259364</strong><span>Prompt bytes</span><small>D:\tez\practical\protocol_re\data\13_llm_prompt.md</small></article><article class="metric"><strong>259364</strong><span>Prompt chars</span></article><article class="metric"><strong>64841</strong><span>Prompt est. tokens</span></article></div>
       <p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>
     </section>
     
@@ -151,7 +151,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.999</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.995</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -188,7 +188,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9945</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -225,7 +225,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9997</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9902</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -262,7 +262,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9997</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9991</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9978</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9949</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9942</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -291,7 +291,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:57.5%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:66.67%" title="2..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00</code>
@@ -299,11 +299,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9836</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9836</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..9</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>2..9</code></td><td>response_size_selector</td><td>0.9929</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9836</td></tr><tr><td><code>2..9</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>0.9929</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -328,7 +328,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:67.6%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:4.17%" title="0..0 variable"></span><span class="seg variable" style="width:4.17%" title="1..1 variable"></span><span class="seg constant" style="width:12.50%" title="2..4 constant"></span><span class="seg variable" style="width:4.17%" title="5..5 variable"></span><span class="seg constant" style="width:4.17%" title="6..6 constant"></span><span class="seg variable" style="width:4.17%" title="7..7 variable"></span><span class="seg variable" style="width:4.17%" title="8..8 variable"></span><span class="seg variable" style="width:4.17%" title="9..9 variable"></span><span class="seg variable" style="width:4.17%" title="10..10 variable"></span><span class="seg constant" style="width:54.17%" title="11..23 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:4.17%" title="0..0 variable"></span><span class="seg variable" style="width:4.17%" title="1..1 variable"></span><span class="seg constant" style="width:12.50%" title="2..4 constant"></span><span class="seg variable" style="width:4.17%" title="5..5 variable"></span><span class="seg constant" style="width:4.17%" title="6..6 constant"></span><span class="seg variable" style="width:4.17%" title="7..7 variable"></span><span class="seg variable" style="width:4.17%" title="8..8 variable"></span><span class="seg variable" style="width:4.17%" title="9..9 variable"></span><span class="seg variable" style="width:4.17%" title="10..10 variable"></span><span class="seg variable" style="width:4.17%" title="11..11 variable"></span><span class="seg constant" style="width:50.00%" title="12..23 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01 00 04 00 00 00 06 01 01 00 0e 00 01</code>
@@ -336,11 +336,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>0.9999</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>0.9999</td></tr><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9939</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..23</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..23</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9987</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>12..23</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>12..23</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -373,7 +373,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9995</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9962</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -410,7 +410,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9993</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9981</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9993</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9981</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9971</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -447,7 +447,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>framing_constant</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9982</td></tr><tr><td><code>2..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..11</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9982</td></tr><tr><td><code>2..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9891</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.936</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -476,7 +476,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:53.6%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:58.33%" title="2..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg constant" style="width:16.67%" title="10..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:33.33%" title="2..5 constant"></span><span class="seg variable" style="width:25.00%" title="6..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg constant" style="width:16.67%" title="10..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 01 00 ?? 00 01</code>
@@ -484,11 +484,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9843</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9193</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.7023</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9843</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9193</td></tr><tr><td><code>6..8</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..8</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9843</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -513,7 +513,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:60.4%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:58.33%" title="2..8 constant"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg constant" style="width:16.67%" title="10..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:33.33%" title="2..5 constant"></span><span class="seg constant" style="width:25.00%" title="6..8 constant"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg constant" style="width:16.67%" title="10..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 01 00 ?? 00 01</code>
@@ -521,11 +521,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>2..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9814</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8615</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9814</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8615</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..8</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>2..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -550,7 +550,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:83.33%" title="2..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:50.00%" title="6..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 03 00 23 00 01</code>
@@ -558,11 +558,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8353</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.8013</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.79</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8353</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8353</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -587,7 +587,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:53.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:66.67%" title="2..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 2d ?? 01</code>
@@ -595,11 +595,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8183</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.6563</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9972</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8183</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..9</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8183</td></tr><tr><td><code>2..9</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9972</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>2..5</code></td><td>transaction_or_correlation_id</td><td>0.9500000000000001</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -624,7 +624,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:83.33%" title="2..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:50.00%" title="6..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 ?? 00 ?? 00 01</code>
@@ -632,11 +632,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.8246</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8196</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.7992</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8196</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8196</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -661,7 +661,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:57.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:83.33%" title="2..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:50.00%" title="6..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 03 00 23 00 01</code>
@@ -669,11 +669,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.812</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.799</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>2..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -698,7 +698,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:9.09%" title="0..0 variable"></span><span class="seg variable" style="width:9.09%" title="1..1 variable"></span><span class="seg variable" style="width:72.73%" title="2..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:9.09%" title="0..0 variable"></span><span class="seg variable" style="width:9.09%" title="1..1 variable"></span><span class="seg constant" style="width:36.36%" title="2..5 constant"></span><span class="seg variable" style="width:36.36%" title="6..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 2d ??</code>
@@ -706,11 +706,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>framing_length</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9876</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9707</td></tr><tr><td><code>0..1</code></td><td>framing_transaction_or_counter</td><td>0.7267</td></tr><tr><td><code>0..3</code></td><td>framing_transaction_or_counter</td><td>0.7143</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>6..9</code></td><td>keyword</td><td>0.9944</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9876</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9707</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..10</code></td><td>keyword</td><td>0.9876</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9707</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>2..9</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>6..9</code></td><td>keyword</td><td>0.9944</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9876</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9707</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>

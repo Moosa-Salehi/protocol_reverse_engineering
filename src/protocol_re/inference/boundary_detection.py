@@ -86,6 +86,7 @@ def infer_segments(
     score_threshold: float = 1.5,
     min_segment_width: int = 1,
     family_features: Optional[Dict[str, Any]] = None,
+    framing_summary: Optional[Dict[str, Any]] = None,
 ) -> List[Segment]:
     if not messages_hex:
         return []
@@ -95,11 +96,16 @@ def infer_segments(
     boundary_scores = score_boundaries(messages_hex)
     boundary_score_by_offset = {int(item["boundary_after"]): item for item in boundary_scores}
 
+    framing_boundary, framing_evidence = framing_body_boundary_hint(framing_summary, max_len)
+
     raw_boundaries = [0]
     for item in boundary_scores:
         boundary = int(item["boundary_after"]) + 1
         if item["score"] >= score_threshold and boundary - raw_boundaries[-1] >= min_segment_width:
             raw_boundaries.append(boundary)
+    if framing_boundary is not None and framing_boundary not in raw_boundaries:
+        raw_boundaries.append(framing_boundary)
+    raw_boundaries = sorted(set(raw_boundaries))
     if raw_boundaries[-1] != max_len:
         raw_boundaries.append(max_len)
 
@@ -132,6 +138,10 @@ def infer_segments(
             evidence.update(feature_evidence)
             confidence = feature_adjusted_segment_confidence(kind, confidence, feature_evidence)
 
+        if framing_boundary is not None and (start == framing_boundary or end == framing_boundary):
+            evidence["framing_boundary_support"] = framing_evidence
+            confidence = max(confidence, float(framing_evidence.get("confidence", 0.0)) * 0.85)
+
         segments.append(
             Segment(
                 start=start,
@@ -143,6 +153,31 @@ def infer_segments(
         )
 
     return segments
+
+
+def framing_body_boundary_hint(
+    framing_summary: Optional[Dict[str, Any]],
+    max_len: int,
+    min_confidence: float = 0.65,
+) -> Tuple[Optional[int], Dict[str, Any]]:
+    if not framing_summary:
+        return None, {}
+    layouts = framing_summary.get("layout_hypotheses", []) or []
+    if not layouts:
+        return None, {}
+    best = layouts[0]
+    confidence = float(best.get("confidence", 0.0) or 0.0)
+    body_start = int(best.get("body_start", best.get("header_end", 0)) or 0)
+    if confidence < min_confidence or body_start <= 0 or body_start >= max_len:
+        return None, {}
+    return body_start, {
+        "source": "framing",
+        "confidence": round(confidence, 4),
+        "header_start": int(best.get("header_start", 0) or 0),
+        "header_end": int(best.get("header_end", body_start) or body_start),
+        "body_start": body_start,
+        "field_support_types": (best.get("evidence") or {}).get("field_support_types", []),
+    }
 
 
 def _average_window(values: Sequence[float], start: int, end: int) -> Optional[float]:

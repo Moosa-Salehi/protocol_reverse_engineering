@@ -27,7 +27,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback; it clusters a unique-message sample and propagates sampled labels to duplicate payloads across the corpus.
 - `scripts/05_infer_framing.py` infers protocol-agnostic framing/header hypotheses from discovered families using stable prefixes, length/correlation/counter/discriminator candidates, and body-tail variability.
 - `scripts/06_extract_features.py` writes reusable per-family feature artifacts.
-- `scripts/07_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json`, it uses family entropy/uniqueness/coverage vectors to refine segment confidence.
+- `scripts/07_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json` and `--framing-json`, it uses family feature vectors and high-confidence framing body-start hints to refine segment boundaries without adding framing fields as protocol fields.
 - `scripts/08_pair_requests_responses.py` emits candidate request/response pairs per session.
 - `scripts/09_infer_keywords.py` finds candidate keyword bytes and keyword-based subformats.
 - `scripts/10_infer_relations.py` summarizes family-to-family request/response relations, echo fields, and simple role hints.
@@ -121,7 +121,7 @@ python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --reassembly
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000
 python3 scripts/05_infer_framing.py data/01_messages.jsonl data/02_family_assignments.json data/04_framing.json
 python3 scripts/06_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
-python3 scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json
+python3 scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json
 python3 scripts/08_pair_requests_responses.py data/01_messages.jsonl data/06_pairs.json --assignments-json data/02_family_assignments.json
 python3 scripts/09_infer_keywords.py data/01_messages.jsonl data/07_keywords.json --assignments-json data/02_family_assignments.json
 python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assignments.json data/06_pairs.json data/08_relations.json
