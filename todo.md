@@ -1,11 +1,3 @@
-  the F1 and other metrics for final ground truth evaluation are showed as zero in md/html for relations, fix it.
-
-  ### TODO 4. remove the legacy json support and related files, the project works only with pcaps from now on.
-
-  the stage 3 loads all messages in ram, make it stream so it doesnt consume the entire ram.
-
-  add a flag to main that when given, skips stage 3 and uses the already exists 01_messages.jsonl instead of recreating it.
-
   ### TODO 5. Add protocol-agnostic framing hypothesis module
 
   - Files
