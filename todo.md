@@ -1,24 +1,5 @@
 Read README.md for context. No summarize/explanation needed. Await task.
 
-  ### TODO 6. Add generic length-field detection
-
-  - Files
-      - src/protocol_re/inference/framing.py
-      - src/protocol_re/inference/boundary_detection.py
-  - Tasks
-      - For widths 1, 2, 4, and possibly 8:
-          - Test big/little endian values.
-          - Test value equals total message length.
-          - Test value equals remaining length after the field.
-          - Test value equals payload/body length.
-          - Test value equals count-scaled payload length, e.g. value * 2, value + constant.
-      - Store role hypothesis length.
-      - Store relation type:
-          - total_length
-          - remaining_length
-          - body_length
-          - count_scaled_length
-
   ### TODO 7. Add transaction/correlation-field detection
 
   - Files
