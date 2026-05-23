@@ -94,30 +94,7 @@
 
 ### TODO 10. Neural clustering quality diagnostics
 
-- Goal
-    - Add diagnostics that identify over-split, under-split, noisy, or low-cohesion families using latent-space metrics and symbolic consistency.
-- Files
-    - `src/protocol_re/clustering/family_discovery.py`
-    - `src/protocol_re/evaluation/reporting.py`
-    - New: `src/protocol_re/clustering/diagnostics.py`
-    - `scripts/04_discover_families.py`
-    - `scripts/13_evaluate_pipeline.py`
-    - `src/protocol_re/export/markdown.py`
-    - `src/protocol_re/export/html.py`
-- Tasks
-    - Compute `latent_dispersion`, latent-space silhouette score, nearest-family distance, and density estimates when latent vectors exist.
-    - Combine neural metrics with symbolic checks: length-profile consistency, discriminator consistency, direction consistency, field-layout consistency, and noise ratio.
-    - Flag family merge candidates when latent distance is low and symbolic layouts are compatible.
-    - Flag split candidates when latent dispersion is high, discriminator values are mixed, or field layouts are inconsistent.
-    - Keep diagnostics advisory at first; do not automatically mutate family assignments until thresholds are validated.
-    - Surface family-level warnings in evaluation JSON, Markdown, HTML, and LLM evidence.
-- Output/schema changes
-    - Add diagnostics: `latent_dispersion`, `latent_silhouette`, `merge_candidates`, `split_suspicion`, `under_split_score`, `over_split_score`, and `diagnostic_warnings`.
-- Expected impact
-    - Accuracy insight: ↑↑ for iterative tuning.
-    - Runtime: neutral if computed from cached vectors.
-- Risk
-    - Low-medium. Automatic merge/split should remain disabled until proven reliable.
+- status: implemented.
 
 ### TODO 11. Learned pairing and relation scorer
 
