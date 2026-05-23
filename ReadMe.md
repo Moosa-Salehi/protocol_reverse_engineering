@@ -6,7 +6,7 @@ The pipeline is:
 
 1. Optionally collect PCAP/PCAPNG files from an arbitrary source tree into a normalized `pcaps/` directory and remove duplicate captures.
 2. Extract TCP payloads into `data/01_messages.jsonl`, either as packet payloads or as directional reassembled TCP streams. Each message records source file, session key, endpoints, direction when a service port is known, payload hex, length, timestamp/session order, and extraction metadata.
-3. Discover message families in `data/02_family_assignments.json` by clustering unique payload vectors with HDBSCAN or DBSCAN after optional PCA. When those dependencies are unavailable, a length/prefix heuristic is used; sampled labels are propagated to duplicate payloads and centroid-nearest unsampled unique payloads.
+3. Discover message families in `data/02_family_assignments.json` by clustering unique payload vectors with HDBSCAN or DBSCAN after optional PCA. Feature modes include raw bytes, symbolic structural features, optional 32D neural latents from `industrial_encoder_only.pth`, or hybrid structural+neural vectors. When dependencies or the neural model are unavailable, deterministic fallback paths are used; sampled labels are propagated to duplicate payloads and centroid-nearest unsampled unique payloads.
 4. Infer protocol-agnostic framing hypotheses in `data/04_framing.json`, including stable prefixes and likely header fields such as length, counter, discriminator, and body/tail variability hints.
 5. Extract reusable per-family evidence in `data/03_family_features.json`: length profiles, entropy and uniqueness by offset, byte histograms, n-gram/motif repetition, trailing padding/suffix clues, recurring fixed-position groups, and example message ids.
 6. Infer family templates, contiguous segments, and coarse field hypotheses in `data/05_families.json`. Boundary inference uses payload variability plus optional feature/framing evidence, including high-confidence body-start hints, without treating framing-only bytes as protocol fields.
@@ -26,7 +26,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/01_collect_pcaps.py` collects PCAP files from a source tree into one normalized directory.
 - `scripts/02_dedup_pcaps.py` finds duplicate PCAP files and can remove them.
 - `scripts/03_extract_messages.py` extracts TCP payload messages from PCAPs directly into the canonical JSONL corpus.
-- `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback; it clusters a unique-message sample and propagates sampled labels to duplicate payloads across the corpus.
+- `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback; it supports `raw_bytes`, `structural`, `neural`, and `hybrid` feature modes, caches neural latents by payload hash, clusters a unique-message sample, and propagates labels to duplicate payloads across the corpus.
 - `scripts/05_infer_framing.py` infers protocol-agnostic framing/header hypotheses from discovered families using stable prefixes, length/correlation/counter/discriminator candidates, and body-tail variability.
 - `scripts/06_extract_features.py` writes reusable per-family feature artifacts.
 - `scripts/07_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json` and `--framing-json`, it uses family feature vectors and high-confidence framing body-start hints to refine segment boundaries without adding framing fields as protocol fields.
@@ -48,6 +48,17 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, top n-gram frequency tables, wider repeated motifs, trailing-block/padding hints, length profiles, and recurring fixed-position groups.
 - `main.py` passes `data/03_family_features.json` into boundary inference and passes framing, feature, keyword, relation, and semantic artifacts into the protocol-model builder so final models retain the evidence from upstream stages.
 - Evaluation reports distinguish corpus assignment coverage from clustering sample ratio, so the configured 100K clustering sample is reported separately from propagated family assignment coverage.
+
+## Family discovery feature modes
+
+Stage 04 accepts `--feature-mode raw_bytes|structural|neural|hybrid`.
+
+- `raw_bytes` preserves the previous padded-byte vector behavior and downweights volatile byte offsets.
+- `structural` uses symbolic protocol features such as length buckets, stable prefix masks, discriminator-like bytes, direction, header/body split hints, and length-field evidence.
+- `neural` loads `industrial_encoder_only.pth` when available and encodes each unique payload as a 32D latent vector.
+- `hybrid` concatenates the neural 32D latent vector with the structural feature vector.
+
+Neural modes are optional. If PyTorch, the model file, or a compatible encoder object is unavailable, family discovery falls back to symbolic structural features or the existing heuristic path. Latents are cached by payload hash with `--latent-cache-path` to speed repeated runs. The assignment JSON records clustering metadata under `metadata`, including `feature_mode`, `neural_model`, `latent_dim`, `latent_cache`, and `symbolic_feature_count`.
 
 ## LLM evidence schema
 
@@ -103,6 +114,7 @@ Useful runner options:
 python main.py files --collect
 python main.py ../pcaps --service-port 502 --ground-truth-json ./truth-files/modbus.json
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
+python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_encoder_only.pth --family-latent-cache-path data/latent_cache.json
 ```
 
 ## Running step by step
@@ -120,7 +132,7 @@ Build from an existing normalized PCAP directory, matching the default `python m
 
 ```bash
 python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --reassembly-mode stream --max-messages 200000
-python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000
+python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000 --feature-mode raw_bytes
 python3 scripts/05_infer_framing.py data/01_messages.jsonl data/02_family_assignments.json data/04_framing.json
 python3 scripts/06_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
 python3 scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json
@@ -136,6 +148,12 @@ python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/1
 python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json truth-files/modbus.json data/15_evaluation_result.json
 python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_report.md --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json
 python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json
+```
+
+To use hybrid structural/neural clustering in the step-by-step flow:
+
+```bash
+python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000 --feature-mode hybrid --neural-model-path industrial_encoder_only.pth --latent-cache-path data/latent_cache.json --neural-batch-size 256
 ```
 
 If running with `--collect`, prepend these steps and use `pcaps` as the extraction input:

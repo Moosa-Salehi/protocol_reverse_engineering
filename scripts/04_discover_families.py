@@ -18,6 +18,10 @@ def main() -> None:
     parser.add_argument("--dbscan-eps", type=float, default=40.0)
     parser.add_argument("--dbscan-min-samples", type=int, default=5)
     parser.add_argument("--hdbscan-min-cluster-size", type=int, default=50)
+    parser.add_argument("--feature-mode", choices=["raw_bytes", "structural", "neural", "hybrid"], default="raw_bytes")
+    parser.add_argument("--neural-model-path", default="industrial_encoder_only.pth")
+    parser.add_argument("--latent-cache-path")
+    parser.add_argument("--neural-batch-size", type=int, default=256)
     args = parser.parse_args()
 
     records = load_corpus_jsonl(args.input_jsonl)
@@ -29,6 +33,10 @@ def main() -> None:
         dbscan_eps=args.dbscan_eps,
         dbscan_min_samples=args.dbscan_min_samples,
         hdbscan_min_cluster_size=args.hdbscan_min_cluster_size,
+        feature_mode=args.feature_mode,
+        neural_model_path=args.neural_model_path,
+        latent_cache_path=args.latent_cache_path,
+        neural_batch_size=args.neural_batch_size,
     )
     requested_sample = args.sample_size if args.sample_size is not None else len(records)
     assignment_strategy = (
@@ -46,6 +54,15 @@ def main() -> None:
         "requested_sample_size": requested_sample,
         "assignment_strategy": assignment_strategy,
         "feature_shape": list(result.feature_shape),
+        "metadata": {
+            "feature_mode": result.feature_mode,
+            "requested_feature_mode": result.requested_feature_mode,
+            "neural_model": result.neural_model,
+            "latent_dim": result.latent_dim,
+            "latent_cache": result.latent_cache,
+            "symbolic_feature_count": result.symbolic_feature_count,
+            "fallback_reason": result.fallback_reason,
+        },
     }
     with open(args.output_json, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)

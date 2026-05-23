@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Sequence
+from typing import Any, Callable, Dict, List, Sequence
 
+from protocol_re.clustering.hybrid_features import build_feature_matrix
+from protocol_re.clustering.structural_features import downweight_raw_byte_matrix
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
@@ -33,6 +35,13 @@ class ClusteringResult:
     labels: List[int]
     sample_size: int
     feature_shape: tuple[int, int]
+    feature_mode: str = "raw_bytes"
+    requested_feature_mode: str = "raw_bytes"
+    neural_model: str | None = None
+    latent_dim: int = 0
+    latent_cache: str | None = None
+    symbolic_feature_count: int = 0
+    fallback_reason: str | None = None
 
 
 
@@ -91,6 +100,8 @@ def heuristic_family_assignments(records: Sequence[MessageRecord]) -> Clustering
         labels=labels,
         sample_size=len(records),
         feature_shape=(len(records), 2),
+        feature_mode="heuristic",
+        requested_feature_mode="heuristic",
     )
 
 
@@ -101,6 +112,7 @@ def _propagate_assignments(
     reduced_sample_matrix: object | None = None,
     reducer: Any | None = None,
     vector_width: int | None = None,
+    unsampled_matrix_builder: Callable[[Sequence[MessageRecord]], object] | None = None,
 ) -> List[FamilyAssignment]:
     assignment_by_msg_id = {assignment.msg_id: assignment for assignment in sampled_assignments}
     family_by_payload = {}
@@ -152,7 +164,10 @@ def _propagate_assignments(
     centroid_matrix = np.vstack([centroids[family_id] for family_id in family_ids])
     for start in range(0, len(unique_unsampled), CENTROID_ASSIGNMENT_BATCH_SIZE):
         batch = unique_unsampled[start : start + CENTROID_ASSIGNMENT_BATCH_SIZE]
-        unsampled_matrix = vectorize_messages(batch, width=vector_width or int(sample_matrix.shape[1]))
+        if unsampled_matrix_builder is not None:
+            unsampled_matrix = unsampled_matrix_builder(batch)
+        else:
+            unsampled_matrix = vectorize_messages(batch, width=vector_width or int(sample_matrix.shape[1]))
         if reducer is not None:
             unsampled_matrix = reducer.transform(unsampled_matrix)
         for record, row in zip(batch, unsampled_matrix):
@@ -179,7 +194,13 @@ def discover_families(
     dbscan_eps: float = 40.0,
     dbscan_min_samples: int = 5,
     hdbscan_min_cluster_size: int = 50,
+    feature_mode: str = "raw_bytes",
+    neural_model_path: str | None = None,
+    latent_cache_path: str | None = None,
+    neural_batch_size: int = 256,
 ) -> ClusteringResult:
+    if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
+        raise ValueError(f"Unsupported feature mode: {feature_mode}")
     working_records = unique_messages(records)
     if sample_size is not None and len(working_records) > sample_size:
         working_records = working_records[:sample_size]
@@ -191,9 +212,62 @@ def discover_families(
             labels=result.labels,
             sample_size=len(working_records),
             feature_shape=result.feature_shape,
+            feature_mode="heuristic",
+            requested_feature_mode=feature_mode,
+            neural_model=neural_model_path,
+            latent_cache=latent_cache_path,
+            fallback_reason="numpy_or_clustering_dependency_unavailable",
         )
 
-    matrix = vectorize_messages(working_records)
+    feature_info = None
+    unsampled_matrix_builder = None
+    vector_width = None
+    if feature_mode == "raw_bytes":
+        matrix = vectorize_messages(working_records)
+        matrix = downweight_raw_byte_matrix(matrix, working_records, corpus_records=records)
+        vector_width = int(matrix.shape[1])
+
+        def build_raw_unsampled(batch: Sequence[MessageRecord]) -> object:
+            raw_matrix = vectorize_messages(batch, width=vector_width)
+            return downweight_raw_byte_matrix(raw_matrix, batch, corpus_records=records)
+
+        unsampled_matrix_builder = build_raw_unsampled
+        actual_feature_mode = "raw_bytes"
+        requested_feature_mode = feature_mode
+        neural_model = None
+        latent_dim = 0
+        latent_cache = None
+        symbolic_feature_count = 0
+        fallback_reason = None
+    else:
+        feature_info = build_feature_matrix(
+            working_records,
+            records,
+            feature_mode=feature_mode,
+            model_path=neural_model_path,
+            latent_cache_path=latent_cache_path,
+            neural_batch_size=neural_batch_size,
+        )
+        matrix = feature_info.matrix
+
+        def build_feature_unsampled(batch: Sequence[MessageRecord]) -> object:
+            return build_feature_matrix(
+                batch,
+                records,
+                feature_mode=feature_mode,
+                model_path=neural_model_path,
+                latent_cache_path=latent_cache_path,
+                neural_batch_size=neural_batch_size,
+            ).matrix
+
+        unsampled_matrix_builder = build_feature_unsampled
+        actual_feature_mode = feature_info.feature_mode
+        requested_feature_mode = feature_info.requested_feature_mode
+        neural_model = feature_info.neural_model
+        latent_dim = feature_info.latent_dim
+        latent_cache = feature_info.latent_cache
+        symbolic_feature_count = feature_info.symbolic_feature_count
+        fallback_reason = feature_info.fallback_reason
     reduced, reducer = maybe_reduce_dimensions(matrix, pca_components)
 
     if method == "dbscan":
@@ -219,9 +293,17 @@ def discover_families(
             working_records,
             reduced_sample_matrix=reduced,
             reducer=reducer,
-            vector_width=int(matrix.shape[1]),
+            vector_width=vector_width,
+            unsampled_matrix_builder=unsampled_matrix_builder,
         ),
         labels=labels.tolist() if hasattr(labels, "tolist") else list(labels),
         sample_size=len(working_records),
         feature_shape=tuple(reduced.shape),
+        feature_mode=actual_feature_mode,
+        requested_feature_mode=requested_feature_mode,
+        neural_model=neural_model,
+        latent_dim=latent_dim,
+        latent_cache=latent_cache,
+        symbolic_feature_count=symbolic_feature_count,
+        fallback_reason=fallback_reason,
     )

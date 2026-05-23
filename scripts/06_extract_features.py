@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 from protocol_re.corpus.message_corpus import iter_corpus_jsonl
 from protocol_re.features.extraction import stream_feature_artifacts
@@ -16,6 +15,10 @@ def main() -> None:
     parser.add_argument("output", help="output family features json")
     parser.add_argument("--assignments-json", help="Optional family assignment JSON from 04_discover_families.py")
     parser.add_argument("--include-unassigned", action="store_true", help="Include records without a family assignment")
+    parser.add_argument("--feature-mode", choices=["raw_bytes", "structural", "neural", "hybrid"], default=None, help="Clustering feature mode metadata passthrough")
+    parser.add_argument("--neural-model-path", default=None, help="Optional neural model path metadata passthrough")
+    parser.add_argument("--latent-cache-path", default=None, help="Optional latent cache path metadata passthrough")
+    parser.add_argument("--neural-batch-size", type=int, default=256, help="Optional neural batch size metadata passthrough")
     args = parser.parse_args()
 
     assignments = None

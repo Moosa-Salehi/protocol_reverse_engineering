@@ -126,6 +126,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(assignments_json),
                     "--sample-size",
                     str(args.family_sample_size),
+                    "--feature-mode",
+                    args.family_feature_mode,
+                    "--neural-model-path",
+                    _path(args.family_neural_model_path),
+                    "--neural-batch-size",
+                    str(args.family_neural_batch_size),
                 ],
             ),
             (
@@ -145,6 +151,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(family_features_json),
                     "--assignments-json",
                     _path(assignments_json),
+                    "--feature-mode",
+                    args.family_feature_mode,
+                    "--neural-model-path",
+                    _path(args.family_neural_model_path),
+                    "--neural-batch-size",
+                    str(args.family_neural_batch_size),
                 ],
             ),
             (
@@ -262,6 +274,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             if step_name == "10_infer_relations":
                 step_args.append("--allow-self-relations")
                 break
+    if args.family_latent_cache_path:
+        for step_name, step_args in pipeline:
+            if step_name in {"04_discover_families", "06_extract_features"}:
+                step_args.extend(["--latent-cache-path", _path(args.family_latent_cache_path)])
 
     llm_steps = [
         (
@@ -413,6 +429,30 @@ def parse_args() -> argparse.Namespace:
     )
 
     family_group.add_argument("--family-sample-size", type=int, default=100000, help="Max unique messages for clustering.")
+    family_group.add_argument(
+        "--family-feature-mode",
+        choices=["raw_bytes", "structural", "neural", "hybrid"],
+        default="raw_bytes",
+        help="Feature encoding for family discovery.",
+    )
+    family_group.add_argument(
+        "--family-neural-model-path",
+        type=Path,
+        default=Path("industrial_encoder_only.pth"),
+        help="Optional VAE encoder checkpoint for neural/hybrid family discovery.",
+    )
+    family_group.add_argument(
+        "--family-latent-cache-path",
+        type=Path,
+        default=Path("data/latent_cache.json"),
+        help="Cache path for payload-hash neural latent vectors.",
+    )
+    family_group.add_argument(
+        "--family-neural-batch-size",
+        type=int,
+        default=256,
+        help="Batch size for optional neural latent extraction.",
+    )
 
     relations_group.add_argument("--min-edge-pairs", type=int, default=2, help="Minimum pair count for relation edge pruning.")
     relations_group.add_argument("--min-edge-lift", type=float, default=1.0, help="Minimum lift for relation edge pruning.")
@@ -470,6 +510,9 @@ def validate_args(args: argparse.Namespace) -> None:
     args.data_dir = _resolve_under_project(args.data_dir)
     args.output_dir = _resolve_under_project(args.output_dir)
     args.llm_config = _resolve_under_project(args.llm_config)
+    args.family_neural_model_path = _resolve_under_project(args.family_neural_model_path)
+    if args.family_latent_cache_path:
+        args.family_latent_cache_path = _resolve_under_project(args.family_latent_cache_path)
     messages_jsonl = args.data_dir / "01_messages.jsonl"
     if args.max_messages is not None and args.max_messages <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --max-messages must be greater than 0.")
@@ -479,6 +522,8 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit(f"{RED}Error:{RESET} --min-edge-lift must be non-negative.")
     if args.max_response_families_per_request <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --max-response-families-per-request must be greater than 0.")
+    if args.family_neural_batch_size <= 0:
+        raise SystemExit(f"{RED}Error:{RESET} --family-neural-batch-size must be greater than 0.")
     if not args.llm_render_only and not args.llm_config.is_file():
         raise SystemExit(f"{RED}Error:{RESET} LLM config file does not exist: {args.llm_config}")
     if args.llm_template:
