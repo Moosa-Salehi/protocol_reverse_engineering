@@ -40,7 +40,10 @@ def main() -> None:
     with open(args.output_json, "w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2)
 
+    diagnostic_summary = ((report.get("diagnostics") or {}).get("summary") or {})
     print(f"[+] Wrote evaluation report to {args.output_json}")
+    if diagnostic_summary:
+        print(f"[+] Clustering diagnostic warning families: {diagnostic_summary.get('warning_family_count', 0)}")
 
 
 if __name__ == "__main__":

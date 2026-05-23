@@ -241,6 +241,30 @@ def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
     boundaries = evaluation.get("boundaries", {}) or {}
     pairs = evaluation.get("pairs", {}) or {}
     relations = evaluation.get("relations", {}) or {}
+    diagnostics = evaluation.get("diagnostics", {}) or {}
+    diagnostic_summary = diagnostics.get("summary", {}) or {}
+    warning_rows = "".join(
+        "<tr>"
+        f"<td><code>{_text(item.get('family_id'))}</code></td>"
+        f"<td>{_text(item.get('message_count', 0))}</td>"
+        f"<td>{_text(item.get('split_suspicion', 0.0))}</td>"
+        f"<td>{_text(item.get('over_split_score', 0.0))}</td>"
+        f"<td>{_text(', '.join(item.get('diagnostic_warnings', []) or []))}</td>"
+        "</tr>"
+        for item in (diagnostic_summary.get("top_warning_families", []) or [])[:10]
+    )
+    diagnostics_html = ""
+    if diagnostic_summary:
+        diagnostics_html = (
+            '<h3>Clustering Diagnostics</h3>'
+            '<div class="metric-grid">'
+            f'{_metric("Warning families", diagnostic_summary.get("warning_family_count", 0))}'
+            f'{_metric("Split candidates", diagnostic_summary.get("split_candidate_count", 0))}'
+            f'{_metric("Merge candidates", diagnostic_summary.get("merge_candidate_count", 0))}'
+            '</div>'
+            '<table><thead><tr><th>Family</th><th>Messages</th><th>Split</th><th>Over-split</th><th>Warnings</th></tr></thead>'
+            f'<tbody>{warning_rows or "<tr><td colspan=\"5\">No family warnings.</td></tr>"}</tbody></table>'
+        )
     return f"""
     <section class="panel eval-panel">
       <h2>Pipeline Evaluation</h2>
@@ -252,6 +276,7 @@ def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
         {_metric('Pair hypotheses', pairs.get('pair_count', 0), _pct(1 - float(pairs.get('direction_unknown_pair_ratio', 0) or 0)) + ' direction-known')}
         {_metric('Relation edges', relations.get('edge_count', 0), str(relations.get('edges_with_echo_fields', 0)) + ' with echoes')}
       </div>
+      {diagnostics_html}
     </section>
     """
 

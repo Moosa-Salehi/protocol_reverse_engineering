@@ -4,6 +4,7 @@ from collections import Counter
 from statistics import mean
 from typing import Any, Dict, Iterable, List, Sequence
 
+from protocol_re.clustering.diagnostics import augment_diagnostics_with_layouts, diagnostic_summary
 from protocol_re.model.schema import MessageRecord
 
 
@@ -55,6 +56,8 @@ def clustering_summary(total_messages: int, assignments_payload: Dict[str, Any])
     sample_size = assignments_payload.get("sample_size")
     corpus_assignment_coverage_ratio = round(assigned_count / total_messages, 6) if total_messages else 0.0
     clustering_sample_ratio = round(sample_size / total_messages, 6) if total_messages and sample_size is not None else None
+    diagnostics = assignments_payload.get("diagnostics", {}) or {}
+    diagnostics_summary = diagnostic_summary(diagnostics) if diagnostics else {}
     return {
         "assigned_message_count": assigned_count,
         "total_message_count": total_messages,
@@ -70,6 +73,7 @@ def clustering_summary(total_messages: int, assignments_payload: Dict[str, Any])
         "feature_shape": assignments_payload.get("feature_shape"),
         "cluster_size_distribution": _quantiles(cluster_sizes),
         "largest_families": _top_counter(family_counts, 20),
+        "diagnostics_summary": diagnostics_summary,
     }
 
 
@@ -266,6 +270,7 @@ def build_evaluation_report(
 ) -> Dict[str, Any]:
     total_messages = len(records)
     family_count = len(families_payload)
+    diagnostics = augment_diagnostics_with_layouts(assignments_payload.get("diagnostics", {}) or {}, families_payload)
     return {
         "artifact_type": "protocol_re_evaluation_report",
         "corpus": corpus_summary(records),
@@ -275,6 +280,7 @@ def build_evaluation_report(
         "relations": relation_summary(relations_payload),
         "semantics": semantics_summary(semantics_payload or {}, family_count),
         "framing": framing_summary(framing_payload or {}, family_count),
+        "diagnostics": diagnostics,
         "notes": [
             "Metrics are heuristic quality indicators for reverse-engineering workflow triage.",
             "Low assignment coverage usually means clustering sampled fewer messages than the full corpus.",

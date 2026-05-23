@@ -74,6 +74,8 @@ def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
     relations = evaluation.get("relations", {}) or {}
     semantics = evaluation.get("semantics", {}) or {}
     framing = evaluation.get("framing", {}) or {}
+    diagnostics = evaluation.get("diagnostics", {}) or {}
+    diagnostic_summary = diagnostics.get("summary", {}) or {}
 
     lines.append(f"- Messages: `{corpus.get('message_count', 0)}` across `{corpus.get('session_count', 0)}` sessions")
     lines.append(
@@ -114,7 +116,38 @@ def _evaluation_section(evaluation: Optional[Dict[str, object]]) -> List[str]:
             f"of `{framing.get('family_count', 0)}` families "
             f"ratio=`{_fmt_metric(framing.get('usable_family_ratio', 0.0))}`"
         )
+    if diagnostic_summary:
+        lines.append(
+            f"- Clustering diagnostics: warning_families=`{diagnostic_summary.get('warning_family_count', 0)}` "
+            f"split_candidates=`{diagnostic_summary.get('split_candidate_count', 0)}` "
+            f"merge_candidates=`{diagnostic_summary.get('merge_candidate_count', 0)}`"
+        )
     lines.append("")
+
+    top_warnings = diagnostic_summary.get("top_warning_families", []) or []
+    if top_warnings:
+        lines.append("### Clustering Diagnostic Warnings")
+        lines.append("")
+        for item in top_warnings[:10]:
+            warning_text = ", ".join(str(warning) for warning in (item.get("diagnostic_warnings", []) or [])[:4])
+            lines.append(
+                f"- `{item.get('family_id')}` | messages=`{item.get('message_count', 0)}` "
+                f"split=`{_fmt_metric(item.get('split_suspicion', 0.0))}` "
+                f"under_split=`{_fmt_metric(item.get('under_split_score', 0.0))}` "
+                f"over_split=`{_fmt_metric(item.get('over_split_score', 0.0))}` warnings={warning_text}"
+            )
+        lines.append("")
+
+    top_merges = diagnostic_summary.get("top_merge_candidates", []) or []
+    if top_merges:
+        lines.append("### Clustering Merge Candidates")
+        lines.append("")
+        for item in top_merges[:10]:
+            lines.append(
+                f"- `{item.get('family_id')}` -> `{item.get('candidate_family_id')}` "
+                f"distance=`{_fmt_metric(item.get('distance', 0.0))}` score=`{_fmt_metric(item.get('score', 0.0))}`"
+            )
+        lines.append("")
 
     top_edges = relations.get("top_edges", []) or []
     if top_edges:

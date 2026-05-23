@@ -4,6 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence
 
+from protocol_re.clustering.diagnostics import build_family_diagnostics
 from protocol_re.clustering.hybrid_features import build_feature_matrix
 from protocol_re.clustering.structural_features import downweight_raw_byte_matrix
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
@@ -42,6 +43,7 @@ class ClusteringResult:
     latent_cache: str | None = None
     symbolic_feature_count: int = 0
     fallback_reason: str | None = None
+    diagnostics: Dict[str, Any] | None = None
 
 
 
@@ -217,9 +219,11 @@ def discover_families(
             neural_model=neural_model_path,
             latent_cache=latent_cache_path,
             fallback_reason="numpy_or_clustering_dependency_unavailable",
+            diagnostics=build_family_diagnostics(records, result.assignments),
         )
 
     feature_info = None
+    latent_matrix = None
     unsampled_matrix_builder = None
     vector_width = None
     if feature_mode == "raw_bytes":
@@ -249,6 +253,8 @@ def discover_families(
             neural_batch_size=neural_batch_size,
         )
         matrix = feature_info.matrix
+        if feature_info.latent_dim > 0:
+            latent_matrix = np.asarray(matrix)[:, : feature_info.latent_dim]
 
         def build_feature_unsampled(batch: Sequence[MessageRecord]) -> object:
             return build_feature_matrix(
@@ -286,16 +292,24 @@ def discover_families(
         family_id = "noise" if label == -1 else f"family_{label}"
         sampled_assignments.append(FamilyAssignment(msg_id=record.msg_id, family_id=family_id, confidence=1.0))
 
+    assignments = _propagate_assignments(
+        records,
+        sampled_assignments,
+        working_records,
+        reduced_sample_matrix=reduced,
+        reducer=reducer,
+        vector_width=vector_width,
+        unsampled_matrix_builder=unsampled_matrix_builder,
+    )
+    diagnostics = build_family_diagnostics(
+        records,
+        assignments,
+        latent_matrix=latent_matrix,
+        latent_records=working_records if latent_matrix is not None else None,
+    )
+
     return ClusteringResult(
-        assignments=_propagate_assignments(
-            records,
-            sampled_assignments,
-            working_records,
-            reduced_sample_matrix=reduced,
-            reducer=reducer,
-            vector_width=vector_width,
-            unsampled_matrix_builder=unsampled_matrix_builder,
-        ),
+        assignments=assignments,
         labels=labels.tolist() if hasattr(labels, "tolist") else list(labels),
         sample_size=len(working_records),
         feature_shape=tuple(reduced.shape),
@@ -306,4 +320,5 @@ def discover_families(
         latent_cache=latent_cache,
         symbolic_feature_count=symbolic_feature_count,
         fallback_reason=fallback_reason,
+        diagnostics=diagnostics,
     )

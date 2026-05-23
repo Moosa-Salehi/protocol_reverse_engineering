@@ -54,6 +54,7 @@ def main() -> None:
         "requested_sample_size": requested_sample,
         "assignment_strategy": assignment_strategy,
         "feature_shape": list(result.feature_shape),
+        "diagnostics": result.diagnostics or {},
         "metadata": {
             "feature_mode": result.feature_mode,
             "requested_feature_mode": result.requested_feature_mode,

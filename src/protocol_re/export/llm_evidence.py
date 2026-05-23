@@ -152,6 +152,8 @@ def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     relations = evaluation.get("relations", {}) or {}
     semantics = evaluation.get("semantics", {}) or {}
     framing = evaluation.get("framing", {}) or {}
+    diagnostics = evaluation.get("diagnostics", {}) or {}
+    diagnostic_summary = diagnostics.get("summary", {}) or {}
 
     return {
         "corpus": {
@@ -199,6 +201,15 @@ def _compact_evaluation(evaluation: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             "best_confidence_distribution": framing.get("best_confidence_distribution", {}),
             "top_header_ends": (framing.get("top_header_ends", []) or [])[:10],
             "field_type_counts": framing.get("field_type_counts", {}),
+        },
+        "diagnostics": {
+            "latent_available": (diagnostics.get("global", {}) or {}).get("latent_available"),
+            "latent_silhouette": (diagnostics.get("global", {}) or {}).get("latent_silhouette"),
+            "warning_family_count": diagnostic_summary.get("warning_family_count"),
+            "split_candidate_count": diagnostic_summary.get("split_candidate_count"),
+            "merge_candidate_count": diagnostic_summary.get("merge_candidate_count"),
+            "top_warning_families": (diagnostic_summary.get("top_warning_families", []) or [])[:10],
+            "top_merge_candidates": (diagnostic_summary.get("top_merge_candidates", []) or [])[:10],
         },
     }
 
@@ -307,6 +318,7 @@ def _coverage(bundle: Dict[str, Any]) -> Dict[str, Any]:
         "families",
         "relations",
         "metadata.framing_global_summary",
+        "evaluation.diagnostics.top_warning_families",
         "global_hypotheses.length_candidates",
         "global_hypotheses.opcode_candidates",
         "global_hypotheses.constants",
