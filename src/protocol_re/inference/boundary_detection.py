@@ -271,7 +271,7 @@ def infer_field_hypotheses(
         width = segment.end - segment.start
         confidence = 0.5
         field_type = "blob"
-        evidence: Dict[str, Any] = {"unique_values": float(len(unique_values))}
+        evidence: Dict[str, float] = {"unique_values": float(len(unique_values))}
         attributes: Dict[str, str] = {}
         endian = None
 
@@ -279,39 +279,28 @@ def infer_field_hypotheses(
             field_type = "constant"
             confidence = 0.99
             attributes["value_hex"] = next(iter(unique_values)).hex()
-        elif width in (1, 2, 4, 8):
-            body_start_candidates = sorted(
-                {
-                    candidate
-                    for item in segments
-                    for candidate in (int(item.start), int(item.end))
-                    if candidate >= segment.end
-                }
-            )
-            length_detection = _detect_length_field(
-                messages,
-                segment.start,
-                segment.end,
-                body_start_candidates=body_start_candidates,
-            )
-            best_length_score = float(length_detection.get("match_score", 0.0))
-            best_endian = length_detection.get("endian")
-            evidence["length_match_score"] = round(best_length_score, 4)
-            if length_detection:
-                evidence.update(length_detection)
-
+        elif width in (1, 2, 4):
+            best_length_score = 0.0
+            best_endian = None
             for candidate_endian in ("big", "little"):
+                matches_total = 0
+                matches_suffix = 0
                 usable = 0
-                values = []
                 for message in messages:
                     if len(message) < segment.end:
                         continue
                     usable += 1
-                    values.append(safe_int_from_bytes(message[segment.start:segment.end], endian=candidate_endian))
+                    value = safe_int_from_bytes(message[segment.start:segment.end], endian=candidate_endian)
+                    if value == len(message):
+                        matches_total += 1
+                    if value == len(message) - segment.end:
+                        matches_suffix += 1
                 if usable:
-                    score = len(set(values)) / usable
-                    if best_endian is None or (candidate_endian == best_endian and score > 0):
+                    score = max(matches_total / usable, matches_suffix / usable)
+                    if score > best_length_score:
+                        best_length_score = score
                         best_endian = candidate_endian
+            evidence["length_match_score"] = round(best_length_score, 4)
 
             cardinality_ratio = len(unique_values) / max(total_messages, 1)
             evidence["cardinality_ratio"] = round(cardinality_ratio, 4)
@@ -319,8 +308,6 @@ def infer_field_hypotheses(
                 field_type = "length"
                 confidence = best_length_score
                 endian = best_endian
-                attributes["role_hypothesis"] = "length"
-                attributes["relation_type"] = str(length_detection.get("relation_type", ""))
             elif cardinality_ratio <= 0.2:
                 field_type = "keyword"
                 confidence = 1.0 - cardinality_ratio
@@ -346,132 +333,3 @@ def infer_field_hypotheses(
         )
 
     return hypotheses
-
-
-def _detect_length_field(
-    messages: Sequence[bytes],
-    start: int,
-    end: int,
-    body_start_candidates: Sequence[int],
-) -> Dict[str, Any]:
-    best: Dict[str, Any] = {}
-    for endian in ("big", "little"):
-        candidate = _score_length_field(
-            messages,
-            start,
-            end,
-            endian=endian,
-            body_start_candidates=body_start_candidates,
-        )
-        if float(candidate.get("match_score", 0.0)) > float(best.get("match_score", 0.0)):
-            best = candidate
-    return best
-
-
-def _score_length_field(
-    messages: Sequence[bytes],
-    start: int,
-    end: int,
-    endian: str,
-    body_start_candidates: Sequence[int],
-) -> Dict[str, Any]:
-    usable_messages = [message for message in messages if len(message) >= end]
-    usable = len(usable_messages)
-    if not usable:
-        return {}
-
-    values = [safe_int_from_bytes(message[start:end], endian=endian) for message in usable_messages]
-    total_lengths = [len(message) for message in usable_messages]
-    remaining_lengths = [len(message) - end for message in usable_messages]
-
-    candidates: List[Dict[str, Any]] = [
-        _score_direct_length_relation(values, total_lengths, "total_length"),
-        _score_direct_length_relation(values, remaining_lengths, "remaining_length"),
-    ]
-
-    max_body_start = min(total_lengths)
-    for body_start in body_start_candidates:
-        if body_start > max_body_start:
-            continue
-        body_lengths = [len(message) - body_start for message in usable_messages]
-        candidate = _score_direct_length_relation(values, body_lengths, "body_length")
-        candidate["body_start"] = body_start
-        candidates.append(candidate)
-
-    for relation_type, targets in (
-        ("total_length", total_lengths),
-        ("remaining_length", remaining_lengths),
-    ):
-        candidates.extend(_score_scaled_length_relations(values, targets, relation_type))
-    for body_start in body_start_candidates:
-        if body_start > max_body_start:
-            continue
-        body_lengths = [len(message) - body_start for message in usable_messages]
-        for candidate in _score_scaled_length_relations(values, body_lengths, "body_length"):
-            candidate["body_start"] = body_start
-            candidates.append(candidate)
-
-    best = max(candidates, key=lambda item: (float(item.get("match_score", 0.0)), _length_relation_priority(item)))
-    best["match_score"] = round(float(best.get("match_score", 0.0)), 4)
-    best["role_hypothesis"] = "length"
-    best["endian"] = endian
-    best["usable_messages"] = usable
-    return best
-
-
-def _score_direct_length_relation(values: Sequence[int], targets: Sequence[int], relation_type: str) -> Dict[str, Any]:
-    matches = sum(1 for value, target in zip(values, targets) if value == target)
-    return {
-        "match_score": matches / max(len(values), 1),
-        "relation_type": relation_type,
-        "transform": "identity",
-    }
-
-
-def _score_scaled_length_relations(
-    values: Sequence[int],
-    targets: Sequence[int],
-    target_relation_type: str,
-) -> List[Dict[str, Any]]:
-    candidates: List[Dict[str, Any]] = []
-    has_variation = len(set(values)) >= 2 and len(set(targets)) >= 2
-    for scale in (2, 4, 8):
-        matches = sum(1 for value, target in zip(values, targets) if value * scale == target) if has_variation else 0
-        candidates.append(
-            {
-                "match_score": matches / max(len(values), 1),
-                "relation_type": "count_scaled_length",
-                "target_relation_type": target_relation_type,
-                "transform": "multiply",
-                "scale": scale,
-            }
-        )
-
-    constants = [target - value for value, target in zip(values, targets)]
-    if constants and has_variation:
-        constant, count = Counter(constants).most_common(1)[0]
-        if abs(constant) <= 256:
-            candidates.append(
-                {
-                    "match_score": count / max(len(constants), 1),
-                    "relation_type": "count_scaled_length",
-                    "target_relation_type": target_relation_type,
-                    "transform": "add_constant",
-                    "constant": constant,
-                }
-            )
-    return candidates
-
-
-def _length_relation_priority(candidate: Dict[str, Any]) -> int:
-    relation_type = str(candidate.get("relation_type", ""))
-    transform = str(candidate.get("transform", ""))
-    if relation_type == "total_length" and transform == "identity":
-        return 4
-    if relation_type == "remaining_length" and transform == "identity":
-        return 3
-    if relation_type == "body_length" and transform == "identity":
-        return 2
-    if relation_type == "count_scaled_length":
-        return 1
-    return 0

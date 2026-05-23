@@ -263,130 +263,43 @@ def _constant_runs(stats: Sequence[Dict[str, Any]]) -> List[FramingFieldRegion]:
 
 def _length_fields(messages: Sequence[bytes], scan_limit: int) -> List[FramingFieldRegion]:
     regions: List[FramingFieldRegion] = []
-    for width in (1, 2, 4, 8):
+    for width in (1, 2, 4):
         for start in range(0, max(0, scan_limit - width + 1)):
             end = start + width
             for endian in ("big", "little"):
-                detection = _score_length_field(messages, start, end, endian, scan_limit)
-                if detection["match_score"] < 0.65:
+                usable = total_matches = suffix_matches = remaining_matches = 0
+                for message in messages:
+                    if len(message) < end:
+                        continue
+                    usable += 1
+                    value = safe_int_from_bytes(message[start:end], endian=endian)
+                    if value == len(message):
+                        total_matches += 1
+                    if value == len(message) - end:
+                        suffix_matches += 1
+                    if value == len(message) - start:
+                        remaining_matches += 1
+                if not usable:
                     continue
-                regions.append(
-                    FramingFieldRegion(
-                        start=start,
-                        end=end,
-                        field_type="length",
-                        confidence=round(float(detection["match_score"]), 4),
-                        evidence=detection,
+                match_count = max(total_matches, suffix_matches, remaining_matches)
+                score = match_count / usable
+                if score >= 0.65:
+                    if match_count == total_matches:
+                        relation = "total_length"
+                    elif match_count == suffix_matches:
+                        relation = "body_after_field"
+                    else:
+                        relation = "remaining_from_field"
+                    regions.append(
+                        FramingFieldRegion(
+                            start=start,
+                            end=end,
+                            field_type="length",
+                            confidence=round(score, 4),
+                            evidence={"match_score": round(score, 4), "relation": relation, "endian": endian, "usable_messages": usable},
+                        )
                     )
-                )
     return regions
-
-
-def _score_length_field(
-    messages: Sequence[bytes],
-    start: int,
-    end: int,
-    endian: str,
-    scan_limit: int,
-) -> Dict[str, Any]:
-    usable_messages = [message for message in messages if len(message) >= end]
-    usable = len(usable_messages)
-    if not usable:
-        return {"match_score": 0.0, "endian": endian, "usable_messages": 0}
-
-    values = [safe_int_from_bytes(message[start:end], endian=endian) for message in usable_messages]
-    total_lengths = [len(message) for message in usable_messages]
-    remaining_lengths = [len(message) - end for message in usable_messages]
-
-    candidates: List[Dict[str, Any]] = [
-        _score_direct_length_relation(values, total_lengths, "total_length"),
-        _score_direct_length_relation(values, remaining_lengths, "remaining_length"),
-    ]
-
-    # Body length is scanned independently from the length field so protocols with
-    # preambles or trailers can still expose the likely body-start offset.
-    body_start_limit = min(scan_limit, min(total_lengths))
-    for body_start in range(end, body_start_limit + 1):
-        body_lengths = [len(message) - body_start for message in usable_messages]
-        candidate = _score_direct_length_relation(values, body_lengths, "body_length")
-        candidate["body_start"] = body_start
-        candidates.append(candidate)
-
-    for relation_type, targets in (
-        ("total_length", total_lengths),
-        ("remaining_length", remaining_lengths),
-    ):
-        candidates.extend(_score_scaled_length_relations(values, targets, relation_type))
-    for body_start in range(end, body_start_limit + 1):
-        body_lengths = [len(message) - body_start for message in usable_messages]
-        for candidate in _score_scaled_length_relations(values, body_lengths, "body_length"):
-            candidate["body_start"] = body_start
-            candidates.append(candidate)
-
-    best = max(candidates, key=lambda item: (float(item.get("match_score", 0.0)), _length_relation_priority(item)))
-    best["match_score"] = round(float(best.get("match_score", 0.0)), 4)
-    best["role_hypothesis"] = "length"
-    best["endian"] = endian
-    best["usable_messages"] = usable
-    return best
-
-
-def _score_direct_length_relation(values: Sequence[int], targets: Sequence[int], relation_type: str) -> Dict[str, Any]:
-    matches = sum(1 for value, target in zip(values, targets) if value == target)
-    return {
-        "match_score": matches / max(len(values), 1),
-        "relation_type": relation_type,
-        "transform": "identity",
-    }
-
-
-def _score_scaled_length_relations(
-    values: Sequence[int],
-    targets: Sequence[int],
-    target_relation_type: str,
-) -> List[Dict[str, Any]]:
-    candidates: List[Dict[str, Any]] = []
-    has_variation = len(set(values)) >= 2 and len(set(targets)) >= 2
-    for scale in (2, 4, 8):
-        matches = sum(1 for value, target in zip(values, targets) if value * scale == target) if has_variation else 0
-        candidates.append(
-            {
-                "match_score": matches / max(len(values), 1),
-                "relation_type": "count_scaled_length",
-                "target_relation_type": target_relation_type,
-                "transform": "multiply",
-                "scale": scale,
-            }
-        )
-
-    constants = [target - value for value, target in zip(values, targets)]
-    if constants and has_variation:
-        constant, count = Counter(constants).most_common(1)[0]
-        if abs(constant) <= 256:
-            candidates.append(
-                {
-                    "match_score": count / max(len(constants), 1),
-                    "relation_type": "count_scaled_length",
-                    "target_relation_type": target_relation_type,
-                    "transform": "add_constant",
-                    "constant": constant,
-                }
-            )
-    return candidates
-
-
-def _length_relation_priority(candidate: Dict[str, Any]) -> int:
-    relation_type = str(candidate.get("relation_type", ""))
-    transform = str(candidate.get("transform", ""))
-    if relation_type == "total_length" and transform == "identity":
-        return 4
-    if relation_type == "remaining_length" and transform == "identity":
-        return 3
-    if relation_type == "body_length" and transform == "identity":
-        return 2
-    if relation_type == "count_scaled_length":
-        return 1
-    return 0
 
 
 def _counter_like_fields(messages: Sequence[bytes], scan_limit: int) -> List[FramingFieldRegion]:
