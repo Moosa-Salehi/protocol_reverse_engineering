@@ -284,10 +284,9 @@ def infer_field_hypotheses(
                 {
                     candidate
                     for item in segments
-                    for candidate in (int(item.start),)
-                    if candidate >= segment.end and candidate != segment.start
+                    for candidate in (int(item.start), int(item.end))
+                    if candidate >= segment.end
                 }
-                | {segment.end}
             )
             length_detection = _detect_length_field(
                 messages,
@@ -295,12 +294,11 @@ def infer_field_hypotheses(
                 segment.end,
                 body_start_candidates=body_start_candidates,
             )
-            best_length_score = float(length_detection.get("match_score", 0.0) or 0.0)
-            best_length_confidence = float(length_detection.get("confidence", 0.0) or 0.0)
+            best_length_score = float(length_detection.get("match_score", 0.0))
             best_endian = length_detection.get("endian")
-            evidence["candidate_length_match_score"] = round(best_length_score, 4)
+            evidence["length_match_score"] = round(best_length_score, 4)
             if length_detection:
-                evidence["candidate_length_relation_type"] = length_detection.get("relation_type")
+                evidence.update(length_detection)
 
             for candidate_endian in ("big", "little"):
                 usable = 0
@@ -317,12 +315,10 @@ def infer_field_hypotheses(
 
             cardinality_ratio = len(unique_values) / max(total_messages, 1)
             evidence["cardinality_ratio"] = round(cardinality_ratio, 4)
-            if _qualified_length_detection(length_detection):
+            if best_length_score >= 0.8:
                 field_type = "length"
-                confidence = best_length_confidence
+                confidence = best_length_score
                 endian = best_endian
-                evidence.update(length_detection)
-                evidence["length_match_score"] = round(best_length_score, 4)
                 attributes["role_hypothesis"] = "length"
                 attributes["relation_type"] = str(length_detection.get("relation_type", ""))
             elif cardinality_ratio <= 0.2:
@@ -367,7 +363,7 @@ def _detect_length_field(
             endian=endian,
             body_start_candidates=body_start_candidates,
         )
-        if float(candidate.get("confidence", 0.0)) > float(best.get("confidence", 0.0)):
+        if float(candidate.get("match_score", 0.0)) > float(best.get("match_score", 0.0)):
             best = candidate
     return best
 
@@ -388,14 +384,13 @@ def _score_length_field(
     total_lengths = [len(message) for message in usable_messages]
     remaining_lengths = [len(message) - end for message in usable_messages]
 
-    unique_body_starts = sorted(set(body_start_candidates))
     candidates: List[Dict[str, Any]] = [
         _score_direct_length_relation(values, total_lengths, "total_length"),
         _score_direct_length_relation(values, remaining_lengths, "remaining_length"),
     ]
 
     max_body_start = min(total_lengths)
-    for body_start in unique_body_starts:
+    for body_start in body_start_candidates:
         if body_start > max_body_start:
             continue
         body_lengths = [len(message) - body_start for message in usable_messages]
@@ -408,7 +403,7 @@ def _score_length_field(
         ("remaining_length", remaining_lengths),
     ):
         candidates.extend(_score_scaled_length_relations(values, targets, relation_type))
-    for body_start in unique_body_starts:
+    for body_start in body_start_candidates:
         if body_start > max_body_start:
             continue
         body_lengths = [len(message) - body_start for message in usable_messages]
@@ -416,9 +411,7 @@ def _score_length_field(
             candidate["body_start"] = body_start
             candidates.append(candidate)
 
-    for candidate in candidates:
-        candidate["confidence"] = round(_length_detection_confidence(candidate, values, total_lengths), 4)
-    best = max(candidates, key=lambda item: (float(item.get("confidence", 0.0)), float(item.get("match_score", 0.0)), _length_relation_priority(item)))
+    best = max(candidates, key=lambda item: (float(item.get("match_score", 0.0)), _length_relation_priority(item)))
     best["match_score"] = round(float(best.get("match_score", 0.0)), 4)
     best["role_hypothesis"] = "length"
     best["endian"] = endian
@@ -457,7 +450,7 @@ def _score_scaled_length_relations(
     constants = [target - value for value, target in zip(values, targets)]
     if constants and has_variation:
         constant, count = Counter(constants).most_common(1)[0]
-        if abs(constant) <= 32:
+        if abs(constant) <= 256:
             candidates.append(
                 {
                     "match_score": count / max(len(constants), 1),
@@ -482,23 +475,3 @@ def _length_relation_priority(candidate: Dict[str, Any]) -> int:
     if relation_type == "count_scaled_length":
         return 1
     return 0
-
-
-def _length_detection_confidence(candidate: Dict[str, Any], values: Sequence[int], targets: Sequence[int]) -> float:
-    score = float(candidate.get("match_score", 0.0) or 0.0)
-    has_variation = len(set(values)) >= 2 and len(set(targets)) >= 2
-    if candidate.get("relation_type") == "count_scaled_length" and not has_variation:
-        return 0.0
-    if len(set(values)) <= 1 and candidate.get("relation_type") != "remaining_length":
-        return 0.0
-    if not has_variation:
-        return min(score, 0.72)
-    return score
-
-
-def _qualified_length_detection(detection: Dict[str, Any]) -> bool:
-    if float(detection.get("confidence", 0.0) or 0.0) < 0.9:
-        return False
-    if int(detection.get("usable_messages", 0) or 0) < 3:
-        return False
-    return True
