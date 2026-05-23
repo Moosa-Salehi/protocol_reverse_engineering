@@ -1,21 +1,23 @@
 # Protocol RE project
 
-This project is a framework for reverse engineering industrial communication protocols from PCAP traffic. The system takes network captures and gradually infers the structure of an unknown protocol.
+This project is a protocol-agnostic reverse-engineering pipeline for TCP application traffic captured in PCAP/PCAPNG files. It turns packet captures into a canonical message corpus, groups similar payloads into message families, infers framing/header clues, field boundaries, keyword subformats, request/response relations, and semantic hints, then assembles those signals into a structured protocol model plus Markdown/HTML reports and optional LLM/evaluation artifacts. It is designed for industrial and other binary protocols where the analyst has traffic captures but not a formal specification.
 
 The pipeline is:
 
-1. Read PCAP files and reconstruct flows/messages.
-2. Extract raw payloads and represent them as byte/hex sequences.
-3. Compute basic features such as message length, byte statistics, entropy, repetition patterns, and motifs.
-4. Cluster similar messages to identify message types/families.
-5. Detect field boundaries inside messages using statistical differences between byte offsets.
-6. Produce structured summaries of each message type: length patterns, field positions, statistics, relations, and semantic hints.
-7. Prepare this structured information so it can later be analyzed by an LLM to infer field roles and generate a protocol specification.
-8. Export a human-readable protocol specification.
+1. Optionally collect PCAP/PCAPNG files from an arbitrary source tree into a normalized `pcaps/` directory and remove duplicate captures.
+2. Extract TCP payloads into `data/01_messages.jsonl`, either as packet payloads or as directional reassembled TCP streams. Each message records source file, session key, endpoints, direction when a service port is known, payload hex, length, timestamp/session order, and extraction metadata.
+3. Discover message families in `data/02_family_assignments.json` by clustering unique payload vectors with HDBSCAN or DBSCAN after optional PCA. When those dependencies are unavailable, a length/prefix heuristic is used; sampled labels are propagated to duplicate payloads and centroid-nearest unsampled unique payloads.
+4. Infer protocol-agnostic framing hypotheses in `data/04_framing.json`, including stable prefixes and likely header fields such as length, counter, discriminator, and body/tail variability hints.
+5. Extract reusable per-family evidence in `data/03_family_features.json`: length profiles, entropy and uniqueness by offset, byte histograms, n-gram/motif repetition, trailing padding/suffix clues, recurring fixed-position groups, and example message ids.
+6. Infer family templates, contiguous segments, and coarse field hypotheses in `data/05_families.json`. Boundary inference uses payload variability plus optional feature/framing evidence, including high-confidence body-start hints, without treating framing-only bytes as protocol fields.
+7. Pair likely requests and responses within sessions, detect keyword-like discriminator bytes/subformats, summarize family-to-family relations, echo fields, length relations, role hints, and semantic field labels.
+8. Assemble `data/10_protocol_model.json` from family, feature, framing, keyword, relation, and semantic evidence; write pipeline quality metrics to `data/11_evaluation.json`.
+9. Export compact LLM evidence, render or call an OpenAI-compatible analysis step, prepare optional ground-truth evaluation input, and compare against a ground-truth protocol JSON when provided.
+10. Render final human-readable Markdown and self-contained HTML reports, including evaluation, LLM analysis, and final ground-truth metrics when available.
 
 ## Architecture
 
-The pipeline is intentionally protocol-agnostic. PCAP extraction creates a canonical message corpus, family discovery groups similar payloads, feature extraction builds reusable byte-level evidence, boundary inference proposes templates and fields, request/response pairing and relation inference connect families, semantic labeling adds role and field hints, and exporters turn the resulting protocol model into Markdown, HTML, evaluation metrics, and LLM evidence bundles.
+The pipeline is intentionally protocol-agnostic and evidence-preserving. Extraction creates the canonical corpus consumed by every later stage. Family discovery assigns message ids to payload families so framing, feature extraction, boundary inference, keyword detection, pairing, relation inference, and semantic labeling all work from the same family map. The protocol-model builder then keeps the upstream evidence attached to each family instead of flattening it away, and exporters render the same model into Markdown, HTML, compact LLM evidence, and evaluation inputs.
 
 The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; generated/intermediate artifacts live in `data/`; final specs go to `output/`.
 
