@@ -95,18 +95,19 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         <article class="metric"><strong>154658</strong><span>Pair hypotheses</span><small>100.0% direction-known</small></article>
         <article class="metric"><strong>40</strong><span>Relation edges</span><small>40 with echoes</small></article>
       </div>
+      <h3>Clustering Diagnostics</h3><div class="metric-grid"><article class="metric"><strong>7</strong><span>Warning families</span></article><article class="metric"><strong>0</strong><span>Split candidates</span></article><article class="metric"><strong>0</strong><span>Merge candidates</span></article></div><table><thead><tr><th>Family</th><th>Messages</th><th>Split</th><th>Over-split</th><th>Warnings</th></tr></thead><tbody><tr><td><code>family_11</code></td><td>51186</td><td>0.3</td><td>0.0</td><td>mixed directions, mixed length profile</td></tr><tr><td><code>family_14</code></td><td>46616</td><td>0.3</td><td>0.0</td><td>mixed directions, mixed length profile</td></tr><tr><td><code>family_8</code></td><td>26044</td><td>0.3</td><td>0.0</td><td>mixed directions, mixed length profile</td></tr><tr><td><code>family_3</code></td><td>18375</td><td>0.3</td><td>0.0</td><td>mixed directions, mixed length profile</td></tr><tr><td><code>family_4</code></td><td>11678</td><td>0.3</td><td>0.0</td><td>mixed directions, mixed length profile</td></tr><tr><td><code>family_2</code></td><td>9898</td><td>0.3</td><td>0.0</td><td>mixed directions, mixed length profile</td></tr><tr><td><code>noise</code></td><td>5868</td><td>0.3</td><td>0.0</td><td>mixed directions, mixed length profile, noise family</td></tr></tbody></table>
     </section>
     
   
     <section class="panel eval-panel">
       <h2>Final Ground Truth Evaluation</h2>
       <div class="metric-grid">
-        <article class="metric"><strong>0.375575</strong><span>Overall score</span><small>fail</small></article>
+        <article class="metric"><strong>0.372943</strong><span>Overall score</span><small>fail</small></article>
         <article class="metric"><strong>11</strong><span>Matched message types</span><small>of 11</small></article>
         <article class="metric"><strong>0.6875</strong><span>Message type accuracy</span></article>
         <article class="metric"><strong>0.814815</strong><span>Message type F1</span></article>
-        <article class="metric"><strong>0.241935</strong><span>Field boundary accuracy</span></article>
-        <article class="metric"><strong>0.389611</strong><span>Field boundary F1</span></article>
+        <article class="metric"><strong>0.233871</strong><span>Field boundary accuracy</span></article>
+        <article class="metric"><strong>0.379085</strong><span>Field boundary F1</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics accuracy</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics F1</span></article>
         <article class="metric"><strong>0.175</strong><span>Relation accuracy</span></article>
@@ -117,17 +118,17 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
   
     <section class="panel llm-panel">
       <h2>LLM Analysis</h2>
-      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>259364</strong><span>Prompt bytes</span><small>D:\tez\practical\protocol_re\data\13_llm_prompt.md</small></article><article class="metric"><strong>259364</strong><span>Prompt chars</span></article><article class="metric"><strong>64841</strong><span>Prompt est. tokens</span></article></div>
+      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>262127</strong><span>Prompt bytes</span><small>D:\tez\practical\protocol_re\data\13_llm_prompt.md</small></article><article class="metric"><strong>262127</strong><span>Prompt chars</span></article><article class="metric"><strong>65532</strong><span>Prompt est. tokens</span></article></div>
       <p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>
     </section>
     
   <section class="panel">
     <h2>Metadata</h2>
-    <table class="meta-table"><tbody><tr><th>source_family_summary</th><td>D:\tez\practical\protocol_re\data\05_families.json</td></tr><tr><th>source_feature_summary</th><td>D:\tez\practical\protocol_re\data\03_family_features.json</td></tr><tr><th>source_keyword_summary</th><td>D:\tez\practical\protocol_re\data\07_keywords.json</td></tr><tr><th>source_framing_summary</th><td>D:\tez\practical\protocol_re\data\04_framing.json</td></tr><tr><th>source_relations_summary</th><td>D:\tez\practical\protocol_re\data\08_relations.json</td></tr><tr><th>source_semantics_summary</th><td>D:\tez\practical\protocol_re\data\09_semantics.json</td></tr><tr><th>framing_global_summary</th><td>{&#x27;common_header_ends&#x27;: [{&#x27;header_end&#x27;: 6, &#x27;family_count&#x27;: 14, &#x27;family_ratio&#x27;: 0.875}, {&#x27;header_end&#x27;: 12, &#x27;family_count&#x27;: 1, &#x27;family_ratio&#x27;: 0.0625}, {&#x27;header_end&#x27;: 7, &#x27;family_count&#x27;: 1, &#x27;family_ratio&#x27;: 0.0625}], &#x27;field_type_counts&#x27;: {&#x27;length&#x27;: 49, &#x27;transaction_or_counter&#x27;: 18, &#x27;discriminator&#x27;: 11, &#x27;constant&#x27;: 10}, &#x27;mean_best_confidence&#x27;: 1.0, &#x27;families_with_header_candidate&#x27;: 16}</td></tr><tr><th>notes</th><td>Initial auto-generated protocol model assembled from family summaries.</td></tr></tbody></table>
+    <table class="meta-table"><tbody><tr><th>source_family_summary</th><td>D:\tez\practical\protocol_re\data\05_families.json</td></tr><tr><th>source_feature_summary</th><td>D:\tez\practical\protocol_re\data\03_family_features.json</td></tr><tr><th>source_keyword_summary</th><td>D:\tez\practical\protocol_re\data\07_keywords.json</td></tr><tr><th>source_framing_summary</th><td>D:\tez\practical\protocol_re\data\04_framing.json</td></tr><tr><th>source_relations_summary</th><td>D:\tez\practical\protocol_re\data\08_relations.json</td></tr><tr><th>source_semantics_summary</th><td>D:\tez\practical\protocol_re\data\09_semantics.json</td></tr><tr><th>framing_global_summary</th><td>{&#x27;common_header_ends&#x27;: [{&#x27;header_end&#x27;: 6, &#x27;family_count&#x27;: 14, &#x27;family_ratio&#x27;: 0.875}, {&#x27;header_end&#x27;: 7, &#x27;family_count&#x27;: 1, &#x27;family_ratio&#x27;: 0.0625}, {&#x27;header_end&#x27;: 12, &#x27;family_count&#x27;: 1, &#x27;family_ratio&#x27;: 0.0625}], &#x27;field_type_counts&#x27;: {&#x27;length&#x27;: 49, &#x27;transaction_or_counter&#x27;: 18, &#x27;discriminator&#x27;: 11, &#x27;constant&#x27;: 10}, &#x27;mean_best_confidence&#x27;: 1.0, &#x27;families_with_header_candidate&#x27;: 16}</td></tr><tr><th>notes</th><td>Initial auto-generated protocol model assembled from family summaries.</td></tr></tbody></table>
   </section>
   <section class="panel">
     <h2>Strongest Relations</h2>
-    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody><tr><td><code>family_8</code></td><td><code>family_8</code></td><td>18535</td><td>6.4423</td><td>0.369194</td><td>2.144957</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_8</code></td><td><code>family_14</code></td><td>17047</td><td>4.9454</td><td>0.339555</td><td>1.159678</td><td>1.0</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_11</code></td><td><code>family_11</code></td><td>9256</td><td>6.4422</td><td>0.749717</td><td>4.473194</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_14</code></td><td><code>family_11</code></td><td>8077</td><td>4.9465</td><td>0.235935</td><td>1.40771</td><td>0.998638</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_5</code></td><td><code>family_5</code></td><td>4768</td><td>6.3616</td><td>0.421984</td><td>8.951206</td><td>0.943372</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>20</td></tr><tr><td><code>family_2</code></td><td><code>family_2</code></td><td>3984</td><td>6.4465</td><td>0.684654</td><td>10.86468</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_7</code></td><td><code>family_8</code></td><td>3632</td><td>6.4385</td><td>0.940933</td><td>5.46667</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_14</code></td><td><code>family_0</code></td><td>3248</td><td>6.46</td><td>0.094876</td><td>1.173778</td><td>0.995074</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_13</code></td><td><code>family_14</code></td><td>2594</td><td>6.4364</td><td>0.847712</td><td>2.895184</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_0</code></td><td><code>family_14</code></td><td>2392</td><td>4.9692</td><td>0.324339</td><td>1.107712</td><td>1.0</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>4</td></tr><tr><td><code>family_14</code></td><td><code>noise</code></td><td>2287</td><td>5.9793</td><td>0.066805</td><td>2.199684</td><td>0.679056</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>17</td><td>0</td></tr><tr><td><code>family_5</code></td><td><code>family_2</code></td><td>2250</td><td>4.9482</td><td>0.199133</td><td>3.16001</td><td>0.999556</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_5</code></td><td><code>family_4</code></td><td>1858</td><td>4.9485</td><td>0.164439</td><td>1.812031</td><td>0.999462</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_8</code></td><td><code>family_13</code></td><td>1777</td><td>4.9454</td><td>0.035396</td><td>2.354499</td><td>1.0</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_11</code></td><td><code>family_0</code></td><td>1726</td><td>6.4671</td><td>0.139802</td><td>1.729586</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_10</code></td><td><code>family_11</code></td><td>1664</td><td>6.4365</td><td>0.936937</td><td>5.590247</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>noise</code></td><td><code>family_11</code></td><td>1623</td><td>5.8674</td><td>0.343783</td><td>2.051187</td><td>0.605669</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>17</td><td>0</td></tr><tr><td><code>noise</code></td><td><code>family_14</code></td><td>1559</td><td>5.9374</td><td>0.330227</td><td>1.12782</td><td>0.654266</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>17</td><td>0</td></tr><tr><td><code>family_4</code></td><td><code>family_0</code></td><td>1559</td><td>6.4645</td><td>0.104821</td><td>1.296806</td><td>0.998076</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_8</code></td><td><code>noise</code></td><td>1536</td><td>5.5873</td><td>0.030595</td><td>1.007406</td><td>0.578125</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>17</td><td>0</td></tr></tbody></table>
+    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody><tr><td><code>family_11</code></td><td><code>family_11</code></td><td>18602</td><td>6.4424</td><td>0.369351</td><td>2.144261</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_11</code></td><td><code>family_14</code></td><td>16981</td><td>4.9454</td><td>0.337165</td><td>1.154092</td><td>1.0</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_8</code></td><td><code>family_8</code></td><td>9281</td><td>6.4422</td><td>0.750162</td><td>4.471365</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_14</code></td><td><code>family_8</code></td><td>8080</td><td>4.9469</td><td>0.23634</td><td>1.408714</td><td>0.998391</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_4</code></td><td><code>family_4</code></td><td>4736</td><td>6.3632</td><td>0.421652</td><td>8.912385</td><td>0.944468</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>20</td></tr><tr><td><code>family_2</code></td><td><code>family_2</code></td><td>3957</td><td>6.4463</td><td>0.682359</td><td>10.887474</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_10</code></td><td><code>family_11</code></td><td>3551</td><td>6.4376</td><td>0.962591</td><td>5.588306</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_14</code></td><td><code>family_0</code></td><td>3228</td><td>6.4599</td><td>0.094419</td><td>1.167933</td><td>0.995043</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_13</code></td><td><code>family_14</code></td><td>2634</td><td>6.4363</td><td>0.831965</td><td>2.847752</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_0</code></td><td><code>family_14</code></td><td>2382</td><td>4.9692</td><td>0.322895</td><td>1.105247</td><td>1.0</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>4</td></tr><tr><td><code>family_14</code></td><td><code>noise</code></td><td>2244</td><td>5.9693</td><td>0.065637</td><td>2.168617</td><td>0.67246</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>17</td><td>0</td></tr><tr><td><code>family_4</code></td><td><code>family_2</code></td><td>2240</td><td>4.9482</td><td>0.19943</td><td>3.182036</td><td>0.999554</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_11</code></td><td><code>family_13</code></td><td>1859</td><td>4.9455</td><td>0.036911</td><td>2.348262</td><td>1.0</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_4</code></td><td><code>family_3</code></td><td>1854</td><td>4.9485</td><td>0.165064</td><td>1.814778</td><td>0.999461</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>20</td><td>0</td></tr><tr><td><code>family_8</code></td><td><code>family_0</code></td><td>1728</td><td>6.4671</td><td>0.13967</td><td>1.727675</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_7</code></td><td><code>family_8</code></td><td>1632</td><td>6.4365</td><td>0.934173</td><td>5.56817</td><td>1.0</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>noise</code></td><td><code>family_8</code></td><td>1592</td><td>5.8849</td><td>0.337431</td><td>2.01127</td><td>0.617462</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>17</td><td>0</td></tr><tr><td><code>noise</code></td><td><code>family_14</code></td><td>1588</td><td>5.949</td><td>0.336583</td><td>1.152099</td><td>0.661839</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>17</td><td>0</td></tr><tr><td><code>family_3</code></td><td><code>family_0</code></td><td>1564</td><td>6.4645</td><td>0.104826</td><td>1.29666</td><td>0.998082</td><td>1.0</td><td>client_to_server-&gt;server_to_client</td><td>20</td><td>14</td></tr><tr><td><code>family_11</code></td><td><code>noise</code></td><td>1557</td><td>5.5767</td><td>0.030915</td><td>1.021415</td><td>0.5851</td><td>1.0</td><td>server_to_client-&gt;client_to_server</td><td>17</td><td>0</td></tr></tbody></table>
   </section>
   <main>
     <section class="panel"><h2>Families</h2><p class="muted">Showing 16 largest families.</p></section>
@@ -135,12 +136,12 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
     <section class="family-card">
       <header>
         <div>
-          <h3>family_8</h3>
-          <p><span class="pill request">request</span> 51024 messages</p>
+          <h3>family_11</h3>
+          <p><span class="pill request">request</span> 51186 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:62.0%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:62.1%"></span></div>
         </div>
       </header>
       <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
@@ -159,13 +160,13 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.3074</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x102459</span><span class="pill motif">000000 x51178</span><span class="pill motif">0101 x35363</span><span class="pill motif">0100 x28140</span><span class="pill motif">0006 x24654</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x24410</span><span class="pill wide">00000006 x24410</span><span class="pill wide">00000601 x24410</span><span class="pill wide">0000000401 x20076</span><span class="pill wide">00000004 x20076</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.30799</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x102784</span><span class="pill motif">000000 x51340</span><span class="pill motif">0101 x35294</span><span class="pill motif">0100 x28072</span><span class="pill motif">0006 x24798</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x24552</span><span class="pill wide">00000006 x24552</span><span class="pill wide">00000601 x24552</span><span class="pill wide">0000000401 x20083</span><span class="pill wide">00000004 x20083</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_3</span><span class="pill related">family_6</span><span class="pill related">family_7</span><span class="pill related">family_8</span><span class="pill related">noise</span></div>
+      <div class="pill-row"><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_5</span><span class="pill related">family_9</span><span class="pill related">noise</span></div>
     </section>
     
 
@@ -173,7 +174,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <header>
         <div>
           <h3>family_14</h3>
-          <p><span class="pill response">response</span> 46674 messages</p>
+          <p><span class="pill response">response</span> 46616 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -188,33 +189,33 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9945</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9945</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9998</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.318024</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x93669</span><span class="pill motif">000000 x46817</span><span class="pill motif">0101 x32515</span><span class="pill motif">0100 x25931</span><span class="pill motif">0006 x23060</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x22737</span><span class="pill wide">00000006 x22737</span><span class="pill wide">00000601 x22737</span><span class="pill wide">0000000401 x18173</span><span class="pill wide">00000004 x18173</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.317694</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x93553</span><span class="pill motif">000000 x46759</span><span class="pill motif">0101 x32529</span><span class="pill motif">0100 x25945</span><span class="pill motif">0006 x23019</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x22697</span><span class="pill wide">00000006 x22697</span><span class="pill wide">00000601 x22697</span><span class="pill wide">0000000401 x18172</span><span class="pill wide">00000004 x18172</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_12</span><span class="pill related">family_13</span><span class="pill related">family_3</span><span class="pill related">family_8</span><span class="pill related">family_9</span></div>
+      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_11</span><span class="pill related">family_12</span><span class="pill related">family_13</span><span class="pill related">family_5</span><span class="pill related">family_6</span><span class="pill related">family_7</span><span class="pill related">family_8</span></div>
     </section>
     
 
     <section class="family-card">
       <header>
         <div>
-          <h3>family_11</h3>
-          <p><span class="pill response">response</span> 26018 messages</p>
+          <h3>family_8</h3>
+          <p><span class="pill response">response</span> 26044 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:66.0%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:65.9%"></span></div>
         </div>
       </header>
       <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
@@ -233,25 +234,25 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.320438</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x52211</span><span class="pill motif">000000 x26091</span><span class="pill motif">0101 x18027</span><span class="pill motif">0100 x14342</span><span class="pill motif">0006 x12475</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x12358</span><span class="pill wide">00000006 x12358</span><span class="pill wide">00000601 x12358</span><span class="pill wide">0000000401 x10333</span><span class="pill wide">00000004 x10333</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.32039</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x52263</span><span class="pill motif">000000 x26117</span><span class="pill motif">0101 x18050</span><span class="pill motif">0100 x14365</span><span class="pill motif">0006 x12501</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x12384</span><span class="pill wide">00000006 x12384</span><span class="pill wide">00000601 x12384</span><span class="pill wide">0000000401 x10331</span><span class="pill wide">00000004 x10331</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_1</span><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_9</span><span class="pill related">noise</span></div>
+      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_1</span><span class="pill related">family_14</span><span class="pill related">family_6</span><span class="pill related">family_7</span><span class="pill related">family_8</span><span class="pill related">noise</span></div>
     </section>
     
 
     <section class="family-card">
       <header>
         <div>
-          <h3>family_4</h3>
-          <p><span class="pill response">response</span> 18323 messages</p>
+          <h3>family_3</h3>
+          <p><span class="pill response">response</span> 18375 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:62.1%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:62.3%"></span></div>
         </div>
       </header>
       <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
@@ -270,13 +271,13 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.361278</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x36685</span><span class="pill motif">000000 x18323</span><span class="pill motif">0006 x10895</span><span class="pill motif">000006 x10686</span><span class="pill motif">000601 x10686</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x10686</span><span class="pill wide">00000006 x10686</span><span class="pill wide">00000601 x10686</span><span class="pill wide">0000000401 x4714</span><span class="pill wide">00000004 x4714</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.361599</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x36789</span><span class="pill motif">000000 x18375</span><span class="pill motif">0006 x10926</span><span class="pill motif">000006 x10716</span><span class="pill motif">000601 x10716</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x10716</span><span class="pill wide">00000006 x10716</span><span class="pill wide">00000601 x10716</span><span class="pill wide">0000000401 x4722</span><span class="pill wide">00000004 x4722</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>16.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_10</span><span class="pill related">family_5</span></div>
+      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_4</span><span class="pill related">family_7</span></div>
     </section>
     
 
@@ -284,11 +285,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <header>
         <div>
           <h3>family_0</h3>
-          <p><span class="pill response">response</span> 15624 messages</p>
+          <p><span class="pill response">response</span> 15626 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:57.5%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:57.4%"></span></div>
         </div>
       </header>
       <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
@@ -299,33 +300,33 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9836</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9986</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9951</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9836</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9952</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>0.9929</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9986</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9951</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>0.9929</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9917</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.86454</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x34383</span><span class="pill motif">000000 x15688</span><span class="pill motif">000005 x12329</span><span class="pill motif">000501 x12329</span><span class="pill motif">010402 x12329</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x12329</span><span class="pill wide">000005010402 x12329</span><span class="pill wide">0000000501 x12329</span><span class="pill wide">0000050104 x12329</span><span class="pill wide">0005010402 x12329</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.864584</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x34387</span><span class="pill motif">000000 x15690</span><span class="pill motif">000005 x12331</span><span class="pill motif">000501 x12331</span><span class="pill motif">010402 x12331</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x12331</span><span class="pill wide">000005010402 x12331</span><span class="pill wide">0000000501 x12331</span><span class="pill wide">0000050104 x12331</span><span class="pill wide">0005010402 x12331</span></div>
       <h4>Format Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>75.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>76.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_2</span><span class="pill related">family_4</span><span class="pill related">family_5</span></div>
+      <div class="pill-row"><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_2</span><span class="pill related">family_3</span><span class="pill related">family_4</span><span class="pill related">family_8</span></div>
     </section>
     
 
     <section class="family-card">
       <header>
         <div>
-          <h3>family_5</h3>
-          <p><span class="pill request">request</span> 11696 messages</p>
+          <h3>family_4</h3>
+          <p><span class="pill request">request</span> 11678 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:67.6%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:67.7%"></span></div>
         </div>
       </header>
       <div class="segment-map"><span class="seg variable" style="width:4.17%" title="0..0 variable"></span><span class="seg variable" style="width:4.17%" title="1..1 variable"></span><span class="seg constant" style="width:12.50%" title="2..4 constant"></span><span class="seg variable" style="width:4.17%" title="5..5 variable"></span><span class="seg constant" style="width:4.17%" title="6..6 constant"></span><span class="seg variable" style="width:4.17%" title="7..7 variable"></span><span class="seg variable" style="width:4.17%" title="8..8 variable"></span><span class="seg variable" style="width:4.17%" title="9..9 variable"></span><span class="seg variable" style="width:4.17%" title="10..10 variable"></span><span class="seg variable" style="width:4.17%" title="11..11 variable"></span><span class="seg constant" style="width:50.00%" title="12..23 constant"></span></div>
@@ -336,7 +337,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9939</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9935</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -344,13 +345,13 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.342643</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>3</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x23595</span><span class="pill motif">000000 x11864</span><span class="pill motif">0006 x6977</span><span class="pill motif">0601 x6755</span><span class="pill motif">000006 x6751</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x6751</span><span class="pill wide">00000006 x6751</span><span class="pill wide">00000601 x6751</span><span class="pill wide">0000000401 x2960</span><span class="pill wide">00000004 x2960</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.346428</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>3</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x23558</span><span class="pill motif">000000 x11846</span><span class="pill motif">0006 x6910</span><span class="pill motif">0601 x6690</span><span class="pill motif">000006 x6686</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x6686</span><span class="pill wide">00000006 x6686</span><span class="pill wide">00000601 x6686</span><span class="pill wide">0000000401 x2950</span><span class="pill wide">00000004 x2950</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>15.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>12</strong><span>Header end</span><small>body starts 12</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span><span class="pill field">6..6 constant</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_2</span><span class="pill related">family_4</span><span class="pill related">family_5</span></div>
+      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_2</span><span class="pill related">family_3</span><span class="pill related">family_4</span></div>
     </section>
     
 
@@ -358,7 +359,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <header>
         <div>
           <h3>family_2</h3>
-          <p><span class="pill response">response</span> 9951 messages</p>
+          <p><span class="pill response">response</span> 9898 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -381,13 +382,13 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.352236</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x20069</span><span class="pill motif">000000 x10070</span><span class="pill motif">0101 x5869</span><span class="pill motif">000006 x5823</span><span class="pill motif">000601 x5823</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x5823</span><span class="pill wide">00000006 x5823</span><span class="pill wide">00000601 x5823</span><span class="pill wide">0000000401 x2649</span><span class="pill wide">00000004 x2649</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.350698</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x19963</span><span class="pill motif">000000 x10017</span><span class="pill motif">0101 x5857</span><span class="pill motif">000006 x5803</span><span class="pill motif">000601 x5803</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x5803</span><span class="pill wide">00000006 x5803</span><span class="pill wide">00000601 x5803</span><span class="pill wide">0000000401 x2647</span><span class="pill wide">00000004 x2647</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>11.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_2</span><span class="pill related">family_5</span></div>
+      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_2</span><span class="pill related">family_4</span></div>
     </section>
     
 
@@ -395,11 +396,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <header>
         <div>
           <h3>noise</h3>
-          <p><span class="pill request">request</span> 5882 messages</p>
+          <p><span class="pill request">request</span> 5868 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:53.6%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:53.8%"></span></div>
         </div>
       </header>
       <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
@@ -410,7 +411,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9993</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9981</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9971</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9993</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9981</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9971</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9918</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -418,87 +419,13 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.607803</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x11821</span><span class="pill motif">000000 x5939</span><span class="pill motif">0006 x3326</span><span class="pill motif">000006 x3324</span><span class="pill motif">000601 x3324</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3324</span><span class="pill wide">00000006 x3324</span><span class="pill wide">00000601 x3324</span><span class="pill wide">0000000501 x2558</span><span class="pill wide">00000005 x2558</span></div>
+      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.603329</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x11793</span><span class="pill motif">000000 x5925</span><span class="pill motif">0006 x3354</span><span class="pill motif">000006 x3352</span><span class="pill motif">000601 x3352</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3352</span><span class="pill wide">00000006 x3352</span><span class="pill wide">00000601 x3352</span><span class="pill wide">0000000501 x2516</span><span class="pill wide">00000005 x2516</span></div>
       <h4>Format Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>50.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>48.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_8</span><span class="pill related">family_9</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_7</h3>
-          <p><span class="pill request">request</span> 3860 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg constant" style="width:8.33%" title="8..8 constant"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:16.67%" title="10..11 variable"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 06 01 ?? 00 ?? 00 01</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..11</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9987</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9982</td></tr><tr><td><code>2..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9891</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.936</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>keyword</td><td>0.9995</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9987</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.201685</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x7720</span><span class="pill motif">000000 x3860</span><span class="pill motif">000006 x3860</span><span class="pill motif">000601 x3860</span><span class="pill motif">0006 x3860</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3860</span><span class="pill wide">00000006 x3860</span><span class="pill wide">00000601 x3860</span><span class="pill wide">000000060101 x3085</span><span class="pill wide">000006010100 x3085</span></div>
-      <h4>Format Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>7.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">2..6 constant</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_3</span><span class="pill related">family_8</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_13</h3>
-          <p><span class="pill request">request</span> 3060 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:53.6%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:33.33%" title="2..5 constant"></span><span class="seg variable" style="width:25.00%" title="6..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg constant" style="width:16.67%" title="10..11 constant"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 06 01 01 00 ?? 00 01</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9843</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9193</td></tr><tr><td><code>6..8</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.231006</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x6120</span><span class="pill motif">000000 x3060</span><span class="pill motif">000006 x3060</span><span class="pill motif">000601 x3060</span><span class="pill motif">0001 x3060</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3060</span><span class="pill wide">00000006 x3060</span><span class="pill wide">00000601 x3060</span><span class="pill wide">000000060101 x2922</span><span class="pill wide">000006010100 x2922</span></div>
-      <h4>Format Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>5.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_14</span><span class="pill related">family_3</span><span class="pill related">family_8</span></div>
+      <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_6</span><span class="pill related">family_7</span><span class="pill related">family_8</span></div>
     </section>
     
 
@@ -506,7 +433,81 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <header>
         <div>
           <h3>family_10</h3>
-          <p><span class="pill request">request</span> 1776 messages</p>
+          <p><span class="pill request">request</span> 3689 messages</p>
+        </div>
+        <div class="confidence">
+          <span>Semantic confidence</span>
+          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
+        </div>
+      </header>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg variable" style="width:16.67%" title="7..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg constant" style="width:16.67%" title="10..11 constant"></span></div>
+      <details open>
+        <summary>Template</summary>
+        <code class="template">?? ?? 00 00 00 06 01 ?? 00 ?? 00 01</code>
+      </details>
+      <div class="card-grid">
+        <div>
+          <h4>Field Hypotheses</h4>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..8</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>2..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9886</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.933</td></tr></tbody></table>
+        </div>
+        <div>
+          <h4>Semantic Labels</h4>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>7..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>7..8</code></td><td>keyword</td><td>0.9989</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr></tbody></table>
+        </div>
+      </div>
+      <h4>Feature Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.185903</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x7378</span><span class="pill motif">000000 x3689</span><span class="pill motif">000006 x3689</span><span class="pill motif">000601 x3689</span><span class="pill motif">0001 x3689</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3689</span><span class="pill wide">00000006 x3689</span><span class="pill wide">00000601 x3689</span><span class="pill wide">000000060101 x3196</span><span class="pill wide">000006010100 x3196</span></div>
+      <h4>Format Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>6.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">2..6 constant</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
+      <h4>Related Families</h4>
+      <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_5</span></div>
+    </section>
+    
+
+    <section class="family-card">
+      <header>
+        <div>
+          <h3>family_13</h3>
+          <p><span class="pill request">request</span> 3166 messages</p>
+        </div>
+        <div class="confidence">
+          <span>Semantic confidence</span>
+          <div class="bar" aria-label="semantic confidence"><span style="width:52.9%"></span></div>
+        </div>
+      </header>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:33.33%" title="2..5 constant"></span><span class="seg variable" style="width:25.00%" title="6..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg constant" style="width:16.67%" title="10..11 constant"></span></div>
+      <details open>
+        <summary>Template</summary>
+        <code class="template">?? ?? 00 00 00 06 01 ?? 00 ?? 00 01</code>
+      </details>
+      <div class="card-grid">
+        <div>
+          <h4>Field Hypotheses</h4>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9845</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.922</td></tr><tr><td><code>6..8</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+        </div>
+        <div>
+          <h4>Semantic Labels</h4>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..8</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>10..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9984</td></tr></tbody></table>
+        </div>
+      </div>
+      <h4>Feature Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.237786</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x6332</span><span class="pill motif">000000 x3166</span><span class="pill motif">000006 x3166</span><span class="pill motif">000601 x3166</span><span class="pill motif">0001 x3166</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x3166</span><span class="pill wide">00000006 x3166</span><span class="pill wide">00000601 x3166</span><span class="pill wide">000000060101 x2930</span><span class="pill wide">000006010100 x2930</span></div>
+      <h4>Format Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>5.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
+      <h4>Related Families</h4>
+      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_5</span></div>
+    </section>
+    
+
+    <section class="family-card">
+      <header>
+        <div>
+          <h3>family_7</h3>
+          <p><span class="pill request">request</span> 1747 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -521,7 +522,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9814</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8615</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..8</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9805</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8592</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
@@ -529,13 +530,13 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.21975</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x3552</span><span class="pill motif">000000 x1776</span><span class="pill motif">000006 x1776</span><span class="pill motif">000601 x1776</span><span class="pill motif">010100 x1776</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000060101 x1776</span><span class="pill wide">000006010100 x1776</span><span class="pill wide">0000000601 x1776</span><span class="pill wide">0000060101 x1776</span><span class="pill wide">0006010100 x1776</span></div>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.21963</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x3494</span><span class="pill motif">000000 x1747</span><span class="pill motif">000006 x1747</span><span class="pill motif">000601 x1747</span><span class="pill motif">010100 x1747</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000060101 x1747</span><span class="pill wide">000006010100 x1747</span><span class="pill wide">0000000601 x1747</span><span class="pill wide">0000060101 x1747</span><span class="pill wide">0006010100 x1747</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>4.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">family_4</span><span class="pill related">noise</span></div>
+      <div class="pill-row"><span class="pill related">family_14</span><span class="pill related">family_3</span><span class="pill related">family_8</span><span class="pill related">noise</span></div>
     </section>
     
 
@@ -543,7 +544,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <header>
         <div>
           <h3>family_12</h3>
-          <p><span class="pill request">request</span> 1506 messages</p>
+          <p><span class="pill request">request</span> 1479 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -558,15 +559,15 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8353</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9675</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8323</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9688</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9675</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.472511</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x3012</span><span class="pill motif">000000 x1506</span><span class="pill motif">2300 x1451</span><span class="pill motif">000006 x1445</span><span class="pill motif">000601 x1445</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x1445</span><span class="pill wide">00000006 x1445</span><span class="pill wide">00000601 x1445</span><span class="pill wide">0000000601030023 x1443</span><span class="pill wide">0000060103002300 x1443</span></div>
+      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.473296</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2958</span><span class="pill motif">000000 x1479</span><span class="pill motif">2300 x1423</span><span class="pill motif">000006 x1417</span><span class="pill motif">000601 x1417</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x1417</span><span class="pill wide">00000006 x1417</span><span class="pill wide">00000601 x1417</span><span class="pill wide">0000000601030023 x1415</span><span class="pill wide">0000060103002300 x1415</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>4.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
@@ -579,45 +580,45 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
     <section class="family-card">
       <header>
         <div>
-          <h3>family_3</h3>
-          <p><span class="pill response">response</span> 1409 messages</p>
+          <h3>family_5</h3>
+          <p><span class="pill response">response</span> 1422 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
           <div class="bar" aria-label="semantic confidence"><span style="width:53.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 2d ?? 01</code>
+        <code class="template">?? ?? 00 00 00 05 01 04 02 2d ?? ??</code>
       </details>
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9972</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8183</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9986</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9909</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9712</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.82</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9972</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>2..5</code></td><td>transaction_or_correlation_id</td><td>0.9500000000000001</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9986</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9909</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9712</td></tr><tr><td><code>2..5</code></td><td>transaction_or_correlation_id</td><td>0.9500000000000001</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.987634</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2819</span><span class="pill motif">000000 x1410</span><span class="pill motif">000005 x1398</span><span class="pill motif">000501 x1398</span><span class="pill motif">010402 x1398</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x1398</span><span class="pill wide">000005010402 x1398</span><span class="pill wide">0000000501 x1398</span><span class="pill wide">0000050104 x1398</span><span class="pill wide">0005010402 x1398</span></div>
+      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.98261</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2845</span><span class="pill motif">000000 x1423</span><span class="pill motif">000005 x1398</span><span class="pill motif">000501 x1398</span><span class="pill motif">010402 x1398</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x1398</span><span class="pill wide">000005010402 x1398</span><span class="pill wide">0000000501 x1398</span><span class="pill wide">0000050104 x1398</span><span class="pill wide">0005010402 x1398</span></div>
       <h4>Format Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>12.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>13.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_13</span><span class="pill related">family_14</span><span class="pill related">family_7</span><span class="pill related">family_8</span></div>
+      <div class="pill-row"><span class="pill related">family_10</span><span class="pill related">family_11</span><span class="pill related">family_13</span><span class="pill related">family_14</span></div>
     </section>
     
 
     <section class="family-card">
       <header>
         <div>
-          <h3>family_6</h3>
-          <p><span class="pill request">request</span> 1375 messages</p>
+          <h3>family_9</h3>
+          <p><span class="pill request">request</span> 1374 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -632,33 +633,33 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8196</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8195</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9724</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9723</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.418458</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2750</span><span class="pill motif">000000 x1375</span><span class="pill motif">000006 x1367</span><span class="pill motif">000601 x1367</span><span class="pill motif">0001 x1367</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x1367</span><span class="pill wide">00000006 x1367</span><span class="pill wide">00000601 x1367</span><span class="pill wide">0000000601030023 x1277</span><span class="pill wide">0000060103002300 x1277</span></div>
+      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.423096</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2748</span><span class="pill motif">000000 x1374</span><span class="pill motif">000006 x1365</span><span class="pill motif">000601 x1365</span><span class="pill motif">0001 x1365</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x1365</span><span class="pill wide">00000006 x1365</span><span class="pill wide">00000601 x1365</span><span class="pill wide">0000000601030023 x1303</span><span class="pill wide">0000060103002300 x1303</span></div>
       <h4>Format Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>3.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_8</span></div>
+      <div class="pill-row"><span class="pill related">family_11</span></div>
     </section>
     
 
     <section class="family-card">
       <header>
         <div>
-          <h3>family_9</h3>
-          <p><span class="pill request">request</span> 936 messages</p>
+          <h3>family_6</h3>
+          <p><span class="pill request">request</span> 946 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:57.0%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:57.1%"></span></div>
         </div>
       </header>
       <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:50.00%" title="6..11 variable"></span></div>
@@ -669,21 +670,21 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9662</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>6..11</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9658</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>1..1</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9662</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.468117</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x1872</span><span class="pill motif">000000 x936</span><span class="pill motif">2300 x907</span><span class="pill motif">000006 x905</span><span class="pill motif">000601 x905</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x905</span><span class="pill wide">00000006 x905</span><span class="pill wide">00000601 x905</span><span class="pill wide">0000000601030023 x903</span><span class="pill wide">0000060103002300 x903</span></div>
+      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.466964</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x1892</span><span class="pill motif">000000 x946</span><span class="pill motif">000006 x915</span><span class="pill motif">000601 x915</span><span class="pill motif">0006 x915</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x915</span><span class="pill wide">00000006 x915</span><span class="pill wide">00000601 x915</span><span class="pill wide">0000000601030023 x909</span><span class="pill wide">0000060103002300 x909</span></div>
       <h4>Format Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>3.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
+      <div class="feature-grid"><article class="metric"><strong>7.0</strong><span>Keyword offset</span><small>candidate discriminator</small></article><article class="metric"><strong>4.0</strong><span>Keyword cardinality</span><small>observed values</small></article></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_11</span><span class="pill related">family_14</span><span class="pill related">noise</span></div>
+      <div class="pill-row"><span class="pill related">family_14</span><span class="pill related">family_8</span><span class="pill related">noise</span></div>
     </section>
     
 
@@ -720,7 +721,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>6</strong><span>Header end</span><small>body starts 6</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_11</span></div>
+      <div class="pill-row"><span class="pill related">family_8</span></div>
     </section>
     
   </main>
