@@ -262,24 +262,29 @@ def _constant_runs(stats: Sequence[Dict[str, Any]]) -> List[FramingFieldRegion]:
 
 
 def _length_fields(messages: Sequence[bytes], scan_limit: int) -> List[FramingFieldRegion]:
-    regions: List[FramingFieldRegion] = []
+    raw_regions: List[FramingFieldRegion] = []
     for width in (1, 2, 4, 8):
         for start in range(0, max(0, scan_limit - width + 1)):
             end = start + width
             for endian in ("big", "little"):
                 detection = _score_length_field(messages, start, end, endian, scan_limit)
-                if detection["match_score"] < 0.65:
+                if not _qualified_length_detection(detection):
                     continue
-                regions.append(
+                raw_regions.append(
                     FramingFieldRegion(
                         start=start,
                         end=end,
                         field_type="length",
-                        confidence=round(float(detection["match_score"]), 4),
+                        confidence=round(float(detection.get("confidence", 0.0)), 4),
                         evidence=detection,
                     )
                 )
-    return regions
+    selected = _suppress_overlapping_length_fields(raw_regions)
+    for region in selected:
+        region.evidence["raw_length_candidate_count"] = len(raw_regions)
+        region.evidence["selected_length_candidate_count"] = len(selected)
+        region.evidence["suppressed_length_candidate_count"] = max(0, len(raw_regions) - len(selected))
+    return selected
 
 
 def _score_length_field(
@@ -303,13 +308,11 @@ def _score_length_field(
         _score_direct_length_relation(values, remaining_lengths, "remaining_length"),
     ]
 
-    # Body length is scanned independently from the length field so protocols with
-    # preambles or trailers can still expose the likely body-start offset.
     body_start_limit = min(scan_limit, min(total_lengths))
-    for body_start in range(end, body_start_limit + 1):
-        body_lengths = [len(message) - body_start for message in usable_messages]
+    if end <= body_start_limit:
+        body_lengths = [len(message) - end for message in usable_messages]
         candidate = _score_direct_length_relation(values, body_lengths, "body_length")
-        candidate["body_start"] = body_start
+        candidate["body_start"] = end
         candidates.append(candidate)
 
     for relation_type, targets in (
@@ -317,13 +320,15 @@ def _score_length_field(
         ("remaining_length", remaining_lengths),
     ):
         candidates.extend(_score_scaled_length_relations(values, targets, relation_type))
-    for body_start in range(end, body_start_limit + 1):
-        body_lengths = [len(message) - body_start for message in usable_messages]
+    if end <= body_start_limit:
+        body_lengths = [len(message) - end for message in usable_messages]
         for candidate in _score_scaled_length_relations(values, body_lengths, "body_length"):
-            candidate["body_start"] = body_start
+            candidate["body_start"] = end
             candidates.append(candidate)
 
-    best = max(candidates, key=lambda item: (float(item.get("match_score", 0.0)), _length_relation_priority(item)))
+    for candidate in candidates:
+        candidate["confidence"] = round(_length_detection_confidence(candidate, values, total_lengths), 4)
+    best = max(candidates, key=lambda item: (float(item.get("confidence", 0.0)), float(item.get("match_score", 0.0)), _length_relation_priority(item)))
     best["match_score"] = round(float(best.get("match_score", 0.0)), 4)
     best["role_hypothesis"] = "length"
     best["endian"] = endian
@@ -362,7 +367,7 @@ def _score_scaled_length_relations(
     constants = [target - value for value, target in zip(values, targets)]
     if constants and has_variation:
         constant, count = Counter(constants).most_common(1)[0]
-        if abs(constant) <= 256:
+        if abs(constant) <= 32:
             candidates.append(
                 {
                     "match_score": count / max(len(constants), 1),
@@ -387,6 +392,45 @@ def _length_relation_priority(candidate: Dict[str, Any]) -> int:
     if relation_type == "count_scaled_length":
         return 1
     return 0
+
+
+def _length_detection_confidence(candidate: Dict[str, Any], values: Sequence[int], targets: Sequence[int]) -> float:
+    score = float(candidate.get("match_score", 0.0) or 0.0)
+    has_variation = len(set(values)) >= 2 and len(set(targets)) >= 2
+    if candidate.get("relation_type") == "count_scaled_length" and not has_variation:
+        return 0.0
+    if len(set(values)) <= 1 and candidate.get("relation_type") != "remaining_length":
+        return 0.0
+    if not has_variation:
+        return min(score, 0.72)
+    return score
+
+
+def _qualified_length_detection(detection: Dict[str, Any]) -> bool:
+    if float(detection.get("confidence", 0.0) or 0.0) < 0.9:
+        return False
+    if int(detection.get("usable_messages", 0) or 0) < 3:
+        return False
+    return True
+
+
+def _length_candidate_sort_key(region: FramingFieldRegion) -> Tuple[float, int, int, int]:
+    width = region.end - region.start
+    width_preference = {2: 4, 4: 3, 1: 2, 8: 1}.get(width, 0)
+    return (region.confidence, _length_relation_priority(region.evidence), width_preference, -region.start)
+
+
+def _suppress_overlapping_length_fields(regions: Sequence[FramingFieldRegion]) -> List[FramingFieldRegion]:
+    selected: List[FramingFieldRegion] = []
+    for region in sorted(regions, key=_length_candidate_sort_key, reverse=True):
+        if any(_ranges_overlap(region, existing) for existing in selected):
+            continue
+        selected.append(region)
+    return sorted(selected, key=lambda item: (item.start, item.end, -item.confidence))
+
+
+def _ranges_overlap(left: FramingFieldRegion, right: FramingFieldRegion) -> bool:
+    return left.start < right.end and right.start < left.end
 
 
 def _counter_like_fields(messages: Sequence[bytes], scan_limit: int) -> List[FramingFieldRegion]:
@@ -475,9 +519,13 @@ def _header_boundary_scores(
         fields_in_header = [field for field in fields if field.end <= boundary]
         if boundary == 0:
             score = 0.15
+            selected_fields: List[FramingFieldRegion] = []
+            overlapping_count = 0
         else:
             evidence = tail_scores.get(boundary, {})
-            field_score = sum(_field_weight(field) * field.confidence for field in fields_in_header)
+            selected_fields = _select_non_overlapping_field_support(fields_in_header)
+            overlapping_count = max(0, len(fields_in_header) - len(selected_fields))
+            field_score = _capped_field_support_score(selected_fields)
             coverage_score = mean([float(item.get("coverage", 0.0) or 0.0) for item in stats[:boundary]]) if stats[:boundary] else 0.0
             stability_score = float(evidence.get("head_stability", 0.0))
             tail_jump = min(float(evidence.get("tail_variability_jump", 0.0)) / 3.0, 1.0)
@@ -486,10 +534,36 @@ def _header_boundary_scores(
         scores[boundary] = {
             "score": round(score, 4),
             "field_support_count": len(fields_in_header),
+            "selected_field_support_count": len(selected_fields),
+            "overlapping_field_candidate_count": overlapping_count,
             "field_support_types": sorted({field.field_type for field in fields_in_header}),
+            "selected_field_support_types": sorted({field.field_type for field in selected_fields}),
             **{key: round(value, 4) for key, value in tail_scores.get(boundary, {}).items()},
         }
     return scores
+
+
+def _select_non_overlapping_field_support(fields: Sequence[FramingFieldRegion]) -> List[FramingFieldRegion]:
+    selected: List[FramingFieldRegion] = []
+    for field in sorted(fields, key=lambda item: (_field_weight(item) * item.confidence, item.end - item.start), reverse=True):
+        if any(_ranges_overlap(field, existing) for existing in selected):
+            continue
+        selected.append(field)
+    return selected
+
+
+def _capped_field_support_score(fields: Sequence[FramingFieldRegion]) -> float:
+    caps = {
+        "length": 1.25,
+        "transaction_or_counter": 0.95,
+        "discriminator": 0.75,
+        "constant": 0.55,
+    }
+    by_type: Dict[str, float] = defaultdict(float)
+    for field in fields:
+        field_type = field.field_type
+        by_type[field_type] += _field_weight(field) * field.confidence
+    return sum(min(score, caps.get(field_type, 0.4)) for field_type, score in by_type.items())
 
 
 def _field_weight(field: FramingFieldRegion) -> float:
