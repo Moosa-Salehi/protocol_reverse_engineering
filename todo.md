@@ -90,33 +90,7 @@
 
 ### TODO 9. Hybrid structural and neural feature encoding
 
-- Goal
-    - Improve family discovery by clustering messages using both symbolic protocol features and 32D neural latent vectors.
-- Files
-    - `src/protocol_re/clustering/family_discovery.py`
-    - New: `src/protocol_re/clustering/structural_features.py`
-    - New: `src/protocol_re/clustering/hybrid_features.py`
-    - New: `src/protocol_re/neural/encoder.py`
-    - New: `src/protocol_re/neural/model_loader.py`
-    - New: `src/protocol_re/neural/artifacts.py`
-    - `scripts/04_discover_families.py`
-    - `scripts/06_extract_features.py`
-    - `requirements.txt`
-- Tasks
-    - Add clustering feature modes: `raw_bytes`, `structural`, `neural`, and `hybrid`.
-    - Load `industrial_encoder_only.pth` as an optional VAE encoder and generate 32D latent vectors per unique payload.
-    - Cache latent vectors by payload hash to avoid recomputing duplicate messages.
-    - Concatenate latent vectors with high-salience symbolic features such as length bucket, stable prefix mask, discriminator candidates, direction, header/body split hints, and length-field evidence.
-    - Downweight or mask bytes/fields classified as transaction ID, sequence number, timestamp, checksum, random nonce, or payload blob.
-    - Keep existing raw-byte and heuristic fallback paths when the model file or neural dependencies are unavailable.
-    - Add CLI flags for model path, feature mode, latent cache path, and neural batch size.
-- Output/schema changes
-    - Record clustering metadata: `feature_mode`, `neural_model`, `latent_dim`, `latent_cache`, and `symbolic_feature_count`.
-- Expected impact
-    - Accuracy: ↑↑ for binary industrial protocols with variable payloads.
-    - Runtime: ↓ for repeated runs with cached latents; initial neural pass may be slower.
-- Risk
-    - Medium-high. Need deterministic fallback and careful dependency handling.
+- status: implemented. result: slight score decrease in raw_bytes mode, huge score decrease in structural mode.
 
 ### TODO 10. Neural clustering quality diagnostics
 
