@@ -1,5 +1,7 @@
 Read README.md for context. No summarize/explanation needed. Await task.
 
+update readme first paragraph and pipeline explanation to match the current codes. it must explain them more accurate and complete.
+
   ### TODO 7. Add transaction/correlation-field detection
 
   - Files
