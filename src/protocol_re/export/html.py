@@ -129,13 +129,28 @@ def _feature_panel(feature_summary: Dict[str, Any]) -> str:
 
 def _format_panel(keyword_summary: Dict[str, Any]) -> str:
     if not keyword_summary:
-        return '<p class="muted">No keyword evidence attached.</p>'
-    keyword = keyword_summary.get("keyword") or {}
+        return '<p class="muted">No discriminator evidence attached.</p>'
+    candidate = keyword_summary.get("keyword") or {}
+    candidates = keyword_summary.get("discriminator_candidates", []) or keyword_summary.get("opcode_candidates", []) or []
+    salience = candidate.get("salience_score", 0.0) if candidate else 0.0
+    mutual_information = candidate.get("mutual_information", 0.0) if candidate else 0.0
+    contrastive = candidate.get("contrastive_separation", 0.0) if candidate else 0.0
+    candidate_html = "".join(
+        _pill(
+            f"{int(item.get('start', item.get('offset', 0)))} conf={item.get('confidence', 0.0)} sal={item.get('salience_score', 0.0)}",
+            "field",
+        )
+        for item in candidates[:5]
+    ) or '<span class="muted">No candidates</span>'
     return (
         '<div class="feature-grid">'
-        f'{_metric("Keyword offset", keyword.get("offset", "none"), "candidate discriminator")}'
-        f'{_metric("Keyword cardinality", keyword.get("cardinality", 0), "observed values")}'
+        f'{_metric("Discriminator offset", candidate.get("offset", "none"), "opcode/message-type candidate")}'
+        f'{_metric("Cardinality", candidate.get("cardinality", 0), "observed values")}'
+        f'{_metric("Salience", salience, "learned offset score")}'
+        f'{_metric("Mutual info", mutual_information, "family separation")}'
+        f'{_metric("Contrast", contrastive, "value/family purity")}'
         '</div>'
+        f'<div class="motif-row"><b>Top discriminator candidates</b>{candidate_html}</div>'
     )
 
 
@@ -202,7 +217,7 @@ def _family_card(family: Dict[str, Any]) -> str:
       </div>
       <h4>Feature Evidence</h4>
       {_feature_panel(feature)}
-      <h4>Format Evidence</h4>
+      <h4>Discriminator Evidence</h4>
       {_format_panel(keyword)}
       <h4>Framing Evidence</h4>
       {_framing_panel(framing)}

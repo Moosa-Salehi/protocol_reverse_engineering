@@ -311,12 +311,21 @@ def render_protocol_model_markdown(
                 f"max=`{entropy_summary.get('max', 0.0)}` mean=`{entropy_summary.get('mean', 0.0)}`"
             )
         keyword_summary = family.get("keyword_summary") or {}
-        keyword = keyword_summary.get("keyword") if isinstance(keyword_summary, dict) else None
-        if keyword:
+        discriminator = keyword_summary.get("keyword") if isinstance(keyword_summary, dict) else None
+        discriminator_candidates = (keyword_summary.get("discriminator_candidates", []) or keyword_summary.get("opcode_candidates", []) or []) if isinstance(keyword_summary, dict) else []
+        if discriminator:
             lines.append(
-                f"- Candidate keyword offset: `{int(keyword.get('offset', 0))}` "
-                f"cardinality=`{int(keyword.get('cardinality', 0))}` entropy=`{keyword.get('entropy', 0.0)}`"
+                f"- Candidate discriminator offset: `{int(discriminator.get('offset', 0))}` "
+                f"cardinality=`{int(discriminator.get('cardinality', 0))}` entropy=`{discriminator.get('entropy', 0.0)}` "
+                f"salience=`{discriminator.get('salience_score', 0.0)}` mutual_information=`{discriminator.get('mutual_information', 0.0)}` "
+                f"contrastive_separation=`{discriminator.get('contrastive_separation', 0.0)}` confidence=`{discriminator.get('confidence', 0.0)}`"
             )
+        if discriminator_candidates:
+            compact_candidates = ", ".join(
+                f"offset `{int(item.get('start', item.get('offset', 0)))}` conf=`{item.get('confidence', 0.0)}` salience=`{item.get('salience_score', 0.0)}`"
+                for item in discriminator_candidates[:3]
+            )
+            lines.append(f"- Top discriminator candidates: {compact_candidates}")
         framing_summary = family.get("framing_summary") or {}
         layouts = framing_summary.get("layout_hypotheses", []) if isinstance(framing_summary, dict) else []
         if layouts:

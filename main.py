@@ -198,7 +198,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     "--neural-model-path",
                     _path(args.family_neural_model_path),
                     "--salience-cache-path",
-                    _path(data_dir / "salience_cache.json"),
+                    _path(args.discriminator_salience_cache_path),
                 ],
             ),
             (
@@ -401,6 +401,7 @@ def parse_args() -> argparse.Namespace:
     collect_group = parser.add_argument_group("Stage 01 - collect_pcaps / Stage 02 - dedup_pcaps")
     extract_group = parser.add_argument_group("Stage 03 - extract_messages")
     family_group = parser.add_argument_group("Stage 04 - discover_families")
+    discriminator_group = parser.add_argument_group("Stage 09 - discriminator/opcode discovery")
     relations_group = parser.add_argument_group("Stage 10 - infer_relations")
     llm_analysis_group = parser.add_argument_group("Stage 15 - analyze_with_llm")
     final_eval_group = parser.add_argument_group("Stage 17 - evaluate_protocol_spec")
@@ -462,6 +463,13 @@ def parse_args() -> argparse.Namespace:
         help="Batch size for optional neural latent extraction.",
     )
 
+    discriminator_group.add_argument(
+        "--discriminator-salience-cache-path",
+        type=Path,
+        default=Path("data/salience_cache.json"),
+        help="Cache path for learned discriminator/opcode salience scores.",
+    )
+
     relations_group.add_argument("--min-edge-pairs", type=int, default=2, help="Minimum pair count for relation edge pruning.")
     relations_group.add_argument("--min-edge-lift", type=float, default=1.0, help="Minimum lift for relation edge pruning.")
     relations_group.add_argument(
@@ -521,6 +529,8 @@ def validate_args(args: argparse.Namespace) -> None:
     args.family_neural_model_path = _resolve_under_project(args.family_neural_model_path)
     if args.family_latent_cache_path:
         args.family_latent_cache_path = _resolve_under_project(args.family_latent_cache_path)
+    if args.discriminator_salience_cache_path:
+        args.discriminator_salience_cache_path = _resolve_under_project(args.discriminator_salience_cache_path)
     messages_jsonl = args.data_dir / "01_messages.jsonl"
     if args.max_messages is not None and args.max_messages <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --max-messages must be greater than 0.")

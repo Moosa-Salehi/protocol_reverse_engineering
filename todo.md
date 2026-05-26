@@ -60,33 +60,7 @@
 
 ### TODO 8. Neural feature salience scoring
 
-- Goal
-    - Replace entropy-only discriminator discovery with learned salience scoring while preserving explainable symbolic evidence.
-- Files
-    - `src/protocol_re/features/extraction.py`
-    - `src/protocol_re/inference/keyword_detection.py`
-    - `src/protocol_re/inference/framing.py`
-    - New: `src/protocol_re/neural/salience.py`
-    - New: `src/protocol_re/inference/discriminator_fields.py`
-    - `scripts/06_extract_features.py`
-    - `scripts/09_infer_keywords.py`
-    - `src/protocol_re/export/llm_evidence.py`
-    - `schema/llm_evidence.schema.json`
-- Tasks
-    - Rename the internal concept from keyword-only detection to discriminator/opcode candidate discovery while keeping backward-compatible output names where needed.
-    - Train or load an attention-based model that scores byte offsets and spans by contribution to family separation.
-    - Add gradient-based salience support for neural encoders when model weights are available.
-    - Combine learned salience with symbolic signals: low-to-medium cardinality, family mutual information, direction mutual information, length-profile separation, and offset stability.
-    - Suppress fields already classified as length, transaction ID, counter, checksum, timestamp, or payload blob.
-    - Search across all plausible header/body offsets instead of the current fixed offset window.
-    - Export top discriminator candidates to LLM evidence with compact supporting statistics.
-- Output/schema changes
-    - Add candidate fields: `salience_score`, `mutual_information`, `contrastive_separation`, `excluded_roles`, and `confidence`.
-- Expected impact
-    - Accuracy: ↑ for message-type identification and family interpretation.
-    - Runtime: neutral with cached salience; fallback stays heuristic.
-- Risk
-    - Medium. Learned salience must remain evidence-gated and explainable.
+- status: implemented.
 
 ### TODO 9. Hybrid structural and neural feature encoding
 

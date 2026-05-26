@@ -1,6 +1,6 @@
 # Protocol RE project
 
-This project is a protocol-agnostic reverse-engineering pipeline for TCP application traffic captured in PCAP/PCAPNG files. It turns packet captures into a canonical message corpus, groups similar payloads into message families, infers framing/header clues, field boundaries, keyword subformats, request/response relations, and semantic hints, then assembles those signals into a structured protocol model plus Markdown/HTML reports and optional LLM/evaluation artifacts. It is designed for industrial and other binary protocols where the analyst has traffic captures but not a formal specification.
+This project is a protocol-agnostic reverse-engineering pipeline for TCP application traffic captured in PCAP/PCAPNG files. It turns packet captures into a canonical message corpus, groups similar payloads into message families, infers framing/header clues, field boundaries, discriminator/opcode subformats, request/response relations, and semantic hints, then assembles those signals into a structured protocol model plus Markdown/HTML reports and optional LLM/evaluation artifacts. It is designed for industrial and other binary protocols where the analyst has traffic captures but not a formal specification.
 
 The pipeline is:
 
@@ -10,14 +10,14 @@ The pipeline is:
 4. Infer protocol-agnostic framing hypotheses in `data/04_framing.json`, including stable prefixes and likely header fields such as length, counter, discriminator, and body/tail variability hints.
 5. Extract reusable per-family evidence in `data/03_family_features.json`: length profiles, entropy and uniqueness by offset, byte histograms, n-gram/motif repetition, trailing padding/suffix clues, recurring fixed-position groups, and example message ids.
 6. Infer family templates, contiguous segments, and coarse field hypotheses in `data/05_families.json`. Boundary inference uses payload variability plus optional feature/framing evidence, including high-confidence body-start hints, without treating framing-only bytes as protocol fields.
-7. Pair likely requests and responses within sessions, detect keyword-like discriminator bytes/subformats, summarize family-to-family relations, echo fields, length relations, role hints, and semantic field labels.
-8. Assemble `data/10_protocol_model.json` from family, feature, framing, keyword, relation, and semantic evidence; write pipeline quality metrics to `data/11_evaluation.json`.
+7. Pair likely requests and responses within sessions, discover discriminator/opcode bytes and subformats with learned salience plus symbolic evidence, summarize family-to-family relations, echo fields, length relations, role hints, and semantic field labels.
+8. Assemble `data/10_protocol_model.json` from family, feature, framing, discriminator/keyword, relation, and semantic evidence; write pipeline quality metrics to `data/11_evaluation.json`.
 9. Export compact LLM evidence, render or call an OpenAI-compatible analysis step, prepare optional ground-truth evaluation input, and compare against a ground-truth protocol JSON when provided.
 10. Render final human-readable Markdown and self-contained HTML reports, including evaluation, LLM analysis, and final ground-truth metrics when available.
 
 ## Architecture
 
-The pipeline is intentionally protocol-agnostic and evidence-preserving. Extraction creates the canonical corpus consumed by every later stage. Family discovery assigns message ids to payload families so framing, feature extraction, boundary inference, keyword detection, pairing, relation inference, and semantic labeling all work from the same family map. The protocol-model builder then keeps the upstream evidence attached to each family instead of flattening it away, and exporters render the same model into Markdown, HTML, compact LLM evidence, and evaluation inputs.
+The pipeline is intentionally protocol-agnostic and evidence-preserving. Extraction creates the canonical corpus consumed by every later stage. Family discovery assigns message ids to payload families so framing, feature extraction, boundary inference, discriminator/opcode discovery, pairing, relation inference, and semantic labeling all work from the same family map. The protocol-model builder then keeps the upstream evidence attached to each family instead of flattening it away, and exporters render the same model into Markdown, HTML, compact LLM evidence, and evaluation inputs.
 
 The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; generated/intermediate artifacts live in `data/`; final specs go to `output/`.
 
@@ -31,10 +31,10 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/06_extract_features.py` writes reusable per-family feature artifacts.
 - `scripts/07_infer_boundaries.py` infers templates, contiguous segments, and coarse field hypotheses; with `--features-json` and `--framing-json`, it uses family feature vectors and high-confidence framing body-start hints to refine segment boundaries without adding framing fields as protocol fields.
 - `scripts/08_pair_requests_responses.py` emits candidate request/response pairs per session.
-- `scripts/09_infer_keywords.py` finds candidate keyword bytes and keyword-based subformats.
+- `scripts/09_infer_keywords.py` discovers discriminator/opcode candidates and subformats while preserving backward-compatible keyword output names; it combines learned salience, optional encoder gradients, family/direction mutual information, cardinality, stability, and framing/feature suppression evidence.
 - `scripts/10_infer_relations.py` summarizes family-to-family request/response relations, echo fields, and simple role hints.
 - `scripts/11_infer_semantics.py` attaches semantic field labels using boundary hypotheses plus request/response evidence.
-- `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, keyword, relation, and semantic evidence when supplied.
+- `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, discriminator/keyword, relation, and semantic evidence when supplied.
 - `scripts/13_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, relations, and semantic-label coverage when supplied.
 - `scripts/14_export_llm_evidence.py` renders a schema-shaped compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
 - `scripts/15_analyze_with_llm.py` renders the protocol-analysis prompt and can call an OpenAI-compatible LLM API to write `data/13_llm_analysis.json`.
@@ -46,7 +46,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 ## Feature artifacts
 
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, top n-gram frequency tables, wider repeated motifs, trailing-block/padding hints, length profiles, and recurring fixed-position groups.
-- `main.py` passes `data/03_family_features.json` into boundary inference and passes framing, feature, keyword, relation, and semantic artifacts into the protocol-model builder so final models retain the evidence from upstream stages.
+- `main.py` passes `data/03_family_features.json` into boundary inference and passes framing, feature, discriminator/keyword, relation, and semantic artifacts into the protocol-model builder so final models retain the evidence from upstream stages.
 - Evaluation reports distinguish corpus assignment coverage from clustering sample ratio, so the configured 100K clustering sample is reported separately from propagated family assignment coverage.
 
 ## Family discovery feature modes
@@ -59,6 +59,12 @@ Stage 04 accepts `--feature-mode raw_bytes|structural|neural|hybrid`.
 - `hybrid` concatenates the neural 32D latent vector with the structural feature vector.
 
 Neural modes are optional. If PyTorch, the model file, or a compatible encoder object is unavailable, family discovery falls back to symbolic structural features or the existing heuristic path. Latents are cached by payload hash with `--latent-cache-path` to speed repeated runs. The assignment JSON records clustering metadata under `metadata`, including `feature_mode`, `neural_model`, `latent_dim`, `latent_cache`, and `symbolic_feature_count`.
+
+## Discriminator salience
+
+Stage 09 now treats the legacy keyword step as discriminator/opcode candidate discovery. It keeps `data/07_keywords.json` and the `keyword` field for compatibility, but also emits `discriminator_candidates`/`opcode_candidates` with `salience_score`, `mutual_information`, `contrastive_separation`, `excluded_roles`, and `confidence`. Learned salience uses a small cached attention classifier over byte offsets, optional gradient salience from `--neural-model-path` when a compatible PyTorch encoder is available, and symbolic gates for cardinality, offset stability, family/direction mutual information, length-profile separation, and known framing roles. Fields already classified as length, transaction/counter, checksum, timestamp, or payload blob are suppressed.
+
+The runner writes learned salience cache entries to `data/salience_cache.json` by default; override with `--discriminator-salience-cache-path`.
 
 ## LLM evidence schema
 
@@ -114,7 +120,7 @@ Useful runner options:
 python main.py files --collect
 python main.py ../pcaps --service-port 502 --ground-truth-json ./truth-files/modbus.json
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
-python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_encoder_only.pth --family-latent-cache-path data/latent_cache.json
+python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_encoder_only.pth --family-latent-cache-path data/latent_cache.json --discriminator-salience-cache-path data/salience_cache.json
 ```
 
 ## Running step by step
@@ -137,7 +143,7 @@ python3 scripts/05_infer_framing.py data/01_messages.jsonl data/02_family_assign
 python3 scripts/06_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
 python3 scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json
 python3 scripts/08_pair_requests_responses.py data/01_messages.jsonl data/06_pairs.json --assignments-json data/02_family_assignments.json
-python3 scripts/09_infer_keywords.py data/01_messages.jsonl data/07_keywords.json --assignments-json data/02_family_assignments.json
+python3 scripts/09_infer_keywords.py data/01_messages.jsonl data/07_keywords.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json --neural-model-path industrial_encoder_only.pth --salience-cache-path data/salience_cache.json
 python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assignments.json data/06_pairs.json data/08_relations.json
 python3 scripts/11_infer_semantics.py data/05_families.json data/08_relations.json data/09_semantics.json
 python3 scripts/12_build_protocol_model.py data/05_families.json data/10_protocol_model.json --features-json data/03_family_features.json --keywords-json data/07_keywords.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json --framing-json data/04_framing.json
