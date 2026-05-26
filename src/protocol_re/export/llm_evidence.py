@@ -52,6 +52,9 @@ def _compact_field(field: Dict[str, Any]) -> Dict[str, Any]:
     }
     if field.get("endian"):
         result["endian"] = field.get("endian")
+    for key in ("salience_score", "mutual_information", "contrastive_separation", "excluded_roles"):
+        if key in field:
+            result[key] = field.get(key)
     if evidence:
         result["evidence"] = _trim_object(
             evidence,
@@ -64,6 +67,9 @@ def _compact_field(field: Dict[str, Any]) -> Dict[str, Any]:
                 "support",
                 "relation_type",
                 "echo_support",
+                "symbolic_cardinality_score",
+                "low_to_medium_cardinality",
+                "learned_salience_available",
             ],
         )
     return result
@@ -109,6 +115,24 @@ def _compact_feature_summary(feature_summary: Optional[Dict[str, Any]]) -> Dict[
         },
     }
 
+
+
+def _compact_discriminator_candidate(candidate: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "family_id": candidate.get("family_id"),
+        "label": candidate.get("field_type", "discriminator"),
+        "start": _as_int(candidate.get("start", candidate.get("offset", 0))),
+        "end": _as_int(candidate.get("end", _as_int(candidate.get("start", candidate.get("offset", 0))) + 1)),
+        "length": _as_int(candidate.get("length", 1)),
+        "confidence": round(_as_float(candidate.get("confidence", 0.0)), 6),
+        "salience_score": round(_as_float(candidate.get("salience_score", 0.0)), 6),
+        "mutual_information": round(_as_float(candidate.get("mutual_information", 0.0)), 6),
+        "contrastive_separation": round(_as_float(candidate.get("contrastive_separation", 0.0)), 6),
+        "excluded_roles": candidate.get("excluded_roles", []) or [],
+        "cardinality": candidate.get("cardinality"),
+        "coverage": candidate.get("coverage"),
+        "entropy": candidate.get("entropy"),
+    }
 
 def _compact_relation(relation: Dict[str, Any]) -> Dict[str, Any]:
     return {
@@ -238,6 +262,8 @@ def _compact_family(family: Dict[str, Any], field_limit: int) -> Dict[str, Any]:
     segments = family.get("segments", []) or []
     fields = family.get("field_hypotheses", []) or []
     labels = semantic_summary.get("field_labels", []) or []
+    keyword_summary = family.get("keyword_summary") or {}
+    discriminator_candidates = keyword_summary.get("discriminator_candidates", []) or keyword_summary.get("opcode_candidates", []) or []
 
     return {
         "family_id": family.get("family_id"),
@@ -249,6 +275,7 @@ def _compact_family(family: Dict[str, Any], field_limit: int) -> Dict[str, Any]:
         "segments": [_compact_segment(segment) for segment in sorted(segments, key=lambda item: (_as_int(item.get("start", 0)), _as_int(item.get("end", 0))))[:12]],
         "fields": [_compact_field(field) for field in _top_items(fields, field_limit)],
         "semantic_labels": [_compact_label(label) for label in _top_items(labels, field_limit)],
+        "discriminator_candidates": [_compact_discriminator_candidate(candidate) for candidate in _top_items(discriminator_candidates, field_limit)],
         "features": _compact_feature_summary(feature_summary),
         "confidence_notes": _family_confidence_notes(family),
     }
@@ -297,12 +324,20 @@ def _global_candidates(families: List[Dict[str, Any]], field_limit: int) -> Dict
             compact["family_id"] = family_id
             if "length" in field_type:
                 length_candidates.append(compact)
-            elif field_type in {"keyword", "opcode", "function", "selector"} or "keyword" in field_type:
+            elif field_type in {"keyword", "opcode", "function", "selector", "discriminator"} or "keyword" in field_type or "discriminator" in field_type:
                 opcode_candidates.append(compact)
             elif "constant" in field_type or field_type == "fixed":
                 constants.append(compact)
             if _as_float(field.get("confidence", 0.0)) < 0.55:
                 low_confidence.append({**compact, "reason": "low field confidence"})
+        keyword_summary = family.get("keyword_summary") or {}
+        for candidate in keyword_summary.get("discriminator_candidates", []) or keyword_summary.get("opcode_candidates", []) or []:
+            compact = _compact_discriminator_candidate(candidate)
+            compact["family_id"] = family_id
+            compact["label"] = "discriminator"
+            opcode_candidates.append(compact)
+            if _as_float(candidate.get("confidence", 0.0)) < 0.55:
+                low_confidence.append({**compact, "reason": "low discriminator confidence"})
 
     return {
         "length_candidates": _top_items(length_candidates, field_limit),

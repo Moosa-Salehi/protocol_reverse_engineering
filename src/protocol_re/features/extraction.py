@@ -4,7 +4,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from math import log2, sqrt
 from statistics import mean
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
@@ -245,10 +245,31 @@ class FamilyFeatureAccumulator:
             entropy_vector.append(round(shannon_entropy_from_counts(counts), 6))
             uniqueness_ratio_vector.append(round(len(counts) / coverage_count, 6) if coverage_count else 0.0)
             coverage_vector.append(round(coverage_count / self.message_count, 6) if self.message_count else 0.0)
+        discriminator_offsets = []
+        for offset, (counts, coverage_count) in enumerate(zip(self.position_counts, self.position_coverage)):
+            if not counts or not coverage_count:
+                continue
+            cardinality = len(counts)
+            unique_ratio = cardinality / coverage_count
+            if 1 < cardinality <= 32 and unique_ratio <= 0.5:
+                value, count = counts.most_common(1)[0]
+                discriminator_offsets.append(
+                    {
+                        "offset": offset,
+                        "cardinality": cardinality,
+                        "entropy": round(shannon_entropy_from_counts(counts), 6),
+                        "unique_ratio": round(unique_ratio, 6),
+                        "coverage": round(coverage_count / self.message_count, 6) if self.message_count else 0.0,
+                        "dominant_value_hex": f"{value:02x}",
+                        "dominant_ratio": round(count / coverage_count, 6),
+                    }
+                )
+        discriminator_offsets.sort(key=lambda item: (-float(item["entropy"]), int(item["cardinality"]), int(item["offset"])))
         return {
             "entropy_vector": entropy_vector,
             "uniqueness_ratio_vector": uniqueness_ratio_vector,
             "coverage_vector": coverage_vector,
+            "discriminator_position_stats": discriminator_offsets[:20],
         }
 
     def motif_stats(self) -> Dict[str, object]:

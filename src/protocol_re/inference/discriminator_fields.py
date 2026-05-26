@@ -1,0 +1,263 @@
+from __future__ import annotations
+
+from collections import Counter, defaultdict
+from math import log2
+from statistics import mean
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+from protocol_re.inference.boundary_detection import infer_template
+from protocol_re.model.schema import MessageRecord
+from protocol_re.neural.salience import attention_offset_salience, encoder_gradient_salience, merge_salience_scores
+from protocol_re.utils.bytes import hex_to_bytes
+
+SUPPRESSED_ROLE_TOKENS = ("length", "transaction", "counter", "checksum", "timestamp", "blob")
+
+
+def entropy(values: Sequence[Any]) -> float:
+    if not values:
+        return 0.0
+    counts = Counter(values)
+    total = float(sum(counts.values()))
+    return -sum((count / total) * log2(count / total) for count in counts.values())
+
+
+def mutual_information(left: Sequence[Any], right: Sequence[Any]) -> float:
+    if not left or not right or len(left) != len(right):
+        return 0.0
+    total = float(len(left))
+    left_counts = Counter(left)
+    right_counts = Counter(right)
+    pair_counts = Counter(zip(left, right))
+    value = 0.0
+    for (lval, rval), count in pair_counts.items():
+        pxy = count / total
+        px = left_counts[lval] / total
+        py = right_counts[rval] / total
+        value += pxy * log2(pxy / (px * py))
+    return value
+
+
+def normalized_mi(left: Sequence[Any], right: Sequence[Any]) -> float:
+    denom = max(entropy(left), entropy(right), 1e-9)
+    return max(0.0, min(1.0, mutual_information(left, right) / denom))
+
+
+def _offset_values(messages: Sequence[bytes], offset: int) -> Tuple[List[int], List[int]]:
+    values: List[int] = []
+    indexes: List[int] = []
+    for index, message in enumerate(messages):
+        if offset < len(message):
+            values.append(message[offset])
+            indexes.append(index)
+    return values, indexes
+
+
+def _contrastive_separation(values: Sequence[int], labels: Sequence[str]) -> float:
+    if not values or len(values) != len(labels):
+        return 0.0
+    total = len(values)
+    value_counts = Counter(values)
+    dominant = 0
+    for value, count in value_counts.items():
+        label_counts = Counter(label for observed, label in zip(values, labels) if observed == value)
+        dominant += label_counts.most_common(1)[0][1] if label_counts else 0
+    purity = dominant / max(total, 1)
+    balance = min(len(value_counts), 16) / 16.0
+    return max(0.0, min(1.0, (0.75 * purity) + (0.25 * balance)))
+
+
+def _excluded_roles(family_id: str, offset: int, family_features: Dict[str, Any], framing: Dict[str, Any]) -> List[str]:
+    roles: List[str] = []
+    family_framing = ((framing.get("families") or {}).get(family_id) or {}) if framing else {}
+    for layout in family_framing.get("layout_hypotheses", []) or []:
+        for field in layout.get("field_regions", []) or []:
+            start = int(field.get("start", 0) or 0)
+            end = int(field.get("end", start) or start)
+            if start <= offset < end:
+                field_type = str(field.get("field_type", "unknown"))
+                if any(token in field_type for token in SUPPRESSED_ROLE_TOKENS):
+                    roles.append(field_type)
+    position_stats = (family_features.get("position_stats") or {}) if family_features else {}
+    unique_ratios = position_stats.get("uniqueness_ratio_vector", []) or []
+    coverage = position_stats.get("coverage_vector", []) or []
+    if offset < len(unique_ratios) and offset < len(coverage):
+        if float(unique_ratios[offset]) >= 0.8 and float(coverage[offset]) >= 0.8:
+            roles.append("payload_blob")
+    return sorted(set(roles))
+
+
+def infer_discriminator_candidates(
+    records: Sequence[MessageRecord],
+    family_by_msg_id: Dict[int, str],
+    features: Optional[Dict[str, Any]] = None,
+    framing: Optional[Dict[str, Any]] = None,
+    neural_model_path: Optional[str] = None,
+    salience_cache_path: Optional[str] = None,
+    max_offset: int = 128,
+    top_k: int = 5,
+) -> Dict[str, Any]:
+    families: Dict[str, List[MessageRecord]] = defaultdict(list)
+    labeled_payloads: List[bytes] = []
+    labels: List[str] = []
+    directions: List[str] = []
+    for record in records:
+        family_id = family_by_msg_id.get(record.msg_id)
+        if family_id is None:
+            continue
+        families[family_id].append(record)
+        labeled_payloads.append(hex_to_bytes(record.payload_hex))
+        labels.append(family_id)
+        directions.append(record.direction or "unknown")
+
+    observed_max = min(max((len(payload) for payload in labeled_payloads), default=0), max_offset)
+    attention = attention_offset_salience(labeled_payloads, labels, max_length=observed_max or 1, cache_path=salience_cache_path)
+    gradient = encoder_gradient_salience(labeled_payloads, model_path=neural_model_path, max_length=observed_max or 1)
+    salience = merge_salience_scores(attention, gradient, observed_max or 1)
+
+    global_family_mi: Dict[int, float] = {}
+    global_direction_mi: Dict[int, float] = {}
+    for offset in range(observed_max):
+        values, indexes = _offset_values(labeled_payloads, offset)
+        global_family_mi[offset] = normalized_mi(values, [labels[index] for index in indexes])
+        global_direction_mi[offset] = normalized_mi(values, [directions[index] for index in indexes])
+
+    output: Dict[str, Any] = {}
+    for family_id, family_records in sorted(families.items()):
+        messages = [hex_to_bytes(record.payload_hex) for record in family_records]
+        family_labels = [family_by_msg_id.get(record.msg_id, family_id) for record in family_records]
+        family_directions = [record.direction or "unknown" for record in family_records]
+        candidates: List[Dict[str, Any]] = []
+        family_max = min(max((len(message) for message in messages), default=0), max_offset)
+        for offset in range(family_max):
+            values, indexes = _offset_values(messages, offset)
+            if len(values) < 2:
+                continue
+            cardinality = len(set(values))
+            coverage = len(values) / max(len(messages), 1)
+            unique_ratio = cardinality / max(len(values), 1)
+            stable_ratio = Counter(values).most_common(1)[0][1] / max(len(values), 1)
+            if coverage < 0.5 or cardinality <= 1:
+                continue
+            # Evidence-gate learned salience with explainable symbolic constraints.
+            cardinality_score = 1.0 - min(abs(cardinality - 4) / 16.0, 1.0) if cardinality <= 32 else 0.0
+            stability_score = max(0.0, min(1.0, 1.0 - stable_ratio))
+            local_direction_mi = normalized_mi(values, [family_directions[index] for index in indexes])
+            contrastive = _contrastive_separation(values, [family_labels[index] for index in indexes])
+            learned = salience[offset] if offset < len(salience) else 0.0
+            family_mi = global_family_mi.get(offset, 0.0)
+            direction_mi = max(global_direction_mi.get(offset, 0.0), local_direction_mi)
+            excluded = _excluded_roles(family_id, offset, (features or {}).get(family_id, {}) if features else {}, framing or {})
+            if excluded:
+                continue
+            score = (
+                (0.30 * learned)
+                + (0.24 * family_mi)
+                + (0.16 * direction_mi)
+                + (0.14 * cardinality_score)
+                + (0.10 * contrastive)
+                + (0.06 * stability_score)
+            )
+            if cardinality > max(32, len(values) * 0.45):
+                score *= 0.35
+            if score < 0.08:
+                continue
+            candidates.append(
+                {
+                    "family_id": family_id,
+                    "start": offset,
+                    "end": offset + 1,
+                    "offset": float(offset),
+                    "length": 1,
+                    "field_type": "discriminator",
+                    "cardinality": float(cardinality),
+                    "coverage": round(coverage, 6),
+                    "entropy": round(entropy(values), 6),
+                    "salience_score": round(learned, 6),
+                    "mutual_information": round(family_mi, 6),
+                    "direction_mutual_information": round(direction_mi, 6),
+                    "contrastive_separation": round(contrastive, 6),
+                    "offset_stability": round(stable_ratio, 6),
+                    "excluded_roles": [],
+                    "confidence": round(max(0.0, min(1.0, score)), 6),
+                    "evidence": {
+                        "symbolic_cardinality_score": round(cardinality_score, 6),
+                        "low_to_medium_cardinality": 1 < cardinality <= 32,
+                        "learned_salience_available": bool(attention.get("available") or gradient.get("available")),
+                    },
+                }
+            )
+        candidates.sort(key=lambda item: (-float(item["confidence"]), int(item["start"])))
+        output[family_id] = _family_discriminator_summary(family_id, messages, candidates[:top_k], attention, gradient)
+    return output
+
+
+def _family_discriminator_summary(
+    family_id: str,
+    messages: Sequence[bytes],
+    candidates: Sequence[Dict[str, Any]],
+    attention: Dict[str, Any],
+    gradient: Dict[str, Any],
+) -> Dict[str, Any]:
+    keyword = dict(candidates[0]) if candidates else None
+    if keyword is not None:
+        keyword = {
+            "offset": keyword["offset"],
+            "entropy": keyword["entropy"],
+            "cardinality": keyword["cardinality"],
+            "salience_score": keyword["salience_score"],
+            "mutual_information": keyword["mutual_information"],
+            "contrastive_separation": keyword["contrastive_separation"],
+            "excluded_roles": keyword["excluded_roles"],
+            "confidence": keyword["confidence"],
+        }
+    if keyword is None:
+        subclusters = {"format_0": {"message_count": len(messages), "template": infer_template([message.hex() for message in messages])}}
+    else:
+        offset = int(keyword["offset"])
+        grouped: Dict[int, List[str]] = defaultdict(list)
+        for message in messages:
+            if offset < len(message):
+                grouped[message[offset]].append(message.hex())
+        subclusters = {
+            f"format_{idx}": {
+                "keyword_value": f"0x{value:02x}",
+                "discriminator_value": f"0x{value:02x}",
+                "message_count": len(members),
+                "template": infer_template(members),
+            }
+            for idx, (value, members) in enumerate(sorted(grouped.items()))
+        }
+    return {
+        "algorithm": "discriminator_candidate_discovery_v1",
+        "family_id": family_id,
+        "keyword": keyword,
+        "discriminator_candidates": list(candidates),
+        "opcode_candidates": list(candidates),
+        "subclusters": subclusters,
+        "salience_metadata": {
+            "attention": {key: value for key, value in attention.items() if key != "offset_scores"},
+            "gradient": {key: value for key, value in gradient.items() if key != "offset_scores"},
+        },
+    }
+
+
+def split_messages_by_discriminator(messages_hex: Sequence[str], search_range: Optional[range] = None) -> Dict[str, Any]:
+    records = [
+        MessageRecord(
+            msg_id=index,
+            source_file="inline",
+            session_id="inline",
+            session_key="inline",
+            src_ip="",
+            src_port=0,
+            dst_ip="",
+            dst_port=0,
+            direction="unknown",
+            payload_hex=message_hex,
+            payload_len=len(hex_to_bytes(message_hex)),
+        )
+        for index, message_hex in enumerate(messages_hex)
+    ]
+    max_offset = (max(search_range) + 1) if search_range else 128
+    result = infer_discriminator_candidates(records, {record.msg_id: "family_0" for record in records}, max_offset=max_offset)
+    return result.get("family_0", {"keyword": None, "subclusters": {"format_0": {"message_count": len(messages_hex), "template": infer_template(messages_hex)}}})
