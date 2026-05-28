@@ -35,7 +35,7 @@ def load_optional_encoder_with_reason(model_path: str | None = None, latent_dim:
     if not path.exists():
         return EncoderLoadResult(None, str(path), False, "model_file_not_found")
     try:
-        artifact = torch.load(str(path), map_location="cpu")
+        artifact = _torch_load_model_artifact(path)
     except Exception as exc:
         return EncoderLoadResult(None, str(path), False, f"model_load_failed:{exc.__class__.__name__}")
     model = _extract_model(artifact)
@@ -57,3 +57,12 @@ def _extract_model(artifact: object) -> object | None:
             if hasattr(candidate, "eval") and callable(candidate):
                 return candidate
     return None
+
+
+def _torch_load_model_artifact(path: Path) -> object:
+    try:
+        return torch.load(str(path), map_location="cpu", weights_only=True)
+    except TypeError:
+        return torch.load(str(path), map_location="cpu")
+    except Exception:
+        return torch.load(str(path), map_location="cpu", weights_only=False)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence
 
@@ -291,7 +292,13 @@ def discover_families(
     elif method == "hdbscan":
         if hdbscan is None:
             raise RuntimeError("hdbscan is required for HDBSCAN clustering")
-        labels = hdbscan.HDBSCAN(min_cluster_size=hdbscan_min_cluster_size, allow_single_cluster=True).fit_predict(reduced)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=".*force_all_finite.*ensure_all_finite.*",
+                category=FutureWarning,
+            )
+            labels = hdbscan.HDBSCAN(min_cluster_size=hdbscan_min_cluster_size, allow_single_cluster=True).fit_predict(reduced)
     else:
         raise ValueError(f"Unsupported clustering method: {method}")
 
