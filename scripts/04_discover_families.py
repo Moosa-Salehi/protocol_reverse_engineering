@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 
 from protocol_re.clustering.family_discovery import discover_families
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
@@ -69,6 +70,16 @@ def main() -> None:
         json.dump(payload, handle, indent=2)
 
     family_count = len({assignment.family_id for assignment in result.assignments})
+    print(f"[+] Family discovery clustering method: {args.method}")
+    print(f"[+] Family discovery requested feature mode: {result.requested_feature_mode}")
+    print(f"[+] Family discovery effective feature mode: {result.feature_mode}")
+    if result.feature_mode != result.requested_feature_mode or result.fallback_reason:
+        print(
+            "[!] Warning: family discovery fallback applied "
+            f"({result.requested_feature_mode} -> {result.feature_mode}); "
+            f"reason: {result.fallback_reason or 'unspecified'}",
+            file=sys.stderr,
+        )
     print(f"[+] Discovered {family_count} families")
     print(f"[+] Wrote {len(result.assignments)} family assignments to {args.output_json}")
 

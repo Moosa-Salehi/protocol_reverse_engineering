@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import defaultdict
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
@@ -42,6 +43,17 @@ def main() -> None:
     with open(args.output_json, "w", encoding="utf-8") as handle:
         json.dump(result, handle, indent=2)
 
+    fallback_counts = {}
+    for family in result.get("families", {}).values():
+        best = (family.get("layout_hypotheses") or [{}])[0]
+        reason = ((best.get("evidence") or {}).get("fallback_reason"))
+        if reason:
+            fallback_counts[reason] = fallback_counts.get(reason, 0) + 1
+
+    print(f"[+] Framing inference algorithm: {result.get('metadata', {}).get('algorithm', 'unknown')}")
+    if fallback_counts:
+        reasons = ", ".join(f"{reason}={count}" for reason, count in sorted(fallback_counts.items()))
+        print(f"[!] Warning: framing fallback applied for {sum(fallback_counts.values())} families ({reasons})", file=sys.stderr)
     print(f"[+] Wrote framing hypotheses for {len(result.get('families', {}))} families to {args.output_json}")
 
 

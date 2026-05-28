@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import defaultdict
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
@@ -53,12 +54,27 @@ def main() -> None:
             salience_cache_path=args.salience_cache_path,
             max_offset=args.max_offset,
         )
+        print("[+] Discriminator discovery grouping mode: family_assignments")
     else:
         grouped = defaultdict(list)
         for record in records:
             family_id = f"len_{record.payload_len}" if args.family_mode == "length" else f"prefix2_{record.payload_hex[:4] or 'empty'}"
             grouped[family_id].append(record.payload_hex)
         output = {family_id: split_family_by_keyword(messages_hex, search_range=range(0, args.max_offset)) for family_id, messages_hex in grouped.items()}
+        print(f"[+] Discriminator discovery grouping mode: heuristic_{args.family_mode}")
+        print("[!] Warning: discriminator discovery used heuristic family grouping because --assignments-json was not provided", file=sys.stderr)
+
+    unavailable_counts = {}
+    for family in output.values():
+        salience_metadata = family.get("salience_metadata", {}) if isinstance(family, dict) else {}
+        for key in ("attention", "gradient"):
+            salience = salience_metadata.get(key) if isinstance(salience_metadata, dict) else None
+            if isinstance(salience, dict) and salience.get("available") is False:
+                reason = str(salience.get("reason") or "unspecified")
+                unavailable_counts[reason] = unavailable_counts.get(reason, 0) + 1
+    if unavailable_counts:
+        reasons = ", ".join(f"{reason}={count}" for reason, count in sorted(unavailable_counts.items()))
+        print(f"[!] Warning: optional discriminator salience fallback/unavailable ({reasons})", file=sys.stderr)
 
     with open(args.output_json, "w", encoding="utf-8") as handle:
         json.dump(output, handle, indent=2)

@@ -120,7 +120,7 @@ Useful runner options:
 python main.py files --collect
 python main.py ../pcaps --service-port 502 --ground-truth-json ./truth-files/modbus.json
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
-python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_encoder_only.pth --family-latent-cache-path data/latent_cache.json --discriminator-salience-cache-path data/salience_cache.json
+python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_encoder_only.pth
 ```
 
 ## Running step by step

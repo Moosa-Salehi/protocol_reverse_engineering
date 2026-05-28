@@ -207,7 +207,15 @@ def discover_families(
     if sample_size is not None and len(working_records) > sample_size:
         working_records = working_records[:sample_size]
 
-    if np is None or (method == "dbscan" and DBSCAN is None) or (method == "hdbscan" and hdbscan is None):
+    unavailable_dependencies = []
+    if np is None:
+        unavailable_dependencies.append("numpy")
+    if method == "dbscan" and DBSCAN is None:
+        unavailable_dependencies.append("scikit_learn_dbscan")
+    if method == "hdbscan" and hdbscan is None:
+        unavailable_dependencies.append("hdbscan")
+
+    if unavailable_dependencies:
         result = heuristic_family_assignments(records)
         return ClusteringResult(
             assignments=result.assignments,
@@ -218,7 +226,7 @@ def discover_families(
             requested_feature_mode=feature_mode,
             neural_model=neural_model_path,
             latent_cache=latent_cache_path,
-            fallback_reason="numpy_or_clustering_dependency_unavailable",
+            fallback_reason="dependency_unavailable:" + ",".join(unavailable_dependencies),
             diagnostics=build_family_diagnostics(records, result.assignments),
         )
 

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
-from protocol_re.neural.model_loader import load_optional_encoder
+from protocol_re.neural.model_loader import load_optional_encoder_with_reason
 
 try:
     import torch
@@ -135,9 +135,10 @@ def encoder_gradient_salience(
     """Return gradient salience for compatible torch encoders, or an unavailable marker."""
     if torch is None or not payloads:
         return {"available": False, "reason": "torch_or_payloads_unavailable", "offset_scores": []}
-    encoder = load_optional_encoder(model_path=model_path)
+    load_result = load_optional_encoder_with_reason(model_path=model_path)
+    encoder = load_result.encoder
     if encoder is None:
-        return {"available": False, "reason": "encoder_unavailable", "offset_scores": []}
+        return {"available": False, "reason": load_result.reason or "encoder_unavailable", "offset_scores": []}
     try:
         rows: List[List[float]] = []
         for payload in payloads[:sample_limit]:

@@ -42,6 +42,7 @@ def main() -> None:
             if family_id is None and not args.include_unassigned:
                 continue
             grouped[family_id or "unassigned"].append(record.payload_hex)
+        grouping_mode = "family_assignments"
     else:
         for record in records:
             if args.family_mode == "length":
@@ -49,6 +50,7 @@ def main() -> None:
             else:
                 family_id = f"prefix2_{record.payload_hex[:4] or 'empty'}"
             grouped[family_id].append(record.payload_hex)
+        grouping_mode = f"heuristic_{args.family_mode}"
 
     result = {}
     for family_id, messages_hex in grouped.items():
@@ -69,6 +71,7 @@ def main() -> None:
     with open(args.output_json, "w", encoding="utf-8") as handle:
         json.dump(result, handle, indent=2)
 
+    print(f"[+] Boundary inference grouping mode: {grouping_mode}")
     print(f"[+] Wrote {len(result)} family boundary summaries to {args.output_json}")
 
 
