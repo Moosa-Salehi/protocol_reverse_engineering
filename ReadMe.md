@@ -64,7 +64,7 @@ Neural modes are optional. If PyTorch, the model file, or a compatible encoder o
 
 Stage 09 now treats the legacy keyword step as discriminator/opcode candidate discovery. It keeps `data/07_keywords.json` and the `keyword` field for compatibility, but also emits `discriminator_candidates`/`opcode_candidates` with `salience_score`, `mutual_information`, `contrastive_separation`, `excluded_roles`, and `confidence`. Learned salience uses a small cached attention classifier over byte offsets, optional gradient salience from `--neural-model-path` when a compatible PyTorch encoder is available, and symbolic gates for cardinality, offset stability, family/direction mutual information, length-profile separation, and known framing roles. Fields already classified as length, transaction/counter, checksum, timestamp, or payload blob are suppressed.
 
-The runner writes learned salience cache entries to `data/salience_cache.json` by default; override with `--discriminator-salience-cache-path`.
+The runner writes learned salience cache entries to `data/07_salience_cache.json` by default; override with `--discriminator-salience-cache-path`.
 
 ## LLM evidence schema
 

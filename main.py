@@ -441,19 +441,19 @@ def parse_args() -> argparse.Namespace:
     family_group.add_argument(
         "--family-feature-mode",
         choices=["raw_bytes", "structural", "neural", "hybrid"],
-        default="raw_bytes",
+        default="hybrid",
         help="Feature encoding for family discovery.",
     )
     family_group.add_argument(
         "--family-neural-model-path",
         type=Path,
-        default=Path("industrial_encoder_only.pth"),
+        default=Path("pre_trained/industrial_encoder_only.pth"),
         help="Optional VAE encoder checkpoint for neural/hybrid family discovery.",
     )
     family_group.add_argument(
         "--family-latent-cache-path",
         type=Path,
-        default=Path("data/latent_cache.json"),
+        default=Path("data/02_latent_cache.json"),
         help="Cache path for payload-hash neural latent vectors.",
     )
     family_group.add_argument(
@@ -466,7 +466,7 @@ def parse_args() -> argparse.Namespace:
     discriminator_group.add_argument(
         "--discriminator-salience-cache-path",
         type=Path,
-        default=Path("data/salience_cache.json"),
+        default=Path("data/07_salience_cache.json"),
         help="Cache path for learned discriminator/opcode salience scores.",
     )
 

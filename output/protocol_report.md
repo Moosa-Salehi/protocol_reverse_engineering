@@ -61,7 +61,7 @@ Version: `0.1`
 
 ## LLM Analysis
 
-- Prompt size: `262127` bytes, `262127` characters, estimated tokens=`65532`
+- Prompt size: `292019` bytes, `292019` characters, estimated tokens=`73005`
 
 _LLM analysis was skipped because stage 15 ran in render-only mode._
 
@@ -110,7 +110,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.621`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.521928` max=`2.732159` mean=`2.30799`
-- Candidate keyword offset: `9` cardinality=`7` entropy=`1.9892`
+- Candidate discriminator offset: `0` cardinality=`52` entropy=`5.618933` salience=`1.0` mutual_information=`0.207388` contrastive_separation=`1.0` confidence=`0.508623`
+- Top discriminator candidates: offset `0` conf=`0.508623` salience=`1.0`, offset `10` conf=`0.424521` salience=`0.4055`, offset `8` conf=`0.398398` salience=`0.084807`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -182,7 +183,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.6354`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.317694`
-- Candidate keyword offset: `9` cardinality=`7` entropy=`2.0058`
+- Candidate discriminator offset: `0` cardinality=`50` entropy=`5.500669` salience=`1.0` mutual_information=`0.207388` contrastive_separation=`1.0` confidence=`0.508404`
+- Top discriminator candidates: offset `0` conf=`0.508404` salience=`1.0`, offset `10` conf=`0.434284` salience=`0.4055`, offset `8` conf=`0.398601` salience=`0.084807`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -254,7 +256,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.6588`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.32039`
-- Candidate keyword offset: `9` cardinality=`7` entropy=`1.9985`
+- Candidate discriminator offset: `0` cardinality=`34` entropy=`4.847875` salience=`1.0` mutual_information=`0.207388` contrastive_separation=`1.0` confidence=`0.507039`
+- Top discriminator candidates: offset `0` conf=`0.507039` salience=`1.0`, offset `10` conf=`0.45365` salience=`0.4055`, offset `8` conf=`0.39812` salience=`0.084807`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -326,7 +329,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.6228`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`3.027169` mean=`2.361599`
-- Candidate keyword offset: `9` cardinality=`16` entropy=`2.6495`
+- Candidate discriminator offset: `0` cardinality=`94` entropy=`6.199223` salience=`1.0` mutual_information=`0.207388` contrastive_separation=`1.0` confidence=`0.5092`
+- Top discriminator candidates: offset `0` conf=`0.5092` salience=`1.0`, offset `8` conf=`0.392874` salience=`0.084807`, offset `10` conf=`0.361518` salience=`0.4055`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -396,7 +400,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.5743`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`1.947339` max=`3.027169` mean=`2.864584`
-- Candidate keyword offset: `10` cardinality=`76` entropy=`4.711`
+- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.743136` salience=`0.084807` mutual_information=`0.076129` contrastive_separation=`0.78125` confidence=`0.404287`
+- Top discriminator candidates: offset `8` conf=`0.404287` salience=`0.084807`, offset `10` conf=`0.373964` salience=`0.4055`, offset `9` conf=`0.3145` salience=`0.077977`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -460,7 +465,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.6765`
 - Length stats: min=`10` max=`24` distinct=`4`
 - Entropy summary: min=`1.360964` max=`3.027169` mean=`2.346428`
-- Candidate keyword offset: `9` cardinality=`15` entropy=`2.6389`
+- Candidate discriminator offset: `0` cardinality=`76` entropy=`5.557105` salience=`1.0` mutual_information=`0.207388` contrastive_separation=`1.0` confidence=`0.509291`
+- Top discriminator candidates: offset `0` conf=`0.509291` salience=`1.0`, offset `8` conf=`0.392224` salience=`0.084807`, offset `10` conf=`0.361606` salience=`0.4055`
 - Framing hypothesis: header=`0`..`11` body_start=`12` confidence=`1.0`
 
 #### Segments
@@ -529,7 +535,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.6046`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`3.027169` mean=`2.350698`
-- Candidate keyword offset: `9` cardinality=`11` entropy=`2.6555`
+- Candidate discriminator offset: `0` cardinality=`38` entropy=`4.90285` salience=`1.0` mutual_information=`0.207388` contrastive_separation=`1.0` confidence=`0.507973`
+- Top discriminator candidates: offset `0` conf=`0.507973` salience=`1.0`, offset `10` conf=`0.402817` salience=`0.4055`, offset `8` conf=`0.39364` salience=`0.084807`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -601,7 +608,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.5377`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`1.729574` max=`3.027169` mean=`2.603329`
-- Candidate keyword offset: `10` cardinality=`48` entropy=`2.5631`
+- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.985309` salience=`0.084807` mutual_information=`0.076129` contrastive_separation=`0.78125` confidence=`0.410605`
+- Top discriminator candidates: offset `8` conf=`0.410605` salience=`0.084807`, offset `7` conf=`0.391316` salience=`0.083791`, offset `10` conf=`0.357404` salience=`0.4055`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -670,7 +678,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `1.0`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`1.825011` max=`2.450826` mean=`2.185903`
-- Candidate keyword offset: `9` cardinality=`6` entropy=`2.1362`
+- Candidate discriminator offset: `9` cardinality=`6` entropy=`2.136217` salience=`0.077977` mutual_information=`0.234079` contrastive_separation=`0.84375` confidence=`0.378372`
+- Top discriminator candidates: offset `9` conf=`0.378372` salience=`0.077977`, offset `7` conf=`0.282689` salience=`0.083791`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -726,7 +735,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.5286`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.450826` mean=`2.237786`
-- Candidate keyword offset: `9` cardinality=`5` entropy=`1.994`
+- Candidate discriminator offset: `9` cardinality=`5` entropy=`1.994045` salience=`0.077977` mutual_information=`0.234079` contrastive_separation=`0.828125` confidence=`0.381065`
+- Top discriminator candidates: offset `9` conf=`0.381065` salience=`0.077977`, offset `7` conf=`0.279143` salience=`0.083791`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -790,7 +800,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.6042`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.221252` mean=`2.21963`
-- Candidate keyword offset: `9` cardinality=`4` entropy=`1.6227`
+- Candidate discriminator offset: `9` cardinality=`4` entropy=`1.622696` salience=`0.077977` mutual_information=`0.234079` contrastive_separation=`0.8125` confidence=`0.382874`
+- Top discriminator candidates: offset `9` conf=`0.382874` salience=`0.077977`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -852,7 +863,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.284159` max=`3.027169` mean=`2.473296`
-- Candidate keyword offset: `10` cardinality=`4` entropy=`0.315`
+- Candidate discriminator offset: `10` cardinality=`4` entropy=`0.315002` salience=`0.4055` mutual_information=`0.23178` contrastive_separation=`0.8125` confidence=`0.526004`
+- Top discriminator candidates: offset `10` conf=`0.526004` salience=`0.4055`, offset `9` conf=`0.437641` salience=`0.077977`, offset `7` conf=`0.418082` salience=`0.083791`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -904,7 +916,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.5297`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.284159` max=`3.027169` mean=`2.98261`
-- Candidate keyword offset: `10` cardinality=`13` entropy=`2.8681`
+- Candidate discriminator offset: `10` cardinality=`13` entropy=`2.868056` salience=`0.4055` mutual_information=`0.23178` contrastive_separation=`0.953125` confidence=`0.431005`
+- Top discriminator candidates: offset `10` conf=`0.431005` salience=`0.4055`, offset `9` conf=`0.427135` salience=`0.077977`, offset `8` conf=`0.394519` salience=`0.084807`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -966,7 +979,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`1.896241` max=`2.845351` mean=`2.423096`
-- Candidate keyword offset: `9` cardinality=`3` entropy=`0.3218`
+- Candidate discriminator offset: `10` cardinality=`3` entropy=`0.060232` salience=`0.4055` mutual_information=`0.23178` contrastive_separation=`0.796875` confidence=`0.539851`
+- Top discriminator candidates: offset `10` conf=`0.539851` salience=`0.4055`, offset `8` conf=`0.404731` salience=`0.084807`, offset `9` conf=`0.346435` salience=`0.077977`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -1018,7 +1032,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.5709`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.221252` max=`3.027169` mean=`2.466964`
-- Candidate keyword offset: `7` cardinality=`4` entropy=`0.269`
+- Candidate discriminator offset: `10` cardinality=`3` entropy=`0.214834` salience=`0.4055` mutual_information=`0.23178` contrastive_separation=`0.796875` confidence=`0.540109`
+- Top discriminator candidates: offset `10` conf=`0.540109` salience=`0.4055`, offset `9` conf=`0.429825` salience=`0.077977`, offset `7` conf=`0.401561` salience=`0.083791`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -1075,7 +1090,8 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.024296`
-- Candidate keyword offset: `10` cardinality=`11` entropy=`2.0942`
+- Candidate discriminator offset: `10` cardinality=`11` entropy=`2.094176` salience=`0.4055` mutual_information=`0.23178` contrastive_separation=`0.921875` confidence=`0.429143`
+- Top discriminator candidates: offset `10` conf=`0.429143` salience=`0.4055`, offset `9` conf=`0.34673` salience=`0.077977`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
