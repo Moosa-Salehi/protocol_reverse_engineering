@@ -79,11 +79,11 @@ def _clean_hex(hex_str: Any) -> str:
     return str(hex_str).replace(":", "").replace(" ", "").lower()
 
 
-def _safe_float(value: Any) -> float | None:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+# def _safe_float(value: Any) -> float | None:
+#     try:
+#         return float(value)
+#     except (TypeError, ValueError):
+#         return None
 
 
 def _safe_int(value: Any) -> int:
@@ -510,7 +510,8 @@ def _tshark_payload_record_to_message(
         direction="unknown",
         payload_hex=payload_hex,
         payload_len=len(payload_hex) // 2,
-        timestamp=_safe_float(payload_record.get("timestamp")),
+        # timestamp=_safe_float(payload_record.get("timestamp")),
+        timestamp=payload_record.get("timestamp"),
         index_in_session=index_in_session,
     )
 
