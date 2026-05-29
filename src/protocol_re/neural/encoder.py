@@ -46,18 +46,25 @@ class TorchPayloadEncoder:
 
     def _extract_latent(self, output: object) -> List[List[float]]:
         if isinstance(output, (tuple, list)):
-            output = output[0]
+            # ConvVAE.forward returns (reconstruction, mu, logvar) — take mu (idx 1)
+            if len(output) == 3:
+                output = output[1]   # <-- mu, shape (B, latent_dim)
+            else:
+                output = output[0]   # fallback for other models
+
         if isinstance(output, dict):
             for key in ("z", "latent", "mu", "embedding"):
                 if key in output:
                     output = output[key]
                     break
+
         if hasattr(output, "detach"):
             array = output.detach().cpu().float().numpy()
         elif np is not None:
             array = np.asarray(output, dtype=np.float32)
         else:
             raise RuntimeError("Neural model output could not be converted without NumPy")
+
         if array.ndim == 1:
             array = array.reshape(1, -1)
         if array.shape[1] < self.latent_dim:
@@ -65,4 +72,5 @@ class TorchPayloadEncoder:
                 raise RuntimeError("NumPy is required to pad neural latent vectors")
             padding = np.zeros((array.shape[0], self.latent_dim - array.shape[1]), dtype=np.float32)
             array = np.concatenate([array, padding], axis=1)
-        return array[:, : self.latent_dim].astype("float32").tolist()
+
+        return array[:, :self.latent_dim].astype("float32").tolist()
