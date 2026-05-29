@@ -22,7 +22,10 @@ class MessageRecord:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        if not data["metadata"]:
+            data.pop("metadata")
+        return data
 
 
 @dataclass

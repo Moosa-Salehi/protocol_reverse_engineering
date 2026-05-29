@@ -163,7 +163,6 @@ def _iter_packet_payload_messages(file_path: str, service_port: int | None = Non
             payload_len=len(payload),
             timestamp=_packet_timestamp(packet),
             index_in_session=session_index,
-            metadata={"service_port": service_port, "extraction_mode": "packet_payload"},
         )
         session_counts[session_key] += 1
 
@@ -468,9 +467,6 @@ def _payloads_from_tshark_packets(packets: List[Dict[str, Any]]) -> List[Dict[st
 def _tshark_payload_record_to_message(
     payload_record: Dict[str, Any],
     pcap_name: str,
-    packet_json: Path,
-    payload_json: Path,
-    tshark_filter: str,
     index_in_session: int,
 ) -> MessageRecord:
     metadata = payload_record.get("metadata", {})
@@ -478,7 +474,6 @@ def _tshark_payload_record_to_message(
     tcp_meta = metadata.get("tcp", {}) if isinstance(metadata, dict) else {}
     udp_meta = metadata.get("udp", {}) if isinstance(metadata, dict) else {}
     eth_meta = metadata.get("eth", {}) if isinstance(metadata, dict) else {}
-    frame_meta = metadata.get("frame", {}) if isinstance(metadata, dict) else {}
 
     src_ip = str(ip_meta.get("src") or eth_meta.get("src") or "unknown")
     dst_ip = str(ip_meta.get("dst") or eth_meta.get("dst") or "unknown")
@@ -517,15 +512,6 @@ def _tshark_payload_record_to_message(
         payload_len=len(payload_hex) // 2,
         timestamp=_safe_float(payload_record.get("timestamp")),
         index_in_session=index_in_session,
-        metadata={
-            "extraction_mode": "tshark_packet_payload",
-            "tshark_filter": tshark_filter,
-            "protocol": payload_record.get("protocol"),
-            "transport": l4,
-            "frame_number": frame_meta.get("number"),
-            "packet_metadata_json": str(packet_json),
-            "payload_metadata_json": str(payload_json),
-        },
     )
 
 
@@ -560,9 +546,6 @@ def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, i
         temp_message = _tshark_payload_record_to_message(
             payload_record,
             pcap_path.name,
-            packet_json,
-            payload_json,
-            tshark_filter,
             index_in_session=0,
         )
         temp_message.index_in_session = session_counts[temp_message.session_id]
@@ -621,15 +604,8 @@ def _stream_reassembled_messages(file_path: str, service_port: int | None = None
                         timestamp=chunk.start_timestamp,
                         index_in_session=0,
                         metadata={
-                            "service_port": service_port,
-                            "extraction_mode": "tcp_stream",
-                            "framing": framing,
-                            "stream_chunk_index": chunk_index,
-                            "frame_index_in_chunk": frame_index,
-                            "stream_offset": stream_offset,
                             "tcp_start_seq": chunk.start_seq + stream_offset,
                             "tcp_end_seq": chunk.start_seq + stream_offset + len(payload),
-                            "stream_gap_before": chunk.had_gap_before,
                         },
                     )
                 )
