@@ -124,6 +124,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(args.data_dir / "payload_extraction" / "packets"),
                     "--payloads-dir",
                     _path(args.data_dir / "payload_extraction" / "payloads"),
+                    "--tshark-workers",
+                    str(args.tshark_workers),
                 ]
             )
         if args.max_messages is not None:
@@ -449,6 +451,7 @@ def parse_args() -> argparse.Namespace:
         help="Message extraction method. tshark uses --tshark-filter; tcp is the legacy Scapy TCP port extractor.",
     )
     extract_group.add_argument("--tshark-filter", help="TShark display filter for the target protocol, for example mbtcp or s7comm.")
+    extract_group.add_argument("--tshark-workers", type=int, default=4, help="Maximum parallel TShark worker processes.")
     extract_group.add_argument("--service-port", type=int, help="Legacy TCP extractor port filter. Used with --extraction-method tcp.")
     extract_group.add_argument(
         "--reassembly-mode",
@@ -582,6 +585,8 @@ def validate_args(args: argparse.Namespace) -> None:
 
     if args.extraction_method == "tshark" and not args.tshark_filter:
         raise SystemExit(f"{RED}Error:{RESET} --tshark-filter is required with --extraction-method tshark.")
+    if args.tshark_workers <= 0:
+        raise SystemExit(f"{RED}Error:{RESET} --tshark-workers must be greater than 0.")
 
     if args.input_folder is None:
         raise SystemExit(f"{RED}Error:{RESET} input_folder is required unless --use-existing-messages is provided.")
