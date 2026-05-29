@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Tuple
 
 from protocol_re.model.schema import MessageRecord
 
@@ -19,6 +20,14 @@ except Exception:  # pragma: no cover - optional dependency at import time
 
 
 FlowKey = Tuple[str, int, str, int]
+L2_ETHERTYPES = {
+    "goose": "88b8",
+    "sv": "88ba",
+    "pn_rt": "8892",
+    "pn_dcp": "8892",
+    "pn_io": "8892",
+    "ecatf": "88a4",
+}
 
 
 @dataclass
@@ -41,6 +50,46 @@ class TcpChunk:
 def _require_scapy() -> None:
     if rdpcap is None or PcapReader is None or TCP is None or IP is None:
         raise RuntimeError("Scapy is required for PCAP extraction. Install scapy before running this stage.")
+
+
+def _first(value: Any) -> Any:
+    if isinstance(value, list):
+        return value[0] if value else None
+    return value
+
+
+def _get_nested_field(layers: Dict[str, Any], section: str, field: str) -> Any:
+    section_obj = layers.get(section)
+    if isinstance(section_obj, dict) and field in section_obj:
+        return _first(section_obj[field])
+    if field in layers:
+        return _first(layers[field])
+    return None
+
+
+def _has_nested_field(layers: Dict[str, Any], section: str, field: str) -> bool:
+    section_obj = layers.get(section)
+    return (isinstance(section_obj, dict) and field in section_obj) or field in layers
+
+
+def _clean_hex(hex_str: Any) -> str:
+    if not hex_str:
+        return ""
+    return str(hex_str).replace(":", "").replace(" ", "").lower()
+
+
+def _safe_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 def _canonical_session_key(src_ip: str, src_port: int, dst_ip: str, dst_port: int) -> str:
@@ -215,6 +264,206 @@ def _application_frames_from_stream(stream: bytes) -> List[Tuple[bytes, int, str
     return [(stream, 0, "raw_tcp_stream")]
 
 
+def _slice_l2_payload(frame_raw: Any, protocol_name: str) -> str | None:
+    ethertype = L2_ETHERTYPES.get(protocol_name.lower())
+    if not ethertype:
+        return None
+
+    hex_str = _clean_hex(frame_raw)
+    for index in range(24, len(hex_str) - 4, 2):
+        if hex_str[index : index + 4] == ethertype:
+            return hex_str[index + 4 :]
+    return None
+
+
+def _slice_l7_payload_fallback(frame_raw: Any) -> str | None:
+    hex_str = _clean_hex(frame_raw)
+    if len(hex_str) < 28:
+        return None
+
+    ethertype = hex_str[24:28]
+    ip_start_byte = 14
+    if ethertype == "8100":
+        ethertype = hex_str[32:36]
+        ip_start_byte = 18
+
+    if ethertype != "0800":
+        return None
+
+    ip_start_hex = ip_start_byte * 2
+    try:
+        ihl = int(hex_str[ip_start_hex + 1], 16)
+        ip_proto = int(hex_str[ip_start_hex + 18 : ip_start_hex + 20], 16)
+    except (ValueError, IndexError):
+        return None
+
+    ip_header_len = ihl * 4
+    l4_start_byte = ip_start_byte + ip_header_len
+    l4_start_hex = l4_start_byte * 2
+
+    if ip_proto == 6:
+        try:
+            data_offset = int(hex_str[l4_start_hex + 24], 16)
+        except (ValueError, IndexError):
+            return None
+        tcp_header_len = data_offset * 4
+        payload_start = l4_start_byte + tcp_header_len
+        return hex_str[payload_start * 2 :]
+
+    if ip_proto == 17:
+        payload_start = l4_start_byte + 8
+        return hex_str[payload_start * 2 :]
+
+    return None
+
+
+def _extract_actual_tshark_payload(packet: Dict[str, Any]) -> str | None:
+    protocol = str(packet.get("protocol", "unknown")).lower()
+    metadata = packet.get("metadata", {})
+    frame_raw = metadata.get("frame", {}).get("raw", "") if isinstance(metadata, dict) else ""
+
+    if protocol in L2_ETHERTYPES:
+        return _slice_l2_payload(frame_raw, protocol)
+
+    tcp_meta = metadata.get("tcp") if isinstance(metadata, dict) else None
+    if isinstance(tcp_meta, dict):
+        payload = tcp_meta.get("payload")
+        if payload and payload != "None":
+            return _clean_hex(payload)
+
+    udp_meta = metadata.get("udp") if isinstance(metadata, dict) else None
+    if isinstance(udp_meta, dict):
+        payload = udp_meta.get("payload")
+        if payload and payload != "None":
+            return _clean_hex(payload)
+
+    return _slice_l7_payload_fallback(frame_raw)
+
+
+def _tshark_protocol_name(tshark_filter: str) -> str:
+    token = tshark_filter.strip().lower().split()[0] if tshark_filter.strip() else "unknown"
+    return token.strip("()")
+
+
+def _extract_tshark_packets(
+    pcap_path: str,
+    tshark_filter: str,
+    max_packets: int | None = None,
+) -> List[Dict[str, Any]]:
+    protocol_name = _tshark_protocol_name(tshark_filter)
+    cmd = [
+        "tshark",
+        "-r",
+        pcap_path,
+        "-o",
+        "tcp.desegment_tcp_streams:true",
+        "-o",
+        "tcp.reassemble_out_of_order:true",
+        "-o",
+        "ip.defragment:true",
+        "-x",
+        "-Y",
+        f"({tshark_filter})",
+        "-T",
+        "ek",
+    ]
+    try:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    except FileNotFoundError as exc:
+        raise RuntimeError("tshark is required for --extraction-method tshark but was not found on PATH.") from exc
+
+    packets: List[Dict[str, Any]] = []
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if "layers" not in obj or not isinstance(obj["layers"], dict):
+            continue
+
+        layers = obj["layers"]
+        found_protocol = protocol_name if protocol_name in layers else "unknown"
+        frame_raw = _first(layers.get("frame_raw")) or _get_nested_field(layers, "frame", "frame_raw")
+        metadata = {
+            "frame": {
+                "number": _get_nested_field(layers, "frame", "frame_frame_number"),
+                "time_epoch": _get_nested_field(layers, "frame", "frame_frame_time_epoch"),
+                "raw": frame_raw,
+            },
+            "eth": {
+                "src": _get_nested_field(layers, "eth", "eth_eth_src"),
+                "dst": _get_nested_field(layers, "eth", "eth_eth_dst"),
+                "type": _get_nested_field(layers, "eth", "eth_eth_type"),
+            },
+            "ip": {
+                "src": _get_nested_field(layers, "ip", "ip_ip_src"),
+                "dst": _get_nested_field(layers, "ip", "ip_ip_dst"),
+                "id": _get_nested_field(layers, "ip", "ip_ip_id"),
+                "proto": _get_nested_field(layers, "ip", "ip_ip_proto"),
+                "flags": _get_nested_field(layers, "ip", "ip_ip_flags"),
+                "frag_offset": _get_nested_field(layers, "ip", "ip_ip_frag_offset"),
+            },
+            "tcp": {
+                "stream": _get_nested_field(layers, "tcp", "tcp_tcp_stream"),
+                "srcport": _get_nested_field(layers, "tcp", "tcp_tcp_srcport"),
+                "dstport": _get_nested_field(layers, "tcp", "tcp_tcp_dstport"),
+                "seq": _get_nested_field(layers, "tcp", "tcp_tcp_seq"),
+                "ack": _get_nested_field(layers, "tcp", "tcp_tcp_ack"),
+                "len": _get_nested_field(layers, "tcp", "tcp_tcp_len"),
+                "flags": _get_nested_field(layers, "tcp", "tcp_tcp_flags"),
+                "window_size": _get_nested_field(layers, "tcp", "tcp_tcp_window_size"),
+                "analysis": {
+                    "retransmission": _has_nested_field(layers, "tcp", "tcp_analysis_retransmission")
+                    or _has_nested_field(layers, "tcp", "tcp_tcp_analysis_retransmission"),
+                    "out_of_order": _has_nested_field(layers, "tcp", "tcp_analysis_out_of_order")
+                    or _has_nested_field(layers, "tcp", "tcp_tcp_analysis_out_of_order"),
+                    "lost_segment": _has_nested_field(layers, "tcp", "tcp_analysis_lost_segment")
+                    or _has_nested_field(layers, "tcp", "tcp_tcp_analysis_lost_segment"),
+                },
+                "payload": _clean_hex(_get_nested_field(layers, "tcp", "tcp_tcp_payload")),
+            },
+            "udp": {
+                "srcport": _get_nested_field(layers, "udp", "udp_udp_srcport"),
+                "dstport": _get_nested_field(layers, "udp", "udp_udp_dstport"),
+                "length": _get_nested_field(layers, "udp", "udp_udp_length"),
+                "checksum": _get_nested_field(layers, "udp", "udp_udp_checksum"),
+                "payload": _clean_hex(_get_nested_field(layers, "udp", "udp_udp_payload")),
+            },
+        }
+        if found_protocol != "unknown" and frame_raw:
+            packets.append({"protocol": found_protocol, "metadata": metadata})
+            if max_packets is not None and len(packets) >= max_packets:
+                proc.terminate()
+                break
+
+    proc.wait()
+    return packets
+
+
+def _payloads_from_tshark_packets(packets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    payloads: List[Dict[str, Any]] = []
+    for packet in packets:
+        tcp_meta = packet.get("metadata", {}).get("tcp")
+        if isinstance(tcp_meta, dict) and tcp_meta.get("analysis", {}).get("retransmission") is True:
+            continue
+
+        payload_hex = _extract_actual_tshark_payload(packet)
+        if payload_hex:
+            payloads.append(
+                {
+                    "timestamp": packet.get("metadata", {}).get("frame", {}).get("time_epoch", ""),
+                    "protocol": packet.get("protocol"),
+                    "payload_hex": payload_hex,
+                    "metadata": packet.get("metadata", {}),
+                }
+            )
+    return payloads
+
+
 def _stream_reassembled_messages(file_path: str, service_port: int | None = None) -> List[MessageRecord]:
     source_name = Path(file_path).name
     segments_by_flow: Dict[FlowKey, List[TcpSegment]] = defaultdict(list)
@@ -378,6 +627,112 @@ def iter_messages_from_pcaps(
                 return
 
 
+def iter_messages_from_pcaps_tshark(
+    pcap_dir: str,
+    tshark_filter: str,
+    packets_dir: str,
+    payloads_dir: str,
+    max_messages: int | None = None,
+) -> Iterator[MessageRecord]:
+    packets_path = Path(packets_dir)
+    payloads_path = Path(payloads_dir)
+    packets_path.mkdir(parents=True, exist_ok=True)
+    payloads_path.mkdir(parents=True, exist_ok=True)
+
+    pcap_paths = [path for path in sorted(Path(pcap_dir).iterdir()) if path.suffix.lower() in {".pcap", ".pcapng"}]
+    session_counts: Dict[str, int] = defaultdict(int)
+    next_msg_id = 0
+    packets_seen = 0
+
+    for pcap_path in pcap_paths:
+        remaining = None if max_messages is None else max_messages - packets_seen
+        if remaining is not None and remaining <= 0:
+            break
+
+        packet_records = _extract_tshark_packets(str(pcap_path), tshark_filter, max_packets=remaining)
+        packets_seen += len(packet_records)
+        packet_json = packets_path / f"{pcap_path.name}.json"
+        with open(packet_json, "w", encoding="utf-8") as handle:
+            json.dump(packet_records, handle, indent=4)
+
+        payload_records = _payloads_from_tshark_packets(packet_records)
+        payload_json = payloads_path / f"{pcap_path.name}.json"
+        with open(payload_json, "w", encoding="utf-8") as handle:
+            json.dump(
+                [
+                    {
+                        "timestamp": item.get("timestamp", ""),
+                        "protocol": item.get("protocol"),
+                        "payload_hex": item.get("payload_hex"),
+                    }
+                    for item in payload_records
+                ],
+                handle,
+                indent=4,
+            )
+
+        for payload_record in payload_records:
+            metadata = payload_record.get("metadata", {})
+            ip_meta = metadata.get("ip", {}) if isinstance(metadata, dict) else {}
+            tcp_meta = metadata.get("tcp", {}) if isinstance(metadata, dict) else {}
+            udp_meta = metadata.get("udp", {}) if isinstance(metadata, dict) else {}
+            eth_meta = metadata.get("eth", {}) if isinstance(metadata, dict) else {}
+            frame_meta = metadata.get("frame", {}) if isinstance(metadata, dict) else {}
+
+            src_ip = str(ip_meta.get("src") or eth_meta.get("src") or "unknown")
+            dst_ip = str(ip_meta.get("dst") or eth_meta.get("dst") or "unknown")
+            if tcp_meta.get("stream") is not None or tcp_meta.get("payload"):
+                src_port = _safe_int(tcp_meta.get("srcport"))
+                dst_port = _safe_int(tcp_meta.get("dstport"))
+                l4 = "tcp"
+            elif udp_meta.get("srcport") is not None or udp_meta.get("payload"):
+                src_port = _safe_int(udp_meta.get("srcport"))
+                dst_port = _safe_int(udp_meta.get("dstport"))
+                l4 = "udp"
+            else:
+                src_port = 0
+                dst_port = 0
+                l4 = "l2"
+
+            stream = tcp_meta.get("stream") if isinstance(tcp_meta, dict) else None
+            if stream is not None:
+                session_key = f"tcp.stream:{stream}"
+            else:
+                session_key = _canonical_session_key(src_ip, src_port, dst_ip, dst_port)
+            session_id = f"{pcap_path.name}:{session_key}"
+            index_in_session = session_counts[session_id]
+            payload_hex = str(payload_record.get("payload_hex") or "")
+
+            yield MessageRecord(
+                msg_id=next_msg_id,
+                source_file=pcap_path.name,
+                session_id=session_id,
+                session_key=session_key,
+                src_ip=src_ip,
+                src_port=src_port,
+                dst_ip=dst_ip,
+                dst_port=dst_port,
+                direction="unknown",
+                payload_hex=payload_hex,
+                payload_len=len(payload_hex) // 2,
+                timestamp=_safe_float(payload_record.get("timestamp")),
+                index_in_session=index_in_session,
+                metadata={
+                    "extraction_mode": "tshark_packet_payload",
+                    "tshark_filter": tshark_filter,
+                    "protocol": payload_record.get("protocol"),
+                    "transport": l4,
+                    "frame_number": frame_meta.get("number"),
+                    "packet_metadata_json": str(packet_json),
+                    "payload_metadata_json": str(payload_json),
+                },
+            )
+            session_counts[session_id] += 1
+            next_msg_id += 1
+            if max_messages is not None and next_msg_id >= max_messages:
+                return
+
+
 def write_messages_from_pcaps_jsonl(
     pcap_dir: str,
     output_path: str,
@@ -391,6 +746,28 @@ def write_messages_from_pcaps_jsonl(
             pcap_dir,
             service_port=service_port,
             reassembly_mode=reassembly_mode,
+            max_messages=max_messages,
+        ):
+            handle.write(json.dumps(message.to_dict(), sort_keys=True) + "\n")
+            count += 1
+    return count
+
+
+def write_messages_from_pcaps_tshark_jsonl(
+    pcap_dir: str,
+    output_path: str,
+    tshark_filter: str,
+    packets_dir: str,
+    payloads_dir: str,
+    max_messages: int | None = None,
+) -> int:
+    count = 0
+    with open(output_path, "w", encoding="utf-8") as handle:
+        for message in iter_messages_from_pcaps_tshark(
+            pcap_dir,
+            tshark_filter=tshark_filter,
+            packets_dir=packets_dir,
+            payloads_dir=payloads_dir,
             max_messages=max_messages,
         ):
             handle.write(json.dumps(message.to_dict(), sort_keys=True) + "\n")

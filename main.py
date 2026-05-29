@@ -106,6 +106,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _script("03_extract_messages.py"),
                     _path(extraction_input),
                     _path(messages_jsonl),
+                    "--extraction-method",
+                    args.extraction_method,
                     "--reassembly-mode",
                     args.reassembly_mode,
                 ],
@@ -113,6 +115,17 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         )
         if args.service_port is not None:
             pipeline[-1][1].extend(["--service-port", str(args.service_port)])
+        if args.tshark_filter:
+            pipeline[-1][1].extend(["--tshark-filter", args.tshark_filter])
+        if args.extraction_method == "tshark":
+            pipeline[-1][1].extend(
+                [
+                    "--packets-dir",
+                    _path(args.data_dir / "payload_extraction" / "packets"),
+                    "--payloads-dir",
+                    _path(args.data_dir / "payload_extraction" / "payloads"),
+                ]
+            )
         if args.max_messages is not None:
             pipeline[-1][1].extend(["--max-messages", str(args.max_messages)])
 
@@ -429,12 +442,19 @@ def parse_args() -> argparse.Namespace:
     )
 
     extract_group.add_argument("--max-messages", type=int, default=DEFAULT_MAX_MESSAGES, help="Maximum messages to extract/write.")
-    extract_group.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
+    extract_group.add_argument(
+        "--extraction-method",
+        choices=["tshark", "tcp"],
+        default="tshark",
+        help="Message extraction method. tshark uses --tshark-filter; tcp is the legacy Scapy TCP port extractor.",
+    )
+    extract_group.add_argument("--tshark-filter", help="TShark display filter for the target protocol, for example mbtcp or s7comm.")
+    extract_group.add_argument("--service-port", type=int, help="Legacy TCP extractor port filter. Used with --extraction-method tcp.")
     extract_group.add_argument(
         "--reassembly-mode",
         choices=["packet", "stream"],
         default="stream",
-        help="PCAP extraction mode: packet payloads or reconstructed directional TCP streams.",
+        help="Legacy TCP extraction mode: packet payloads or reconstructed directional TCP streams.",
     )
 
     family_group.add_argument("--family-sample-size", type=int, default=100000, help="Max unique messages for clustering.")
@@ -559,6 +579,9 @@ def validate_args(args: argparse.Namespace) -> None:
         if args.input_folder is not None:
             args.input_folder = args.input_folder.resolve()
         return
+
+    if args.extraction_method == "tshark" and not args.tshark_filter:
+        raise SystemExit(f"{RED}Error:{RESET} --tshark-filter is required with --extraction-method tshark.")
 
     if args.input_folder is None:
         raise SystemExit(f"{RED}Error:{RESET} input_folder is required unless --use-existing-messages is provided.")

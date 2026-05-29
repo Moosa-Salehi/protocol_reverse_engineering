@@ -25,7 +25,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 
 - `scripts/01_collect_pcaps.py` collects PCAP files from a source tree into one normalized directory.
 - `scripts/02_dedup_pcaps.py` finds duplicate PCAP files and can remove them.
-- `scripts/03_extract_messages.py` extracts TCP payload messages from PCAPs directly into the canonical JSONL corpus.
+- `scripts/03_extract_messages.py` extracts protocol payload messages into the canonical JSONL corpus, using TShark display-filter extraction by default or the legacy Scapy TCP port extractor for compatibility.
 - `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback; it supports `raw_bytes`, `structural`, `neural`, and `hybrid` feature modes, caches neural latents by payload hash, clusters a unique-message sample, and propagates labels to duplicate payloads across the corpus.
 - `scripts/05_infer_framing.py` infers protocol-agnostic framing/header hypotheses from discovered families using stable prefixes, length/correlation/counter/discriminator candidates, and body-tail variability.
 - `scripts/06_extract_features.py` writes reusable per-family feature artifacts.
@@ -109,18 +109,19 @@ pip install -r requirements.txt
 Default PCAP workflow:
 
 ```bash
-python main.py <folder-containing-pcaps> --service-port <service-port>
+python main.py <folder-containing-pcaps> --tshark-filter <protocol-filter-name>
 ```
 
-This command treats the input folder as an existing normalized PCAP directory, extracts up to 200,000 TCP payload messages into `data/01_messages.jsonl`, runs all inference stages, writes `output/protocol_report.md` and `output/protocol_report.html`. Typical runtime for 200,000 messages: 6 minutes. (3 minutes for message extraction in stream mode, 2 minutes waiting for llm response).
+This command treats the input folder as an existing normalized PCAP directory, extracts up to 200,000 TShark-filtered packet payloads into `data/01_messages.jsonl`, writes intermediate packet metadata to `data/payload_extraction/packets` and carved payloads to `data/payload_extraction/payloads`, runs all inference stages, writes `output/protocol_report.md` and `output/protocol_report.html`. Typical runtime for 200,000 messages: 6 minutes. (3 minutes for message extraction, 2 minutes waiting for llm response).
 
 Useful runner options:
 
 ```bash
-python main.py files --collect
-python main.py ../pcaps --service-port 502 --ground-truth-json ./truth-files/modbus.json
+python main.py files --collect --tshark-filter mbtcp
+python main.py ../pcaps --tshark-filter mbtcp --ground-truth-json ./truth-files/modbus.json
+python main.py ../pcaps --extraction-method tcp --service-port 502 --ground-truth-json ./truth-files/modbus.json
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
-python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_VAE.pth
+python main.py ../pcaps --tshark-filter s7comm --family-feature-mode hybrid --family-neural-model-path industrial_VAE.pth
 ```
 
 ## Running step by step
@@ -137,7 +138,7 @@ $env:PYTHONPATH="src"
 Build from an existing normalized PCAP directory, matching the default `python main.py pcaps` flow:
 
 ```bash
-python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --reassembly-mode stream --max-messages 200000
+python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --extraction-method tshark --tshark-filter mbtcp --max-messages 200000
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000 --feature-mode raw_bytes
 python3 scripts/05_infer_framing.py data/01_messages.jsonl data/02_family_assignments.json data/04_framing.json
 python3 scripts/06_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
