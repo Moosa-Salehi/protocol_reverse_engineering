@@ -109,7 +109,7 @@ pip install -r requirements.txt
 Default PCAP workflow:
 
 ```bash
-python main.py <folder-containing-pcaps> --tshark-filter <protocol-filter-name>
+python main.py <folder-containing-pcaps> --tshark-filter <tshark-filter>
 ```
 
 This command treats the input folder as an existing normalized PCAP directory, extracts up to 200,000 TShark-filtered packet payloads into `data/01_messages.jsonl`, writes intermediate packet metadata to `data/payload_extraction/packets` and carved payloads to `data/payload_extraction/payloads`, runs all inference stages, writes `output/protocol_report.md` and `output/protocol_report.html`. Typical runtime for 200,000 messages: 6 minutes. (3 minutes for message extraction, 2 minutes waiting for llm response).
@@ -117,7 +117,7 @@ This command treats the input folder as an existing normalized PCAP directory, e
 Useful runner options:
 
 ```bash
-python main.py files --collect --tshark-filter mbtcp
+python main.py files --collect --tshark-filter "udp.srcport == 49152"
 python main.py ../pcaps --tshark-filter mbtcp --ground-truth-json ./truth-files/modbus.json
 python main.py ../pcaps --extraction-method tcp --service-port 502 --ground-truth-json ./truth-files/modbus.json
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
