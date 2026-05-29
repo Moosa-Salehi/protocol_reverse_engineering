@@ -521,24 +521,34 @@ def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, i
     packet_json = Path(packets_dir) / f"{pcap_path.name}.json"
     payload_json = Path(payloads_dir) / f"{pcap_path.name}.json"
 
-    packet_records = _extract_tshark_packets(str(pcap_path), tshark_filter)
-    with open(packet_json, "w", encoding="utf-8") as handle:
-        json.dump(packet_records, handle, indent=4)
+    packet_records = []
+    if not os.path.exists(packet_json):
+        packet_records = _extract_tshark_packets(str(pcap_path), tshark_filter)
+        with open(packet_json, "w", encoding="utf-8") as handle:
+            json.dump(packet_records, handle, indent=4)
+    else:
+        with open(packet_json, "r", encoding="utf-8") as handle:
+            packet_records = json.load(handle)
 
-    payload_records = _payloads_from_tshark_packets(packet_records)
-    with open(payload_json, "w", encoding="utf-8") as handle:
-        json.dump(
-            [
-                {
-                    "timestamp": item.get("timestamp", ""),
-                    "protocol": item.get("protocol"),
-                    "payload_hex": item.get("payload_hex"),
-                }
-                for item in payload_records
-            ],
-            handle,
-            indent=4,
-        )
+    payload_records = []
+    if not os.path.exists(payload_json):
+        payload_records = _payloads_from_tshark_packets(packet_records)
+        with open(payload_json, "w", encoding="utf-8") as handle:
+            json.dump(
+                [
+                    {
+                        "timestamp": item.get("timestamp", ""),
+                        "protocol": item.get("protocol"),
+                        "payload_hex": item.get("payload_hex"),
+                    }
+                    for item in payload_records
+                ],
+                handle,
+                indent=4,
+            )
+    else:
+        with open(payload_json, "r", encoding="utf-8") as handle:
+            payload_records = json.load(handle)
 
     session_counts: Dict[str, int] = defaultdict(int)
     messages: List[MessageRecord] = []
