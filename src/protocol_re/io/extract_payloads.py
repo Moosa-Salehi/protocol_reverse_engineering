@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -464,6 +465,112 @@ def _payloads_from_tshark_packets(packets: List[Dict[str, Any]]) -> List[Dict[st
     return payloads
 
 
+def _tshark_payload_record_to_message(
+    payload_record: Dict[str, Any],
+    pcap_name: str,
+    packet_json: Path,
+    payload_json: Path,
+    tshark_filter: str,
+    index_in_session: int,
+) -> MessageRecord:
+    metadata = payload_record.get("metadata", {})
+    ip_meta = metadata.get("ip", {}) if isinstance(metadata, dict) else {}
+    tcp_meta = metadata.get("tcp", {}) if isinstance(metadata, dict) else {}
+    udp_meta = metadata.get("udp", {}) if isinstance(metadata, dict) else {}
+    eth_meta = metadata.get("eth", {}) if isinstance(metadata, dict) else {}
+    frame_meta = metadata.get("frame", {}) if isinstance(metadata, dict) else {}
+
+    src_ip = str(ip_meta.get("src") or eth_meta.get("src") or "unknown")
+    dst_ip = str(ip_meta.get("dst") or eth_meta.get("dst") or "unknown")
+    if tcp_meta.get("stream") is not None or tcp_meta.get("payload"):
+        src_port = _safe_int(tcp_meta.get("srcport"))
+        dst_port = _safe_int(tcp_meta.get("dstport"))
+        l4 = "tcp"
+    elif udp_meta.get("srcport") is not None or udp_meta.get("payload"):
+        src_port = _safe_int(udp_meta.get("srcport"))
+        dst_port = _safe_int(udp_meta.get("dstport"))
+        l4 = "udp"
+    else:
+        src_port = 0
+        dst_port = 0
+        l4 = "l2"
+
+    stream = tcp_meta.get("stream") if isinstance(tcp_meta, dict) else None
+    if stream is not None:
+        session_key = f"tcp.stream:{stream}"
+    else:
+        session_key = _canonical_session_key(src_ip, src_port, dst_ip, dst_port)
+    session_id = f"{pcap_name}:{session_key}"
+    payload_hex = str(payload_record.get("payload_hex") or "")
+
+    return MessageRecord(
+        msg_id=-1,
+        source_file=pcap_name,
+        session_id=session_id,
+        session_key=session_key,
+        src_ip=src_ip,
+        src_port=src_port,
+        dst_ip=dst_ip,
+        dst_port=dst_port,
+        direction="unknown",
+        payload_hex=payload_hex,
+        payload_len=len(payload_hex) // 2,
+        timestamp=_safe_float(payload_record.get("timestamp")),
+        index_in_session=index_in_session,
+        metadata={
+            "extraction_mode": "tshark_packet_payload",
+            "tshark_filter": tshark_filter,
+            "protocol": payload_record.get("protocol"),
+            "transport": l4,
+            "frame_number": frame_meta.get("number"),
+            "packet_metadata_json": str(packet_json),
+            "payload_metadata_json": str(payload_json),
+        },
+    )
+
+
+def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, int, List[MessageRecord]]:
+    pcap_path_str, tshark_filter, packets_dir, payloads_dir = args
+    pcap_path = Path(pcap_path_str)
+    packet_json = Path(packets_dir) / f"{pcap_path.name}.json"
+    payload_json = Path(payloads_dir) / f"{pcap_path.name}.json"
+
+    packet_records = _extract_tshark_packets(str(pcap_path), tshark_filter)
+    with open(packet_json, "w", encoding="utf-8") as handle:
+        json.dump(packet_records, handle, indent=4)
+
+    payload_records = _payloads_from_tshark_packets(packet_records)
+    with open(payload_json, "w", encoding="utf-8") as handle:
+        json.dump(
+            [
+                {
+                    "timestamp": item.get("timestamp", ""),
+                    "protocol": item.get("protocol"),
+                    "payload_hex": item.get("payload_hex"),
+                }
+                for item in payload_records
+            ],
+            handle,
+            indent=4,
+        )
+
+    session_counts: Dict[str, int] = defaultdict(int)
+    messages: List[MessageRecord] = []
+    for payload_record in payload_records:
+        temp_message = _tshark_payload_record_to_message(
+            payload_record,
+            pcap_path.name,
+            packet_json,
+            payload_json,
+            tshark_filter,
+            index_in_session=0,
+        )
+        temp_message.index_in_session = session_counts[temp_message.session_id]
+        session_counts[temp_message.session_id] += 1
+        messages.append(temp_message)
+    return pcap_path.name, len(packet_records), messages
+
+
 def _stream_reassembled_messages(file_path: str, service_port: int | None = None) -> List[MessageRecord]:
     source_name = Path(file_path).name
     segments_by_flow: Dict[FlowKey, List[TcpSegment]] = defaultdict(list)
@@ -633,6 +740,7 @@ def iter_messages_from_pcaps_tshark(
     packets_dir: str,
     payloads_dir: str,
     max_messages: int | None = None,
+    max_workers: int = 4,
 ) -> Iterator[MessageRecord]:
     packets_path = Path(packets_dir)
     payloads_path = Path(payloads_dir)
@@ -640,97 +748,62 @@ def iter_messages_from_pcaps_tshark(
     payloads_path.mkdir(parents=True, exist_ok=True)
 
     pcap_paths = [path for path in sorted(Path(pcap_dir).iterdir()) if path.suffix.lower() in {".pcap", ".pcapng"}]
-    session_counts: Dict[str, int] = defaultdict(int)
     next_msg_id = 0
-    packets_seen = 0
 
-    for pcap_path in pcap_paths:
-        remaining = None if max_messages is None else max_messages - packets_seen
-        if remaining is not None and remaining <= 0:
-            break
+    if max_workers <= 1 or len(pcap_paths) <= 1:
+        for pcap_path in pcap_paths:
+            _, _, messages = _process_tshark_pcap_worker((str(pcap_path), tshark_filter, str(packets_path), str(payloads_path)))
+            for message in messages:
+                message.msg_id = next_msg_id
+                yield message
+                next_msg_id += 1
+                if max_messages is not None and next_msg_id >= max_messages:
+                    return
+        return
 
-        packet_records = _extract_tshark_packets(str(pcap_path), tshark_filter, max_packets=remaining)
-        packets_seen += len(packet_records)
-        packet_json = packets_path / f"{pcap_path.name}.json"
-        with open(packet_json, "w", encoding="utf-8") as handle:
-            json.dump(packet_records, handle, indent=4)
+    worker_count = min(max_workers, os.cpu_count() or 1, len(pcap_paths))
+    next_submit_index = 0
+    next_emit_index = 0
+    pending: Dict[Any, int] = {}
+    completed: Dict[int, List[MessageRecord]] = {}
 
-        payload_records = _payloads_from_tshark_packets(packet_records)
-        payload_json = payloads_path / f"{pcap_path.name}.json"
-        with open(payload_json, "w", encoding="utf-8") as handle:
-            json.dump(
-                [
-                    {
-                        "timestamp": item.get("timestamp", ""),
-                        "protocol": item.get("protocol"),
-                        "payload_hex": item.get("payload_hex"),
-                    }
-                    for item in payload_records
-                ],
-                handle,
-                indent=4,
+    with ProcessPoolExecutor(max_workers=worker_count) as executor:
+        while next_submit_index < len(pcap_paths) and len(pending) < worker_count:
+            pcap_path = pcap_paths[next_submit_index]
+            future = executor.submit(
+                _process_tshark_pcap_worker,
+                (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path)),
             )
+            pending[future] = next_submit_index
+            next_submit_index += 1
 
-        for payload_record in payload_records:
-            metadata = payload_record.get("metadata", {})
-            ip_meta = metadata.get("ip", {}) if isinstance(metadata, dict) else {}
-            tcp_meta = metadata.get("tcp", {}) if isinstance(metadata, dict) else {}
-            udp_meta = metadata.get("udp", {}) if isinstance(metadata, dict) else {}
-            eth_meta = metadata.get("eth", {}) if isinstance(metadata, dict) else {}
-            frame_meta = metadata.get("frame", {}) if isinstance(metadata, dict) else {}
+        while pending:
+            for future in as_completed(tuple(pending.keys())):
+                completed[pending.pop(future)] = future.result()[2]
+                break
 
-            src_ip = str(ip_meta.get("src") or eth_meta.get("src") or "unknown")
-            dst_ip = str(ip_meta.get("dst") or eth_meta.get("dst") or "unknown")
-            if tcp_meta.get("stream") is not None or tcp_meta.get("payload"):
-                src_port = _safe_int(tcp_meta.get("srcport"))
-                dst_port = _safe_int(tcp_meta.get("dstport"))
-                l4 = "tcp"
-            elif udp_meta.get("srcport") is not None or udp_meta.get("payload"):
-                src_port = _safe_int(udp_meta.get("srcport"))
-                dst_port = _safe_int(udp_meta.get("dstport"))
-                l4 = "udp"
-            else:
-                src_port = 0
-                dst_port = 0
-                l4 = "l2"
+            while next_emit_index in completed:
+                messages = completed.pop(next_emit_index)
+                for message in messages:
+                    message.msg_id = next_msg_id
+                    yield message
+                    next_msg_id += 1
+                    if max_messages is not None and next_msg_id >= max_messages:
+                        for future in pending:
+                            future.cancel()
+                        return
+                next_emit_index += 1
 
-            stream = tcp_meta.get("stream") if isinstance(tcp_meta, dict) else None
-            if stream is not None:
-                session_key = f"tcp.stream:{stream}"
-            else:
-                session_key = _canonical_session_key(src_ip, src_port, dst_ip, dst_port)
-            session_id = f"{pcap_path.name}:{session_key}"
-            index_in_session = session_counts[session_id]
-            payload_hex = str(payload_record.get("payload_hex") or "")
-
-            yield MessageRecord(
-                msg_id=next_msg_id,
-                source_file=pcap_path.name,
-                session_id=session_id,
-                session_key=session_key,
-                src_ip=src_ip,
-                src_port=src_port,
-                dst_ip=dst_ip,
-                dst_port=dst_port,
-                direction="unknown",
-                payload_hex=payload_hex,
-                payload_len=len(payload_hex) // 2,
-                timestamp=_safe_float(payload_record.get("timestamp")),
-                index_in_session=index_in_session,
-                metadata={
-                    "extraction_mode": "tshark_packet_payload",
-                    "tshark_filter": tshark_filter,
-                    "protocol": payload_record.get("protocol"),
-                    "transport": l4,
-                    "frame_number": frame_meta.get("number"),
-                    "packet_metadata_json": str(packet_json),
-                    "payload_metadata_json": str(payload_json),
-                },
-            )
-            session_counts[session_id] += 1
-            next_msg_id += 1
-            if max_messages is not None and next_msg_id >= max_messages:
-                return
+                while next_submit_index < len(pcap_paths) and len(pending) < worker_count:
+                    if max_messages is not None and next_msg_id >= max_messages:
+                        break
+                    pcap_path = pcap_paths[next_submit_index]
+                    future = executor.submit(
+                        _process_tshark_pcap_worker,
+                        (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path)),
+                    )
+                    pending[future] = next_submit_index
+                    next_submit_index += 1
 
 
 def write_messages_from_pcaps_jsonl(
@@ -760,6 +833,7 @@ def write_messages_from_pcaps_tshark_jsonl(
     packets_dir: str,
     payloads_dir: str,
     max_messages: int | None = None,
+    max_workers: int = 4,
 ) -> int:
     count = 0
     with open(output_path, "w", encoding="utf-8") as handle:
@@ -769,6 +843,7 @@ def write_messages_from_pcaps_tshark_jsonl(
             packets_dir=packets_dir,
             payloads_dir=payloads_dir,
             max_messages=max_messages,
+            max_workers=max_workers,
         ):
             handle.write(json.dumps(message.to_dict(), sort_keys=True) + "\n")
             count += 1

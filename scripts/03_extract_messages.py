@@ -29,6 +29,7 @@ def main() -> None:
         default="data/payload_extraction/payloads",
         help="Directory for intermediate carved payload JSON files.",
     )
+    parser.add_argument("--tshark-workers", type=int, default=4, help="Maximum parallel TShark worker processes.")
     parser.add_argument("--max-messages", type=int, help="Maximum number of messages to extract.")
     parser.add_argument(
         "--reassembly-mode",
@@ -49,6 +50,7 @@ def main() -> None:
             packets_dir=args.packets_dir,
             payloads_dir=args.payloads_dir,
             max_messages=args.max_messages,
+            max_workers=args.tshark_workers,
         )
     else:
         count = write_messages_from_pcaps_jsonl(
