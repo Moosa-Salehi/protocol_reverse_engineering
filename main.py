@@ -447,7 +447,7 @@ def parse_args() -> argparse.Namespace:
     family_group.add_argument(
         "--family-neural-model-path",
         type=Path,
-        default=Path("pre_trained/industrial_encoder_only.pth"),
+        default=Path("pre_trained/industrial_VAE.pth"),
         help="Optional VAE encoder checkpoint for neural/hybrid family discovery.",
     )
     family_group.add_argument(

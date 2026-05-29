@@ -6,7 +6,7 @@ The pipeline is:
 
 1. Optionally collect PCAP/PCAPNG files from an arbitrary source tree into a normalized `pcaps/` directory and remove duplicate captures.
 2. Extract TCP payloads into `data/01_messages.jsonl`, either as packet payloads or as directional reassembled TCP streams. Each message records source file, session key, endpoints, direction when a service port is known, payload hex, length, timestamp/session order, and extraction metadata.
-3. Discover message families in `data/02_family_assignments.json` by clustering unique payload vectors with HDBSCAN or DBSCAN after optional PCA. Feature modes include raw bytes, symbolic structural features, optional 32D neural latents from `industrial_encoder_only.pth`, or hybrid structural+neural vectors. When dependencies or the neural model are unavailable, deterministic fallback paths are used; sampled labels are propagated to duplicate payloads and centroid-nearest unsampled unique payloads.
+3. Discover message families in `data/02_family_assignments.json` by clustering unique payload vectors with HDBSCAN or DBSCAN after optional PCA. Feature modes include raw bytes, symbolic structural features, optional 32D neural latents from `industrial_VAE.pth`, or hybrid structural+neural vectors. When dependencies or the neural model are unavailable, deterministic fallback paths are used; sampled labels are propagated to duplicate payloads and centroid-nearest unsampled unique payloads.
 4. Infer protocol-agnostic framing hypotheses in `data/04_framing.json`, including stable prefixes and likely header fields such as length, counter, discriminator, and body/tail variability hints.
 5. Extract reusable per-family evidence in `data/03_family_features.json`: length profiles, entropy and uniqueness by offset, byte histograms, n-gram/motif repetition, trailing padding/suffix clues, recurring fixed-position groups, and example message ids.
 6. Infer family templates, contiguous segments, and coarse field hypotheses in `data/05_families.json`. Boundary inference uses payload variability plus optional feature/framing evidence, including high-confidence body-start hints, without treating framing-only bytes as protocol fields.
@@ -55,7 +55,7 @@ Stage 04 accepts `--feature-mode raw_bytes|structural|neural|hybrid`.
 
 - `raw_bytes` preserves the previous padded-byte vector behavior and downweights volatile byte offsets.
 - `structural` uses symbolic protocol features such as length buckets, stable prefix masks, discriminator-like bytes, direction, header/body split hints, and length-field evidence.
-- `neural` loads `industrial_encoder_only.pth` when available and encodes each unique payload as a 32D latent vector.
+- `neural` loads `industrial_VAE.pth` when available and encodes each unique payload as a 32D latent vector.
 - `hybrid` concatenates the neural 32D latent vector with the structural feature vector.
 
 Neural modes are optional. If PyTorch, the model file, or a compatible encoder object is unavailable, family discovery falls back to symbolic structural features or the existing heuristic path. Latents are cached by payload hash with `--latent-cache-path` to speed repeated runs. The assignment JSON records clustering metadata under `metadata`, including `feature_mode`, `neural_model`, `latent_dim`, `latent_cache`, and `symbolic_feature_count`.
@@ -120,7 +120,7 @@ Useful runner options:
 python main.py files --collect
 python main.py ../pcaps --service-port 502 --ground-truth-json ./truth-files/modbus.json
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
-python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_encoder_only.pth
+python main.py ../pcaps --service-port 502 --family-feature-mode hybrid --family-neural-model-path industrial_VAE.pth
 ```
 
 ## Running step by step
@@ -143,7 +143,7 @@ python3 scripts/05_infer_framing.py data/01_messages.jsonl data/02_family_assign
 python3 scripts/06_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
 python3 scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json
 python3 scripts/08_pair_requests_responses.py data/01_messages.jsonl data/06_pairs.json --assignments-json data/02_family_assignments.json
-python3 scripts/09_infer_keywords.py data/01_messages.jsonl data/07_keywords.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json --neural-model-path industrial_encoder_only.pth --salience-cache-path data/salience_cache.json
+python3 scripts/09_infer_keywords.py data/01_messages.jsonl data/07_keywords.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json --neural-model-path industrial_VAE.pth --salience-cache-path data/salience_cache.json
 python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assignments.json data/06_pairs.json data/08_relations.json
 python3 scripts/11_infer_semantics.py data/05_families.json data/08_relations.json data/09_semantics.json
 python3 scripts/12_build_protocol_model.py data/05_families.json data/10_protocol_model.json --features-json data/03_family_features.json --keywords-json data/07_keywords.json --relations-json data/08_relations.json --semantics-json data/09_semantics.json --framing-json data/04_framing.json
@@ -159,7 +159,7 @@ python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_re
 To use hybrid structural/neural clustering in the step-by-step flow:
 
 ```bash
-python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000 --feature-mode hybrid --neural-model-path industrial_encoder_only.pth --latent-cache-path data/latent_cache.json --neural-batch-size 256
+python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000 --feature-mode hybrid --neural-model-path industrial_VAE.pth --latent-cache-path data/latent_cache.json --neural-batch-size 256
 ```
 
 If running with `--collect`, prepend these steps and use `pcaps` as the extraction input:

@@ -20,7 +20,7 @@ def main() -> None:
     parser.add_argument("--dbscan-min-samples", type=int, default=5)
     parser.add_argument("--hdbscan-min-cluster-size", type=int, default=50)
     parser.add_argument("--feature-mode", choices=["raw_bytes", "structural", "neural", "hybrid"], default="raw_bytes")
-    parser.add_argument("--neural-model-path", default="industrial_encoder_only.pth")
+    parser.add_argument("--neural-model-path", default="industrial_VAE.pth")
     parser.add_argument("--latent-cache-path")
     parser.add_argument("--neural-batch-size", type=int, default=256)
     args = parser.parse_args()
