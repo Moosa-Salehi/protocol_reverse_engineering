@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from datetime import datetime
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -78,13 +79,22 @@ def _clean_hex(hex_str: Any) -> str:
         return ""
     return str(hex_str).replace(":", "").replace(" ", "").lower()
 
+def iso_z_to_unix_float(s: str) -> float:
+    # Expect e.g. 2023-03-25T12:23:36.835880000Z
+    s = s.strip()
 
-# def _safe_float(value: Any) -> float | None:
-#     try:
-#         return float(value)
-#     except (TypeError, ValueError):
-#         return None
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"  # Z -> UTC offset for fromisoformat
 
+    # Trim fractional seconds to 6 digits (microseconds) if present
+    if "." in s:
+        main, rest = s.split(".", 1)              # main: ...T12:23:36
+        frac, offset = rest[:rest.find("+")], rest[rest.find("+"):]  # frac, +00:00
+        frac = (frac[:6]).ljust(6, "0")           # keep 6 digits
+        s = f"{main}.{frac}{offset}"
+
+    dt = datetime.fromisoformat(s)
+    return dt.timestamp()
 
 def _safe_int(value: Any) -> int:
     try:
@@ -510,8 +520,7 @@ def _tshark_payload_record_to_message(
         direction="unknown",
         payload_hex=payload_hex,
         payload_len=len(payload_hex) // 2,
-        # timestamp=_safe_float(payload_record.get("timestamp")),
-        timestamp=payload_record.get("timestamp"),
+        timestamp=iso_z_to_unix_float(str(payload_record.get("timestamp"))),        
         index_in_session=index_in_session,
     )
 
