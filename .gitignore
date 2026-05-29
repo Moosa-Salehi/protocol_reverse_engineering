@@ -1,5 +1,7 @@
 LLM_config.json
 data/
+data2/
+output2/
 archive/
 venv/
 *.pyc
