@@ -76,11 +76,14 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     relations_json = data_dir / "08_relations.json"
     semantics_json = data_dir / "09_semantics.json"
     model_json = data_dir / "10_protocol_model.json"
+    refined_model_json = data_dir / "10_protocol_model.refined.json"
     evaluation_json = data_dir / "11_evaluation.json"
     protocol_spec_md = output_dir / "protocol_report.md"
     llm_evidence_json = data_dir / "12_llm_evidence.json"
     llm_analysis_json = data_dir / "13_llm_analysis.json"
     llm_prompt_md = data_dir / "13_llm_prompt.md"
+    llm_patches_json = data_dir / "13_llm_patches.json"
+    llm_patch_validation_json = data_dir / "13_llm_patch_validation.json"
     evaluation_model_data_json = data_dir / "14_evaluation_model_data.json"
     final_evaluation_json = data_dir / "15_evaluation_result.json"
     html_report = output_dir / "protocol_report.html"
@@ -274,7 +277,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 "18_export_markdown",
                 [
                     _script("18_export_markdown.py"),
-                    _path(model_json),
+                    _path(refined_model_json),
                     _path(protocol_spec_md),
                     "--evaluation-json",
                     _path(evaluation_json),
@@ -284,7 +287,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 "19_export_html",
                 [
                     _script("19_export_html.py"),
-                    _path(model_json),
+                    _path(refined_model_json),
                     _path(html_report),
                     "--evaluation-json",
                     _path(evaluation_json),
@@ -326,6 +329,23 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ],
         ),
         (
+            "15b_apply_llm_refinement",
+            [
+                _script("15b_apply_llm_refinement.py"),
+                _path(model_json),
+                _path(llm_analysis_json),
+                _path(refined_model_json),
+                "--evidence-json",
+                _path(llm_evidence_json),
+                "--schema-json",
+                _path(PROJECT_ROOT / "schema" / "protocol_model.schema.json"),
+                "--patches-out",
+                _path(llm_patches_json),
+                "--validation-out",
+                _path(llm_patch_validation_json),
+            ],
+        ),
+        (
             "16_prepare_evaluation_data",
             [
                 _script("16_prepare_evaluation_data.py"),
@@ -333,6 +353,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 _path(evaluation_json),
                 _path(llm_analysis_json),
                 _path(evaluation_model_data_json),
+                "--refined-protocol-model-json",
+                _path(refined_model_json),
+                "--patch-validation-json",
+                _path(llm_patch_validation_json),
             ],
         ),
     ]

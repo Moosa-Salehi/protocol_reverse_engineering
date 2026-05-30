@@ -12,8 +12,8 @@ The pipeline is:
 6. Infer family templates, contiguous segments, and coarse field hypotheses in `data/05_families.json`. Boundary inference uses payload variability plus optional feature/framing evidence, including high-confidence body-start hints, without treating framing-only bytes as protocol fields.
 7. Pair likely requests and responses within sessions, discover discriminator/opcode bytes and subformats with learned salience plus symbolic evidence, summarize family-to-family relations, echo fields, length relations, role hints, and semantic field labels.
 8. Assemble `data/10_protocol_model.json` from family, feature, framing, discriminator/keyword, relation, and semantic evidence; write pipeline quality metrics to `data/11_evaluation.json`.
-9. Export compact LLM evidence, render or call an OpenAI-compatible analysis step, prepare optional ground-truth evaluation input, and compare against a ground-truth protocol JSON when provided.
-10. Render final human-readable Markdown and self-contained HTML reports, including evaluation, LLM analysis, and final ground-truth metrics when available.
+9. Export compact LLM evidence, render or call an OpenAI-compatible analysis step, collect RFC 6902 LLM patches, validate them against `schema/protocol_model.schema.json`, and apply only evidence-supported semantic refinements into `data/10_protocol_model.refined.json`.
+10. Prepare optional ground-truth evaluation input from the LLM-assisted refined model, compare against a ground-truth protocol JSON when provided, and render final Markdown/HTML reports from the refined model.
 
 ## Architecture
 
@@ -37,11 +37,12 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/12_build_protocol_model.py` assembles a protocol-model JSON document matching `schema/protocol_model.schema.json`, including feature, discriminator/keyword, relation, and semantic evidence when supplied.
 - `scripts/13_evaluate_pipeline.py` writes pipeline quality metrics for corpus coverage, clustering, boundaries, pairing, relations, and semantic-label coverage when supplied.
 - `scripts/14_export_llm_evidence.py` renders a schema-shaped compact per-family evidence bundle for downstream LLM analysis, including compact evaluation metrics when supplied.
-- `scripts/15_analyze_with_llm.py` renders the protocol-analysis prompt and can call an OpenAI-compatible LLM API to write `data/13_llm_analysis.json`.
-- `scripts/16_prepare_evaluation_data.py` prepares `data/14_evaluation_model_data.json` for final ground-truth evaluation.
-- `scripts/17_evaluate_protocol_spec.py` compares `data/14_evaluation_model_data.json` against a ground-truth protocol JSON and writes `data/15_evaluation_result.json`.
-- `scripts/18_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied.
-- `scripts/19_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence.
+- `scripts/15_analyze_with_llm.py` renders the protocol-analysis prompt and can call an OpenAI-compatible LLM API to write `data/13_llm_analysis.json` with structured patch suggestions.
+- `scripts/15b_apply_llm_refinement.py` extracts LLM patches into `data/13_llm_patches.json`, validates/evidence-gates each patch into `data/13_llm_patch_validation.json`, and writes `data/10_protocol_model.refined.json`.
+- `scripts/16_prepare_evaluation_data.py` prepares `data/14_evaluation_model_data.json` for final ground-truth evaluation, using the refined protocol model when supplied.
+- `scripts/17_evaluate_protocol_spec.py` compares `data/14_evaluation_model_data.json` against a ground-truth protocol JSON and writes `data/15_evaluation_result.json`, including base-vs-refined deltas when both are available.
+- `scripts/18_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied; the runner passes the refined model.
+- `scripts/19_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence; the runner passes the refined model.
 
 ## Feature artifacts
 
@@ -68,11 +69,13 @@ The runner writes learned salience cache entries to `data/07_salience_cache.json
 
 ## LLM evidence schema
 
-`schema/llm_evidence.schema.json` defines the compact evidence bundle produced by `scripts/14_export_llm_evidence.py`. The bundle is protocol-agnostic and is organized for LLM analysis around source counts, coverage, evaluation quality signals, top global relations, global field candidates, compact family evidence, and open questions. Raw payloads are intentionally omitted. The exporter writes compact JSON by default; use `--pretty` only when human-readable formatting is needed. Use `--family-limit`, `--field-limit`, and `--relation-limit` to make smaller targeted bundles.
+`schema/llm_evidence.schema.json` defines the compact evidence bundle produced by `scripts/14_export_llm_evidence.py`. The bundle is protocol-agnostic and is organized for LLM analysis around source counts, coverage, evaluation quality signals, top global relations, global field candidates, compact family evidence, neural context, and open questions. Raw payloads are intentionally omitted. The exporter writes compact JSON by default; use `--pretty` only when human-readable formatting is needed. Use `--family-limit`, `--field-limit`, and `--relation-limit` to make smaller targeted bundles.
 
 ## LLM protocol analysis
 
-`scripts/15_analyze_with_llm.py` reads `data/12_llm_evidence.json`, renders a protocol reverse-engineering prompt, and call an OpenAI-compatible API. Configure the API base URL and model in `LLM_config.json`; keep the API key only in an environment variable. When using `--render-only`, no config is needed.
+`scripts/15_analyze_with_llm.py` reads `data/12_llm_evidence.json`, renders a protocol reverse-engineering prompt, and calls an OpenAI-compatible API. Configure the API base URL and model in `LLM_config.json`; keep the API key only in an environment variable. When using `--render-only`, no config is needed.
+
+The LLM contract is structured: the model returns `analysis_markdown` plus an RFC 6902 `patches` array against `data/10_protocol_model.json`. Patches are suggestions only. `scripts/15b_apply_llm_refinement.py` validates every patch against the protocol model schema, restricts patch targets to semantic roles, field type/encoding labels, confidence adjustments, relation labels, and protocol hints, and rejects patches without statistical, symbolic, or neural support. Accepted patches produce `data/10_protocol_model.refined.json`; rejected patches and reasons are recorded in `data/13_llm_patch_validation.json`.
 
 ```json
 {
@@ -91,7 +94,7 @@ $env:OPENAI_API_KEY = "<api-key>"     # powershell
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 ```
 
-Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. The runner exposes the same workflow with `--llm-config`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, `--llm-max-tokens`.
+Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. In render-only mode, stage 15b still creates `data/10_protocol_model.refined.json`, but with no LLM patch changes. The runner exposes the same workflow with `--llm-config`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, `--llm-max-tokens`.
 
 ## Requirements
 
@@ -116,7 +119,7 @@ Default PCAP workflow:
 python main.py <folder-containing-pcaps> --tshark-filter <tshark-filter>
 ```
 
-This command treats the input folder as an existing normalized PCAP directory, extracts up to 200,000 TShark-filtered packet payloads into `data/01_messages.jsonl`, writes intermediate packet metadata to `data/payload_extraction/packets` and carved payloads to `data/payload_extraction/payloads`, runs all inference stages, writes `output/protocol_report.md` and `output/protocol_report.html`. Typical runtime for 200,000 messages: 6 minutes. (3 minutes for message extraction, 2 minutes waiting for llm response).
+This command treats the input folder as an existing normalized PCAP directory, extracts up to 200,000 TShark-filtered packet payloads into `data/01_messages.jsonl`, writes intermediate packet metadata to `data/payload_extraction/packets` and carved payloads to `data/payload_extraction/payloads`, runs all inference stages, writes the base model to `data/10_protocol_model.json`, writes the LLM-assisted refined model to `data/10_protocol_model.refined.json`, and renders `output/protocol_report.md` plus `output/protocol_report.html` from the refined model. Typical runtime for 200,000 messages: 6 minutes. (3 minutes for message extraction, 2 minutes waiting for llm response).
 
 Useful runner options:
 
@@ -153,10 +156,11 @@ python3 scripts/12_build_protocol_model.py data/05_families.json data/10_protoco
 python3 scripts/13_evaluate_pipeline.py data/01_messages.jsonl data/02_family_assignments.json data/05_families.json data/06_pairs.json data/08_relations.json data/11_evaluation.json --semantics-json data/09_semantics.json
 python3 scripts/14_export_llm_evidence.py data/10_protocol_model.json data/12_llm_evidence.json --evaluation-json data/11_evaluation.json
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --config LLM_config.json --prompt-out data/13_llm_prompt.md
-python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json
+python3 scripts/15b_apply_llm_refinement.py data/10_protocol_model.json data/13_llm_analysis.json data/10_protocol_model.refined.json --evidence-json data/12_llm_evidence.json --schema-json schema/protocol_model.schema.json --patches-out data/13_llm_patches.json --validation-out data/13_llm_patch_validation.json
+python3 scripts/16_prepare_evaluation_data.py data/10_protocol_model.json data/11_evaluation.json data/13_llm_analysis.json data/14_evaluation_model_data.json --refined-protocol-model-json data/10_protocol_model.refined.json --patch-validation-json data/13_llm_patch_validation.json
 python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json truth-files/modbus.json data/15_evaluation_result.json
-python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_report.md --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json
-python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json
+python3 scripts/18_export_markdown.py data/10_protocol_model.refined.json output/protocol_report.md --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json
+python3 scripts/19_export_html.py data/10_protocol_model.refined.json output/protocol_report.html --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json
 ```
 
 To use hybrid structural/neural clustering in the step-by-step flow:
@@ -172,10 +176,10 @@ python3 scripts/01_collect_pcaps.py files pcaps
 python3 scripts/02_dedup_pcaps.py pcaps --delete
 ```
 
-If running with `--ground-truth-json ground_truth/protocol.json`, insert this after stage 16 and pass the final evaluation JSON to the exporters:
+If running with `--ground-truth-json ground_truth/protocol.json`, insert this after stage 16 and pass the final evaluation JSON to the exporters. The evaluation data and exporters use the LLM-assisted refined model:
 
 ```bash
 python3 scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json ground_truth/protocol.json data/15_evaluation_result.json
-python3 scripts/18_export_markdown.py data/10_protocol_model.json output/protocol_report.md --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json --final-evaluation-json data/15_evaluation_result.json
-python3 scripts/19_export_html.py data/10_protocol_model.json output/protocol_report.html --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json --final-evaluation-json data/15_evaluation_result.json
+python3 scripts/18_export_markdown.py data/10_protocol_model.refined.json output/protocol_report.md --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json --final-evaluation-json data/15_evaluation_result.json
+python3 scripts/19_export_html.py data/10_protocol_model.refined.json output/protocol_report.html --evaluation-json data/11_evaluation.json --llm-analysis-json data/13_llm_analysis.json --final-evaluation-json data/15_evaluation_result.json
 ```
