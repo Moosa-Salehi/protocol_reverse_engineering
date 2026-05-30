@@ -1,235 +1,406 @@
 # Comprehensive TODO List for Protocol Reverse Engineering Pipeline
 
 **Analysis Date:** 2026-05-30  
-**Current Status:** Overall accuracy score: 0.158741 (FAIL) on Modbus evaluation  
+**Current Status:** Overall accuracy score: 0.4905 (FAIL) on test protocol evaluation  
 **Priority Order:** 1. Accuracy → 2. Runtime → 3. Code Quality
 
 ---
 
 ## Executive Summary
 
-Based on evaluation results (`data/15_evaluation_result.json`), the pipeline shows critical accuracy issues:
-- **Message Type Matching:** 18.2% recall (2/11 types detected)
-- **Field Boundaries:** 25.7% recall, 45% precision
-- **Field Semantics:** 0% accuracy (no correct semantic labels)
-- **Relations:** 0% accuracy (no correct request/response relations)
+Based on evaluation results (`data/15_evaluation_result.json`) using **raw_bytes clustering mode**, the pipeline shows:
 
-The pipeline has strong infrastructure (LLM integration, neural features, evaluation framework) but needs significant improvements in core inference algorithms.
+### Strengths:
+- **Message Type Matching:** 90.91% recall, 90.91% precision (10/11 types detected) ✅
+- **Field Boundary Recall:** 88.57% (good detection) ✅
+- **Relations Recall:** 100% (all relations found) ✅
+
+### Critical Weaknesses:
+- **Field Boundary Precision:** 38.27% (too many false positives - over-segmentation)
+- **Field Semantics:** 0% accuracy (no correct semantic labels)
+- **Relations Precision:** 35% (too many false positive relations)
+- **Overall Score:** 0.4905 (below passing threshold)
+
+### Key Insights:
+1. **Neural mode fails catastrophically** (2 families, 0.16 score) vs **raw_bytes succeeds** (11 families, 0.49 score)
+2. **Clustering works well** in raw_bytes mode (90.91% family detection)
+3. **Main issues:** Over-segmentation, zero semantic labeling, noisy relations
+4. **LLM integration is monolithic** - needs to be broken into smaller, stage-specific interactions
+
+The pipeline has strong infrastructure but needs: (1) fix neural features, (2) reduce over-segmentation, (3) implement semantic labeling, (4) add multi-stage LLM integration.
 
 ---
 
 ## PRIORITY 1: ACCURACY IMPROVEMENTS (Critical)
 
-### A1. Fix Family Discovery / Clustering (CRITICAL - Root Cause)
-**Priority:** P0 - Blocking all downstream accuracy  
-**Current Issue:** Only 2 families detected for Modbus (should be 11+ message types)  
-**Impact:** Cascading failure - wrong clustering → wrong boundaries → wrong semantics
+### A1. Fix Neural Feature Mode (CRITICAL - Currently Broken)
+**Priority:** P0 - Neural mode produces 2 families vs raw_bytes 11 families  
+**Current Issue:** Neural features (32D latent) collapse all messages into one cluster  
+**Impact:** Neural mode is unusable (0.16 score vs 0.49 for raw_bytes)
+
+**Root Cause Analysis:**
+- Neural VAE compresses 10-12 byte messages too aggressively
+- 32D latent space loses discriminative information
+- Transaction IDs and variable headers add noise
+- Structural features in hybrid mode don't compensate enough
 
 **Tasks:**
-1. **Investigate clustering collapse:**
-   - Analyze why 199,715/200,000 messages assigned to single family
-   - Check if neural features (32D latent) are too compressed
-   - Examine if structural features lack discriminative power
-   - Review HDBSCAN/DBSCAN parameters (min_cluster_size, min_samples, eps)
+1. **Diagnose neural feature collapse:**
+   - Visualize latent space distribution (t-SNE, UMAP)
+   - Measure latent space variance and separation
+   - Compare latent distances vs ground truth family distances
+   - Identify which message types are being merged
 
-2. **Add discriminator-aware clustering:**
-   - Extract function code (byte 0) as strong clustering signal
-   - Use stable prefix bytes as pre-clustering features
-   - Add direction (client/server) as clustering constraint
-   - Implement hierarchical clustering: coarse (by opcode) → fine (by structure)
+2. **Improve neural feature extraction:**
+   - Increase latent dimension (32D → 64D or 128D)
+   - Train VAE with discriminative loss (not just reconstruction)
+   - Add contrastive learning to separate different message types
+   - Use attention mechanism to focus on discriminative bytes
+   - Consider using pre-trained protocol embeddings
 
-3. **Improve feature engineering:**
-   - Add position-weighted byte features (header bytes more important)
-   - Include length bucket as explicit feature
-   - Add byte histogram similarity
-   - Use edit distance for similar-length messages
-   - Combine multiple feature modes with learned weights
+3. **Add protocol-agnostic preprocessing:**
+   - Detect and mask variable fields (transaction IDs, counters, timestamps)
+   - Normalize payload lengths (pad/truncate intelligently)
+   - Extract stable prefix/suffix patterns before encoding
+   - Use byte position embeddings (like positional encoding in transformers)
 
-4. **Add clustering validation:**
-   - Implement silhouette score monitoring
-   - Add within-cluster variance checks
-   - Detect over-clustering (too many 1-message families)
-   - Detect under-clustering (families with high internal variance)
-   - Auto-tune clustering parameters based on validation metrics
+4. **Improve hybrid feature fusion:**
+   - Balance neural vs structural feature weights
+   - Use learned fusion (small MLP) instead of concatenation
+   - Add feature importance analysis
+   - Ensure structural features can override neural when confident
+
+5. **Add fallback mechanism:**
+   - Detect when neural features are failing (low variance, high compression)
+   - Automatically fall back to raw_bytes or structural mode
+   - Log warnings when neural mode is degraded
 
 **Files:**
-- `src/protocol_re/clustering/family_discovery.py`
 - `src/protocol_re/clustering/hybrid_features.py`
-- `src/protocol_re/clustering/structural_features.py`
+- `src/protocol_re/neural/model_loader.py`
+- `pre_trained/industrial_VAE.pth` (may need retraining)
 - `scripts/04_discover_families.py`
 
-**Expected Impact:** Recall 18% → 70%+, F1 0.31 → 0.75+
+**Expected Impact:** Neural mode score 0.16 → 0.45+, comparable to raw_bytes
+
+**Note:** This is protocol-agnostic - no protocol-specific logic, only generic pattern detection
 
 ---
 
-### A2. Improve Field Boundary Detection
-**Priority:** P0 - Critical for semantic labeling  
-**Current Issue:** 25.7% recall, many merged/split fields
+### A2. Fix Over-Segmentation (CRITICAL - Precision Issue)
+**Priority:** P0 - 88.57% recall but only 38.27% precision  
+**Current Issue:** Too many false positive boundaries - splitting fields incorrectly  
+**Impact:** 50 false positives vs 31 true positives (62% of boundaries are wrong)
+
+**Root Cause Analysis:**
+- Entropy-based scoring creates boundaries at every byte transition
+- No penalty for excessive segmentation
+- Single-byte fields are over-generated
+- No validation against field width conventions
 
 **Tasks:**
-1. **Add protocol-aware boundary hints:**
-   - Detect common header patterns (1-byte opcode, 2-byte address, 2-byte quantity)
-   - Use length field values to mark payload boundaries
-   - Recognize fixed-width field patterns (2-byte, 4-byte alignment)
-   - Add checksum/CRC detection at message end
+1. **Add anti-fragmentation penalties:**
+   - Penalize 1-byte fields heavily unless strong evidence (flags, enum, opcode)
+   - Require minimum segment width (default: 2 bytes)
+   - Add smoothing to boundary scores (prefer fewer, stronger boundaries)
+   - Implement maximum field count per family (e.g., 15 fields max)
 
-2. **Improve boundary scoring:**
+2. **Improve boundary scoring algorithm:**
    - Reduce weight on entropy jumps (currently over-weighted)
-   - Add field-width consistency across family
-   - Penalize 1-byte fields unless strong evidence (enum/flags)
-   - Reward boundaries that align with known field widths (1, 2, 4, 8)
+   - Increase weight on mutual information drops (field independence)
+   - Add field-width consistency across family (prefer aligned boundaries)
+   - Reward boundaries at common widths (1, 2, 4, 8 bytes)
+   - Add coverage consistency (boundaries should appear in most messages)
 
-3. **Add cross-family boundary consistency:**
-   - If multiple families share prefix, align their boundaries
-   - Use discriminator offsets as strong boundary signals
-   - Propagate high-confidence boundaries across similar families
+3. **Add boundary validation and merging:**
+   - Merge adjacent constant fields into single field
+   - Merge adjacent 1-byte variable fields if low cardinality
+   - Validate field widths against typical protocol patterns
+   - Check if fields align with length field values
+   - Flag and merge suspicious single-byte sequences
 
-4. **Implement boundary validation:**
-   - Check if inferred fields make semantic sense
-   - Validate against length field values
-   - Ensure no overlapping fields
-   - Flag suspicious single-byte sequences
+4. **Add LLM-assisted boundary refinement:**
+   - Export boundary candidates with scores to LLM
+   - Ask LLM to identify likely over-segmentation
+   - Let LLM suggest field merges based on patterns
+   - Validate LLM suggestions against statistical evidence
+
+5. **Implement boundary quality metrics:**
+   - Track precision/recall during inference (if ground truth available)
+   - Add over-segmentation ratio metric
+   - Log boundary confidence distributions
+   - Report average fields per family
 
 **Files:**
 - `src/protocol_re/inference/boundary_detection.py`
 - `scripts/07_infer_boundaries.py`
 
-**Expected Impact:** Boundary recall 25.7% → 60%+, precision 45% → 70%+
+**Expected Impact:** Boundary precision 38.27% → 70%+, F1 53.45% → 75%+
+
+**Note:** All improvements are protocol-agnostic, based on statistical patterns only
 
 ---
 
-### A3. Implement Semantic Field Labeling (NEW)
+### A3. Implement Semantic Field Labeling (CRITICAL - NEW)
 **Priority:** P0 - Currently 0% accuracy  
-**Current Issue:** No correct semantic labels detected
+**Current Issue:** No correct semantic labels detected - all fields labeled as generic types
+
+**Root Cause Analysis:**
+- Current semantic labeling is too weak (only uses basic field types)
+- No inference of semantic roles (opcode, address, length, transaction_id, etc.)
+- No use of cross-field relationships
+- No pattern-based semantic inference
 
 **Tasks:**
-1. **Build semantic inference engine:**
-   - Create rule-based classifier for common field types
-   - Detect function_code: byte 0, low cardinality (1-256), stable
-   - Detect address fields: bytes 1-2, 2-byte width, big-endian
-   - Detect quantity/count: bytes 3-4, 2-byte width, correlates with payload
-   - Detect byte_count: 1-byte, value matches remaining length
-   - Detect transaction_id: 2-byte, echoed in request/response
-   - Detect payload: variable length, high entropy, after header
+1. **Build protocol-agnostic semantic inference engine:**
+   - Detect **discriminator/opcode fields:** byte 0-1, low cardinality (2-256), stable position, correlates with family
+   - Detect **length fields:** 1/2/4 bytes, value matches message length or remaining length
+   - Detect **counter/sequence fields:** high cardinality, monotonic or cycling values
+   - Detect **transaction_id fields:** 2/4 bytes, echoed in paired messages, high cardinality
+   - Detect **address fields:** 2/4 bytes, moderate cardinality, stable across similar messages
+   - Detect **quantity/count fields:** 1/2 bytes, correlates with payload size
+   - Detect **status/flags fields:** 1 byte, low cardinality, appears in responses
+   - Detect **payload/data fields:** variable length, high entropy, after header
+   - Detect **checksum/CRC fields:** last 1/2/4 bytes, appears to be calculated
 
-2. **Add field type taxonomy:**
-   - Separate encoding (uint8, uint16, bytes) from semantics (function_code, address)
-   - Define semantic roles: function_code, address, quantity, byte_count, transaction_id, unit_id, payload, checksum
-   - Map field_type → semantic_role with confidence scores
+2. **Add field type taxonomy (protocol-agnostic):**
+   - **Encoding types:** uint8, uint16_be, uint16_le, uint32_be, uint32_le, bytes, bitfield
+   - **Semantic roles:** discriminator, length, transaction_id, sequence_number, address, quantity, status, flags, payload, checksum, constant, reserved
+   - Separate encoding from semantics in schema
+   - Allow multiple semantic hypotheses per field with confidence scores
 
-3. **Use relation evidence:**
-   - Fields echoed in responses → transaction_id
-   - Fields matching response length → byte_count or quantity
-   - First byte with low cardinality → function_code or message_type
-   - Last bytes with fixed patterns → checksum or padding
+3. **Use relation evidence for semantic inference:**
+   - Fields echoed in request/response pairs → transaction_id or correlation_id
+   - Fields matching response length → length or byte_count
+   - First field with low cardinality → discriminator or message_type
+   - Fields that increment → counter or sequence_number
+   - Fields that vary randomly → nonce or random_id
 
-4. **Add LLM-assisted semantic refinement:**
-   - Export field candidates with evidence to LLM
-   - Let LLM suggest semantic labels based on patterns
-   - Validate LLM suggestions against evidence
-   - Apply only evidence-supported labels
+4. **Add cross-family semantic consistency:**
+   - If multiple families have same field at same offset → shared header field
+   - Propagate high-confidence semantic labels across similar families
+   - Detect common protocol patterns (header + payload structure)
+
+5. **Implement confidence-based labeling:**
+   - Assign confidence scores to each semantic hypothesis
+   - Require minimum confidence threshold (e.g., 0.6) for labeling
+   - Report multiple hypotheses when uncertain
+   - Flag fields with conflicting evidence
 
 **Files:**
 - `src/protocol_re/inference/semantic_labeling.py` (major rewrite)
 - New: `src/protocol_re/inference/field_semantics.py`
+- New: `src/protocol_re/inference/semantic_patterns.py`
 - `scripts/11_infer_semantics.py`
+- `src/protocol_re/model/schema.py` (add semantic role taxonomy)
 
-**Expected Impact:** Semantic accuracy 0% → 40%+
+**Expected Impact:** Semantic accuracy 0% → 40-60%
+
+**Note:** All semantic inference is protocol-agnostic, based on statistical patterns and common protocol conventions
 
 ---
 
-### A4. Fix Request/Response Pairing and Relations
-**Priority:** P1 - Currently 0% accuracy  
-**Current Issue:** No correct relations detected
+### A4. Reduce Relation False Positives
+**Priority:** P1 - 100% recall but only 35% precision  
+**Current Issue:** Too many false positive relations - 13 FP vs 7 TP
+
+**Root Cause Analysis:**
+- Echo field detection is too permissive (searches entire payload)
+- Length relation detection generates spurious matches
+- No validation of relation plausibility
+- No filtering of weak relations
 
 **Tasks:**
-1. **Improve pairing algorithm:**
-   - Use function code matching (request/response should have related opcodes)
-   - Add transaction ID matching (if detected)
-   - Consider temporal proximity + direction reversal
-   - Handle multiple responses per request
-   - Detect error responses (exception codes)
+1. **Tighten echo field detection:**
+   - Focus search on header regions only (first 32-64 bytes)
+   - Require higher support threshold (>95% instead of 90%)
+   - Prioritize 2-byte and 4-byte fields (typical transaction IDs)
+   - Ignore single-byte echoes unless very high confidence
+   - Validate that echoed fields are not counters or timestamps
 
-2. **Add relation type classification:**
-   - Distinguish: request_response, command_ack, query_result, error_response
-   - Use payload length patterns (query=short, result=long)
-   - Use discriminator patterns (error codes vs normal codes)
+2. **Improve length relation validation:**
+   - Require high support (>95%) for length field claims
+   - Validate that length field appears in consistent position
+   - Check that length values are reasonable (not random)
+   - Ensure length field is not a counter or address
 
-3. **Improve echo field detection:**
-   - Focus on header regions (first 32 bytes) not entire payload
-   - Prioritize 2-byte and 4-byte fields (transaction IDs)
-   - Require high support (>90%) for echo claims
-
-4. **Add relation validation:**
-   - Check if paired families have compatible structures
+3. **Add relation plausibility checks:**
    - Validate temporal ordering (response after request)
-   - Ensure direction consistency (client→server, server→client)
+   - Check direction consistency (client→server, server→client)
+   - Ensure paired families have compatible structures
+   - Validate that relation makes semantic sense
+
+4. **Implement relation confidence scoring:**
+   - Score relations based on multiple evidence types
+   - Require minimum confidence threshold (e.g., 0.7)
+   - Report confidence for each relation
+   - Filter low-confidence relations
+
+5. **Add relation deduplication:**
+   - Remove redundant relations (same evidence, different representation)
+   - Merge similar relations
+   - Keep only strongest relation per family pair
 
 **Files:**
-- `src/protocol_re/corpus/request_response_pairing.py`
 - `src/protocol_re/inference/request_response_relations.py`
-- `scripts/08_pair_requests_responses.py`
 - `scripts/10_infer_relations.py`
 
-**Expected Impact:** Relation recall 0% → 50%+
+**Expected Impact:** Relation precision 35% → 70%+, F1 51.85% → 80%+
+
+**Note:** All improvements are protocol-agnostic, based on statistical validation
 
 ---
 
-### A5. Add Multi-Layer Protocol Support
-**Priority:** P2 - Important for real protocols  
-**Current Issue:** Modbus TCP has MBAP header + PDU, pipeline treats as flat
+### A5. Multi-Stage LLM Integration (CRITICAL - Architecture Change)
+**Priority:** P0 - Current monolithic approach is ineffective  
+**Current Issue:** Single massive evidence bundle sent to LLM - too much information, unclear goals
+
+**Root Cause Analysis:**
+- Current approach: collect ALL evidence → send to LLM in one shot → hope for good patches
+- LLM gets overwhelmed with 10K+ lines of evidence
+- No clear task decomposition
+- No iterative refinement
+- No validation between stages
+
+**New Architecture: Multi-Stage LLM Pipeline**
+
+**Stage 1: Clustering Validation (After Stage 04)**
+- **Goal:** Validate family assignments, suggest splits/merges
+- **Input:** Family statistics, sample messages per family, clustering diagnostics
+- **Prompt:** "Review these message families. Identify families that should be split or merged based on structural patterns."
+- **Output:** Family split/merge suggestions with evidence
+- **Validation:** Check if suggestions improve silhouette score, validate against message samples
+- **Apply:** Re-cluster with suggestions if validated
+
+**Stage 2: Boundary Refinement (After Stage 07)**
+- **Goal:** Fix over-segmentation, merge fields, validate boundaries
+- **Input:** Per-family field boundaries, boundary scores, sample messages
+- **Prompt:** "Review these field boundaries. Identify over-segmentation (too many 1-byte fields) and suggest field merges."
+- **Output:** Boundary adjustment suggestions (merge fields, adjust offsets)
+- **Validation:** Check if merges reduce false positives, validate against boundary scores
+- **Apply:** Merge fields if validated
+
+**Stage 3: Semantic Labeling (After Stage 11)**
+- **Goal:** Assign semantic roles to fields
+- **Input:** Field hypotheses, relation evidence, family roles
+- **Prompt:** "Assign semantic labels to these fields based on their characteristics: position, cardinality, echoing, length correlation."
+- **Output:** Semantic label suggestions with confidence
+- **Validation:** Check if labels are supported by statistical evidence
+- **Apply:** Add semantic labels if validated
+
+**Stage 4: Relation Validation (After Stage 10)**
+- **Goal:** Validate request/response relations, filter false positives
+- **Input:** Relation candidates, echo fields, pairing evidence
+- **Prompt:** "Review these request/response relations. Identify false positives and validate true relations."
+- **Output:** Relation validation (keep/discard) with reasoning
+- **Validation:** Check if reasoning aligns with evidence
+- **Apply:** Filter relations based on validation
+
+**Stage 5: Protocol Structure Synthesis (Final)**
+- **Goal:** Generate human-readable protocol description
+- **Input:** Refined protocol model (after all stages)
+- **Prompt:** "Synthesize a protocol specification describing the overall structure, message types, and field semantics."
+- **Output:** Markdown protocol description
+- **Validation:** Check for consistency with model
+- **Apply:** Include in final report
+
+**Implementation Tasks:**
+1. **Create stage-specific prompt templates:**
+   - One template per stage with clear goals
+   - Focused evidence bundles (not everything)
+   - Structured output schemas per stage
+
+2. **Implement stage-specific LLM callers:**
+   - `llm_validate_clustering(families, diagnostics) → split/merge suggestions`
+   - `llm_refine_boundaries(family_id, fields, samples) → boundary adjustments`
+   - `llm_label_semantics(family_id, fields, relations) → semantic labels`
+   - `llm_validate_relations(relations, evidence) → relation validation`
+   - `llm_synthesize_protocol(protocol_model) → markdown description`
+
+3. **Add evidence-gated validation:**
+   - Every LLM suggestion must cite specific evidence
+   - Validate suggestions against statistical evidence
+   - Reject suggestions without support
+   - Log rejection reasons for auditability
+
+4. **Implement iterative refinement:**
+   - Allow multiple LLM calls per stage if needed
+   - Support human-in-the-loop review
+   - Enable checkpoint/resume between stages
+
+5. **Add cost and token management:**
+   - Track tokens per stage
+   - Implement token budgets per stage
+   - Support --llm-render-only for all stages
+   - Cache LLM responses per stage
+
+**Files:**
+- New: `src/protocol_re/llm/multi_stage.py`
+- New: `src/protocol_re/llm/stage_clustering.py`
+- New: `src/protocol_re/llm/stage_boundaries.py`
+- New: `src/protocol_re/llm/stage_semantics.py`
+- New: `src/protocol_re/llm/stage_relations.py`
+- New: `src/protocol_re/llm/stage_synthesis.py`
+- New: `prompts/clustering_validation.md`
+- New: `prompts/boundary_refinement.md`
+- New: `prompts/semantic_labeling.md`
+- New: `prompts/relation_validation.md`
+- New: `prompts/protocol_synthesis.md`
+- Refactor: `scripts/15_analyze_with_llm.py` → multi-stage orchestrator
+- Refactor: `src/protocol_re/llm/analyze.py` → stage-specific modules
+
+**Expected Impact:** 
+- LLM effectiveness: significantly improved (focused tasks)
+- Semantic accuracy: 0% → 40-60% (with LLM assistance)
+- Boundary precision: 38% → 60%+ (with LLM merge suggestions)
+- Overall score: 0.49 → 0.65-0.75
+
+**Note:** All LLM interactions are protocol-agnostic, based on generic patterns
+
+---
+
+### A6. Add Multi-Layer Protocol Detection (Protocol-Agnostic)
+**Priority:** P2 - Important for real-world protocols  
+**Current Issue:** Many protocols have transport headers + application PDU, pipeline treats as flat
+
+**Root Cause Analysis:**
+- Protocols often have stable outer headers (framing, transaction IDs, length fields)
+- Inner protocol (PDU) contains the actual message logic
+- Clustering on full frame includes transport noise
+- Boundaries mix transport and application fields
 
 **Tasks:**
-1. **Detect layered structure:**
-   - Identify stable outer headers (MBAP: 7 bytes for Modbus TCP)
+1. **Detect layered structure (protocol-agnostic):**
+   - Identify stable prefix patterns (potential outer header)
    - Detect length fields that point to inner protocol start
-   - Recognize protocol identifiers (MBAP protocol_id = 0x0000)
+   - Recognize protocol identifiers or version fields
+   - Find boundary between stable header and variable payload
 
-2. **Implement layer separation:**
-   - Extract outer header fields separately
+2. **Implement automatic layer separation:**
+   - Extract outer header fields separately (mark as "transport layer")
    - Cluster inner protocol messages independently
    - Maintain layer relationships in protocol model
+   - Report layers separately in output
 
-3. **Add layer-aware evaluation:**
+3. **Add layer-aware feature extraction:**
+   - Extract features from inner protocol only for clustering
+   - Keep outer header for pairing (transaction IDs)
+   - Separate boundary detection per layer
+
+4. **Add layer-aware evaluation:**
    - Match fields at correct layer
-   - Support hierarchical ground truth (MBAP + Modbus PDU)
+   - Support hierarchical ground truth
+   - Report accuracy per layer
 
 **Files:**
 - New: `src/protocol_re/inference/layer_detection.py`
 - `src/protocol_re/inference/framing.py`
 - `scripts/05_infer_framing.py`
+- `scripts/04_discover_families.py` (add layer-aware clustering)
 
-**Expected Impact:** Accuracy +15% for layered protocols
+**Expected Impact:** Accuracy +10-15% for layered protocols, better clustering
 
----
-
-### A6. Improve Discriminator/Opcode Detection
-**Priority:** P1 - Critical for clustering and semantics  
-**Current Issue:** Function codes not reliably detected
-
-**Tasks:**
-1. **Strengthen discriminator detection:**
-   - Prioritize byte 0 for function codes
-   - Require low cardinality (2-256 unique values)
-   - Check stability across family (>95% same position)
-   - Validate against clustering (should separate families)
-
-2. **Add discriminator validation:**
-   - Check if discriminator values correlate with family assignments
-   - Ensure discriminator has high mutual information with families
-   - Validate that discriminator is not a counter or random field
-
-3. **Use discriminators in clustering:**
-   - Pre-cluster by discriminator value
-   - Use discriminator as strong feature in hybrid mode
-   - Ensure families don't span multiple discriminator values
-
-**Files:**
-- `src/protocol_re/inference/framing.py`
-- `scripts/09_infer_keywords.py`
-- `scripts/05_infer_framing.py`
-
-**Expected Impact:** Clustering accuracy +20%, semantic accuracy +15%
+**Note:** All layer detection is protocol-agnostic, based on statistical patterns
 
 ---
 
@@ -536,59 +707,108 @@ The pipeline has strong infrastructure (LLM integration, neural features, evalua
 ## IMPLEMENTATION ROADMAP
 
 ### Phase 1: Critical Accuracy Fixes (Weeks 1-4)
-**Goal:** Improve overall score from 0.16 to 0.50+
+**Goal:** Improve overall score from 0.49 to 0.70+
 
-1. **Week 1:** Fix clustering (A1)
-   - Investigate clustering collapse
-   - Add discriminator-aware features
-   - Tune HDBSCAN parameters
-   - Target: 5+ families detected for Modbus
+**Week 1: Fix Neural Features (A1)**
+- Diagnose neural feature collapse (visualize latent space)
+- Increase latent dimension or add discriminative loss
+- Add protocol-agnostic preprocessing (mask variable fields)
+- Implement fallback mechanism
+- **Target:** Neural mode score 0.16 → 0.45+
 
-2. **Week 2:** Improve boundaries (A2) and discriminators (A6)
-   - Add protocol-aware boundary hints
-   - Strengthen discriminator detection
-   - Target: 50%+ boundary recall
+**Week 2: Reduce Over-Segmentation (A2)**
+- Add anti-fragmentation penalties
+- Improve boundary scoring (reduce entropy weight)
+- Implement boundary merging logic
+- Add maximum field count limits
+- **Target:** Boundary precision 38% → 65%+
 
-3. **Week 3:** Implement semantic labeling (A3)
-   - Build semantic inference engine
-   - Add field type taxonomy
-   - Target: 30%+ semantic accuracy
+**Week 3: Implement Semantic Labeling (A3)**
+- Build protocol-agnostic semantic inference engine
+- Add field type taxonomy (encoding + semantic roles)
+- Use relation evidence for semantic inference
+- Implement confidence-based labeling
+- **Target:** Semantic accuracy 0% → 40%+
 
-4. **Week 4:** Fix relations (A4)
-   - Improve pairing algorithm
-   - Add relation validation
-   - Target: 40%+ relation recall
+**Week 4: Reduce Relation False Positives (A4)**
+- Tighten echo field detection (header regions only)
+- Improve length relation validation
+- Add relation plausibility checks
+- Implement confidence scoring and filtering
+- **Target:** Relation precision 35% → 70%+
 
-**Milestone:** Overall score 0.50+, all metrics >30%
-
----
-
-### Phase 2: Advanced Accuracy & Runtime (Weeks 5-8)
-
-1. **Week 5:** Multi-layer protocol support (A5)
-2. **Week 6:** LLM-assisted refinement improvements
-3. **Week 7:** Runtime optimizations (B2, B3)
-4. **Week 8:** Performance tuning and profiling
-
-**Milestone:** Overall score 0.65+, 2x faster runtime
+**Milestone:** Overall score 0.70+, all metrics >60%
 
 ---
 
-### Phase 3: Code Quality & Testing (Weeks 9-12)
+### Phase 2: Multi-Stage LLM Integration (Weeks 5-6)
+**Goal:** Replace monolithic LLM with focused stage-specific interactions
 
-1. **Week 9-10:** Add comprehensive tests (C1)
-2. **Week 11:** Improve documentation (C3)
-3. **Week 12:** Code refactoring (C4)
+**Week 5: Design and Implement Multi-Stage Architecture (A5)**
+- Create stage-specific prompt templates
+- Implement stage-specific LLM callers
+- Add evidence-gated validation
+- Build orchestration framework
+
+**Week 6: Deploy and Test Multi-Stage LLM**
+- Test each stage independently
+- Validate evidence gating
+- Measure token usage per stage
+- Compare vs monolithic approach
+- **Target:** Semantic accuracy 40% → 55%+, boundary precision 65% → 75%+
+
+**Milestone:** Overall score 0.75+, LLM integration effective
+
+---
+
+### Phase 3: Advanced Features & Layer Detection (Weeks 7-8)
+
+**Week 7: Multi-Layer Protocol Detection (A6)**
+- Implement protocol-agnostic layer detection
+- Add automatic layer separation
+- Update clustering to use inner protocol only
+- **Target:** Accuracy +10% for layered protocols
+
+**Week 8: Performance Tuning and Optimization**
+- Profile and optimize bottlenecks
+- Add incremental processing (B2)
+- Optimize neural inference (B3)
+- Add configurable limits (B4)
+- **Target:** 2x speedup for large captures
+
+**Milestone:** Overall score 0.80+, 2x faster runtime
+
+---
+
+### Phase 4: Code Quality & Testing (Weeks 9-12)
+
+**Week 9-10: Add Comprehensive Tests (C1)**
+- Create test infrastructure
+- Add unit tests for core modules
+- Add integration tests
+- Add regression tests
+
+**Week 11: Improve Documentation (C3)**
+- Add API documentation
+- Add architecture documentation
+- Add usage examples and tutorials
+
+**Week 12: Code Refactoring (C4)**
+- Separate concerns
+- Improve naming consistency
+- Add configuration management
+- Clean up technical debt
 
 **Milestone:** 80%+ test coverage, complete documentation
 
 ---
 
-### Phase 4: Advanced Features (Weeks 13+)
+### Phase 5: Advanced Research Features (Weeks 13+)
 
-1. Research and implement advanced features (D1-D4)
-2. Explore new neural architectures
-3. Add protocol-specific optimizations
+1. Active learning for ground truth generation (D1)
+2. Transfer learning from known protocols (D2)
+3. Anomaly detection for protocol deviations (D3)
+4. Multi-protocol session analysis (D4)
 
 **Milestone:** State-of-the-art protocol RE system
 
@@ -596,20 +816,46 @@ The pipeline has strong infrastructure (LLM integration, neural features, evalua
 
 ## METRICS & SUCCESS CRITERIA
 
-### Accuracy Targets (by Phase 1 end)
-- Overall score: 0.16 → **0.50+**
-- Message type recall: 18% → **70%+**
-- Field boundary recall: 26% → **60%+**
-- Field boundary precision: 45% → **70%+**
-- Field semantics accuracy: 0% → **40%+**
-- Relations recall: 0% → **50%+**
+### Current Baseline (raw_bytes mode)
+- Overall score: **0.4905**
+- Message type recall: **90.91%** ✅
+- Message type precision: **90.91%** ✅
+- Field boundary recall: **88.57%** ✅
+- Field boundary precision: **38.27%** ❌
+- Field semantics accuracy: **0%** ❌
+- Relations recall: **100%** ✅
+- Relations precision: **35%** ❌
 
-### Runtime Targets (by Phase 2 end)
+### Accuracy Targets (by Phase 1 end)
+- Overall score: 0.49 → **0.70+**
+- Message type: maintain 90%+ (already good)
+- Field boundary recall: maintain 88%+ (already good)
+- Field boundary precision: 38% → **65%+**
+- Field semantics accuracy: 0% → **40%+**
+- Relations recall: maintain 100% (already good)
+- Relations precision: 35% → **70%+**
+
+### Accuracy Targets (by Phase 2 end)
+- Overall score: 0.70 → **0.75+**
+- Field boundary precision: 65% → **75%+**
+- Field semantics accuracy: 40% → **55%+**
+- Relations precision: 70% → **75%+**
+
+### Accuracy Targets (by Phase 3 end)
+- Overall score: 0.75 → **0.80+**
+- All metrics: **>70%**
+
+### Neural Mode Targets
+- Current: 2 families, 0.16 score (broken)
+- Phase 1 end: 10+ families, **0.45+ score**
+- Phase 2 end: comparable to raw_bytes (**0.70+ score**)
+
+### Runtime Targets (by Phase 3 end)
 - 200K messages: 6 min → **3 min**
-- Large payloads (8KB): hours → **10-20 min**
+- Large payloads (8KB): 10-20 min → **5-10 min** (already improved)
 - Memory usage: stable, no leaks
 
-### Code Quality Targets (by Phase 3 end)
+### Code Quality Targets (by Phase 4 end)
 - Test coverage: 0% → **80%+**
 - Documentation: minimal → **complete**
 - Code complexity: reduce by 30%
