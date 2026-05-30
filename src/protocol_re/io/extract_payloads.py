@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import hashlib
 from datetime import datetime
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -82,6 +83,10 @@ def _clean_hex(hex_str: Any) -> str:
 def iso_z_to_unix_float(s: str) -> float:
     # Expect e.g. 2023-03-25T12:23:36.835880000Z
     s = s.strip()
+    try:
+        return float(s)
+    except ValueError:
+        pass
 
     if s.endswith("Z"):
         s = s[:-1] + "+00:00"  # Z -> UTC offset for fromisoformat
@@ -355,12 +360,29 @@ def _tshark_protocol_name(tshark_filter: str) -> str:
     return token.strip("()")
 
 
+def _infer_tshark_protocol(layers: Dict[str, Any], tshark_filter: str) -> str:
+    filter_text = tshark_filter.lower()
+    for protocol_name in L2_ETHERTYPES:
+        if protocol_name in layers or protocol_name in filter_text:
+            return protocol_name
+    if "tcp" in layers:
+        return "tcp"
+    if "udp" in layers:
+        return "udp"
+    protocol_name = _tshark_protocol_name(tshark_filter)
+    return protocol_name if protocol_name in layers else "unknown"
+
+
+def _tshark_cache_stem(pcap_path: Path, tshark_filter: str) -> str:
+    filter_hash = hashlib.sha1(tshark_filter.encode("utf-8")).hexdigest()[:12]
+    return f"{pcap_path.name}.{filter_hash}"
+
+
 def _extract_tshark_packets(
     pcap_path: str,
     tshark_filter: str,
     max_packets: int | None = None,
 ) -> List[Dict[str, Any]]:
-    protocol_name = _tshark_protocol_name(tshark_filter)
     cmd = [
         "tshark",
         "-r",
@@ -396,7 +418,7 @@ def _extract_tshark_packets(
             continue
 
         layers = obj["layers"]
-        found_protocol = protocol_name if protocol_name in layers else "unknown"
+        found_protocol = _infer_tshark_protocol(layers, tshark_filter)
         frame_raw = _first(layers.get("frame_raw")) or _get_nested_field(layers, "frame", "frame_raw")
         metadata = {
             "frame": {
@@ -528,8 +550,9 @@ def _tshark_payload_record_to_message(
 def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, int, List[MessageRecord]]:
     pcap_path_str, tshark_filter, packets_dir, payloads_dir = args
     pcap_path = Path(pcap_path_str)
-    packet_json = Path(packets_dir) / f"{pcap_path.name}.json"
-    payload_json = Path(payloads_dir) / f"{pcap_path.name}.json"
+    cache_stem = _tshark_cache_stem(pcap_path, tshark_filter)
+    packet_json = Path(packets_dir) / f"{cache_stem}.json"
+    payload_json = Path(payloads_dir) / f"{cache_stem}.json"
 
     packet_records = []
     if not os.path.exists(packet_json):
@@ -550,6 +573,7 @@ def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, i
                         "timestamp": item.get("timestamp", ""),
                         "protocol": item.get("protocol"),
                         "payload_hex": item.get("payload_hex"),
+                        "metadata": item.get("metadata", {}),
                     }
                     for item in payload_records
                 ],
