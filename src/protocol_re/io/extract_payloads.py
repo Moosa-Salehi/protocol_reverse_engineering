@@ -573,7 +573,7 @@ def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, i
                         "timestamp": item.get("timestamp", ""),
                         "protocol": item.get("protocol"),
                         "payload_hex": item.get("payload_hex"),
-                        "metadata": item.get("metadata", {}),
+                        # "metadata": item.get("metadata", {}),
                     }
                     for item in payload_records
                 ],
