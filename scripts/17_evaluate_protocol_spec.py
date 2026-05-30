@@ -339,6 +339,36 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     }
 
 
+def _score_summary(report: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "overall_score": (report.get("summary") or {}).get("overall_score"),
+        "metrics": report.get("metrics", {}),
+    }
+
+
+def evaluate_protocol_spec_with_refinement(model_data: Dict[str, Any], ground_truth_bundle: Dict[str, Any]) -> Dict[str, Any]:
+    report = evaluate_protocol_spec(model_data, ground_truth_bundle)
+    base_protocol = model_data.get("base_predicted_protocol")
+    refined_protocol = model_data.get("refined_predicted_protocol")
+    if not isinstance(base_protocol, dict) or not isinstance(refined_protocol, dict):
+        return report
+
+    base_data = dict(model_data)
+    base_data["predicted_protocol"] = base_protocol
+    refined_data = dict(model_data)
+    refined_data["predicted_protocol"] = refined_protocol
+    base_report = evaluate_protocol_spec(base_data, ground_truth_bundle)
+    refined_report = evaluate_protocol_spec(refined_data, ground_truth_bundle)
+    base_score = float((base_report.get("summary") or {}).get("overall_score", 0.0) or 0.0)
+    refined_score = float((refined_report.get("summary") or {}).get("overall_score", 0.0) or 0.0)
+    report["refinement_comparison"] = {
+        "base": _score_summary(base_report),
+        "refined": _score_summary(refined_report),
+        "overall_score_delta": round(refined_score - base_score, 6),
+    }
+    return report
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate a reverse-engineered protocol spec against ground truth.")
     parser.add_argument("evaluation_model_data_json", help="Prepared model data from 16_prepare_evaluation_data.py")
@@ -346,7 +376,7 @@ def main() -> None:
     parser.add_argument("output_json", help="Output final evaluation report JSON")
     args = parser.parse_args()
 
-    report = evaluate_protocol_spec(_load_json(args.evaluation_model_data_json), _load_json(args.ground_truth_json))
+    report = evaluate_protocol_spec_with_refinement(_load_json(args.evaluation_model_data_json), _load_json(args.ground_truth_json))
     report["inputs"] = {
         "predicted_protocol_file": args.evaluation_model_data_json,
         "ground_truth_protocol_file": args.ground_truth_json,

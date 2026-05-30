@@ -99,6 +99,9 @@
         "temporal_order_consistency": {"type": "number"},
         "order_usable_pairs": {"type": "integer", "minimum": 0},
         "avg_latency_ms": {"type": ["number", "null"]},
+        "relation_type": {"type": ["string", "null"]},
+        "semantic_label": {"type": ["string", "null"]},
+        "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
         "echo_fields": {
           "type": "array",
           "items": {"type": "object"}
@@ -106,7 +109,8 @@
         "length_relations": {
           "type": "array",
           "items": {"type": "object"}
-        }
+        },
+        "attributes": {"type": "object"}
       }
     },
     "family": {

@@ -8,6 +8,7 @@ from pathlib import Path
 from protocol_re.llm.analyze import (
     LLMRequestConfig,
     call_openai_compatible_chat,
+    extract_message_json,
     extract_message_text,
     render_analysis_prompt,
 )
@@ -87,6 +88,7 @@ def main() -> None:
         "model": model,
         "render_only": args.render_only,
         "analysis_markdown": None,
+        "patches": [],
         "usage": None,
         "raw_response": None,
     }
@@ -106,7 +108,9 @@ def main() -> None:
                 timeout=timeout,
             ),
         )
-        output["analysis_markdown"] = extract_message_text(response)
+        parsed = extract_message_json(response)
+        output["analysis_markdown"] = parsed.get("analysis_markdown") or extract_message_text(response)
+        output["patches"] = parsed.get("patches", []) or parsed.get("json_patches", []) or []
         output["usage"] = response.get("usage")
         output["raw_response"] = response
 

@@ -88,19 +88,18 @@ FOCUS: Use the evaluation section to weigh the reliability of your findings.
 CONSTRAINT: Do not invent protocol details. If evidence is insufficient, explicitly label it as "Requires Capture/Inspection".
 
 Output requirements
-Return a concise but complete Markdown report with these exact section headings:
-- Executive Summary
-- Inferred Protocol Structure
-- Field Boundary Review
-- Semantic Field Map
-- Opcode Candidates
-- Request Response Lifecycle
-- Clustering Assessment
-- Contradictions And Weak Evidence
-- Reconstructed Protocol Layout
-- Similarity To Known Protocols
-- Answers To Open Questions
-- Recommended Next Captures Or Analysis
+Return one JSON object and no Markdown fences. The object must have:
+- analysis_markdown: a concise report with the same analytical content.
+- patches: an RFC 6902 JSON Patch array against data/10_protocol_model.json.
+
+Patch constraints:
+- Every patch object must include op, path, value, evidence_refs, and rationale.
+- Use only add, replace, or test operations.
+- Only target semantic roles, field encoding/type labels, confidence adjustments, relation labels, and metadata.protocol_hints.
+- Do not change field boundaries, payload templates, message counts, family ids, examples, or raw evidence.
+- Only emit a patch when the supplied statistical, symbolic, or neural evidence supports it.
+- Put evidence source names in evidence_refs, such as family:F0:semantic_labels, family:F0:discriminator_candidates, relation:0, global_hypotheses.opcode_candidates, or neural_context.salience_scores.
+- If no safe patch is justified, return patches: [].
 """
 
 
@@ -185,6 +184,32 @@ def extract_message_text(response: Dict[str, Any]) -> str:
                 parts.append(str(item))
         return "".join(parts)
     return str(content)
+
+
+def extract_message_json(response: Dict[str, Any]) -> Dict[str, Any]:
+    text = extract_message_text(response).strip()
+    if not text:
+        return {}
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else {"patches": parsed if isinstance(parsed, list) else []}
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start >= 0 and end > start:
+            try:
+                parsed = json.loads(text[start : end + 1])
+                return parsed if isinstance(parsed, dict) else {}
+            except json.JSONDecodeError:
+                return {"analysis_markdown": text, "patches": []}
+        return {"analysis_markdown": text, "patches": []}
 
 
 def env_value(primary: Optional[str], *names: str) -> Optional[str]:

@@ -148,8 +148,12 @@ class FamilyRelation:
     temporal_order_consistency: float = 0.0
     order_usable_pairs: int = 0
     avg_latency_ms: Optional[float] = None
+    relation_type: Optional[str] = None
+    semantic_label: Optional[str] = None
+    confidence: Optional[float] = None
     echo_fields: List[Dict[str, Any]] = field(default_factory=list)
     length_relations: List[Dict[str, Any]] = field(default_factory=list)
+    attributes: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

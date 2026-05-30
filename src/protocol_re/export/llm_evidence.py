@@ -75,6 +75,38 @@ def _compact_field(field: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
+def _compact_neural_context(item: Dict[str, Any]) -> Dict[str, Any]:
+    evidence = item.get("evidence", {}) or {}
+    attributes = item.get("attributes", {}) or {}
+    candidates = item.get("discriminator_candidates", []) or item.get("opcode_candidates", []) or []
+    neural = item.get("neural", {}) or evidence.get("neural", {}) or attributes.get("neural", {}) or {}
+    result: Dict[str, Any] = {}
+    for source in (item, evidence, attributes, neural):
+        for key in (
+            "latent_diagnostics",
+            "boundary_probabilities",
+            "reconstruction_error",
+            "neural_pairing_score",
+            "neural_pairing_scores",
+        ):
+            if key in source and source.get(key) not in (None, {}, []):
+                result[key] = source.get(key)
+    salience_scores = []
+    for candidate in candidates:
+        if "salience_score" in candidate:
+            salience_scores.append(
+                {
+                    "start": _as_int(candidate.get("start", candidate.get("offset", 0))),
+                    "end": _as_int(candidate.get("end", _as_int(candidate.get("start", candidate.get("offset", 0))) + 1)),
+                    "salience_score": round(_as_float(candidate.get("salience_score", 0.0)), 6),
+                    "confidence": round(_as_float(candidate.get("confidence", 0.0)), 6),
+                }
+            )
+    if salience_scores:
+        result["salience_scores"] = salience_scores[:10]
+    return result
+
+
 def _compact_label(label: Dict[str, Any]) -> Dict[str, Any]:
     start = _as_int(label.get("start", 0))
     length = _as_int(label.get("length", 0))
@@ -135,7 +167,7 @@ def _compact_discriminator_candidate(candidate: Dict[str, Any]) -> Dict[str, Any
     }
 
 def _compact_relation(relation: Dict[str, Any]) -> Dict[str, Any]:
-    return {
+    compact = {
         "request_family_id": relation.get("request_family_id"),
         "response_family_id": relation.get("response_family_id"),
         "pair_count": relation.get("pair_count"),
@@ -150,6 +182,10 @@ def _compact_relation(relation: Dict[str, Any]) -> Dict[str, Any]:
         "echo_fields": (relation.get("echo_fields", []) or [])[:3],
         "length_relations": (relation.get("length_relations", []) or [])[:3],
     }
+    for key in ("neural_pairing_score", "neural_score", "relation_type", "semantic_label", "confidence"):
+        if key in relation:
+            compact[key] = relation.get(key)
+    return compact
 
 
 def _top_relations(model: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
@@ -277,6 +313,7 @@ def _compact_family(family: Dict[str, Any], field_limit: int) -> Dict[str, Any]:
         "semantic_labels": [_compact_label(label) for label in _top_items(labels, field_limit)],
         "discriminator_candidates": [_compact_discriminator_candidate(candidate) for candidate in _top_items(discriminator_candidates, field_limit)],
         "features": _compact_feature_summary(feature_summary),
+        "neural": _compact_neural_context({**family, **keyword_summary}),
         "confidence_notes": _family_confidence_notes(family),
     }
 
@@ -358,6 +395,7 @@ def _coverage(bundle: Dict[str, Any]) -> Dict[str, Any]:
         "global_hypotheses.opcode_candidates",
         "global_hypotheses.constants",
         "global_hypotheses.low_confidence_areas",
+        "neural_context",
     ]
     filled: List[str] = []
     missing: List[str] = []
@@ -408,7 +446,7 @@ def build_llm_evidence_bundle(
             },
         },
         "llm_guidance": {
-            "purpose": "Infer an unknown industrial protocol structure from compact statistical evidence. Do not assume a known protocol unless evidence supports it.",
+            "purpose": "Infer an unknown industrial protocol structure from compact statistical, symbolic, and neural evidence. Return only evidence-supported RFC 6902 patches plus concise analysis.",
             "recommended_tasks": [
                 "identify_message_families",
                 "name_fields",
@@ -416,12 +454,37 @@ def build_llm_evidence_bundle(
                 "infer_lengths",
                 "explain_request_response_relations",
                 "flag_low_confidence_hypotheses",
+                "semantic_labeling",
             ],
             "raw_payloads_included": False,
+            "patch_contract": {
+                "target_document": "data/10_protocol_model.json",
+                "format": "RFC 6902 JSON Patch",
+                "allowed_ops": ["add", "replace", "test"],
+                "allowed_targets": [
+                    "family semantic_summary role/confidence/field_labels/notes",
+                    "field_hypotheses field_type/confidence/endian/attributes.encoding",
+                    "relation relation_type/semantic_label/confidence/attributes",
+                    "metadata.protocol_hints",
+                ],
+                "requires_evidence_refs": True,
+            },
         },
         "evaluation": _compact_evaluation(evaluation),
         "relations": relations,
         "global_hypotheses": candidates,
+        "neural_context": {
+            "latent_diagnostics": ((model.get("metadata") or {}).get("diagnostics") or {}).get("latent_diagnostics")
+            or ((model.get("metadata") or {}).get("neural") or {}).get("latent_diagnostics"),
+            "salience_scores": candidates.get("opcode_candidates", [])[:field_limit],
+            "boundary_probabilities": ((model.get("metadata") or {}).get("neural") or {}).get("boundary_probabilities"),
+            "reconstruction_error": ((model.get("metadata") or {}).get("neural") or {}).get("reconstruction_error"),
+            "neural_pairing_scores": [
+                relation
+                for relation in relations
+                if relation.get("neural_pairing_score") is not None or relation.get("neural_score") is not None
+            ][:relation_limit],
+        },
         "metadata": {
             "framing_global_summary": (model.get("metadata") or {}).get("framing_global_summary", {}),
         },

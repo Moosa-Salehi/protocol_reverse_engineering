@@ -12,6 +12,7 @@
     "evaluation",
     "relations",
     "global_hypotheses",
+    "neural_context",
     "metadata",
     "families",
     "open_questions"
@@ -79,7 +80,18 @@
             ]
           }
         },
-        "raw_payloads_included": {"type": "boolean"}
+        "raw_payloads_included": {"type": "boolean"},
+        "patch_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "target_document": {"type": "string"},
+            "format": {"type": "string"},
+            "allowed_ops": {"type": "array", "items": {"type": "string"}},
+            "allowed_targets": {"type": "array", "items": {"type": "string"}},
+            "requires_evidence_refs": {"type": "boolean"}
+          }
+        }
       }
     },
     "evaluation": {"$ref": "#/$defs/evaluation"},
@@ -99,6 +111,7 @@
         "low_confidence_areas": {"type": "array", "items": {"$ref": "#/$defs/global_field"}}
       }
     },
+    "neural_context": {"$ref": "#/$defs/neural_context"},
     "families": {
       "type": "array",
       "items": {"$ref": "#/$defs/family"}
@@ -315,6 +328,17 @@
         }
       }
     },
+    "neural_context": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "latent_diagnostics": {"type": ["object", "array", "number", "string", "null"]},
+        "salience_scores": {"type": ["array", "null"], "items": {"type": "object"}},
+        "boundary_probabilities": {"type": ["object", "array", "null"]},
+        "reconstruction_error": {"type": ["number", "object", "array", "null"]},
+        "neural_pairing_scores": {"type": ["array", "null"], "items": {"type": "object"}}
+      }
+    },
     "relation": {
       "type": "object",
       "required": ["request_family_id", "response_family_id", "pair_count", "avg_pair_score"],
@@ -331,6 +355,11 @@
         "temporal_order_consistency": {"type": ["number", "null"]},
         "order_usable_pairs": {"type": ["integer", "null"], "minimum": 0},
         "avg_latency_ms": {"type": ["number", "null"]},
+        "neural_pairing_score": {"type": ["number", "null"]},
+        "neural_score": {"type": ["number", "null"]},
+        "relation_type": {"type": ["string", "null"]},
+        "semantic_label": {"type": ["string", "null"]},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
         "echo_fields": {"type": "array", "items": {"type": "object"}},
         "length_relations": {"type": "array", "items": {"type": "object"}}
       }
@@ -351,6 +380,7 @@
         "framing": {"type": "object"},
         "discriminator_candidates": {"type": "array", "items": {"$ref": "#/$defs/global_field"}},
         "features": {"$ref": "#/$defs/features"},
+        "neural": {"$ref": "#/$defs/neural_context"},
         "confidence_notes": {"type": "array", "items": {"type": "string"}}
       }
     }
