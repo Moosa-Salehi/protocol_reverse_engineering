@@ -6,6 +6,8 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 DEFAULT_SYSTEM_PROMPT = "You are an expert Protocol Reverse Engineering Analyst."
@@ -109,8 +111,8 @@ class LLMRequestConfig:
     base_url: str
     api_key: str
     temperature: float = 0.1
-    max_tokens: int = 6000
-    timeout: int = 120
+    max_tokens: int = 4000
+    timeout: int = 180
 
 
 def render_analysis_prompt(

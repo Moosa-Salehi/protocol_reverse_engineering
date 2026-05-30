@@ -83,8 +83,8 @@ The LLM contract is structured: the model returns `analysis_markdown` plus an RF
   "openai_base_url": "https://api.openai.com/v1",
   "model": "gpt-4o-mini",
   "temperature": 0.1,
-  "max_tokens": 6000,
-  "timeout": 120
+  "max_tokens": 4000,
+  "timeout": 180
 }
 ```
 

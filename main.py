@@ -531,7 +531,7 @@ def parse_args() -> argparse.Namespace:
     llm_analysis_group.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
     llm_analysis_group.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
     llm_analysis_group.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
-    llm_analysis_group.add_argument("--llm-max-tokens", type=int, default=6000, help="Max output tokens for stage 15 LLM analysis.")
+    llm_analysis_group.add_argument("--llm-max-tokens", type=int, default=4000, help="Max output tokens for stage 15 LLM analysis.")
 
     final_eval_group.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation.")
     return parser.parse_args()
