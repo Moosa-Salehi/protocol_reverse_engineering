@@ -17,6 +17,8 @@ TOP_MOTIFS_LIMIT = 10
 TOP_NGRAM_FREQUENCIES_LIMIT = 20
 TOP_STRUCTURAL_MOTIFS_LIMIT = 15
 TRAILING_SUFFIX_SIZES = (1, 2, 4, 8)
+MAX_POSITION_STATS_LENGTH = 512  # Limit position-by-position analysis to first 512 bytes
+MAX_NGRAM_ANALYSIS_LENGTH = 1024  # Limit n-gram analysis to first 1024 bytes
 
 
 def shannon_entropy_from_counts(counts: Counter[int]) -> float:
@@ -204,16 +206,20 @@ class FamilyFeatureAccumulator:
         if len(self.example_msg_ids) < 10:
             self.example_msg_ids.append(record.msg_id)
 
-        for offset, byte_value in enumerate(payload):
+        # Limit position-by-position analysis to avoid performance issues with large payloads
+        position_analysis_payload = payload[:MAX_POSITION_STATS_LENGTH]
+        for offset, byte_value in enumerate(position_analysis_payload):
             while len(self.position_counts) <= offset:
                 self.position_counts.append(Counter())
                 self.position_coverage.append(0)
             self.position_counts[offset].update([byte_value])
             self.position_coverage[offset] += 1
 
+        # Limit n-gram analysis to avoid performance issues with large payloads
+        ngram_analysis_payload = payload[:MAX_NGRAM_ANALYSIS_LENGTH]
         has_repetition = False
         for width in NGRAM_SIZES:
-            counts = ngram_counts(payload, width)
+            counts = ngram_counts(ngram_analysis_payload, width)
             repeated = {gram: count for gram, count in counts.items() if count > 1}
             if repeated:
                 has_repetition = True
@@ -224,7 +230,7 @@ class FamilyFeatureAccumulator:
 
         has_wide_repetition = False
         for width in STRUCTURAL_MOTIF_SIZES:
-            counts = ngram_counts(payload, width)
+            counts = ngram_counts(ngram_analysis_payload, width)
             repeated = {gram: count for gram, count in counts.items() if count > 1}
             if repeated:
                 has_wide_repetition = True

@@ -13,6 +13,11 @@ DEFAULT_MIN_EDGE_PAIRS = 2
 DEFAULT_MIN_EDGE_LIFT = 1.0
 DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST = 5
 
+# Performance limits for large payloads
+MAX_ECHO_SEARCH_LENGTH = 256  # Limit echo field search to first 256 bytes
+MAX_LENGTH_FIELD_SEARCH_LENGTH = 128  # Limit length field search to first 128 bytes
+ECHO_SEARCH_STRIDE = 1  # Can increase to 2 or 4 for even faster search on very large payloads
+
 
 
 def _message_lookup(records: Sequence[MessageRecord]) -> Dict[int, MessageRecord]:
@@ -160,9 +165,13 @@ def _echo_candidates(request_payloads: Sequence[bytes], response_payloads: Seque
     req_max_len = max((len(payload) for payload in request_payloads), default=0)
     resp_max_len = max((len(payload) for payload in response_payloads), default=0)
 
+    # Limit search space to avoid performance issues with large payloads
+    req_search_len = min(req_max_len, MAX_ECHO_SEARCH_LENGTH)
+    resp_search_len = min(resp_max_len, MAX_ECHO_SEARCH_LENGTH)
+
     for width in range(1, MAX_ECHO_WIDTH + 1):
-        for req_start in range(0, max(0, req_max_len - width + 1)):
-            for resp_start in range(0, max(0, resp_max_len - width + 1)):
+        for req_start in range(0, max(0, req_search_len - width + 1), ECHO_SEARCH_STRIDE):
+            for resp_start in range(0, max(0, resp_search_len - width + 1), ECHO_SEARCH_STRIDE):
                 usable = 0
                 matches = 0
                 for request, response in zip(request_payloads, response_payloads):
@@ -198,8 +207,11 @@ def _length_relations(request_payloads: Sequence[bytes], response_payloads: Sequ
     resp_lengths = [len(payload) for payload in response_payloads]
     avg_resp_len = mean(resp_lengths) if resp_lengths else 0.0
 
+    # Limit search space to avoid performance issues with large payloads
+    req_search_len = min(req_max_len, MAX_LENGTH_FIELD_SEARCH_LENGTH)
+
     for width in (1, 2, 4):
-        for start in range(0, max(0, req_max_len - width + 1)):
+        for start in range(0, max(0, req_search_len - width + 1)):
             for endian in ("big", "little"):
                 usable = 0
                 equals_response_length = 0

@@ -8,6 +8,9 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from protocol_re.model.schema import FieldHypothesis, Segment
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
+# Performance limits for large payloads
+MAX_BOUNDARY_DETECTION_LENGTH = 512  # Limit boundary detection to first 512 bytes
+
 
 def _entropy(values: Sequence[int]) -> float:
     if not values:
@@ -36,9 +39,11 @@ def _mutual_information(left: Sequence[int], right: Sequence[int]) -> float:
 def position_statistics(messages_hex: Sequence[str]) -> List[Dict[str, float]]:
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max((len(msg) for msg in messages), default=0)
+    # Limit analysis length to avoid performance issues with large payloads
+    analysis_len = min(max_len, MAX_BOUNDARY_DETECTION_LENGTH)
     stats: List[Dict[str, float]] = []
 
-    for offset in range(max_len):
+    for offset in range(analysis_len):
         values = [msg[offset] for msg in messages if offset < len(msg)]
         coverage = len(values) / len(messages) if messages else 0.0
         stats.append(
@@ -56,10 +61,12 @@ def position_statistics(messages_hex: Sequence[str]) -> List[Dict[str, float]]:
 def score_boundaries(messages_hex: Sequence[str]) -> List[Dict[str, float]]:
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max((len(msg) for msg in messages), default=0)
+    # Limit analysis length to avoid performance issues with large payloads
+    analysis_len = min(max_len, MAX_BOUNDARY_DETECTION_LENGTH)
     stats = position_statistics(messages_hex)
     scores: List[Dict[str, float]] = []
 
-    for offset in range(max_len - 1):
+    for offset in range(min(len(stats) - 1, analysis_len - 1)):
         left_values = [msg[offset] for msg in messages if offset < len(msg) and offset + 1 < len(msg)]
         right_values = [msg[offset + 1] for msg in messages if offset < len(msg) and offset + 1 < len(msg)]
         entropy_jump = abs(stats[offset + 1]["entropy"] - stats[offset]["entropy"])
@@ -238,9 +245,11 @@ def feature_adjusted_segment_confidence(
 def infer_template(messages_hex: Sequence[str], stability_threshold: float = 0.95) -> str:
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max((len(msg) for msg in messages), default=0)
+    # Limit template generation to avoid performance issues with large payloads
+    analysis_len = min(max_len, MAX_BOUNDARY_DETECTION_LENGTH)
     template: List[str] = []
 
-    for offset in range(max_len):
+    for offset in range(analysis_len):
         values = [msg[offset] for msg in messages if offset < len(msg)]
         if not values:
             continue
@@ -250,6 +259,10 @@ def infer_template(messages_hex: Sequence[str], stability_threshold: float = 0.9
             template.append(f"{value:02x}")
         else:
             template.append("??")
+
+    # Indicate if template was truncated
+    if max_len > analysis_len:
+        template.append(f"... [{max_len - analysis_len} more bytes]")
 
     return " ".join(template)
 
