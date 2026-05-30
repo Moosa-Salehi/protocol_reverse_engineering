@@ -44,6 +44,11 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 - `scripts/18_export_markdown.py` renders a human-readable Markdown protocol specification with evaluation metrics when supplied; the runner passes the refined model.
 - `scripts/19_export_html.py` renders a self-contained HTML protocol report with model, relation, feature, semantic, and evaluation evidence; the runner passes the refined model.
 
+## Diagnostic and testing tools
+
+- `scripts/20_diagnose_neural_features.py` analyzes neural feature quality, detects collapsed latent spaces, and compares neural vs structural feature variance. Use this to diagnose why neural clustering may be failing.
+- `scripts/21_test_enhanced_neural.py` tests enhanced neural features with preprocessing and quality checks, comparing original vs enhanced vs structural features.
+
 ## Feature artifacts
 
 - `family_features.json` contains per-family length statistics, entropy and uniqueness vectors by byte offset, aggregate byte histograms, motif/repetition summaries, top n-gram frequency tables, wider repeated motifs, trailing-block/padding hints, length profiles, and recurring fixed-position groups.
@@ -54,12 +59,14 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 
 Stage 04 accepts `--feature-mode raw_bytes|structural|neural|hybrid`.
 
-- `raw_bytes` preserves the previous padded-byte vector behavior and downweights volatile byte offsets.
+- `raw_bytes` preserves the previous padded-byte vector behavior and downweights volatile byte offsets. **Recommended for production use.**
 - `structural` uses symbolic protocol features such as length buckets, stable prefix masks, discriminator-like bytes, direction, header/body split hints, and length-field evidence.
-- `neural` loads `industrial_VAE.pth` when available and encodes each unique payload as a 32D latent vector.
+- `neural` loads `industrial_VAE.pth` when available and encodes each unique payload as a 32D latent vector. **Experimental - may produce poor clustering results.**
 - `hybrid` concatenates the neural 32D latent vector with the structural feature vector.
 
 Neural modes are optional. If PyTorch, the model file, or a compatible encoder object is unavailable, family discovery falls back to symbolic structural features or the existing heuristic path. Latents are cached by payload hash with `--latent-cache-path` to speed repeated runs. The assignment JSON records clustering metadata under `metadata`, including `feature_mode`, `neural_model`, `latent_dim`, `latent_cache`, and `symbolic_feature_count`.
+
+**Note on neural mode:** The current 32D VAE may produce collapsed latent spaces for small payloads (10-12 bytes), resulting in poor clustering (e.g., only 2 families instead of 11). Use `scripts/20_diagnose_neural_features.py` to analyze neural feature quality. For production use, `raw_bytes` mode is recommended (achieves 90%+ accuracy on test protocols).
 
 ## Discriminator salience
 
@@ -129,6 +136,24 @@ python main.py ../pcaps --tshark-filter mbtcp --ground-truth-json ./truth-files/
 python main.py ../pcaps --extraction-method tcp --service-port 502 --ground-truth-json ./truth-files/modbus.json
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
 python main.py ../pcaps --tshark-filter s7comm --family-feature-mode hybrid --family-neural-model-path industrial_VAE.pth
+python main.py ../pcaps --tshark-filter mbtcp --family-feature-mode raw_bytes  # Recommended for production
+```
+
+## Diagnostic tools
+
+Diagnose neural feature quality:
+```bash
+python scripts/20_diagnose_neural_features.py data/01_messages.jsonl \
+    --sample-size 5000 \
+    --model-path pre_trained/industrial_VAE.pth \
+    --latent-cache data/latent_cache.json
+```
+
+Test enhanced neural features:
+```bash
+python scripts/21_test_enhanced_neural.py data/01_messages.jsonl \
+    --sample-size 5000 \
+    --model-path pre_trained/industrial_VAE.pth
 ```
 
 ## Running step by step

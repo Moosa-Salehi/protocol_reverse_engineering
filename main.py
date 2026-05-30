@@ -488,8 +488,8 @@ def parse_args() -> argparse.Namespace:
     family_group.add_argument(
         "--family-feature-mode",
         choices=["raw_bytes", "structural", "neural", "hybrid"],
-        default="hybrid",
-        help="Feature encoding for family discovery.",
+        default="raw_bytes",
+        help="Feature encoding for family discovery. Default: raw_bytes (recommended). Neural mode is experimental.",
     )
     family_group.add_argument(
         "--family-neural-model-path",
@@ -508,6 +508,16 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=256,
         help="Batch size for optional neural latent extraction.",
+    )
+    family_group.add_argument(
+        "--enable-neural-preprocessing",
+        action="store_true",
+        help="Enable enhanced neural preprocessing (masks variable fields like transaction IDs). Experimental.",
+    )
+    family_group.add_argument(
+        "--enable-neural-quality-check",
+        action="store_true",
+        help="Enable neural feature quality checks with automatic fallback to raw_bytes if quality is poor. Experimental.",
     )
 
     discriminator_group.add_argument(
