@@ -1,11 +1,11 @@
-# Protocol RE project
+# Protocol Reverse Engineering
 
-This project is a protocol-agnostic reverse-engineering pipeline for TCP application traffic captured in PCAP/PCAPNG files. It turns packet captures into a canonical message corpus, groups similar payloads into message families, infers framing/header clues, field boundaries, discriminator/opcode subformats, request/response relations, and semantic hints, then assembles those signals into a structured protocol model plus Markdown/HTML reports and optional LLM/evaluation artifacts. It is designed for industrial and other binary protocols where the analyst has traffic captures but not a formal specification.
+This project is a protocol-agnostic reverse-engineering pipeline for traffic captured in PCAP/PCAPNG files. It turns packet captures into a canonical message corpus, groups similar payloads into message families, infers framing/header clues, field boundaries, discriminator/opcode subformats, request/response relations, and semantic hints, then assembles those signals into a structured protocol model plus Markdown/HTML reports and optional LLM/evaluation artifacts. It is designed for industrial and other binary protocols where the analyst has traffic captures but not a formal specification.
 
 The pipeline is:
 
 1. Optionally collect PCAP/PCAPNG files from an arbitrary source tree into a normalized `pcaps/` directory and remove duplicate captures.
-2. Extract TCP payloads into `data/01_messages.jsonl`, either as packet payloads or as directional reassembled TCP streams. Each message records source file, session key, endpoints, direction when a service port is known, payload hex, length, timestamp/session order, and extraction metadata.
+2. Extract payloads into `data/01_messages.jsonl` Using TShark with user filter. Each message records source file, session key, payload hex, length, timestamp and extraction metadata.
 3. Discover message families in `data/02_family_assignments.json` by clustering unique payload vectors with HDBSCAN or DBSCAN after optional PCA. Feature modes include raw bytes, symbolic structural features, optional 32D neural latents from `industrial_VAE.pth`, or hybrid structural+neural vectors. When dependencies or the neural model are unavailable, deterministic fallback paths are used; sampled labels are propagated to duplicate payloads and centroid-nearest unsampled unique payloads.
 4. Infer protocol-agnostic framing hypotheses in `data/04_framing.json`, including stable prefixes and likely header fields such as length, counter, discriminator, and body/tail variability hints.
 5. Extract reusable per-family evidence in `data/03_family_features.json`: length profiles, entropy and uniqueness by offset, byte histograms, n-gram/motif repetition, trailing padding/suffix clues, recurring fixed-position groups, and example message ids.
@@ -25,7 +25,7 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 
 - `scripts/01_collect_pcaps.py` collects PCAP files from a source tree into one normalized directory.
 - `scripts/02_dedup_pcaps.py` finds duplicate PCAP files and can remove them.
-- `scripts/03_extract_messages.py` extracts protocol payload messages into the canonical JSONL corpus, using TShark display-filter extraction by default or the legacy Scapy TCP port extractor for compatibility.
+- `scripts/03_extract_messages.py` extracts protocol payload messages into the canonical JSONL corpus, using TShark display-filter extraction by default or the Scapy TCP port extractor for compatibility.
 - `scripts/04_discover_families.py` discovers message families with DBSCAN, HDBSCAN, or a built-in heuristic fallback; it supports `raw_bytes`, `structural`, `neural`, and `hybrid` feature modes, caches neural latents by payload hash, clusters a unique-message sample, and propagates labels to duplicate payloads across the corpus.
 - `scripts/05_infer_framing.py` infers protocol-agnostic framing/header hypotheses from discovered families using stable prefixes, length/correlation/counter/discriminator candidates, and body-tail variability.
 - `scripts/06_extract_features.py` writes reusable per-family feature artifacts.
