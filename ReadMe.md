@@ -86,7 +86,8 @@ The runner writes learned salience cache entries to `data/07_salience_cache.json
 ```
 
 ```bash
-export OPENAI_API_KEY=<api-key>
+export OPENAI_API_KEY=<api-key>       # bash
+$env:OPENAI_API_KEY = "<api-key>"     # powershell
 python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_analysis.json --prompt-out data/13_llm_prompt.md --config LLM_config.json
 ```
 
@@ -131,11 +132,9 @@ python main.py ../pcaps --tshark-filter s7comm --family-feature-mode hybrid --fa
 
 Set imports first:
 
-```bash
-export PYTHONPATH=src
 ```
-```powershell
-$env:PYTHONPATH="src"
+export PYTHONPATH=src   # bash
+$env:PYTHONPATH="src"   # powershell
 ```
 
 Build from an existing normalized PCAP directory, matching the default `python main.py pcaps` flow:
