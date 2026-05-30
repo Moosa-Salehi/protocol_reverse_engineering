@@ -92,9 +92,12 @@ python3 scripts/15_analyze_with_llm.py data/12_llm_evidence.json data/13_llm_ana
 
 Use `--render-only` to create the prompt without calling an API, or `--template custom_prompt.md` to replace the built-in analysis prompt. The runner exposes the same workflow with `--llm-config`, `--llm-template`, `--llm-render-only`, `--llm-temperature`, `--llm-max-tokens`.
 
-## Required system
+## Requirements
 
-a windows/linux system with python installed.
+- Python 3.10+
+- Wireshark/TShark installed and available as `tshark` in PATH
+
+This project used `TShark 4.2.2` and `Python 3.12`.
 
 ## Installing dependencies
 
