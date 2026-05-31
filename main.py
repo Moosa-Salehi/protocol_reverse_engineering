@@ -235,6 +235,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     str(args.min_edge_lift),
                     "--max-response-families-per-request",
                     str(args.max_response_families_per_request),
+                    "--min-echo-support",
+                    str(args.min_echo_support),
+                    "--min-length-support",
+                    str(args.min_length_support),
+                    "--min-relation-confidence",
+                    str(args.min_relation_confidence),
                 ],
             ),
             (
@@ -608,6 +614,9 @@ def parse_args() -> argparse.Namespace:
         help="Maximum candidate response families to retain per request family before relation analysis.",
     )
     relations_group.add_argument("--allow-self-relations", action="store_true", help="Keep same-family request/response relation candidates.")
+    relations_group.add_argument("--min-echo-support", type=float, default=0.95, help="Minimum support threshold for echo field detection (default: 0.95).")
+    relations_group.add_argument("--min-length-support", type=float, default=0.95, help="Minimum support threshold for length relation detection (default: 0.95).")
+    relations_group.add_argument("--min-relation-confidence", type=float, default=0.7, help="Minimum confidence threshold for keeping a relation (default: 0.7).")
 
     llm_analysis_group.add_argument("--llm-config", type=Path, default=Path("LLM_config.json"), help="LLM config JSON for stage 15.")
     llm_analysis_group.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")

@@ -15,12 +15,13 @@ def main() -> None:
     parser.add_argument("assignments_json", help="Output from 04_discover_families.py")
     parser.add_argument("pairs_json", help="Output from 08_pair_requests_responses.py")
     parser.add_argument("output_json", help="Output JSON file for inferred family relations")
-    parser.add_argument("--min-echo-support", type=float, default=0.9)
-    parser.add_argument("--min-length-support", type=float, default=0.9)
+    parser.add_argument("--min-echo-support", type=float, default=0.95, help="Minimum support threshold for echo field detection (default: 0.95)")
+    parser.add_argument("--min-length-support", type=float, default=0.95, help="Minimum support threshold for length relation detection (default: 0.95)")
     parser.add_argument("--min-edge-pairs", type=int, default=2, help="Minimum pair count for a family relation edge.")
     parser.add_argument("--min-edge-lift", type=float, default=1.0, help="Minimum lift over family base rates for a relation edge.")
     parser.add_argument("--max-response-families-per-request", type=int, default=5, help="Top response-family candidates to keep per request family.")
     parser.add_argument("--allow-self-relations", action="store_true", help="Keep same-family request/response candidate edges.")
+    parser.add_argument("--min-relation-confidence", type=float, default=0.7, help="Minimum confidence threshold for keeping a relation (default: 0.7)")
     args = parser.parse_args()
 
     records = load_corpus_jsonl(args.input_jsonl)
@@ -41,6 +42,7 @@ def main() -> None:
         min_edge_lift=args.min_edge_lift,
         max_response_families_per_request=args.max_response_families_per_request,
         allow_self_relations=args.allow_self_relations,
+        min_relation_confidence=args.min_relation_confidence,
     )
 
     with open(args.output_json, "w", encoding="utf-8") as handle:

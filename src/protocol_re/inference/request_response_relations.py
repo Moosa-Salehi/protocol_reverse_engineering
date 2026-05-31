@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from statistics import mean
+from statistics import mean, stdev
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord, PairRecord
@@ -13,10 +13,15 @@ DEFAULT_MIN_EDGE_PAIRS = 2
 DEFAULT_MIN_EDGE_LIFT = 1.0
 DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST = 5
 
-# Performance limits for large payloads
-MAX_ECHO_SEARCH_LENGTH = 256  # Limit echo field search to first 256 bytes
-MAX_LENGTH_FIELD_SEARCH_LENGTH = 128  # Limit length field search to first 128 bytes
-ECHO_SEARCH_STRIDE = 1  # Can increase to 2 or 4 for even faster search on very large payloads
+# A4: Tightened performance limits for echo/length field detection
+MAX_ECHO_SEARCH_LENGTH = 64  # Reduced from 256 to focus on header regions (first 64 bytes)
+MAX_LENGTH_FIELD_SEARCH_LENGTH = 64  # Reduced from 128 to focus on header regions
+ECHO_SEARCH_STRIDE = 1
+
+# A4: Stricter thresholds for relation detection
+DEFAULT_MIN_ECHO_SUPPORT = 0.95  # Increased from 0.9 to reduce false positives
+DEFAULT_MIN_LENGTH_SUPPORT = 0.95  # Increased from 0.9 to reduce false positives
+MIN_CONFIDENCE_THRESHOLD = 0.7  # Minimum confidence to keep a relation
 
 
 
@@ -156,8 +161,95 @@ def _prune_family_edges(
     return retained
 
 
+# A4: Helper function to detect if a field is likely a counter or timestamp
+def _is_likely_counter_or_timestamp(values: List[int]) -> bool:
+    """
+    Detect if a sequence of values is likely a counter or timestamp.
+    Counters: monotonically increasing or cycling with small deltas
+    Timestamps: large values with small deltas
+    """
+    if len(values) < 3:
+        return False
 
-def _echo_candidates(request_payloads: Sequence[bytes], response_payloads: Sequence[bytes], min_support: float = 0.9) -> List[Dict[str, object]]:
+    # Check for monotonic increase (counter)
+    increasing = sum(1 for i in range(len(values) - 1) if values[i + 1] > values[i])
+    if increasing / (len(values) - 1) > 0.8:  # 80% increasing
+        return True
+
+    # Check for cycling pattern (counter wrapping)
+    deltas = [abs(values[i + 1] - values[i]) for i in range(len(values) - 1)]
+    if deltas:
+        avg_delta = mean(deltas)
+        if avg_delta < 10:  # Small deltas suggest counter
+            return True
+
+    # Check for timestamp-like values (large numbers with small relative changes)
+    if values:
+        avg_value = mean(values)
+        if avg_value > 1000000 and deltas:  # Large values
+            relative_deltas = [d / avg_value for d in deltas if avg_value > 0]
+            if relative_deltas and mean(relative_deltas) < 0.01:  # Small relative change
+                return True
+
+    return False
+
+
+# A4: Helper function to calculate confidence score for echo fields
+def _calculate_echo_confidence(
+    width: int,
+    support: float,
+    usable_pairs: int,
+    request_offset: int,
+    response_offset: int,
+    request_values: List[int],
+    response_values: List[int],
+) -> float:
+    """
+    Calculate confidence score for an echo field candidate.
+    Higher confidence for:
+    - Wider fields (2-4 bytes preferred over 1 byte)
+    - Higher support (>95%)
+    - More usable pairs
+    - Header region (first 32 bytes)
+    - Not a counter or timestamp
+    """
+    confidence = 0.0
+
+    # Base confidence from support
+    confidence += support * 0.4  # Max 0.4
+
+    # Width bonus: prioritize 2-byte and 4-byte fields (typical transaction IDs)
+    if width == 2:
+        confidence += 0.25
+    elif width == 4:
+        confidence += 0.25
+    elif width == 1:
+        confidence += 0.05  # Low confidence for single-byte echoes
+    else:
+        confidence += 0.15
+
+    # Position bonus: prefer header regions (first 32 bytes)
+    if request_offset < 32 and response_offset < 32:
+        confidence += 0.15
+    elif request_offset < 64 and response_offset < 64:
+        confidence += 0.10
+    else:
+        confidence += 0.05
+
+    # Sample size bonus
+    if usable_pairs >= 10:
+        confidence += 0.10
+    elif usable_pairs >= 5:
+        confidence += 0.05
+
+    # Penalty for counter/timestamp patterns
+    if _is_likely_counter_or_timestamp(request_values) or _is_likely_counter_or_timestamp(response_values):
+        confidence *= 0.3  # Heavy penalty
+
+    return min(1.0, confidence)
+
+
+def _echo_candidates(request_payloads: Sequence[bytes], response_payloads: Sequence[bytes], min_support: float = DEFAULT_MIN_ECHO_SUPPORT) -> List[Dict[str, object]]:
     candidates: List[Dict[str, object]] = []
     if not request_payloads or not response_payloads:
         return candidates
@@ -165,7 +257,7 @@ def _echo_candidates(request_payloads: Sequence[bytes], response_payloads: Seque
     req_max_len = max((len(payload) for payload in request_payloads), default=0)
     resp_max_len = max((len(payload) for payload in response_payloads), default=0)
 
-    # Limit search space to avoid performance issues with large payloads
+    # A4: Limit search space to header regions only (first 64 bytes)
     req_search_len = min(req_max_len, MAX_ECHO_SEARCH_LENGTH)
     resp_search_len = min(resp_max_len, MAX_ECHO_SEARCH_LENGTH)
 
@@ -174,16 +266,36 @@ def _echo_candidates(request_payloads: Sequence[bytes], response_payloads: Seque
             for resp_start in range(0, max(0, resp_search_len - width + 1), ECHO_SEARCH_STRIDE):
                 usable = 0
                 matches = 0
+                request_values = []
+                response_values = []
+
                 for request, response in zip(request_payloads, response_payloads):
                     if len(request) < req_start + width or len(response) < resp_start + width:
                         continue
                     usable += 1
-                    if request[req_start : req_start + width] == response[resp_start : resp_start + width]:
+                    req_chunk = request[req_start : req_start + width]
+                    resp_chunk = response[resp_start : resp_start + width]
+
+                    if req_chunk == resp_chunk:
                         matches += 1
+
+                    # Collect values for counter/timestamp detection (for 1-4 byte fields)
+                    if width <= 4:
+                        req_val = safe_int_from_bytes(req_chunk, endian="big")
+                        resp_val = safe_int_from_bytes(resp_chunk, endian="big")
+                        request_values.append(req_val)
+                        response_values.append(resp_val)
+
                 if usable == 0:
                     continue
                 support = matches / usable
                 if support >= min_support:
+                    # A4: Calculate confidence score
+                    confidence = _calculate_echo_confidence(
+                        width, support, usable, req_start, resp_start,
+                        request_values, response_values
+                    )
+
                     candidates.append(
                         {
                             "request_offset": req_start,
@@ -191,14 +303,115 @@ def _echo_candidates(request_payloads: Sequence[bytes], response_payloads: Seque
                             "width": width,
                             "support": round(support, 4),
                             "usable_pairs": usable,
+                            "confidence": round(confidence, 4),
                         }
                     )
-    candidates.sort(key=lambda item: (-item["support"], -item["width"], item["request_offset"], item["response_offset"]))
-    return candidates[:20]
+
+    # A4: Sort by confidence first, then support, then width
+    candidates.sort(key=lambda item: (-item["confidence"], -item["support"], -item["width"], item["request_offset"], item["response_offset"]))
+
+    # A4: Filter by minimum confidence threshold and deduplicate
+    filtered_candidates = []
+    seen_positions = set()
+
+    for candidate in candidates:
+        if candidate["confidence"] < MIN_CONFIDENCE_THRESHOLD:
+            continue
+
+        # Deduplicate: skip if we already have an overlapping echo field with higher confidence
+        position_key = (candidate["request_offset"], candidate["response_offset"], candidate["width"])
+        if position_key in seen_positions:
+            continue
+
+        # Check for overlapping fields
+        overlaps = False
+        for seen_req_off, seen_resp_off, seen_width in seen_positions:
+            req_overlap = (
+                candidate["request_offset"] < seen_req_off + seen_width and
+                candidate["request_offset"] + candidate["width"] > seen_req_off
+            )
+            resp_overlap = (
+                candidate["response_offset"] < seen_resp_off + seen_width and
+                candidate["response_offset"] + candidate["width"] > seen_resp_off
+            )
+            if req_overlap and resp_overlap:
+                overlaps = True
+                break
+
+        if not overlaps:
+            filtered_candidates.append(candidate)
+            seen_positions.add(position_key)
+
+    return filtered_candidates[:10]  # Return top 10 instead of 20
 
 
+# A4: Helper function to calculate confidence score for length relations
+def _calculate_length_confidence(
+    width: int,
+    support: float,
+    usable_pairs: int,
+    request_offset: int,
+    relation_type: str,
+    field_values: List[int],
+    avg_response_length: float,
+) -> float:
+    """
+    Calculate confidence score for a length relation candidate.
+    Higher confidence for:
+    - Higher support (>95%)
+    - Consistent position (header region)
+    - Reasonable length values (not random)
+    - Not a counter or address
+    """
+    confidence = 0.0
 
-def _length_relations(request_payloads: Sequence[bytes], response_payloads: Sequence[bytes], min_support: float = 0.9) -> List[Dict[str, object]]:
+    # Base confidence from support
+    confidence += support * 0.5  # Max 0.5
+
+    # Width bonus: prefer 1, 2, or 4 byte length fields
+    if width in (1, 2, 4):
+        confidence += 0.2
+    else:
+        confidence += 0.1
+
+    # Position bonus: prefer header regions (first 32 bytes)
+    if request_offset < 32:
+        confidence += 0.15
+    elif request_offset < 64:
+        confidence += 0.10
+    else:
+        confidence += 0.05
+
+    # Sample size bonus
+    if usable_pairs >= 10:
+        confidence += 0.10
+    elif usable_pairs >= 5:
+        confidence += 0.05
+
+    # Penalty for counter patterns
+    if _is_likely_counter_or_timestamp(field_values):
+        confidence *= 0.2  # Heavy penalty
+
+    # Penalty for unreasonable length values (too large or too small)
+    if field_values:
+        avg_value = mean(field_values)
+        if avg_value < 1 or avg_value > 65535:  # Unreasonable length
+            confidence *= 0.5
+
+        # Check if values are consistent with actual response lengths
+        if avg_response_length > 0:
+            ratio = avg_value / avg_response_length
+            if relation_type == "request_field_equals_response_length":
+                if 0.8 <= ratio <= 1.2:  # Within 20% of actual length
+                    confidence += 0.05
+            elif relation_type == "request_field_equals_length_delta":
+                if ratio < 2.0:  # Delta should be smaller than full length
+                    confidence += 0.05
+
+    return min(1.0, confidence)
+
+
+def _length_relations(request_payloads: Sequence[bytes], response_payloads: Sequence[bytes], min_support: float = DEFAULT_MIN_LENGTH_SUPPORT) -> List[Dict[str, object]]:
     relations: List[Dict[str, object]] = []
     if not request_payloads or not response_payloads:
         return relations
@@ -207,7 +420,7 @@ def _length_relations(request_payloads: Sequence[bytes], response_payloads: Sequ
     resp_lengths = [len(payload) for payload in response_payloads]
     avg_resp_len = mean(resp_lengths) if resp_lengths else 0.0
 
-    # Limit search space to avoid performance issues with large payloads
+    # A4: Limit search space to header regions only (first 64 bytes)
     req_search_len = min(req_max_len, MAX_LENGTH_FIELD_SEARCH_LENGTH)
 
     for width in (1, 2, 4):
@@ -216,22 +429,35 @@ def _length_relations(request_payloads: Sequence[bytes], response_payloads: Sequ
                 usable = 0
                 equals_response_length = 0
                 equals_delta = 0
+                field_values = []
+
                 for request, response in zip(request_payloads, response_payloads):
                     if len(request) < start + width:
                         continue
                     usable += 1
                     value = safe_int_from_bytes(request[start : start + width], endian=endian)
+                    field_values.append(value)
+
                     if value == len(response):
                         equals_response_length += 1
                     if value == max(0, len(response) - len(request)):
                         equals_delta += 1
+
                 if usable == 0:
                     continue
                 support_len = equals_response_length / usable
                 support_delta = equals_delta / usable
                 best_support = max(support_len, support_delta)
+
                 if best_support >= min_support:
                     relation_type = "request_field_equals_response_length" if support_len >= support_delta else "request_field_equals_length_delta"
+
+                    # A4: Calculate confidence score
+                    confidence = _calculate_length_confidence(
+                        width, best_support, usable, start, relation_type,
+                        field_values, avg_resp_len
+                    )
+
                     relations.append(
                         {
                             "request_offset": start,
@@ -241,10 +467,85 @@ def _length_relations(request_payloads: Sequence[bytes], response_payloads: Sequ
                             "support": round(best_support, 4),
                             "usable_pairs": usable,
                             "avg_response_length": round(avg_resp_len, 2),
+                            "confidence": round(confidence, 4),
                         }
                     )
-    relations.sort(key=lambda item: (-item["support"], item["request_offset"], item["width"]))
-    return relations[:20]
+
+    # A4: Sort by confidence first, then support
+    relations.sort(key=lambda item: (-item["confidence"], -item["support"], item["request_offset"], item["width"]))
+
+    # A4: Filter by minimum confidence threshold and deduplicate
+    filtered_relations = []
+    seen_positions = set()
+
+    for relation in relations:
+        if relation["confidence"] < MIN_CONFIDENCE_THRESHOLD:
+            continue
+
+        # Deduplicate: keep only one relation per position (prefer higher confidence)
+        position_key = (relation["request_offset"], relation["width"])
+        if position_key in seen_positions:
+            continue
+
+        filtered_relations.append(relation)
+        seen_positions.add(position_key)
+
+    return filtered_relations[:10]  # Return top 10 instead of 20
+
+
+# A4: Calculate overall relation confidence based on multiple evidence types
+def _calculate_relation_confidence(
+    edge_features: Dict[str, object],
+    echo_fields: List[Dict[str, object]],
+    length_relations: List[Dict[str, object]],
+) -> float:
+    """
+    Calculate overall confidence for a family relation based on:
+    - Edge features (pair count, lift, direction consistency, temporal ordering)
+    - Echo field evidence (high-confidence echoes)
+    - Length relation evidence (high-confidence length fields)
+    """
+    confidence = 0.0
+
+    # Base confidence from edge features
+    pair_count = int(edge_features.get("pair_count", 0))
+    edge_lift = float(edge_features.get("edge_lift", 0.0))
+    direction_consistency = float(edge_features.get("direction_consistency", 0.0))
+    temporal_order_consistency = float(edge_features.get("temporal_order_consistency", 0.0))
+
+    # Pair count contribution (max 0.2)
+    if pair_count >= 10:
+        confidence += 0.2
+    elif pair_count >= 5:
+        confidence += 0.15
+    elif pair_count >= 2:
+        confidence += 0.10
+
+    # Edge lift contribution (max 0.2)
+    if edge_lift >= 2.0:
+        confidence += 0.2
+    elif edge_lift >= 1.5:
+        confidence += 0.15
+    elif edge_lift >= 1.0:
+        confidence += 0.10
+
+    # Direction consistency contribution (max 0.2)
+    confidence += direction_consistency * 0.2
+
+    # Temporal ordering contribution (max 0.2)
+    confidence += temporal_order_consistency * 0.2
+
+    # Echo field evidence (max 0.1)
+    if echo_fields:
+        max_echo_confidence = max(e.get("confidence", 0.0) for e in echo_fields)
+        confidence += max_echo_confidence * 0.1
+
+    # Length relation evidence (max 0.1)
+    if length_relations:
+        max_length_confidence = max(r.get("confidence", 0.0) for r in length_relations)
+        confidence += max_length_confidence * 0.1
+
+    return min(1.0, confidence)
 
 
 
@@ -252,12 +553,13 @@ def summarize_family_relations(
     records: Sequence[MessageRecord],
     pairs: Sequence[PairRecord],
     assignments: Sequence[FamilyAssignment],
-    min_echo_support: float = 0.9,
-    min_length_support: float = 0.9,
+    min_echo_support: float = DEFAULT_MIN_ECHO_SUPPORT,
+    min_length_support: float = DEFAULT_MIN_LENGTH_SUPPORT,
     min_edge_pairs: int = DEFAULT_MIN_EDGE_PAIRS,
     min_edge_lift: float = DEFAULT_MIN_EDGE_LIFT,
     max_response_families_per_request: int = DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST,
     allow_self_relations: bool = False,
+    min_relation_confidence: float = MIN_CONFIDENCE_THRESHOLD,
 ) -> Dict[str, object]:
     messages_by_id = _message_lookup(records)
     family_by_msg_id = _family_lookup(assignments)
@@ -302,6 +604,14 @@ def summarize_family_relations(
 
         echo_candidates = _echo_candidates(request_payloads, response_payloads, min_support=min_echo_support)
         length_relations = _length_relations(request_payloads, response_payloads, min_support=min_length_support)
+
+        # A4: Calculate overall relation confidence
+        relation_confidence = _calculate_relation_confidence(edge_features, echo_candidates, length_relations)
+
+        # A4: Filter out low-confidence relations
+        if relation_confidence < min_relation_confidence:
+            continue
+
         family_roles[request_family]["request_like"] += len(family_pairs)
         family_roles[response_family]["response_like"] += len(family_pairs)
 
@@ -314,6 +624,7 @@ def summarize_family_relations(
                 "avg_latency_ms": round(mean(latencies), 4) if latencies else None,
                 "echo_fields": echo_candidates,
                 "length_relations": length_relations,
+                "relation_confidence": round(relation_confidence, 4),  # A4: Add overall confidence
             }
         )
 
