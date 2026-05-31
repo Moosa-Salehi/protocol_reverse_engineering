@@ -361,11 +361,11 @@ The pipeline has strong infrastructure but needs: (1) fix neural features, (2) r
 
 ### A6. Add Multi-Layer Protocol Detection (Protocol-Agnostic)
 **Priority:** P2 - Important for real-world protocols  
-**Current Issue:** Many protocols have transport headers + application PDU, pipeline treats as flat
+**Current Issue:** Many protocols have transport headers + application payload, pipeline treats as flat
 
 **Root Cause Analysis:**
 - Protocols often have stable outer headers (framing, transaction IDs, length fields)
-- Inner protocol (PDU) contains the actual message logic
+- Inner protocol payload contains the actual message logic
 - Clustering on full frame includes transport noise
 - Boundaries mix transport and application fields
 
@@ -384,7 +384,7 @@ The pipeline has strong infrastructure but needs: (1) fix neural features, (2) r
 
 3. **Add layer-aware feature extraction:**
    - Extract features from inner protocol only for clustering
-   - Keep outer header for pairing (transaction IDs)
+   - Keep outer header for pairing
    - Separate boundary detection per layer
 
 4. **Add layer-aware evaluation:**
