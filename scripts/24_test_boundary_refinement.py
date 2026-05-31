@@ -15,7 +15,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from protocol_re.inference.boundary_detection_enhanced import infer_segments
+from protocol_re.inference.boundary_detection import infer_segments
 from protocol_re.inference.boundary_quality_metrics import (
     compute_boundary_quality_metrics,
     identify_problematic_families,

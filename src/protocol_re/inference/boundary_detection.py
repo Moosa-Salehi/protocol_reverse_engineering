@@ -1,15 +1,31 @@
+"""
+Enhanced boundary detection with anti-fragmentation penalties.
+
+This module addresses over-segmentation by:
+1. Penalizing excessive 1-byte fields
+2. Requiring minimum segment widths
+3. Merging adjacent similar fields
+4. Adding maximum field count limits
+5. Reducing entropy weight in scoring
+"""
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 from math import log2
 from statistics import mean
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FieldHypothesis, Segment
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
-# Performance limits for large payloads
-MAX_BOUNDARY_DETECTION_LENGTH = 512  # Limit boundary detection to first 512 bytes
+# Performance limits
+MAX_BOUNDARY_DETECTION_LENGTH = 512
+
+# Anti-fragmentation parameters
+MAX_FIELDS_PER_FAMILY = 15  # Maximum reasonable field count
+MIN_FIELD_WIDTH_DEFAULT = 1  # Minimum field width (can be overridden)
+SINGLE_BYTE_PENALTY = 0.5  # Penalty for 1-byte fields (unless strong evidence)
+ENTROPY_WEIGHT_REDUCED = 0.6  # Reduced from 1.2 (was over-weighted)
 
 
 def _entropy(values: Sequence[int]) -> float:
@@ -39,7 +55,6 @@ def _mutual_information(left: Sequence[int], right: Sequence[int]) -> float:
 def position_statistics(messages_hex: Sequence[str]) -> List[Dict[str, float]]:
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max((len(msg) for msg in messages), default=0)
-    # Limit analysis length to avoid performance issues with large payloads
     analysis_len = min(max_len, MAX_BOUNDARY_DETECTION_LENGTH)
     stats: List[Dict[str, float]] = []
 
@@ -58,22 +73,45 @@ def position_statistics(messages_hex: Sequence[str]) -> List[Dict[str, float]]:
     return stats
 
 
-def score_boundaries(messages_hex: Sequence[str]) -> List[Dict[str, float]]:
+def score_boundaries(
+    messages_hex: Sequence[str],
+    reduce_entropy_weight: bool = True
+) -> List[Dict[str, float]]:
+    """
+    Score potential field boundaries.
+
+    Args:
+        messages_hex: Messages to analyze
+        reduce_entropy_weight: If True, reduce entropy weight to avoid over-segmentation
+    """
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max((len(msg) for msg in messages), default=0)
-    # Limit analysis length to avoid performance issues with large payloads
     analysis_len = min(max_len, MAX_BOUNDARY_DETECTION_LENGTH)
     stats = position_statistics(messages_hex)
     scores: List[Dict[str, float]] = []
 
+    # Adjust weights to reduce over-segmentation
+    entropy_weight = ENTROPY_WEIGHT_REDUCED if reduce_entropy_weight else 1.2
+    uniqueness_weight = 0.8
+    dependency_weight = 1.0  # Increased from 0.6 (more important)
+    coverage_weight = 0.4
+
     for offset in range(min(len(stats) - 1, analysis_len - 1)):
         left_values = [msg[offset] for msg in messages if offset < len(msg) and offset + 1 < len(msg)]
         right_values = [msg[offset + 1] for msg in messages if offset < len(msg) and offset + 1 < len(msg)]
+
         entropy_jump = abs(stats[offset + 1]["entropy"] - stats[offset]["entropy"])
         uniqueness_jump = abs(stats[offset + 1]["unique_ratio"] - stats[offset]["unique_ratio"])
         dependency_drop = max(0.0, stats[offset]["entropy"] + stats[offset + 1]["entropy"] - _mutual_information(left_values, right_values))
         coverage_drop = abs(stats[offset + 1]["coverage"] - stats[offset]["coverage"])
-        score = (1.2 * entropy_jump) + (0.8 * uniqueness_jump) + (0.6 * dependency_drop) + (0.4 * coverage_drop)
+
+        score = (
+            entropy_weight * entropy_jump +
+            uniqueness_weight * uniqueness_jump +
+            dependency_weight * dependency_drop +
+            coverage_weight * coverage_drop
+        )
+
         scores.append(
             {
                 "boundary_after": float(offset),
@@ -88,43 +126,254 @@ def score_boundaries(messages_hex: Sequence[str]) -> List[Dict[str, float]]:
     return scores
 
 
+def should_merge_segments(
+    seg1: Segment,
+    seg2: Segment,
+    messages_hex: Sequence[str]
+) -> bool:
+    """
+    Determine if two adjacent segments should be merged.
+
+    Merge if:
+    - Both are 1-byte fields
+    - Both are constants
+    - Both have same field type and low confidence
+    """
+    # Both are 1-byte
+    if (seg2.start - seg1.start) == 1 and (seg2.end - seg2.start) == 1:
+        # Merge adjacent 1-byte fields unless they're clearly different types
+        if seg1.kind == seg2.kind == "constant":
+            return True
+        if seg1.kind == seg2.kind == "variable" and seg1.confidence < 0.7 and seg2.confidence < 0.7:
+            return True
+
+    return False
+
+
+def merge_segments(segments: List[Segment], messages_hex: Sequence[str]) -> List[Segment]:
+    """
+    Merge adjacent segments that should be combined.
+
+    More aggressive merging to reduce over-segmentation:
+    - Merge consecutive 1-byte variable fields
+    - Merge adjacent constants
+    - Merge low-confidence adjacent fields
+    - Multi-pass merging for better results
+    """
+    if len(segments) <= 1:
+        return segments
+
+    # Multi-pass merging: keep merging until no more merges happen
+    max_passes = 3
+    for pass_num in range(max_passes):
+        merged: List[Segment] = []
+        current = segments[0]
+        merge_count = 0
+
+        for next_seg in segments[1:]:
+            # Check if segments are adjacent
+            if current.end != next_seg.start:
+                merged.append(current)
+                current = next_seg
+                continue
+
+            should_merge = False
+            merge_reason = ""
+
+            # Rule 1: Merge adjacent constants (always)
+            if current.kind == next_seg.kind == "constant":
+                should_merge = True
+                merge_reason = "adjacent_constants"
+
+            # Rule 2: Merge consecutive 1-byte variable fields (aggressive)
+            elif (current.end - current.start) == 1 and (next_seg.end - next_seg.start) == 1:
+                if current.kind == next_seg.kind == "variable":
+                    should_merge = True
+                    merge_reason = "consecutive_single_byte_variables"
+                # Also merge 1-byte constant + 1-byte variable if both low confidence
+                elif current.confidence < 0.7 and next_seg.confidence < 0.7:
+                    should_merge = True
+                    merge_reason = "adjacent_single_byte_low_confidence"
+
+            # Rule 3: Merge low-confidence adjacent fields of same kind
+            elif (current.kind == next_seg.kind and
+                  current.confidence < 0.7 and next_seg.confidence < 0.7):
+                should_merge = True
+                merge_reason = "low_confidence_same_kind"
+
+            # Rule 4: Merge if combined width is reasonable (2 or 4 bytes)
+            elif (current.kind == next_seg.kind and
+                  (next_seg.end - current.start) in (2, 4)):
+                if current.confidence < 0.8 or next_seg.confidence < 0.8:
+                    should_merge = True
+                    merge_reason = "standard_width_alignment"
+
+            # Rule 5: Merge multiple 1-byte segments into standard widths (2, 4 bytes)
+            elif (current.end - current.start) <= 2 and (next_seg.end - next_seg.start) <= 2:
+                combined_width = next_seg.end - current.start
+                if combined_width in (2, 4) and current.kind == next_seg.kind:
+                    # Merge if at least one has low confidence
+                    if current.confidence < 0.75 or next_seg.confidence < 0.75:
+                        should_merge = True
+                        merge_reason = "small_segments_to_standard_width"
+
+            # Rule 6: Aggressive merging for very small segments (pass 2+)
+            elif pass_num > 0:
+                # In later passes, be more aggressive with small segments
+                if (current.end - current.start) == 1 or (next_seg.end - next_seg.start) == 1:
+                    combined_width = next_seg.end - current.start
+                    if combined_width <= 4:
+                        should_merge = True
+                        merge_reason = "aggressive_small_segment_merge"
+
+            if should_merge:
+                merge_count += 1
+                # Merge: extend current segment
+                # Use the more specific kind if one is constant and one is variable
+                merged_kind = current.kind
+                if current.kind != next_seg.kind:
+                    # Prefer variable over constant when merging different kinds
+                    merged_kind = "variable" if "variable" in (current.kind, next_seg.kind) else current.kind
+
+                current = Segment(
+                    start=current.start,
+                    end=next_seg.end,
+                    kind=merged_kind,
+                    confidence=min(current.confidence, next_seg.confidence) * 0.95,  # Slight penalty for merging
+                    evidence={
+                        **current.evidence,
+                        "merged": True,
+                        "merge_reason": merge_reason,
+                        "merge_pass": pass_num + 1,
+                        "original_segments": current.evidence.get("original_segments", 1) + 1
+                    }
+                )
+            else:
+                # Don't merge - add current and move to next
+                merged.append(current)
+                current = next_seg
+
+        # Add the last segment
+        merged.append(current)
+
+        # If no merges happened, we're done
+        if merge_count == 0:
+            break
+
+        # Prepare for next pass
+        segments = merged
+
+    return merged
+
+
 def infer_segments(
     messages_hex: Sequence[str],
-    score_threshold: float = 1.5,
+    score_threshold: float = 2.0,  # Increased from 1.5
     min_segment_width: int = 1,
     family_features: Optional[Dict[str, Any]] = None,
     framing_summary: Optional[Dict[str, Any]] = None,
+    max_fields: int = MAX_FIELDS_PER_FAMILY,
+    enable_merging: bool = True,
 ) -> List[Segment]:
+    """
+    Infer field segments with anti-fragmentation.
+
+    Args:
+        messages_hex: Messages to analyze
+        score_threshold: Minimum score for boundary (increased to reduce fragmentation)
+        min_segment_width: Minimum segment width
+        family_features: Optional family features
+        framing_summary: Optional framing hints
+        max_fields: Maximum number of fields (anti-fragmentation)
+        enable_merging: Enable segment merging
+    """
     if not messages_hex:
         return []
 
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max(len(msg) for msg in messages)
-    boundary_scores = score_boundaries(messages_hex)
+    boundary_scores = score_boundaries(messages_hex, reduce_entropy_weight=True)
     boundary_score_by_offset = {int(item["boundary_after"]): item for item in boundary_scores}
 
     framing_boundary, framing_evidence = framing_body_boundary_hint(framing_summary, max_len)
 
-    raw_boundaries = [0]
+    # Collect boundaries with scores
+    boundary_candidates = [(0, float('inf'))]  # Start boundary always included
+
     for item in boundary_scores:
         boundary = int(item["boundary_after"]) + 1
-        if item["score"] >= score_threshold and boundary - raw_boundaries[-1] >= min_segment_width:
-            raw_boundaries.append(boundary)
-    if framing_boundary is not None and framing_boundary not in raw_boundaries:
-        raw_boundaries.append(framing_boundary)
-    raw_boundaries = sorted(set(raw_boundaries))
-    if raw_boundaries[-1] != max_len:
-        raw_boundaries.append(max_len)
+        score = item["score"]
+        if score >= score_threshold:
+            boundary_candidates.append((boundary, score))
 
+    # Add framing boundary if present
+    if framing_boundary is not None:
+        boundary_candidates.append((framing_boundary, float('inf')))
+
+    # Add end boundary
+    boundary_candidates.append((max_len, float('inf')))
+
+    # Sort by position
+    boundary_candidates.sort(key=lambda x: x[0])
+
+    # Remove duplicates, keeping highest score
+    unique_boundaries = {}
+    for pos, score in boundary_candidates:
+        if pos not in unique_boundaries or score > unique_boundaries[pos]:
+            unique_boundaries[pos] = score
+
+    raw_boundaries = sorted(unique_boundaries.keys())
+
+    # If too many boundaries, keep only the strongest
+    if len(raw_boundaries) > max_fields + 1:
+        # Keep start, end, and framing boundary
+        protected = {0, max_len}
+        if framing_boundary is not None:
+            protected.add(framing_boundary)
+
+        # Score other boundaries
+        scored_boundaries = [
+            (pos, unique_boundaries[pos])
+            for pos in raw_boundaries
+            if pos not in protected
+        ]
+        scored_boundaries.sort(key=lambda x: -x[1])  # Highest score first
+
+        # Keep top N boundaries
+        keep_count = max_fields - len(protected) + 1
+        kept_boundaries = [pos for pos, _ in scored_boundaries[:keep_count]]
+
+        raw_boundaries = sorted(list(protected) + kept_boundaries)
+
+    # Enforce minimum segment width
+    filtered_boundaries = [raw_boundaries[0]]
+    for boundary in raw_boundaries[1:]:
+        if boundary - filtered_boundaries[-1] >= min_segment_width:
+            filtered_boundaries.append(boundary)
+        elif boundary == max_len:  # Always keep end boundary
+            filtered_boundaries.append(boundary)
+
+    raw_boundaries = filtered_boundaries
+
+    # Create segments
     segments: List[Segment] = []
     for start, end in zip(raw_boundaries, raw_boundaries[1:]):
         if end <= start:
             continue
+
         segment_values = [msg[start:end] for msg in messages if len(msg) >= end]
         value_count = len(set(segment_values)) if segment_values else 0
         entropy_proxy = mean([_entropy(list(value)) for value in segment_values]) if segment_values else 0.0
         kind = "constant" if value_count <= 1 else "variable"
         confidence = 1.0 / (1.0 + entropy_proxy)
+
+        # Apply single-byte penalty
+        width = end - start
+        if width == 1 and kind == "variable":
+            # Penalize 1-byte variable fields unless high confidence
+            if confidence < 0.9:
+                confidence *= SINGLE_BYTE_PENALTY
+
         evidence: Dict[str, Any] = {
             "value_count": value_count,
             "mean_byte_entropy": round(entropy_proxy, 4),
@@ -158,6 +407,10 @@ def infer_segments(
                 evidence=evidence,
             )
         )
+
+    # Merge adjacent similar segments
+    if enable_merging and len(segments) > 1:
+        segments = merge_segments(segments, messages_hex)
 
     return segments
 
@@ -245,7 +498,6 @@ def feature_adjusted_segment_confidence(
 def infer_template(messages_hex: Sequence[str], stability_threshold: float = 0.95) -> str:
     messages = [hex_to_bytes(msg) for msg in messages_hex]
     max_len = max((len(msg) for msg in messages), default=0)
-    # Limit template generation to avoid performance issues with large payloads
     analysis_len = min(max_len, MAX_BOUNDARY_DETECTION_LENGTH)
     template: List[str] = []
 
@@ -260,7 +512,6 @@ def infer_template(messages_hex: Sequence[str], stability_threshold: float = 0.9
         else:
             template.append("??")
 
-    # Indicate if template was truncated
     if max_len > analysis_len:
         template.append(f"... [{max_len - analysis_len} more bytes]")
 

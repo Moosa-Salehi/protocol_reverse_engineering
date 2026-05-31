@@ -13,17 +13,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments, infer_template
 
-# Import enhanced boundary detection
-try:
-    from protocol_re.inference.boundary_detection_enhanced import (
-        infer_segments as infer_segments_enhanced,
-        infer_template as infer_template_enhanced,
-        infer_field_hypotheses as infer_field_hypotheses_enhanced,
-    )
-    ENHANCED_AVAILABLE = True
-except ImportError:
-    ENHANCED_AVAILABLE = False
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Infer field boundaries and coarse field types from message families.")
@@ -36,10 +25,10 @@ def main() -> None:
     parser.add_argument("--features-json", help="Optional family feature JSON from 06_extract_features.py")
     parser.add_argument("--framing-json", help="Optional framing hypotheses from 05_infer_framing.py")
 
-    # Enhanced boundary detection options (A2)
-    parser.add_argument("--enhanced", action="store_true", help="Use enhanced boundary detection (reduces over-segmentation)")
-    parser.add_argument("--max-fields", type=int, default=15, help="Maximum fields per family (enhanced mode only)")
-    parser.add_argument("--enable-merging", action="store_true", default=True, help="Enable segment merging (enhanced mode only)")
+    # Enhanced boundary detection options (A2) - now default
+    parser.add_argument("--enhanced", action="store_true", help="(Deprecated: enhanced mode is now default)")
+    parser.add_argument("--max-fields", type=int, default=15, help="Maximum fields per family")
+    parser.add_argument("--enable-merging", action="store_true", default=True, help="Enable segment merging")
     parser.add_argument("--no-merging", dest="enable_merging", action="store_false", help="Disable segment merging")
 
     args = parser.parse_args()
@@ -75,47 +64,28 @@ def main() -> None:
             grouped[family_id].append(record.payload_hex)
         grouping_mode = f"heuristic_{args.family_mode}"
 
-    # Select boundary detection mode
+    # Enhanced boundary detection is now the default
     if args.enhanced:
-        if not ENHANCED_AVAILABLE:
-            print("[!] ERROR: Enhanced boundary detection not available (import failed)")
-            print("[!] Falling back to original boundary detection")
-            use_enhanced = False
-        else:
-            use_enhanced = True
-            print(f"[+] Using ENHANCED boundary detection")
-            print(f"    - Score threshold: {args.score_threshold}")
-            print(f"    - Max fields: {args.max_fields}")
-            print(f"    - Merging: {'enabled' if args.enable_merging else 'disabled'}")
-    else:
-        use_enhanced = False
-        print(f"[+] Using ORIGINAL boundary detection")
-        print(f"    - Score threshold: {args.score_threshold}")
+        print("[!] Note: --enhanced flag is deprecated; enhanced mode is now default")
+
+    print(f"[+] Using boundary detection with anti-fragmentation")
+    print(f"    - Score threshold: {args.score_threshold}")
+    print(f"    - Max fields: {args.max_fields}")
+    print(f"    - Merging: {'enabled' if args.enable_merging else 'disabled'}")
 
     result = {}
     for family_id, messages_hex in grouped.items():
-        if use_enhanced:
-            # Use enhanced boundary detection
-            segments = infer_segments_enhanced(
-                messages_hex,
-                score_threshold=args.score_threshold,
-                family_features=feature_by_family.get(family_id),
-                framing_summary=framing_by_family.get(family_id),
-                max_fields=args.max_fields,
-                enable_merging=args.enable_merging,
-            )
-            hypotheses = infer_field_hypotheses_enhanced(family_id, messages_hex, segments)
-            template = infer_template_enhanced(messages_hex)
-        else:
-            # Use original boundary detection
-            segments = infer_segments(
-                messages_hex,
-                score_threshold=args.score_threshold,
-                family_features=feature_by_family.get(family_id),
-                framing_summary=framing_by_family.get(family_id),
-            )
-            hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
-            template = infer_template(messages_hex)
+        # Use enhanced boundary detection (now the only implementation)
+        segments = infer_segments(
+            messages_hex,
+            score_threshold=args.score_threshold,
+            family_features=feature_by_family.get(family_id),
+            framing_summary=framing_by_family.get(family_id),
+            max_fields=args.max_fields,
+            enable_merging=args.enable_merging,
+        )
+        hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
+        template = infer_template(messages_hex)
 
         result[family_id] = {
             "message_count": len(messages_hex),

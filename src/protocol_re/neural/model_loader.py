@@ -7,6 +7,13 @@ from typing import Optional
 from protocol_re.neural.encoder import TorchPayloadEncoder
 
 try:
+    from protocol_re.neural.enhanced_encoder import EnhancedTorchPayloadEncoder
+    ENHANCED_ENCODER_AVAILABLE = True
+except ImportError:
+    ENHANCED_ENCODER_AVAILABLE = False
+    EnhancedTorchPayloadEncoder = None
+
+try:
     import torch # type: ignore
     import torch.nn as nn # type: ignore
 except Exception:  # pragma: no cover - optional dependency
@@ -85,19 +92,39 @@ def load_full_vae_from_state_dict(path: str, latent_dim: int = 32, max_len: int 
 
 @dataclass(frozen=True)
 class EncoderLoadResult:
-    encoder: Optional[TorchPayloadEncoder]
+    encoder: Optional[TorchPayloadEncoder | EnhancedTorchPayloadEncoder]
     model_path: str
     available: bool
     reason: str | None = None
 
 
-def load_optional_encoder(model_path: str | None = None, latent_dim: int = 32) -> Optional[TorchPayloadEncoder]:
-    return load_optional_encoder_with_reason(model_path=model_path, latent_dim=latent_dim).encoder
+def load_optional_encoder(
+    model_path: str | None = None,
+    latent_dim: int = 32,
+    use_enhanced: bool = False
+) -> Optional[TorchPayloadEncoder | EnhancedTorchPayloadEncoder]:
+    """
+    Load a neural encoder for payload encoding.
+
+    Args:
+        model_path: Path to model file (default: industrial_VAE.pth)
+        latent_dim: Latent dimension (default: 32)
+        use_enhanced: Use EnhancedTorchPayloadEncoder with preprocessing (default: False)
+
+    Returns:
+        Encoder instance or None if unavailable
+    """
+    return load_optional_encoder_with_reason(
+        model_path=model_path,
+        latent_dim=latent_dim,
+        use_enhanced=use_enhanced
+    ).encoder
 
 def load_optional_encoder_with_reason(
     model_path: str | None = None,
     latent_dim: int = 32,
-    max_len: int = 256                     # <-- added, must match VAE training
+    max_len: int = 256,
+    use_enhanced: bool = False
 ) -> EncoderLoadResult:
     resolved_path = str(Path(model_path or DEFAULT_MODEL_PATH))
 
@@ -118,8 +145,18 @@ def load_optional_encoder_with_reason(
         return EncoderLoadResult(None, str(path), False, "compatible_encoder_not_found_in_artifact")
 
     try:
-        # Pass max_length = max_len to match VAE training
-        encoder = TorchPayloadEncoder(model, latent_dim=latent_dim, max_length=max_len)
+        # Choose encoder type based on use_enhanced flag
+        if use_enhanced and ENHANCED_ENCODER_AVAILABLE:
+            encoder = EnhancedTorchPayloadEncoder(
+                model,
+                latent_dim=latent_dim,
+                max_length=max_len,
+                auto_preprocess=True,
+                quality_check=True
+            )
+        else:
+            # Use standard encoder
+            encoder = TorchPayloadEncoder(model, latent_dim=latent_dim, max_length=max_len)
     except Exception as exc:
         return EncoderLoadResult(None, str(path), False, f"encoder_initialization_failed:{exc.__class__.__name__}")
 

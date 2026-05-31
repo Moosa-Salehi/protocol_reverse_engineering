@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
-Test script to validate enhanced boundary detection (A2 fix).
+Test script to validate boundary detection with different thresholds.
 
-Compares:
-1. Original boundary detection (current)
-2. Enhanced boundary detection (with anti-fragmentation)
+Tests boundary detection with various score thresholds and parameters.
 """
 from __future__ import annotations
 
@@ -16,8 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
-from protocol_re.inference.boundary_detection import infer_segments as infer_segments_original
-from protocol_re.inference.boundary_detection_enhanced import infer_segments as infer_segments_enhanced
+from protocol_re.inference.boundary_detection import infer_segments
 
 
 def analyze_segmentation(segments, name: str):
@@ -53,7 +50,7 @@ def analyze_segmentation(segments, name: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Test enhanced boundary detection")
+    parser = argparse.ArgumentParser(description="Test boundary detection with different thresholds")
     parser.add_argument("messages_jsonl", help="Path to messages JSONL")
     parser.add_argument("--assignments-json", help="Family assignments JSON")
     parser.add_argument("--features-json", help="Family features JSON")
@@ -62,7 +59,7 @@ def main():
     args = parser.parse_args()
 
     print("="*80)
-    print("ENHANCED BOUNDARY DETECTION TEST (A2)")
+    print("BOUNDARY DETECTION TEST")
     print("="*80)
 
     # Load messages
@@ -108,29 +105,14 @@ def main():
     features = family_features.get(args.family_id)
     framing = framing_by_family.get(args.family_id)
 
-    # Test 1: Original boundary detection
+    # Test 1: Default settings
     print("\n" + "="*80)
-    print("TEST 1: Original Boundary Detection")
+    print("TEST 1: Default Settings (threshold=2.0)")
     print("="*80)
 
-    segments_original = infer_segments_original(
+    segments_default = infer_segments(
         family_messages[:1000],  # Sample for speed
-        score_threshold=1.5,
-        min_segment_width=1,
-        family_features=features,
-        framing_summary=framing,
-    )
-
-    analyze_segmentation(segments_original, "Original")
-
-    # Test 2: Enhanced boundary detection (default settings)
-    print("\n" + "="*80)
-    print("TEST 2: Enhanced Boundary Detection (default)")
-    print("="*80)
-
-    segments_enhanced = infer_segments_enhanced(
-        family_messages[:1000],
-        score_threshold=2.0,  # Increased
+        score_threshold=2.0,
         min_segment_width=1,
         family_features=features,
         framing_summary=framing,
@@ -138,24 +120,41 @@ def main():
         enable_merging=True,
     )
 
-    analyze_segmentation(segments_enhanced, "Enhanced")
+    analyze_segmentation(segments_default, "Default")
 
-    # Test 3: Enhanced with stricter settings
+    # Test 2: Lower threshold (more boundaries)
     print("\n" + "="*80)
-    print("TEST 3: Enhanced Boundary Detection (strict)")
+    print("TEST 2: Lower Threshold (threshold=1.5)")
     print("="*80)
 
-    segments_strict = infer_segments_enhanced(
+    segments_lower = infer_segments(
         family_messages[:1000],
-        score_threshold=2.5,  # Even higher
+        score_threshold=1.5,
         min_segment_width=1,
         family_features=features,
         framing_summary=framing,
-        max_fields=10,  # Fewer fields
+        max_fields=15,
         enable_merging=True,
     )
 
-    analyze_segmentation(segments_strict, "Enhanced (strict)")
+    analyze_segmentation(segments_lower, "Lower Threshold")
+
+    # Test 3: Stricter settings
+    print("\n" + "="*80)
+    print("TEST 3: Strict Settings (threshold=2.5, max_fields=10)")
+    print("="*80)
+
+    segments_strict = infer_segments(
+        family_messages[:1000],
+        score_threshold=2.5,
+        min_segment_width=1,
+        family_features=features,
+        framing_summary=framing,
+        max_fields=10,
+        enable_merging=True,
+    )
+
+    analyze_segmentation(segments_strict, "Strict")
 
     # Comparison
     print("\n" + "="*80)
@@ -163,45 +162,32 @@ def main():
     print("="*80)
 
     print(f"\nSegment count:")
-    print(f"  Original:         {len(segments_original)}")
-    print(f"  Enhanced:         {len(segments_enhanced)}")
-    print(f"  Enhanced (strict): {len(segments_strict)}")
-
-    reduction = len(segments_original) - len(segments_enhanced)
-    reduction_pct = 100 * reduction / len(segments_original) if segments_original else 0
-    print(f"\nReduction: {reduction} segments ({reduction_pct:.1f}%)")
+    print(f"  Lower threshold:  {len(segments_lower)}")
+    print(f"  Default:          {len(segments_default)}")
+    print(f"  Strict:           {len(segments_strict)}")
 
     # Count 1-byte segments
-    one_byte_orig = sum(1 for seg in segments_original if seg.end - seg.start == 1)
-    one_byte_enh = sum(1 for seg in segments_enhanced if seg.end - seg.start == 1)
+    one_byte_lower = sum(1 for seg in segments_lower if seg.end - seg.start == 1)
+    one_byte_default = sum(1 for seg in segments_default if seg.end - seg.start == 1)
+    one_byte_strict = sum(1 for seg in segments_strict if seg.end - seg.start == 1)
 
     print(f"\nSingle-byte segments:")
-    print(f"  Original: {one_byte_orig}")
-    print(f"  Enhanced: {one_byte_enh}")
-    print(f"  Reduction: {one_byte_orig - one_byte_enh}")
+    print(f"  Lower threshold: {one_byte_lower}")
+    print(f"  Default:         {one_byte_default}")
+    print(f"  Strict:          {one_byte_strict}")
 
     # Recommendations
     print("\n" + "="*80)
     print("RECOMMENDATIONS")
     print("="*80)
 
-    if len(segments_enhanced) < len(segments_original) * 0.7:
-        print("\n[OK] Significant reduction in over-segmentation!")
-        print("  Enhanced boundary detection is working well.")
-    elif len(segments_enhanced) < len(segments_original) * 0.85:
-        print("\n[OK] Moderate reduction in over-segmentation.")
-        print("  Consider using stricter settings (higher threshold).")
+    if one_byte_default == 0:
+        print("\n[OK] No single-byte segments with default settings!")
+    elif one_byte_default < 3:
+        print("\n[OK] Very few single-byte segments.")
     else:
-        print("\n[WARNING] Minimal reduction in over-segmentation.")
-        print("  May need to adjust parameters or add more constraints.")
-
-    if one_byte_enh < one_byte_orig * 0.5:
-        print("\n[OK] Single-byte segments significantly reduced!")
-    elif one_byte_enh < one_byte_orig * 0.8:
-        print("\n[OK] Some reduction in single-byte segments.")
-    else:
-        print("\n[WARNING] Single-byte segments still high.")
-        print("  Consider enabling merging or increasing min_segment_width.")
+        print("\n[WARNING] Single-byte segments still present.")
+        print("  Consider using stricter settings or checking merging logic.")
 
 
 if __name__ == "__main__":

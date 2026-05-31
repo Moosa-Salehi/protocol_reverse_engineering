@@ -425,15 +425,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             elif step_name == "04_discover_families":
                 step_args.extend(["--layer-aware", "--framing-json", _path(framing_json), "--layer-min-confidence", str(args.layer_min_confidence)])
 
-    # Add enhanced boundary detection flags if enabled (A2)
-    if args.enhanced_boundaries:
-        for step_name, step_args in pipeline:
-            if step_name == "07_infer_boundaries":
-                step_args.extend(["--enhanced"])
-                step_args.extend(["--max-fields", str(args.boundary_max_fields)])
-                if args.no_boundary_merging:
-                    step_args.extend(["--no-merging"])
-                break
+    # Add boundary detection parameters (enhanced mode is now default)
+    for step_name, step_args in pipeline:
+        if step_name == "07_infer_boundaries":
+            step_args.extend(["--max-fields", str(args.boundary_max_fields)])
+            if args.no_boundary_merging:
+                step_args.extend(["--no-merging"])
+            break
 
     llm_steps = [
         (
@@ -526,15 +524,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 if args.ground_truth_json:
                     step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
 
-    # Add enhanced boundary detection flags if enabled (A2)
-    if args.enhanced_boundaries:
-        for step_name, step_args in pipeline:
-            if step_name == "07_infer_boundaries":
-                step_args.extend(["--enhanced"])
-                step_args.extend(["--max-fields", str(args.boundary_max_fields)])
-                if args.no_boundary_merging:
-                    step_args.extend(["--no-merging"])
-                break
+    # Add boundary detection parameters (enhanced mode is now default)
+    for step_name, step_args in pipeline:
+        if step_name == "07_infer_boundaries":
+            step_args.extend(["--max-fields", str(args.boundary_max_fields)])
+            if args.no_boundary_merging:
+                step_args.extend(["--no-merging"])
+            break
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
@@ -689,24 +685,24 @@ def parse_args() -> argparse.Namespace:
     boundary_group.add_argument(
         "--enhanced-boundaries",
         action="store_true",
-        help="Use enhanced boundary detection with anti-fragmentation penalties and multi-pass merging (A2). Reduces over-segmentation by 50%%. Recommended.",
+        help="(Deprecated: enhanced mode is now default) Use enhanced boundary detection with anti-fragmentation.",
     )
     boundary_group.add_argument(
         "--boundary-score-threshold",
         type=float,
         default=2.0,
-        help="Boundary score threshold (default: 2.0 for enhanced, 1.5 for original). Higher = fewer boundaries.",
+        help="Boundary score threshold (default: 2.0). Higher = fewer boundaries.",
     )
     boundary_group.add_argument(
         "--boundary-max-fields",
         type=int,
         default=15,
-        help="Maximum fields per family (enhanced mode only, default: 15). Prevents excessive segmentation.",
+        help="Maximum fields per family (default: 15). Prevents excessive segmentation.",
     )
     boundary_group.add_argument(
         "--no-boundary-merging",
         action="store_true",
-        help="Disable multi-pass segment merging in enhanced mode (not recommended).",
+        help="Disable multi-pass segment merging (not recommended).",
     )
 
     # A6: Multi-layer protocol detection
