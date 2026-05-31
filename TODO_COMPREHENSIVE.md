@@ -579,20 +579,23 @@ The pipeline has strong infrastructure but needs: (1) fix neural features, (2) r
 **Priority:** P3 - Long-term maintainability
 
 **Tasks:**
-1. **Separate concerns:**
-   - Split large modules (boundary_detection.py: 336 lines)
+1. **Manage duplicate/unused codes**
+   - in some stages, multiple codes/functions exist with same purpose, remove the old ones.
+   - remove any unused files/codes throughout the project.
+
+2. **Separate concerns:**
+   - Split large modules
    - Extract reusable utilities
    - Create clear interfaces between stages
 
-2. **Improve naming:**
+3. **Improve naming:**
    - Rename "keywords" to "discriminators" consistently
    - Use semantic names for field types
    - Standardize function naming conventions
 
-3. **Add configuration management:**
+4. **Add configuration management:**
    - Centralize magic numbers and thresholds
    - Create config file for pipeline parameters
-   - Allow per-protocol configuration overrides
 
 **Files:**
 - All source files (gradual refactoring)
