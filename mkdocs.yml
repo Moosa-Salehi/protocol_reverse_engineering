@@ -1,7 +1,7 @@
 site_name: Protocol Reverse Engineering
 site_description: Protocol-agnostic reverse engineering pipeline for binary protocols
-site_author: Protocol RE Team
-repo_url: https://github.com/yourusername/protocol_re
+site_author: Moosa Salehi
+repo_url: https://github.com/Moosa-Salehi/protocol_reverse_engineering
 
 theme:
   name: material
@@ -30,21 +30,9 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting_started.md
-  - User Guide:
-      - How to Use: how_to_use.md
-      - Examples: examples.md
-      - Troubleshooting: troubleshooting.md
-  - Architecture:
-      - Overview: architecture.md
-      - Pipeline Stages: pipeline_stages.md
-      - Feature Modes: feature_modes.md
-  - API Reference:
-      - Modules: api_reference.md
-      - Schemas: schemas.md
+  - Architecture: architecture.md
   - Development:
       - Contributing: contributing.md
-      - Testing: testing.md
-      - Roadmap: roadmap.md
 
 markdown_extensions:
   - admonition
@@ -72,6 +60,6 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/protocol_re
+      link: https://github.com/Moosa-Salehi/protocol_reverse_engineering
   version:
     provider: mike
