@@ -1,0 +1,77 @@
+site_name: Protocol Reverse Engineering
+site_description: Protocol-agnostic reverse engineering pipeline for binary protocols
+site_author: Protocol RE Team
+repo_url: https://github.com/yourusername/protocol_re
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - User Guide:
+      - How to Use: how_to_use.md
+      - Examples: examples.md
+      - Troubleshooting: troubleshooting.md
+  - Architecture:
+      - Overview: architecture.md
+      - Pipeline Stages: pipeline_stages.md
+      - Feature Modes: feature_modes.md
+  - API Reference:
+      - Modules: api_reference.md
+      - Schemas: schemas.md
+  - Development:
+      - Contributing: contributing.md
+      - Testing: testing.md
+      - Roadmap: roadmap.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.details
+  - toc:
+      permalink: true
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_category_heading: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/protocol_re
+  version:
+    provider: mike
