@@ -239,7 +239,18 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
             (
                 "11_infer_semantics",
-                [_script("11_infer_semantics.py"), _path(families_json), _path(relations_json), _path(semantics_json)],
+                [
+                    _script("11_infer_semantics.py"),
+                    _path(families_json),
+                    _path(relations_json),
+                    _path(semantics_json),
+                    "--framing-json",
+                    _path(framing_json),
+                    "--features-json",
+                    _path(family_features_json),
+                    "--keywords-json",
+                    _path(keywords_json),
+                ],
             ),
             (
                 "12_build_protocol_model",
