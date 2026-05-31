@@ -547,31 +547,20 @@ The pipeline has strong infrastructure but needs: (1) fix neural features, (2) r
 ---
 
 ### C3. Improve Documentation
-**Priority:** P2 - Usability
 
 **Tasks:**
-1. **Add API documentation:**
-   - Docstrings for all public functions
-   - Type hints for all functions
-   - Generate Sphinx/MkDocs documentation
+1. **Update ReadMe**
+   - Update ReadMe to match the latest project upadtes.
+   - Improve ReadMe content and structure.
 
-2. **Add architecture documentation:**
-   - Document pipeline stages and data flow
-   - Explain clustering algorithms and parameters
-   - Document neural model architecture
-
-3. **Add usage examples:**
-   - Tutorial for common protocols (Modbus, DNP3, S7)
-   - Guide for adding new neural models
-   - Guide for creating ground truth files
+2. **Add Sphinx or MkDocs documentation:**
+   - Generate Sphinx or MkDocs documentation
 
 **Files:**
+- `ReadMe.md`
 - New: `docs/` directory
 - New: `docs/architecture.md`
-- New: `docs/tutorial.md`
-- New: `docs/api/` (auto-generated)
-
-**Expected Impact:** Easier onboarding, better adoption
+- New: `docs/how_to_use.md`
 
 ---
 
