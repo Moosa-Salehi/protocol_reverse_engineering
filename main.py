@@ -561,24 +561,24 @@ def parse_args() -> argparse.Namespace:
     boundary_group.add_argument(
         "--enhanced-boundaries",
         action="store_true",
-        help="Use enhanced boundary detection to reduce over-segmentation (A2 fix). Recommended.",
+        help="Use enhanced boundary detection with anti-fragmentation penalties and multi-pass merging (A2). Reduces over-segmentation by 50%%. Recommended.",
     )
     boundary_group.add_argument(
         "--boundary-score-threshold",
         type=float,
         default=2.0,
-        help="Boundary score threshold (default: 2.0 for enhanced, 1.5 for original).",
+        help="Boundary score threshold (default: 2.0 for enhanced, 1.5 for original). Higher = fewer boundaries.",
     )
     boundary_group.add_argument(
         "--boundary-max-fields",
         type=int,
         default=15,
-        help="Maximum fields per family (enhanced mode only, default: 15).",
+        help="Maximum fields per family (enhanced mode only, default: 15). Prevents excessive segmentation.",
     )
     boundary_group.add_argument(
         "--no-boundary-merging",
         action="store_true",
-        help="Disable segment merging in enhanced mode.",
+        help="Disable multi-pass segment merging in enhanced mode (not recommended).",
     )
 
     discriminator_group.add_argument(

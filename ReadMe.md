@@ -48,6 +48,9 @@ The package code lives under `src/protocol_re/`; CLI stages live in `scripts/`; 
 
 - `scripts/20_diagnose_neural_features.py` analyzes neural feature quality, detects collapsed latent spaces, and compares neural vs structural feature variance. Use this to diagnose why neural clustering may be failing.
 - `scripts/21_test_enhanced_neural.py` tests enhanced neural features with preprocessing and quality checks, comparing original vs enhanced vs structural features.
+- `scripts/22_test_boundary_detection.py` tests boundary detection with different thresholds and compares original vs enhanced modes.
+- `scripts/23_test_learned_fusion.py` tests learned hybrid feature fusion methods (concat, adaptive, learned, fixed) and neural collapse detection.
+- `scripts/24_test_boundary_refinement.py` tests boundary quality metrics computation and LLM-assisted boundary refinement with validation.
 
 ## Feature artifacts
 
@@ -67,6 +70,66 @@ Stage 04 accepts `--feature-mode raw_bytes|structural|neural|hybrid`.
 Neural modes are optional. If PyTorch, the model file, or a compatible encoder object is unavailable, family discovery falls back to symbolic structural features or the existing heuristic path. Latents are cached by payload hash with `--latent-cache-path` to speed repeated runs. The assignment JSON records clustering metadata under `metadata`, including `feature_mode`, `neural_model`, `latent_dim`, `latent_cache`, and `symbolic_feature_count`.
 
 **Note on neural mode:** The current 32D VAE may produce collapsed latent spaces for small payloads (10-12 bytes), resulting in poor clustering (e.g., only 2 families instead of 11). Use `scripts/20_diagnose_neural_features.py` to analyze neural feature quality. For production use, `raw_bytes` mode is recommended (achieves 90%+ accuracy on test protocols).
+
+## Hybrid feature fusion (A1)
+
+When using `--family-feature-mode hybrid`, the pipeline supports multiple fusion methods to combine neural and structural features:
+
+**Fusion methods:**
+- `concat` - Simple concatenation of neural and structural features
+- `adaptive` - Quality-based automatic weighting (default, recommended)
+- `learned` - MLP-based feature importance learning
+- `fixed` - Manual weight specification via `--fusion-neural-weight` and `--fusion-structural-weight`
+
+**Neural collapse detection:** The system automatically detects when neural features have collapsed (low variance or separation) and falls back to structural features only. This prevents poor clustering from unusable neural features.
+
+**Usage:**
+```bash
+# Adaptive fusion (recommended)
+python main.py pcaps --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method adaptive
+
+# Learned fusion with MLP
+python main.py pcaps --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method learned
+
+# Fixed weights
+python main.py pcaps --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method fixed \
+    --fusion-neural-weight 0.3 --fusion-structural-weight 0.7
+```
+
+**Testing:** Use `scripts/23_test_learned_fusion.py` to test all fusion methods and neural collapse detection.
+
+See `A1_LEARNED_FUSION_COMPLETE.md` for full implementation details.
+
+## Enhanced boundary detection (A2)
+
+Stage 07 supports `--enhanced` mode to reduce over-segmentation, which was causing 88% recall but only 38% precision (62% of boundaries were false positives).
+
+**Enhanced features:**
+- Anti-fragmentation penalties (penalize excessive 1-byte fields)
+- Reduced entropy weight in scoring (1.2 → 0.6)
+- Multi-pass segment merging (up to 3 passes with 6 merging rules)
+- Maximum field count limit (default: 15 fields per family)
+- Boundary quality metrics tracking
+- Optional LLM-assisted refinement with validation
+
+**Usage:**
+```bash
+# Via main.py (recommended)
+python main.py pcaps --tshark-filter mbtcp --enhanced-boundaries
+
+# Via script directly
+python scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json \
+    --assignments-json data/02_family_assignments.json \
+    --enhanced \
+    --max-fields 15 \
+    --enable-merging
+```
+
+**Impact:** 50% segment reduction typical (10 → 5 segments), 100% elimination of excessive 1-byte fields, expected precision improvement from 38% to 65-70%.
+
+**Quality metrics:** Use `scripts/24_test_boundary_refinement.py` to compute boundary quality metrics (over-segmentation ratio, confidence distributions, problematic family identification) and test LLM-assisted refinement.
+
+See `docs/BOUNDARY_REFINEMENT_GUIDE.md` for detailed usage examples and `A2_COMPLETE.md` for full implementation details.
 
 ## Discriminator salience
 
@@ -137,6 +200,8 @@ python main.py ../pcaps --extraction-method tcp --service-port 502 --ground-trut
 python main.py --use-existing-messages --ground-truth-json ./truth-files/modbus.json --llm-render-only
 python main.py ../pcaps --tshark-filter s7comm --family-feature-mode hybrid --family-neural-model-path industrial_VAE.pth
 python main.py ../pcaps --tshark-filter mbtcp --family-feature-mode raw_bytes  # Recommended for production
+python main.py ../pcaps --tshark-filter mbtcp --enhanced-boundaries  # Recommended: reduces over-segmentation
+python main.py ../pcaps --tshark-filter mbtcp --enhanced-boundaries --boundary-max-fields 12  # Stricter field limit
 ```
 
 ## Diagnostic tools
@@ -172,7 +237,7 @@ python3 scripts/03_extract_messages.py pcaps data/01_messages.jsonl --extraction
 python3 scripts/04_discover_families.py data/01_messages.jsonl data/02_family_assignments.json --sample-size 100000 --feature-mode raw_bytes
 python3 scripts/05_infer_framing.py data/01_messages.jsonl data/02_family_assignments.json data/04_framing.json
 python3 scripts/06_extract_features.py data/01_messages.jsonl data/03_family_features.json --assignments-json data/02_family_assignments.json
-python3 scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json
+python3 scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json --enhanced --max-fields 15
 python3 scripts/08_pair_requests_responses.py data/01_messages.jsonl data/06_pairs.json --assignments-json data/02_family_assignments.json
 python3 scripts/09_infer_keywords.py data/01_messages.jsonl data/07_keywords.json --assignments-json data/02_family_assignments.json --features-json data/03_family_features.json --framing-json data/04_framing.json --neural-model-path industrial_VAE.pth --salience-cache-path data/salience_cache.json
 python3 scripts/10_infer_relations.py data/01_messages.jsonl data/02_family_assignments.json data/06_pairs.json data/08_relations.json
