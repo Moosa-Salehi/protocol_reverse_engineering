@@ -37,6 +37,11 @@ protocol_re/
 ├── docs/                     # Documentation
 ├── data/                     # Intermediate artifacts
 ├── output/                   # Final reports
+├── pre_trained/              # Trained nueral models
+├── prompts/                  # Prompts used in LLM assisted stages
+├── schema/                   # protocol model, evaluation schema
+├── tests/                    # test modules
+├── truth-files/              # Real protocol specification, used for evaluation
 └── main.py                   # Pipeline runner
 ```
 
