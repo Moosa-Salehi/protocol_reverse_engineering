@@ -38,51 +38,70 @@ def main() -> None:
     parser.add_argument("--min-confidence", type=float, default=0.7, help="Minimum confidence for keeping relations")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
     parser.add_argument("--results-dir", default="data/llm_stage_results", help="Directory for stage results")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    # Load relations
-    print(f"[+] Loading relations from {args.relations_json}")
-    with open(args.relations_json, "r", encoding="utf-8") as f:
-        relations_data = json.load(f)
+    # Setup logging
+    logger = setup_stage_logging("10b_validate_relations_llm", Path(args.log_dir))
 
-    relations = relations_data.get("family_edges", [])
-    role_hints = relations_data.get("role_hints", {})
+    logger.info("Starting LLM-assisted relation validation")
+    logger.decision(
+        decision="LLM relation validation mode",
+        reason="User configuration",
+        render_only=args.render_only,
+        min_confidence=args.min_confidence,
+    )
 
-    # Load family summaries if provided
-    family_summaries = {}
-    if args.families_json:
-        print(f"[+] Loading families from {args.families_json}")
-        with open(args.families_json, "r", encoding="utf-8") as f:
-            families_data = json.load(f)
+    with logger.stage("load_relations"):
+        logger.info(f"Loading relations from {args.relations_json}")
+        with open(args.relations_json, "r", encoding="utf-8") as f:
+            relations_data = json.load(f)
 
-        for family in families_data.get("families", []):
-            family_id = family["family_id"]
-            family_summaries[family_id] = {
-                "family_id": family_id,
-                "message_count": family.get("message_count", 0),
-                "field_count": len(family.get("fields", [])),
-                "avg_length": family.get("statistics", {}).get("avg_length", 0),
-            }
+        relations = relations_data.get("family_edges", [])
+        role_hints = relations_data.get("role_hints", {})
+        logger.metric("relations_loaded", len(relations), "relations")
+        logger.metric("families_with_roles", len(role_hints), "families")
 
-    # Load LLM config
-    if not args.render_only:
-        print(f"[+] Loading LLM config from {args.llm_config}")
-        llm_config_dict = load_llm_config(args.llm_config)
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            print("[!] Warning: OPENAI_API_KEY not set in environment")
-            api_key = llm_config_dict.get("api_key", "")
+    with logger.stage("load_families"):
+        # Load family summaries if provided
+        family_summaries = {}
+        if args.families_json:
+            logger.info(f"Loading families from {args.families_json}")
+            with open(args.families_json, "r", encoding="utf-8") as f:
+                families_data = json.load(f)
 
-        llm_config = LLMRequestConfig(
-            model=llm_config_dict.get("model", "gpt-4o-mini"),
-            base_url=llm_config_dict.get("openai_base_url", "https://api.openai.com/v1"),
-            api_key=api_key,
-            temperature=llm_config_dict.get("temperature", 0.1),
-            max_tokens=llm_config_dict.get("max_tokens", 3000),
-            timeout=llm_config_dict.get("timeout", 180),
-        )
-    else:
-        llm_config = None
+            for family in families_data.get("families", []):
+                family_id = family["family_id"]
+                family_summaries[family_id] = {
+                    "family_id": family_id,
+                    "message_count": family.get("message_count", 0),
+                    "field_count": len(family.get("fields", [])),
+                    "avg_length": family.get("statistics", {}).get("avg_length", 0),
+                }
+            logger.metric("family_summaries_loaded", len(family_summaries), "families")
+
+    with logger.stage("setup_llm"):
+        # Load LLM config
+        if not args.render_only:
+            logger.info(f"Loading LLM config from {args.llm_config}")
+            llm_config_dict = load_llm_config(args.llm_config)
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                logger.warning("OPENAI_API_KEY not set in environment")
+                api_key = llm_config_dict.get("api_key", "")
+
+            llm_config = LLMRequestConfig(
+                model=llm_config_dict.get("model", "gpt-4o-mini"),
+                base_url=llm_config_dict.get("openai_base_url", "https://api.openai.com/v1"),
+                api_key=api_key,
+                temperature=llm_config_dict.get("temperature", 0.1),
+                max_tokens=llm_config_dict.get("max_tokens", 3000),
+                timeout=llm_config_dict.get("timeout", 180),
+            )
+            logger.info(f"LLM configured: model={llm_config.model}")
+        else:
+            llm_config = None
+            logger.info("Render-only mode: LLM will not be called")
 
     # Create stage config
     stage_config = StageConfig(

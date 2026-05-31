@@ -42,49 +42,69 @@ def main() -> None:
     parser.add_argument("--max-samples", type=int, default=10, help="Maximum sample messages per family")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
     parser.add_argument("--results-dir", default="data/llm_stage_results", help="Directory for stage results")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    # Load data
-    print(f"[+] Loading messages from {args.messages_jsonl}")
-    messages = load_corpus_jsonl(args.messages_jsonl)
-    messages_by_id = {msg.msg_id: msg for msg in messages}
+    # Setup logging
+    logger = setup_stage_logging("07b_refine_boundaries_llm", Path(args.log_dir))
 
-    print(f"[+] Loading families from {args.families_json}")
-    with open(args.families_json, "r", encoding="utf-8") as f:
-        families_data = json.load(f)
+    logger.info("Starting LLM-assisted boundary refinement")
+    logger.decision(
+        decision="LLM boundary refinement mode",
+        reason="User configuration",
+        render_only=args.render_only,
+        min_confidence=args.min_confidence,
+        max_samples=args.max_samples,
+    )
+
+    with logger.stage("load_data"):
+        logger.info(f"Loading messages from {args.messages_jsonl}")
+        messages = load_corpus_jsonl(args.messages_jsonl)
+        messages_by_id = {msg.msg_id: msg for msg in messages}
+        logger.metric("messages_loaded", len(messages), "messages")
+
+        logger.info(f"Loading families from {args.families_json}")
+        with open(args.families_json, "r", encoding="utf-8") as f:
+            families_data = json.load(f)
+        logger.metric("families_loaded", len(families_data), "families")
 
     # Load assignments if provided
-    family_assignments = {}
-    if args.assignments_json:
-        print(f"[+] Loading assignments from {args.assignments_json}")
-        with open(args.assignments_json, "r", encoding="utf-8") as f:
-            assignments_payload = json.load(f)
-        for assignment in assignments_payload.get("assignments", []):
-            msg_id = assignment["msg_id"]
-            family_id = assignment["family_id"]
-            if family_id not in family_assignments:
-                family_assignments[family_id] = []
-            family_assignments[family_id].append(msg_id)
+    with logger.stage("load_assignments"):
+        family_assignments = {}
+        if args.assignments_json:
+            logger.info(f"Loading assignments from {args.assignments_json}")
+            with open(args.assignments_json, "r", encoding="utf-8") as f:
+                assignments_payload = json.load(f)
+            for assignment in assignments_payload.get("assignments", []):
+                msg_id = assignment["msg_id"]
+                family_id = assignment["family_id"]
+                if family_id not in family_assignments:
+                    family_assignments[family_id] = []
+                family_assignments[family_id].append(msg_id)
+            logger.metric("assignments_loaded", len(assignments_payload.get("assignments", [])), "assignments")
 
     # Load LLM config
-    if not args.render_only:
-        print(f"[+] Loading LLM config from {args.llm_config}")
-        llm_config_dict = load_llm_config(args.llm_config)
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            print("[!] Warning: OPENAI_API_KEY not set in environment")
-            api_key = llm_config_dict.get("api_key", "")
+    with logger.stage("setup_llm"):
+        if not args.render_only:
+            logger.info(f"Loading LLM config from {args.llm_config}")
+            llm_config_dict = load_llm_config(args.llm_config)
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                logger.warning("OPENAI_API_KEY not set in environment")
+                api_key = llm_config_dict.get("api_key", "")
 
-        llm_config = LLMRequestConfig(
-            model=llm_config_dict.get("model", "gpt-4o-mini"),
-            base_url=llm_config_dict.get("openai_base_url", "https://api.openai.com/v1"),
-            api_key=api_key,
-            temperature=llm_config_dict.get("temperature", 0.1),
-            max_tokens=llm_config_dict.get("max_tokens", 3000),
-            timeout=llm_config_dict.get("timeout", 180),
-        )
-    else:
-        llm_config = None
+            llm_config = LLMRequestConfig(
+                model=llm_config_dict.get("model", "gpt-4o-mini"),
+                base_url=llm_config_dict.get("openai_base_url", "https://api.openai.com/v1"),
+                api_key=api_key,
+                temperature=llm_config_dict.get("temperature", 0.1),
+                max_tokens=llm_config_dict.get("max_tokens", 3000),
+                timeout=llm_config_dict.get("timeout", 180),
+            )
+            logger.info(f"LLM configured: model={llm_config.model}")
+        else:
+            llm_config = None
+            logger.info("Render-only mode: LLM will not be called")
 
     # Create stage config
     stage_config = StageConfig(

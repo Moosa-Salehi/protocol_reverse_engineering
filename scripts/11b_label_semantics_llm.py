@@ -39,65 +39,89 @@ def main() -> None:
     parser.add_argument("--min-confidence", type=float, default=0.5, help="Minimum confidence for semantic labels")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
     parser.add_argument("--results-dir", default="data/llm_stage_results", help="Directory for stage results")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    # Load families
-    print(f"[+] Loading families from {args.families_json}")
-    with open(args.families_json, "r", encoding="utf-8") as f:
-        families_data = json.load(f)
+    # Setup logging
+    logger = setup_stage_logging("11b_label_semantics_llm", Path(args.log_dir))
 
-    # Load relations if provided
-    relations_by_family = {}
-    if args.relations_json:
-        print(f"[+] Loading relations from {args.relations_json}")
-        with open(args.relations_json, "r", encoding="utf-8") as f:
-            relations_data = json.load(f)
+    logger.info("Starting LLM-assisted semantic labeling")
+    logger.decision(
+        decision="LLM semantic labeling mode",
+        reason="User configuration",
+        render_only=args.render_only,
+        min_confidence=args.min_confidence,
+    )
 
-        role_hints = relations_data.get("role_hints", {})
+    with logger.stage("load_families"):
+        logger.info(f"Loading families from {args.families_json}")
+        with open(args.families_json, "r", encoding="utf-8") as f:
+            families_data = json.load(f)
+        logger.metric("families_loaded", len(families_data.get("families", [])), "families")
 
-        # Group relations by family
-        for edge in relations_data.get("family_edges", []):
-            req_family = edge.get("request_family_id")
-            resp_family = edge.get("response_family_id")
-
-            if req_family not in relations_by_family:
-                relations_by_family[req_family] = []
-            if resp_family not in relations_by_family:
-                relations_by_family[resp_family] = []
-
-            relations_by_family[req_family].append(edge)
-            relations_by_family[resp_family].append(edge)
-    else:
+    with logger.stage("load_relations"):
+        # Load relations if provided
+        relations_by_family = {}
         role_hints = {}
+        if args.relations_json:
+            logger.info(f"Loading relations from {args.relations_json}")
+            with open(args.relations_json, "r", encoding="utf-8") as f:
+                relations_data = json.load(f)
 
-    # Load features if provided
-    features_by_family = {}
-    if args.features_json:
-        print(f"[+] Loading features from {args.features_json}")
-        with open(args.features_json, "r", encoding="utf-8") as f:
-            features_data = json.load(f)
+            role_hints = relations_data.get("role_hints", {})
 
-        for family_feature in features_data.get("families", []):
-            family_id = family_feature.get("family_id")
-            features_by_family[family_id] = family_feature
+            # Group relations by family
+            for edge in relations_data.get("family_edges", []):
+                req_family = edge.get("request_family_id")
+                resp_family = edge.get("response_family_id")
 
-    # Load LLM config
-    if not args.render_only:
-        print(f"[+] Loading LLM config from {args.llm_config}")
-        llm_config_dict = load_llm_config(args.llm_config)
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            print("[!] Warning: OPENAI_API_KEY not set in environment")
-            api_key = llm_config_dict.get("api_key", "")
+                if req_family not in relations_by_family:
+                    relations_by_family[req_family] = []
+                if resp_family not in relations_by_family:
+                    relations_by_family[resp_family] = []
 
-        llm_config = LLMRequestConfig(
-            model=llm_config_dict.get("model", "gpt-4o-mini"),
-            base_url=llm_config_dict.get("openai_base_url", "https://api.openai.com/v1"),
-            api_key=api_key,
-            temperature=llm_config_dict.get("temperature", 0.1),
-            max_tokens=llm_config_dict.get("max_tokens", 4000),
-            timeout=llm_config_dict.get("timeout", 180),
-        )
+                relations_by_family[req_family].append(edge)
+                relations_by_family[resp_family].append(edge)
+
+            logger.metric("relations_loaded", len(relations_data.get("family_edges", [])), "relations")
+            logger.metric("families_with_roles", len(role_hints), "families")
+
+    with logger.stage("load_features"):
+        # Load features if provided
+        features_by_family = {}
+        if args.features_json:
+            logger.info(f"Loading features from {args.features_json}")
+            with open(args.features_json, "r", encoding="utf-8") as f:
+                features_data = json.load(f)
+
+            for family_feature in features_data.get("families", []):
+                family_id = family_feature.get("family_id")
+                features_by_family[family_id] = family_feature
+
+            logger.metric("families_with_features", len(features_by_family), "families")
+
+    with logger.stage("setup_llm"):
+        # Load LLM config
+        if not args.render_only:
+            logger.info(f"Loading LLM config from {args.llm_config}")
+            llm_config_dict = load_llm_config(args.llm_config)
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                logger.warning("OPENAI_API_KEY not set in environment")
+                api_key = llm_config_dict.get("api_key", "")
+
+            llm_config = LLMRequestConfig(
+                model=llm_config_dict.get("model", "gpt-4o-mini"),
+                base_url=llm_config_dict.get("openai_base_url", "https://api.openai.com/v1"),
+                api_key=api_key,
+                temperature=llm_config_dict.get("temperature", 0.1),
+                max_tokens=llm_config_dict.get("max_tokens", 4000),
+                timeout=llm_config_dict.get("timeout", 180),
+            )
+            logger.info(f"LLM configured: model={llm_config.model}")
+        else:
+            llm_config = None
+            logger.info("Render-only mode: LLM will not be called")
     else:
         llm_config = None
 
