@@ -1,8 +1,0 @@
-LLM_config.json
-data*/
-output*/
-!output/
-archive/
-venv/
-*.pyc
-*.log
