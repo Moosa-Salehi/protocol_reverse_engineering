@@ -18,12 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-05-31
 
 ### Added
-- Enhanced boundary detection (A2) with anti-fragmentation penalties
-- Multi-layer protocol detection (A6) for transport/application separation
-- Hybrid feature fusion (A1) with adaptive weighting
-- Multi-stage LLM integration (A5) with evidence-gated validation
-- Improved logging and observability (C5)
-- Code structure refactoring (C4)
+- Enhanced boundary detection with anti-fragmentation penalties
+- Multi-layer protocol detection for transport/application separation
+- Hybrid feature fusion with adaptive weighting
+- Multi-stage LLM integration with evidence-gated validation
+- Improved logging and observability
+- Code structure refactoring 
 - Diagnostic tools for neural features, boundaries, and fusion
 
 ### Changed
@@ -39,8 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.0] - 2026-05-15
 
 ### Added
-- Semantic field labeling (A3) with protocol-agnostic inference
-- Relation false positive reduction (A4)
+- Semantic field labeling with protocol-agnostic inference
+- Relation false positive reduction
 - Ground truth evaluation framework
 - LLM-assisted refinement with RFC 6902 patches
 

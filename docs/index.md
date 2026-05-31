@@ -75,10 +75,14 @@ python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
 python main.py pcaps/ --tshark-filter mbtcp \
     --ground-truth-json truth-files/modbus.json
 
-# With LLM refinement
+# Custom LLM configuration (uses default if not specified)
 python main.py pcaps/ --tshark-filter mbtcp \
     --llm-config LLM_config.json \
     --enhanced-boundaries
+
+# Without LLM refinement (when API not available)
+python main.py pcaps/ --tshark-filter mbtcp \
+    --llm-render-only
 
 # Multi-layer protocol detection
 python main.py pcaps/ --tshark-filter mbtcp \
@@ -188,10 +192,11 @@ python scripts/24_test_boundary_refinement.py data/05_families.json
 - Clustering & inference: ~2 minutes
 - LLM refinement: ~2 minutes (depends on API)
 
-**Accuracy (Modbus TCP with raw_bytes mode):**
+**Accuracy (Modbus TCP with hybrid mode + LLM refinement):**
 - Message type detection: 90.91% precision/recall
 - Field boundary recall: 88.57%
-- Field boundary precision: 38% → 65%+ with enhanced mode
+- Field boundary precision: 65%+ with enhanced mode and LLM refinement
+- Semantic labeling: 40-60% accuracy with LLM assistance
 
 ## 🎓 Supported Protocols
 

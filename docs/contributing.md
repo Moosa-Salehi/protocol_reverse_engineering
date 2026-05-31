@@ -135,8 +135,6 @@ def test_boundary_detection_basic():
 - `docs/getting_started.md` - Installation and quick start
 - `docs/how_to_use.md` - Comprehensive usage guide
 - `docs/architecture.md` - System design
-- `docs/api_reference.md` - Module documentation
-- `docs/examples.md` - Protocol-specific examples
 
 ### Building Documentation
 
