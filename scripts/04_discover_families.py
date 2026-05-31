@@ -23,6 +23,8 @@ def main() -> None:
     parser.add_argument("--neural-model-path", default="industrial_VAE.pth")
     parser.add_argument("--latent-cache-path")
     parser.add_argument("--neural-batch-size", type=int, default=256)
+    parser.add_argument("--fusion-method", choices=["concat", "adaptive", "learned", "fixed"], default="adaptive",
+                        help="Hybrid feature fusion method (default: adaptive)")
     args = parser.parse_args()
 
     records = load_corpus_jsonl(args.input_jsonl)
@@ -38,6 +40,7 @@ def main() -> None:
         neural_model_path=args.neural_model_path,
         latent_cache_path=args.latent_cache_path,
         neural_batch_size=args.neural_batch_size,
+        fusion_method=args.fusion_method,
     )
     requested_sample = args.sample_size if args.sample_size is not None else len(records)
     assignment_strategy = (

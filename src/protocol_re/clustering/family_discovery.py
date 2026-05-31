@@ -201,6 +201,7 @@ def discover_families(
     neural_model_path: str | None = None,
     latent_cache_path: str | None = None,
     neural_batch_size: int = 256,
+    fusion_method: str = "adaptive",  # New parameter for learned fusion
 ) -> ClusteringResult:
     if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
         raise ValueError(f"Unsupported feature mode: {feature_mode}")
@@ -260,6 +261,7 @@ def discover_families(
             model_path=neural_model_path,
             latent_cache_path=latent_cache_path,
             neural_batch_size=neural_batch_size,
+            fusion_method=fusion_method,  # Pass fusion method
         )
         matrix = feature_info.matrix
         if feature_info.latent_dim > 0:
@@ -273,6 +275,7 @@ def discover_families(
                 model_path=neural_model_path,
                 latent_cache_path=latent_cache_path,
                 neural_batch_size=neural_batch_size,
+                fusion_method=fusion_method,  # Pass fusion method
             ).matrix
 
         unsampled_matrix_builder = build_feature_unsampled

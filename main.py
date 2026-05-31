@@ -307,6 +307,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             if step_name in {"04_discover_families", "06_extract_features"}:
                 step_args.extend(["--latent-cache-path", _path(args.family_latent_cache_path)])
 
+    # Add fusion method for hybrid mode
+    if args.family_feature_mode == "hybrid":
+        for step_name, step_args in pipeline:
+            if step_name == "04_discover_families":
+                step_args.extend(["--fusion-method", args.fusion_method])
+                break
+
     llm_steps = [
         (
             "14_export_llm_evidence",
@@ -531,6 +538,24 @@ def parse_args() -> argparse.Namespace:
         "--enable-neural-quality-check",
         action="store_true",
         help="Enable neural feature quality checks with automatic fallback to raw_bytes if quality is poor. Experimental.",
+    )
+    family_group.add_argument(
+        "--fusion-method",
+        choices=["concat", "adaptive", "learned", "fixed"],
+        default="adaptive",
+        help="Hybrid feature fusion method: concat (simple), adaptive (quality-based), learned (MLP), fixed (manual weights). Default: adaptive.",
+    )
+    family_group.add_argument(
+        "--fusion-neural-weight",
+        type=float,
+        default=0.5,
+        help="Neural feature weight for fixed fusion method (0.0-1.0). Default: 0.5.",
+    )
+    family_group.add_argument(
+        "--fusion-structural-weight",
+        type=float,
+        default=0.5,
+        help="Structural feature weight for fixed fusion method (0.0-1.0). Default: 0.5.",
     )
 
     boundary_group.add_argument(

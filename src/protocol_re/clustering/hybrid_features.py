@@ -18,6 +18,15 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     np = None
 
+try:
+    from protocol_re.clustering.learned_fusion import (
+        fuse_features_adaptive,
+        should_override_with_structural,
+    )
+    LEARNED_FUSION_AVAILABLE = True
+except ImportError:
+    LEARNED_FUSION_AVAILABLE = False
+
 
 @dataclass
 class FeatureBuildResult:
@@ -30,6 +39,12 @@ class FeatureBuildResult:
     symbolic_feature_count: int = 0
     fallback_reason: str | None = None
     extra_metadata: Dict[str, object] = field(default_factory=dict)
+    # New fields for learned fusion
+    fusion_method: str | None = None
+    neural_weight: float | None = None
+    structural_weight: float | None = None
+    feature_importance: object | None = None  # numpy array
+    fusion_quality_score: float | None = None
 
 
 def build_feature_matrix(
@@ -40,6 +55,7 @@ def build_feature_matrix(
     latent_cache_path: str | None = None,
     neural_batch_size: int = 256,
     latent_dim: int = 32,
+    fusion_method: str = "adaptive",  # New parameter
 ) -> FeatureBuildResult:
     if np is None:
         raise RuntimeError("NumPy is required for feature matrix construction")
@@ -74,17 +90,75 @@ def build_feature_matrix(
                 latent_dim=latent_dim,
                 latent_cache=latent_cache_path,
             )
+
+        # Build structural features
         structural = vectorize_structural_features(records, corpus_records=corpus_records)
-        matrix = np.concatenate([neural, structural], axis=1).astype(np.float32)
-        return FeatureBuildResult(
-            matrix=matrix,
-            feature_mode="hybrid",
-            requested_feature_mode=feature_mode,
-            neural_model=str(model_path or DEFAULT_MODEL_PATH),
-            latent_dim=latent_dim,
-            latent_cache=latent_cache_path,
-            symbolic_feature_count=int(structural.shape[1]),
-        )
+
+        # Check if structural should override neural (collapse detection)
+        if LEARNED_FUSION_AVAILABLE:
+            should_override, override_reason = should_override_with_structural(neural, structural)
+            if should_override:
+                return FeatureBuildResult(
+                    matrix=structural,
+                    feature_mode="structural",
+                    requested_feature_mode=feature_mode,
+                    neural_model=str(model_path or DEFAULT_MODEL_PATH),
+                    latent_dim=latent_dim,
+                    latent_cache=latent_cache_path,
+                    symbolic_feature_count=int(structural.shape[1]),
+                    fallback_reason=f"neural_override:{override_reason}",
+                )
+
+        # Hybrid mode: fuse neural and structural features
+        if LEARNED_FUSION_AVAILABLE and fusion_method != "concat":
+            # Use learned fusion
+            try:
+                matrix, fusion_weights = fuse_features_adaptive(
+                    neural_features=neural,
+                    structural_features=structural,
+                    method=fusion_method
+                )
+
+                return FeatureBuildResult(
+                    matrix=matrix,
+                    feature_mode="hybrid",
+                    requested_feature_mode=feature_mode,
+                    neural_model=str(model_path or DEFAULT_MODEL_PATH),
+                    latent_dim=latent_dim,
+                    latent_cache=latent_cache_path,
+                    symbolic_feature_count=int(structural.shape[1]),
+                    fusion_method=fusion_weights.method,
+                    neural_weight=fusion_weights.neural_weight,
+                    structural_weight=fusion_weights.structural_weight,
+                    feature_importance=fusion_weights.feature_importance,
+                    fusion_quality_score=fusion_weights.quality_score,
+                )
+            except Exception as exc:
+                # Fallback to simple concatenation if learned fusion fails
+                matrix = np.concatenate([neural, structural], axis=1).astype(np.float32)
+                return FeatureBuildResult(
+                    matrix=matrix,
+                    feature_mode="hybrid",
+                    requested_feature_mode=feature_mode,
+                    neural_model=str(model_path or DEFAULT_MODEL_PATH),
+                    latent_dim=latent_dim,
+                    latent_cache=latent_cache_path,
+                    symbolic_feature_count=int(structural.shape[1]),
+                    fallback_reason=f"learned_fusion_failed:{exc.__class__.__name__}",
+                )
+        else:
+            # Simple concatenation (original behavior)
+            matrix = np.concatenate([neural, structural], axis=1).astype(np.float32)
+            return FeatureBuildResult(
+                matrix=matrix,
+                feature_mode="hybrid",
+                requested_feature_mode=feature_mode,
+                neural_model=str(model_path or DEFAULT_MODEL_PATH),
+                latent_dim=latent_dim,
+                latent_cache=latent_cache_path,
+                symbolic_feature_count=int(structural.shape[1]),
+                fusion_method="concat",
+            )
     raise ValueError(f"Unsupported feature mode: {feature_mode}")
 
 
