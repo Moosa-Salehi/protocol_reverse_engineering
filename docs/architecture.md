@@ -1,8 +1,6 @@
 # Architecture
 
-## Overview
-
-The Protocol Reverse Engineering pipeline is a modular, evidence-preserving system designed to analyze binary protocol traffic from PCAP files. The architecture follows a staged pipeline approach where each stage builds upon the outputs of previous stages.
+This document describes the technical architecture, design principles, and implementation details of the Protocol Reverse Engineering pipeline.
 
 ## Design Principles
 
@@ -222,18 +220,15 @@ Final reports are stored in the `output/` directory:
 
 ## Feature Modes
 
-### Raw Bytes Mode (Recommended)
+### Raw Bytes Mode
 
 Uses padded byte vectors with downweighting of volatile offsets. Achieves 90%+ accuracy on test protocols.
 
-**Pros:**
-- Deterministic and reliable
-- Fast processing
-- No external dependencies
-
-**Cons:**
-- May struggle with highly variable protocols
-- Limited semantic understanding
+**Implementation:**
+- Pad messages to fixed length (default: 512 bytes)
+- Extract byte values as features
+- Downweight positions with high variance
+- Use cosine similarity for clustering
 
 ### Structural Mode
 
@@ -243,27 +238,23 @@ Uses symbolic protocol features extracted from message structure:
 - Discriminator-like bytes
 - Header/body split hints
 
-**Pros:**
-- Protocol-agnostic feature extraction
-- Interpretable features
-- No ML dependencies
+**Implementation:**
+- Extract length distribution features
+- Compute stable byte positions
+- Identify discriminator candidates
+- Combine into feature vector
 
-**Cons:**
-- May miss subtle patterns
-- Requires careful feature engineering
-
-### Neural Mode (Experimental)
+### Neural Mode
 
 Uses 32D VAE latent vectors from `industrial_VAE.pth`.
 
-**Pros:**
-- Can capture complex patterns
-- Learned representations
+**Implementation:**
+- Load pre-trained VAE model
+- Encode messages to latent space
+- Use latent vectors as features
+- Detect collapsed latent spaces
 
-**Cons:**
-- May produce collapsed latent spaces for small payloads
-- Requires PyTorch and trained model
-- Currently produces poor clustering results (use with caution)
+**Note:** Currently produces poor clustering results for small payloads. Use with caution.
 
 ### Hybrid Mode
 
@@ -273,7 +264,11 @@ Combines neural and structural features with adaptive fusion:
 - **learned**: MLP-based feature importance learning
 - **fixed**: Manual weight specification
 
-Includes neural collapse detection and automatic fallback to structural features.
+**Implementation:**
+- Extract both neural and structural features
+- Detect neural collapse (low variance, poor separation)
+- Automatically adjust fusion weights
+- Cache latent vectors for performance
 
 ## Enhanced Features
 
@@ -285,7 +280,13 @@ Reduces over-segmentation through:
 - Multi-pass segment merging (up to 3 passes with 6 merging rules)
 - Maximum field count limit (default: 15 fields per family)
 
-Enable with `--enhanced-boundaries` flag.
+**Merging Rules:**
+1. Merge adjacent 1-byte fields
+2. Merge low-entropy neighbors
+3. Merge fields with similar byte distributions
+4. Merge fields with correlated values
+5. Merge constant fields
+6. Merge fields below minimum length threshold
 
 ### Multi-Layer Protocol Detection
 
@@ -295,7 +296,11 @@ Detects layered protocols (transport + application) using:
 - Transaction/counter fields in header region
 - Confidence scoring based on evidence strength
 
-Enable with `--enable-layer-detection` flag (experimental).
+**Detection Criteria:**
+- Length field at offset < 8 pointing to offset > 8
+- Stable prefix (entropy < 0.5) for first N bytes
+- Variable suffix (entropy > 2.0) for remaining bytes
+- Transaction ID or counter in header region
 
 ### LLM-Assisted Refinement
 
@@ -304,7 +309,11 @@ Stage-specific LLM interactions for:
 - Semantic labeling (assign field roles)
 - Relation validation (filter false positives)
 
-All LLM suggestions are evidence-gated and validated against statistical evidence.
+**Evidence Gating:**
+- All LLM suggestions validated against statistical evidence
+- Patches rejected if they contradict strong evidence
+- Confidence scores used to weight decisions
+- Fallback to statistical inference if LLM unavailable
 
 ## Extensibility
 
@@ -364,20 +373,6 @@ All LLM suggestions are evidence-gated and validated against statistical evidenc
 - PyTorch (for neural features)
 - OpenAI-compatible LLM API (for refinement)
 - Scapy (alternative extraction method)
-
-## Testing
-
-### Diagnostic Tools
-
-- `scripts/20_diagnose_neural_features.py`: Analyze neural feature quality
-- `scripts/21_test_enhanced_neural.py`: Test enhanced neural features
-- `scripts/22_test_boundary_detection.py`: Test boundary detection
-- `scripts/23_test_learned_fusion.py`: Test hybrid feature fusion
-- `scripts/24_test_boundary_refinement.py`: Test boundary quality metrics
-
-### Unit Tests
-
-Located in `tests/` directory (see Testing documentation).
 
 ## Security Considerations
 

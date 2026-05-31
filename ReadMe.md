@@ -1,5 +1,8 @@
 # Protocol Reverse Engineering
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A protocol-agnostic reverse engineering pipeline that analyzes binary protocol traffic from PCAP files and automatically infers protocol structure, message types, field boundaries, and semantic roles.
 
 ## Quick Start
@@ -17,78 +20,72 @@ open output/protocol_report.html
 
 ## Key Features
 
-- **Protocol-Agnostic** - Works with any binary protocol
-- **ML-Powered Clustering** - Discovers message families using advanced ML techniques
-- **Intelligent Field Detection** - Infers boundaries and structure with ML assistance
-- **AI-Driven Semantic Analysis** - Labels opcodes, addresses, lengths using LLM
-- **Multi-Stage LLM Refinement** - AI-assisted boundary, semantic, and relation refinement
-- **Comprehensive Reports** - Markdown and HTML output with evaluation metrics
+- **Protocol-Agnostic Analysis** - Works with any binary protocol without prior knowledge
+- **Automatic Message Clustering** - Discovers message families using advanced clustering
+- **Field Boundary Detection** - Infers field boundaries with enhanced anti-fragmentation
+- **Semantic Labeling** - Identifies opcodes, addresses, lengths, transaction IDs
+- **Request/Response Pairing** - Discovers protocol interactions and relations
+- **LLM-Assisted Refinement** - Optional LLM integration for improved analysis
+- **Comprehensive Reports** - Generates Markdown and interactive HTML specifications
+- **Ground Truth Evaluation** - Validates results against known protocol specifications
 
 ## Documentation
 
-- **[Getting Started](docs/getting_started.md)** - Installation and first analysis
-- **[How to Use](docs/how_to_use.md)** - Comprehensive usage guide
-- **[Architecture](docs/architecture.md)** - System design
-
-## Use Cases
-
-- **Industrial Protocol Analysis** - Modbus, S7comm, DNP3, IEC 104, etc.
-- **SCADA Security** - Understand proprietary protocols
-- **IoT Research** - Analyze device communication
-- **Network Forensics** - Reverse engineer unknown protocols
-- **Protocol Documentation** - Generate specifications from traffic
-
-## Pipeline Overview
-
-```
-PCAP Files → Extract Messages → Cluster Families → Infer Structure
-    ↓
-Detect Boundaries → Pair Requests/Responses → Label Semantics
-    ↓
-Build Protocol Model → LLM Refinement → Generate Reports
-```
+- **[Getting Started](docs/getting_started.md)** - Installation, first analysis, and basic usage
+- **[Architecture](docs/architecture.md)** - System design and technical details
+- **[Testing](docs/testing.md)** - Testing guide and diagnostic tools
+- **[Documentation Guide](docs/Readme.md)** - How to build and contribute to docs
 
 ## Requirements
 
 - Python 3.10+
 - TShark (Wireshark CLI)
-- PyTorch (for neural features)
-- OpenAI-compatible LLM API (for semantic refinement)
-- Dependencies: numpy, scikit-learn, hdbscan, torch
+- Dependencies: numpy, scikit-learn, hdbscan, scapy, torch (optional)
 
-## Performance (for Modbus)
-
-- **Runtime:** ~6 minutes for 200K messages
-- **Accuracy:** 90%+ message type detection
-- **Scalability:** Handles up to 200K messages by default
-
-## Advanced Features
-
-- **Enhanced Boundary Detection** - Reduces over-segmentation
-- **Multi-Layer Detection** - Separates transport/application layers
-- **Hybrid Clustering** - Neural + structural features
-- **Ground Truth Evaluation** - Validates against known protocols
-
-## Example Usage
+## Basic Usage
 
 ```bash
-# Basic analysis
+# Analyze Modbus TCP traffic
 python main.py pcaps/ --tshark-filter mbtcp
 
-# With enhanced features
-python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries --enable-layer-detection
-
-# With LLM refinement
-python main.py pcaps/ --tshark-filter mbtcp --llm-config LLM_config.json --enhanced-boundaries
+# With enhanced boundary detection (recommended)
+python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
 
 # With ground truth evaluation
-python main.py pcaps/ --tshark-filter mbtcp --ground-truth-json truth-files/modbus.json --enhanced-boundaries
+python main.py pcaps/ --tshark-filter mbtcp --ground-truth-json truth-files/modbus.json
 ```
+
+## Project Structure
+
+```
+protocol_re/
+├── src/protocol_re/          # Core library
+├── scripts/                  # Pipeline stages (01-24)
+├── docs/                     # Documentation
+├── data/                     # Intermediate artifacts
+├── output/                   # Final reports
+├── pcaps/                    # Input PCAP files
+└── main.py                   # Pipeline runner
+```
+
+## Supported Protocols
+
+The pipeline is protocol-agnostic and has been tested with:
+- Modbus TCP, S7comm, DNP3, IEC 60870-5-104, and custom protocols
+
+## Performance
+
+Typical runtime for 200K messages: ~6 minutes
+
+Accuracy on Modbus TCP:
+- Message type detection: 90%+ precision/recall
+- Field boundary recall: 88%+
+- Field boundary precision: 65%+ (with enhanced mode)
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License - See LICENSE file for details.
 
----
+## Contact
 
-**Get Started:** [Installation Guide](docs/getting_started.md) | [Usage Guide](docs/how_to_use.md) | [Architecture](docs/architecture.md)
+For questions or issues, please open an issue on GitHub.

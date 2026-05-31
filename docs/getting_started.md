@@ -1,29 +1,36 @@
 # Getting Started
 
-This guide will help you get up and running with the Protocol Reverse Engineering pipeline in minutes.
+This comprehensive guide covers installation, usage, configuration, and troubleshooting for the Protocol Reverse Engineering pipeline.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Your First Analysis](#your-first-analysis)
+- [Usage Guide](#usage-guide)
+- [Feature Modes](#feature-modes)
+- [LLM Integration](#llm-integration)
+- [Ground Truth Evaluation](#ground-truth-evaluation)
+- [Diagnostic Tools](#diagnostic-tools)
+- [Step-by-Step Execution](#step-by-step-execution)
+- [Troubleshooting](#troubleshooting)
+- [Configuration Reference](#configuration-reference)
+- [Best Practices](#best-practices)
 
 ## Prerequisites
 
 Before you begin, ensure you have:
 
-1. **Python 3.10 or higher** installed
+1. **Python 3.10 or higher**
    - Check: `python --version` or `python3 --version`
    - Download: https://www.python.org/downloads/
 
-2. **TShark (Wireshark CLI)** installed
+2. **TShark (Wireshark CLI)**
    - Check: `tshark --version`
    - Download: https://www.wireshark.org/download.html
    - Note: Install Wireshark, which includes TShark
 
-3. **PyTorch** installed (for neural features)
-   - Installed automatically with `pip install -r requirements.txt`
-   - Or manually: `pip install torch`
-
-4. **OpenAI-compatible LLM API access** (for semantic refinement)
-   - OpenAI API key or compatible endpoint
-   - Set via environment variable: `OPENAI_API_KEY`
-
-5. **PCAP files** containing protocol traffic you want to analyze
+3. **PCAP files** containing protocol traffic you want to analyze
 
 ## Installation
 
@@ -62,36 +69,30 @@ pip install -r requirements.txt
 - `scikit-learn` - Machine learning and clustering
 - `hdbscan` - Hierarchical density-based clustering
 - `scapy` - Packet manipulation (optional extraction method)
-- `torch` - PyTorch for neural features
+- `torch` - PyTorch for neural features (optional)
 - `colorama` - Colored terminal output
 
 ## Your First Analysis
 
 ### Example 1: Analyze Modbus TCP Traffic
 
-If you have Modbus TCP PCAP files:
-
 ```bash
 # Place your PCAP files in a directory
 mkdir pcaps
 cp /path/to/your/*.pcap pcaps/
 
-# Set your OpenAI API key
-export OPENAI_API_KEY=<your-api-key>  # Linux/Mac
-# Or: $env:OPENAI_API_KEY = "<your-api-key>"  # Windows PowerShell
-
-# Run the pipeline (uses ML clustering and LLM refinement by default)
-python main.py pcaps --tshark-filter mbtcp
+# Run the pipeline
+python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
 
 # Wait 5-10 minutes for completion
 ```
 
 **What happens:**
 1. Extracts Modbus TCP payloads from PCAPs
-2. Discovers message families using hybrid ML clustering (neural + structural)
-3. Infers field boundaries with ML-powered detection
+2. Discovers message families using clustering
+3. Infers field boundaries
 4. Detects request/response pairs
-5. Refines semantics using multi-stage LLM analysis
+5. Assigns semantic labels to fields
 6. Generates comprehensive protocol specification
 
 **Output:**
@@ -99,37 +100,26 @@ python main.py pcaps --tshark-filter mbtcp
 - `output/protocol_report.html` - Interactive HTML report
 - `data/10_protocol_model.refined.json` - Machine-readable model
 
-### Example 2: Analyze Unknown Protocol on TCP Port 502
-
-If you don't know the protocol but know the port:
+### Example 2: Analyze Unknown Protocol on TCP Port
 
 ```bash
-python main.py pcaps --extraction-method tcp --service-port 502
+python main.py pcaps/ --extraction-method tcp --service-port 502
 ```
 
-### Example 3: Analyze with Enhanced Features
-
-For best results, use enhanced boundary detection:
+### Example 3: Analyze with LLM Refinement
 
 ```bash
-python main.py pcaps --tshark-filter mbtcp --enhanced-boundaries
+# Set API key
+export OPENAI_API_KEY=<your-api-key>  # Linux/Mac
+# Or: $env:OPENAI_API_KEY = "<your-api-key>"  # Windows PowerShell
+
+# Run with LLM refinement
+python main.py pcaps/ --tshark-filter mbtcp --llm-config LLM_config.json --enhanced-boundaries
 ```
 
-**Recommended:** Always use `--enhanced-boundaries` for better results.
+### Understanding the Output
 
-### Example 4: Analyze Without LLM (When API Not Available)
-
-If you don't have LLM API access:
-
-```bash
-python main.py pcaps --tshark-filter mbtcp --llm-render-only
-```
-
-**Note:** This will skip LLM refinement but still use ML clustering. Semantic labeling accuracy will be lower.
-
-## Understanding the Output
-
-### Protocol Report (Markdown)
+#### Protocol Report (Markdown)
 
 Open `output/protocol_report.md` to see:
 
@@ -152,51 +142,38 @@ Open `output/protocol_report.md` to see:
 1. Transaction ID (offset 0, length 2) - uint16_be
 2. Protocol ID (offset 2, length 2) - constant 0x0000
 3. Length (offset 4, length 2) - uint16_be
-4. Unit ID (offset 6, length 1) - uint8
-5. Function Code (offset 7, length 1) - opcode (0x01)
-6. Start Address (offset 8, length 2) - uint16_be
-7. Quantity (offset 10, length 2) - uint16_be
 ...
 ```
 
-### Protocol Report (HTML)
+#### Protocol Report (HTML)
 
-Open `output/protocol_report.html` in a browser to see:
+Open `output/protocol_report.html` in a browser for:
 - Interactive family explorer
 - Field visualizations
 - Request/response relation graphs
 - Statistical evidence
-- Evaluation metrics (if ground truth provided)
+- Evaluation metrics
 
-### Protocol Model (JSON)
+#### Protocol Model (JSON)
 
-`data/10_protocol_model.refined.json` contains machine-readable protocol structure:
+`data/10_protocol_model.refined.json` contains machine-readable protocol structure.
 
-```json
-{
-  "protocol_name": "Unknown Protocol",
-  "families": [
-    {
-      "family_id": "0",
-      "count": 12500,
-      "direction": "client_to_server",
-      "fields": [
-        {
-          "name": "field_0",
-          "offset": 0,
-          "length": 2,
-          "type": "uint16_be",
-          "semantic_role": "transaction_id"
-        }
-      ]
-    }
-  ]
-}
+## Usage Guide
+
+### Basic Usage
+
+```bash
+# Basic analysis
+python main.py pcaps/ --tshark-filter <filter>
+
+# With enhanced boundaries (recommended)
+python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
+
+# Use existing messages (skip extraction)
+python main.py --use-existing-messages
 ```
 
-## Common TShark Filters
-
-Use these filters with `--tshark-filter`:
+**Common TShark filters:**
 
 | Protocol | Filter | Description |
 |----------|--------|-------------|
@@ -206,52 +183,185 @@ Use these filters with `--tshark-filter`:
 | IEC 60870-5-104 | `iec104` | IEC 104 protocol |
 | Custom TCP | `tcp.port == 502` | TCP port 502 |
 | Custom UDP | `udp.port == 2222` | UDP port 2222 |
-| IP address | `ip.addr == 192.168.1.10` | Specific IP address |
-| Combined | `mbtcp and ip.addr == 192.168.1.10` | Multiple conditions |
 
 **Find available filters:**
 ```bash
 tshark -G protocols | grep -i modbus
 ```
 
-## Next Steps
+### Advanced Usage
 
-### 1. Improve Results with Enhanced Features
-
-```bash
-# Use enhanced boundary detection (recommended)
-python main.py pcaps --tshark-filter mbtcp --enhanced-boundaries
-
-# Enable multi-layer protocol detection (experimental)
-python main.py pcaps --tshark-filter mbtcp --enable-layer-detection
-```
-
-### 2. Evaluate Against Ground Truth
-
-If you know the protocol structure, create a ground truth file and evaluate:
+#### Collection and Deduplication
 
 ```bash
-python main.py pcaps --tshark-filter mbtcp \
-    --ground-truth-json truth-files/modbus.json
+python main.py source_files/ --collect --tshark-filter mbtcp
 ```
 
-See `truth-files/modbus.json` for ground truth format.
+This will:
+1. Collect all PCAPs from `source_files/` into `pcaps/`
+2. Remove duplicate captures
+3. Run the full pipeline
 
-### 3. Configure LLM (Required for Full Pipeline)
-
-The pipeline uses LLM refinement by default. Configure your API:
+#### TCP Port Extraction (Alternative to TShark)
 
 ```bash
-# Set API key
-export OPENAI_API_KEY=<your-key>  # Linux/Mac
-$env:OPENAI_API_KEY = "<your-key>"  # Windows PowerShell
-
-# Optional: Create custom LLM_config.json (see below)
-python main.py pcaps --tshark-filter mbtcp \
-    --llm-config LLM_config.json
+python main.py pcaps/ --extraction-method tcp --service-port 502
 ```
 
-**LLM_config.json:**
+**When to use:**
+- TShark filter is not available for your protocol
+- You want to extract by TCP/UDP port only
+- TShark is not installed
+
+#### Enhanced Boundary Detection
+
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
+```
+
+**Options:**
+- `--enhanced-boundaries` - Enable enhanced mode
+- `--boundary-max-fields 12` - Limit maximum fields per family (default: 15)
+- `--enable-merging` - Enable multi-pass segment merging
+
+**Impact:**
+- Reduces false positive boundaries by ~50%
+- Eliminates excessive 1-byte fields
+- Improves boundary precision from 38% to 65-70%
+
+#### Multi-Layer Protocol Detection
+
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --enable-layer-detection
+```
+
+**Options:**
+- `--enable-layer-detection` - Enable layer detection (experimental)
+- `--layer-min-confidence 0.7` - Minimum confidence threshold
+
+**Use cases:**
+- Protocols with stable outer headers (Modbus TCP, S7comm)
+- Transport framing + application payload
+- Protocol tunneling scenarios
+
+#### Message Limits
+
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --max-messages 50000
+```
+
+**Default:** 200,000 messages
+
+**When to adjust:**
+- Small captures: reduce for faster processing
+- Large captures: increase for better coverage
+- Memory constraints: reduce to limit memory usage
+
+## Feature Modes
+
+### Raw Bytes Mode (Recommended)
+
+Default mode using padded byte vectors:
+
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode raw_bytes
+```
+
+**Pros:**
+- 90%+ accuracy on test protocols
+- Fast and deterministic
+- No external dependencies
+
+**Use when:**
+- You want reliable, production-ready results
+- You don't have a trained neural model
+- Protocol has clear structural patterns
+
+### Structural Mode
+
+Use symbolic protocol features:
+
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode structural
+```
+
+**Pros:**
+- Protocol-agnostic feature extraction
+- Interpretable features
+- No ML dependencies
+
+**Use when:**
+- You want to understand feature importance
+- Raw bytes mode is not working well
+- You need explainable clustering
+
+### Neural Mode (Experimental)
+
+Use VAE latent vectors:
+
+```bash
+python main.py pcaps/ --tshark-filter mbtcp \
+    --family-feature-mode neural \
+    --family-neural-model-path industrial_VAE.pth
+```
+
+**Pros:**
+- Can capture complex patterns
+- Learned representations
+
+**Cons:**
+- May produce poor clustering (collapsed latent space)
+- Requires PyTorch and trained model
+- Currently not recommended for production
+
+**Use when:**
+- You have a well-trained VAE model
+- Protocol has complex, non-obvious patterns
+- You're experimenting with ML approaches
+
+### Hybrid Mode
+
+Combine neural and structural features:
+
+```bash
+# Adaptive fusion (recommended)
+python main.py pcaps/ --tshark-filter mbtcp \
+    --family-feature-mode hybrid \
+    --fusion-method adaptive \
+    --family-neural-model-path industrial_VAE.pth
+
+# Learned fusion with MLP
+python main.py pcaps/ --tshark-filter mbtcp \
+    --family-feature-mode hybrid \
+    --fusion-method learned \
+    --family-neural-model-path industrial_VAE.pth
+
+# Fixed weights
+python main.py pcaps/ --tshark-filter mbtcp \
+    --family-feature-mode hybrid \
+    --fusion-method fixed \
+    --fusion-neural-weight 0.3 \
+    --fusion-structural-weight 0.7 \
+    --family-neural-model-path industrial_VAE.pth
+```
+
+**Fusion methods:**
+- `adaptive` - Quality-based automatic weighting (default)
+- `learned` - MLP-based feature importance learning
+- `fixed` - Manual weight specification
+- `concat` - Simple concatenation
+
+**Features:**
+- Automatic neural collapse detection
+- Fallback to structural features when neural fails
+- Latent vector caching for speed
+
+## LLM Integration
+
+### Setup
+
+1. Create `LLM_config.json`:
+
 ```json
 {
   "api_key_required": "yes",
@@ -263,58 +373,380 @@ python main.py pcaps --tshark-filter mbtcp \
 }
 ```
 
-### 4. Try Different Feature Modes
+2. Set API key:
 
 ```bash
-# Hybrid (default, recommended - neural + structural)
-python main.py pcaps --tshark-filter mbtcp --family-feature-mode hybrid
+# Linux/Mac
+export OPENAI_API_KEY=<your-api-key>
 
-# Raw bytes (fallback when neural model unavailable)
-python main.py pcaps --tshark-filter mbtcp --family-feature-mode raw_bytes
+# Windows PowerShell
+$env:OPENAI_API_KEY = "<your-api-key>"
+```
 
-# Structural features (fast, interpretable)
-python main.py pcaps --tshark-filter mbtcp --family-feature-mode structural
+### Run with LLM Refinement
 
-# Neural only (requires trained model)
-python main.py pcaps --tshark-filter mbtcp \
-    --family-feature-mode neural \
-    --family-neural-model-path industrial_VAE.pth
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --llm-config LLM_config.json
+```
+
+### LLM Options
+
+```bash
+# Custom prompt template
+python main.py pcaps/ --tshark-filter mbtcp \
+    --llm-config LLM_config.json \
+    --llm-template custom_prompt.md
+
+# Render prompt only (no API call)
+python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
+
+# Adjust LLM parameters
+python main.py pcaps/ --tshark-filter mbtcp \
+    --llm-config LLM_config.json \
+    --llm-temperature 0.2 \
+    --llm-max-tokens 8000
+```
+
+### Stage-Specific LLM Refinement
+
+Run individual LLM refinement stages:
+
+```bash
+# Boundary refinement
+python scripts/07b_refine_boundaries_llm.py \
+    data/05_families.json \
+    data/05_families.refined.json \
+    --config LLM_config.json
+
+# Semantic labeling
+python scripts/11b_label_semantics_llm.py \
+    data/05_families.json \
+    data/09_semantics.json \
+    data/09_semantics.llm.json \
+    --config LLM_config.json
+
+# Relation validation
+python scripts/10b_validate_relations_llm.py \
+    data/08_relations.json \
+    data/08_relations.validated.json \
+    --config LLM_config.json
+```
+
+## Ground Truth Evaluation
+
+### Prepare Ground Truth
+
+Create a ground truth JSON file (see `truth-files/modbus.json` for example):
+
+```json
+{
+  "protocol_name": "Modbus TCP",
+  "families": [
+    {
+      "family_id": "read_coils",
+      "fields": [
+        {"name": "function_code", "offset": 0, "length": 1, "semantic_role": "opcode"},
+        {"name": "start_address", "offset": 1, "length": 2, "semantic_role": "address"},
+        {"name": "quantity", "offset": 3, "length": 2, "semantic_role": "quantity"}
+      ]
+    }
+  ]
+}
+```
+
+### Run with Evaluation
+
+```bash
+python main.py pcaps/ --tshark-filter mbtcp \
+    --ground-truth-json truth-files/modbus.json
+```
+
+### View Evaluation Results
+
+Check `data/15_evaluation_result.json` for detailed metrics:
+- Message type matching (precision/recall)
+- Field boundary detection (precision/recall)
+- Semantic labeling accuracy
+- Relation detection (precision/recall)
+- Overall score
+
+## Diagnostic Tools
+
+### Diagnose Neural Features
+
+Analyze neural feature quality and detect collapsed latent spaces:
+
+```bash
+python scripts/20_diagnose_neural_features.py data/01_messages.jsonl \
+    --sample-size 5000 \
+    --model-path pre_trained/industrial_VAE.pth \
+    --latent-cache data/latent_cache.json
+```
+
+**Output:**
+- Latent space variance analysis
+- Separation metrics
+- Comparison with structural features
+- Recommendations
+
+### Test Enhanced Neural Features
+
+Compare original vs enhanced neural features:
+
+```bash
+python scripts/21_test_enhanced_neural.py data/01_messages.jsonl \
+    --sample-size 5000 \
+    --model-path pre_trained/industrial_VAE.pth
+```
+
+### Test Boundary Detection
+
+Test boundary detection with different thresholds:
+
+```bash
+python scripts/22_test_boundary_detection.py data/01_messages.jsonl \
+    --assignments-json data/02_family_assignments.json \
+    --features-json data/03_family_features.json
+```
+
+### Test Learned Fusion
+
+Test hybrid feature fusion methods:
+
+```bash
+python scripts/23_test_learned_fusion.py data/01_messages.jsonl \
+    --model-path pre_trained/industrial_VAE.pth
+```
+
+### Test Boundary Refinement
+
+Compute boundary quality metrics and test LLM refinement:
+
+```bash
+python scripts/24_test_boundary_refinement.py data/05_families.json \
+    --messages-json data/01_messages.jsonl \
+    --assignments-json data/02_family_assignments.json
+```
+
+## Step-by-Step Execution
+
+For debugging or custom workflows, run stages individually:
+
+```bash
+# Set Python path
+export PYTHONPATH=src  # Windows: $env:PYTHONPATH="src"
+
+# Stage 03: Extract messages
+python scripts/03_extract_messages.py pcaps data/01_messages.jsonl \
+    --extraction-method tshark \
+    --tshark-filter mbtcp \
+    --max-messages 200000
+
+# Stage 04: Discover families
+python scripts/04_discover_families.py data/01_messages.jsonl \
+    data/02_family_assignments.json \
+    --sample-size 100000 \
+    --feature-mode raw_bytes
+
+# Stage 05: Infer framing
+python scripts/05_infer_framing.py data/01_messages.jsonl \
+    data/02_family_assignments.json \
+    data/04_framing.json
+
+# Stage 06: Extract features
+python scripts/06_extract_features.py data/01_messages.jsonl \
+    data/03_family_features.json \
+    --assignments-json data/02_family_assignments.json
+
+# Stage 07: Infer boundaries
+python scripts/07_infer_boundaries.py data/01_messages.jsonl \
+    data/05_families.json \
+    --assignments-json data/02_family_assignments.json \
+    --features-json data/03_family_features.json \
+    --framing-json data/04_framing.json \
+    --enhanced \
+    --max-fields 15
+
+# Stage 08: Pair requests/responses
+python scripts/08_pair_requests_responses.py data/01_messages.jsonl \
+    data/06_pairs.json \
+    --assignments-json data/02_family_assignments.json
+
+# Stage 09: Infer discriminators
+python scripts/09_infer_keywords.py data/01_messages.jsonl \
+    data/07_keywords.json \
+    --assignments-json data/02_family_assignments.json \
+    --features-json data/03_family_features.json \
+    --framing-json data/04_framing.json
+
+# Stage 10: Infer relations
+python scripts/10_infer_relations.py data/01_messages.jsonl \
+    data/02_family_assignments.json \
+    data/06_pairs.json \
+    data/08_relations.json
+
+# Stage 11: Infer semantics
+python scripts/11_infer_semantics.py data/05_families.json \
+    data/08_relations.json \
+    data/09_semantics.json
+
+# Stage 12: Build protocol model
+python scripts/12_build_protocol_model.py data/05_families.json \
+    data/10_protocol_model.json \
+    --features-json data/03_family_features.json \
+    --keywords-json data/07_keywords.json \
+    --relations-json data/08_relations.json \
+    --semantics-json data/09_semantics.json \
+    --framing-json data/04_framing.json
+
+# Stage 13: Evaluate pipeline
+python scripts/13_evaluate_pipeline.py data/01_messages.jsonl \
+    data/02_family_assignments.json \
+    data/05_families.json \
+    data/06_pairs.json \
+    data/08_relations.json \
+    data/11_evaluation.json \
+    --semantics-json data/09_semantics.json
+
+# Stage 14: Export LLM evidence
+python scripts/14_export_llm_evidence.py data/10_protocol_model.json \
+    data/12_llm_evidence.json \
+    --evaluation-json data/11_evaluation.json
+
+# Stage 15: Analyze with LLM
+python scripts/15_analyze_with_llm.py data/12_llm_evidence.json \
+    data/13_llm_analysis.json \
+    --config LLM_config.json \
+    --prompt-out data/13_llm_prompt.md
+
+# Stage 15b: Apply LLM refinement
+python scripts/15b_apply_llm_refinement.py data/10_protocol_model.json \
+    data/13_llm_analysis.json \
+    data/10_protocol_model.refined.json \
+    --evidence-json data/12_llm_evidence.json \
+    --schema-json schema/protocol_model.schema.json \
+    --patches-out data/13_llm_patches.json \
+    --validation-out data/13_llm_patch_validation.json
+
+# Stage 16: Prepare evaluation data
+python scripts/16_prepare_evaluation_data.py data/10_protocol_model.json \
+    data/11_evaluation.json \
+    data/13_llm_analysis.json \
+    data/14_evaluation_model_data.json \
+    --refined-protocol-model-json data/10_protocol_model.refined.json \
+    --patch-validation-json data/13_llm_patch_validation.json
+
+# Stage 17: Evaluate against ground truth
+python scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json \
+    truth-files/modbus.json \
+    data/15_evaluation_result.json
+
+# Stage 18: Export Markdown
+python scripts/18_export_markdown.py data/10_protocol_model.refined.json \
+    output/protocol_report.md \
+    --evaluation-json data/11_evaluation.json \
+    --llm-analysis-json data/13_llm_analysis.json \
+    --final-evaluation-json data/15_evaluation_result.json
+
+# Stage 19: Export HTML
+python scripts/19_export_html.py data/10_protocol_model.refined.json \
+    output/protocol_report.html \
+    --evaluation-json data/11_evaluation.json \
+    --llm-analysis-json data/13_llm_analysis.json \
+    --final-evaluation-json data/15_evaluation_result.json
 ```
 
 ## Troubleshooting
 
-### Problem: "tshark: command not found"
+### TShark Not Found
+
+**Error:** `tshark: command not found`
 
 **Solution:**
-1. Install Wireshark from https://www.wireshark.org/download.html
-2. Add TShark to PATH:
-   - Windows: Add `C:\Program Files\Wireshark` to PATH
-   - Linux: `sudo apt install tshark` or `sudo yum install wireshark`
-   - Mac: `brew install wireshark`
+1. Install Wireshark (includes TShark)
+2. Add TShark to PATH
 3. Verify: `tshark --version`
 
-### Problem: "No messages found in corpus"
+### No Messages Extracted
+
+**Error:** `No messages found in corpus`
 
 **Possible causes:**
-- Wrong TShark filter
+- Incorrect TShark filter
 - PCAP files don't contain matching traffic
-- PCAP files are empty or corrupted
+- Extraction method mismatch
 
 **Solutions:**
-1. Test filter manually:
-   ```bash
-   tshark -r pcaps/capture.pcap -Y "mbtcp" -T fields -e data | head
-   ```
-2. Try TCP port extraction:
-   ```bash
-   python main.py pcaps --extraction-method tcp --service-port 502
-   ```
-3. Check PCAP contents:
-   ```bash
-   tshark -r pcaps/capture.pcap -c 10
-   ```
+- Verify filter: `tshark -r capture.pcap -Y "mbtcp" -T fields -e data`
+- Try alternative extraction: `--extraction-method tcp --service-port 502`
+- Check PCAP contents: `tshark -r capture.pcap`
 
-### Problem: "ModuleNotFoundError: No module named 'protocol_re'"
+### Poor Clustering Results
+
+**Symptoms:**
+- Too few families (e.g., 2 instead of 11)
+- All messages in one cluster
+- Low silhouette score
+
+**Solutions:**
+1. Try different feature mode: `--family-feature-mode raw_bytes`
+2. Diagnose neural features: `python scripts/20_diagnose_neural_features.py`
+3. Adjust clustering parameters: `--sample-size 50000`
+4. Check message diversity: ensure captures contain varied traffic
+
+### Over-Segmentation
+
+**Symptoms:**
+- Too many 1-byte fields
+- Low boundary precision (< 40%)
+- Excessive field count (> 20 fields per family)
+
+**Solutions:**
+1. Enable enhanced boundaries: `--enhanced-boundaries`
+2. Reduce field limit: `--boundary-max-fields 12`
+3. Use LLM refinement: `--llm-config LLM_config.json`
+
+### LLM API Errors
+
+**Error:** `OpenAI API error: 401 Unauthorized`
+
+**Solution:**
+- Check API key: `echo $OPENAI_API_KEY`
+- Verify config: `cat LLM_config.json`
+- Test API: `curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models`
+
+**Error:** `Timeout waiting for LLM response`
+
+**Solution:**
+- Increase timeout: `--llm-timeout 300`
+- Reduce evidence size: `--family-limit 10`
+- Use render-only mode: `--llm-render-only`
+
+### Memory Issues
+
+**Error:** `MemoryError` or system slowdown
+
+**Solutions:**
+1. Reduce message limit: `--max-messages 50000`
+2. Reduce clustering sample: `--sample-size 10000`
+3. Close other applications
+4. Use 64-bit Python
+
+### Slow Performance
+
+**Symptoms:**
+- Pipeline takes > 15 minutes for 200K messages
+- Stages hang or appear frozen
+
+**Solutions:**
+1. Check TShark performance: time the extraction stage
+2. Reduce sample size: `--sample-size 50000`
+3. Skip LLM stages: `--llm-render-only`
+4. Use raw_bytes mode (fastest): `--family-feature-mode raw_bytes`
+
+### ModuleNotFoundError
+
+**Error:** `ModuleNotFoundError: No module named 'protocol_re'`
 
 **Solution:**
 Set Python path before running individual scripts:
@@ -324,110 +756,11 @@ export PYTHONPATH=src
 
 # Windows PowerShell
 $env:PYTHONPATH="src"
-
-# Windows Command Prompt
-set PYTHONPATH=src
 ```
 
 Note: `main.py` sets this automatically; only needed for individual scripts.
 
-### Problem: Pipeline is very slow
-
-**Solutions:**
-1. Reduce message limit:
-   ```bash
-   python main.py pcaps --tshark-filter mbtcp --max-messages 50000
-   ```
-2. Skip LLM stages (when not needed):
-   ```bash
-   python main.py pcaps --tshark-filter mbtcp --llm-render-only
-   ```
-3. Use structural mode (faster than hybrid):
-   ```bash
-   python main.py pcaps --tshark-filter mbtcp --family-feature-mode structural
-   ```
-
-### Problem: Poor clustering results (too few families)
-
-**Solutions:**
-1. Ensure neural model is available:
-   ```bash
-   ls industrial_VAE.pth  # Should exist
-   ```
-2. Diagnose neural features:
-   ```bash
-   python scripts/20_diagnose_neural_features.py data/01_messages.jsonl
-   ```
-3. Try different fusion method:
-   ```bash
-   python main.py pcaps --tshark-filter mbtcp \
-       --family-feature-mode hybrid --fusion-method adaptive
-   ```
-4. Ensure diverse traffic in PCAPs (multiple message types)
-
-## Understanding Pipeline Stages
-
-The pipeline runs these stages automatically:
-
-1. **Message Extraction** (Stage 03)
-   - Extracts protocol payloads from PCAPs
-   - Creates canonical message corpus
-   - Output: `data/01_messages.jsonl`
-
-2. **Family Discovery** (Stage 04)
-   - Clusters similar messages into families
-   - Uses HDBSCAN or DBSCAN clustering
-   - Output: `data/02_family_assignments.json`
-
-3. **Framing Inference** (Stage 05)
-   - Detects headers and framing patterns
-   - Identifies length fields, counters
-   - Output: `data/04_framing.json`
-
-4. **Feature Extraction** (Stage 06)
-   - Extracts statistical features per family
-   - Entropy, uniqueness, byte histograms
-   - Output: `data/03_family_features.json`
-
-5. **Boundary Detection** (Stage 07)
-   - Infers field boundaries
-   - Segments messages into fields
-   - Output: `data/05_families.json`
-
-6. **Request/Response Pairing** (Stage 08)
-   - Pairs requests with responses
-   - Analyzes session patterns
-   - Output: `data/06_pairs.json`
-
-7. **Discriminator Discovery** (Stage 09)
-   - Identifies opcode/discriminator bytes
-   - Detects message type indicators
-   - Output: `data/07_keywords.json`
-
-8. **Relation Inference** (Stage 10)
-   - Discovers family-to-family relations
-   - Detects echo fields, length relations
-   - Output: `data/08_relations.json`
-
-9. **Semantic Labeling** (Stage 11)
-   - Assigns semantic roles to fields
-   - Labels opcodes, addresses, lengths, etc.
-   - Output: `data/09_semantics.json`
-
-10. **Protocol Model Assembly** (Stage 12)
-    - Combines all evidence into unified model
-    - Output: `data/10_protocol_model.json`
-
-11. **LLM Refinement** (Stages 14-15b, default)
-    - Multi-stage LLM-assisted refinement
-    - Evidence-gated patch validation
-    - Output: `data/10_protocol_model.refined.json`
-
-12. **Report Generation** (Stages 18-19)
-    - Generates Markdown and HTML reports
-    - Output: `output/protocol_report.md`, `output/protocol_report.html`
-
-## Configuration Options
+## Configuration Reference
 
 ### Main Pipeline Options
 
@@ -444,7 +777,7 @@ Extraction:
   --service-port PORT           TCP/UDP port for extraction (with --extraction-method tcp)
 
 Clustering:
-  --family-feature-mode MODE    Feature mode: hybrid (default), raw_bytes, structural, neural
+  --family-feature-mode MODE    Feature mode: raw_bytes (default), structural, neural, hybrid
   --sample-size N               Clustering sample size (default: 100000)
   --family-neural-model-path    Path to neural model (default: industrial_VAE.pth)
 
@@ -456,9 +789,9 @@ Layer Detection:
   --enable-layer-detection      Enable multi-layer protocol detection (experimental)
   --layer-min-confidence N      Minimum confidence for layer detection (default: 0.6)
 
-LLM (used by default):
+LLM:
   --llm-config FILE             LLM configuration file (default: LLM_config.json)
-  --llm-render-only             Skip LLM API calls (when API not available)
+  --llm-render-only             Skip LLM API calls
   --llm-temperature N           LLM temperature (default: 0.1)
   --llm-max-tokens N            LLM max tokens (default: 4000)
 
@@ -469,30 +802,60 @@ Other:
   --collect                     Collect PCAPs from source tree first
 ```
 
-## Learning Resources
+## Best Practices
 
-- **[How to Use](how_to_use.md)** - Comprehensive usage guide
-- **[Architecture](architecture.md)** - System design and components
-- **[API Reference](api_reference.md)** - Module documentation
-- **[Examples](examples.md)** - Protocol-specific examples
-- **[TODO_COMPREHENSIVE.md](../TODO_COMPREHENSIVE.md)** - Roadmap and known issues
+### 1. Start Simple
 
-## Getting Help
+Begin with default settings:
+```bash
+python main.py pcaps/ --tshark-filter mbtcp
+```
 
-1. Check the troubleshooting section above
-2. Review the [How to Use](how_to_use.md) guide
-3. Check `data/11_evaluation.json` for quality metrics
-4. Run diagnostic tools (see [How to Use](how_to_use.md#diagnostic-tools))
-5. Review intermediate outputs in `data/` directory
+### 2. Use Enhanced Boundaries
 
-## What's Next?
+Always enable for better results:
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
+```
 
-Now that you've run your first analysis:
+### 3. Prefer Raw Bytes Mode
 
-1. **Review the output reports** to understand what was discovered
-2. **Try enhanced features** like `--enhanced-boundaries` for better results
-3. **Create ground truth** for your protocol and evaluate accuracy
-4. **Experiment with feature modes** to find what works best
-5. **Use LLM refinement** for better semantic labeling
+Use `raw_bytes` for production:
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode raw_bytes
+```
 
-Happy protocol reverse engineering! 🔍
+### 4. Validate with Ground Truth
+
+Create ground truth for your protocol and evaluate:
+```bash
+python main.py pcaps/ --tshark-filter mbtcp --ground-truth-json truth.json
+```
+
+### 5. Use LLM Refinement Selectively
+
+LLM refinement helps but costs tokens:
+- Use for final analysis
+- Use `--llm-render-only` for testing
+- Review patches before accepting
+
+### 6. Save Intermediate Results
+
+Keep `data/` directory for debugging and re-runs:
+```bash
+# Re-run from stage 10 onwards
+python main.py --use-existing-messages
+```
+
+### 7. Monitor Quality Metrics
+
+Check `data/11_evaluation.json` for quality signals:
+- Silhouette score > 0.3 (good clustering)
+- Coverage > 90% (good family assignment)
+- Boundary confidence > 0.6 (good boundaries)
+
+## Next Steps
+
+- Read [Architecture](architecture.md) for system design details
+- Check [Testing Guide](testing.md) for diagnostic tools and evaluation
+- Review [TODO_COMPREHENSIVE.md](../TODO_COMPREHENSIVE.md) for roadmap

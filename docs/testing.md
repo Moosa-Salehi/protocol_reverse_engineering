@@ -1,6 +1,6 @@
 # Testing Guide
 
-This guide covers testing practices and tools for the Protocol Reverse Engineering pipeline.
+This guide covers testing practices, tools, and evaluation methods for the Protocol Reverse Engineering pipeline.
 
 ## Overview
 
@@ -193,71 +193,6 @@ def test_clustering_stage():
     messages = load_test_messages()
     assignments = discover_families(messages)
     assert len(set(assignments.values())) > 1
-```
-
-## Diagnostic Tools
-
-### Neural Feature Diagnostics
-
-Analyze neural feature quality:
-
-```bash
-python scripts/20_diagnose_neural_features.py data/01_messages.jsonl \
-    --sample-size 5000 \
-    --model-path pre_trained/industrial_VAE.pth \
-    --latent-cache data/latent_cache.json
-```
-
-**Output:**
-- Latent space variance
-- Separation metrics
-- Comparison with structural features
-- Recommendations
-
-### Enhanced Neural Features Test
-
-Compare original vs enhanced neural features:
-
-```bash
-python scripts/21_test_enhanced_neural.py data/01_messages.jsonl \
-    --sample-size 5000 \
-    --model-path pre_trained/industrial_VAE.pth
-```
-
-### Boundary Detection Test
-
-Test boundary detection with different thresholds:
-
-```bash
-python scripts/22_test_boundary_detection.py data/01_messages.jsonl \
-    --assignments-json data/02_family_assignments.json \
-    --features-json data/03_family_features.json
-```
-
-### Learned Fusion Test
-
-Test hybrid feature fusion methods:
-
-```bash
-python scripts/23_test_learned_fusion.py data/01_messages.jsonl \
-    --model-path pre_trained/industrial_VAE.pth
-```
-
-**Tests:**
-- Concat fusion
-- Adaptive fusion
-- Learned fusion (MLP)
-- Fixed weight fusion
-- Neural collapse detection
-
-### Boundary Refinement Test
-
-Test boundary quality metrics and LLM refinement:
-
-```bash
-python scripts/24_test_boundary_refinement.py data/05_families.json \
-    --messages-json data/01_messages.jsonl \
-    --assignments-json data/02_family_assignments.json
 ```
 
 ## Ground Truth Evaluation
