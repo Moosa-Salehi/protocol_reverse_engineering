@@ -10,7 +10,7 @@ A protocol-agnostic reverse engineering pipeline that analyzes binary protocol t
 - **Protocol-Agnostic Analysis** - Works with any binary protocol without prior knowledge
 - **Automatic Message Clustering** - Discovers message families using advanced clustering
 - **Field Boundary Detection** - Infers field boundaries with enhanced anti-fragmentation
-- **Semantic Labeling** - Identifies opcodes, addresses, lengths, transaction IDs
+- **Semantic Labeling** - Identifies field labels
 - **Request/Response Pairing** - Discovers protocol interactions and relations
 - **LLM-Assisted Refinement** - LLM integration for improved analysis
 - **Comprehensive Reports** - Generates Markdown and interactive HTML specifications
