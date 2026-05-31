@@ -189,6 +189,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(family_features_json),
                     "--framing-json",
                     _path(framing_json),
+                    "--score-threshold",
+                    str(args.boundary_score_threshold),
                 ],
             ),
             (
@@ -389,6 +391,16 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 if args.ground_truth_json:
                     step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
 
+    # Add enhanced boundary detection flags if enabled (A2)
+    if args.enhanced_boundaries:
+        for step_name, step_args in pipeline:
+            if step_name == "07_infer_boundaries":
+                step_args.extend(["--enhanced"])
+                step_args.extend(["--max-fields", str(args.boundary_max_fields)])
+                if args.no_boundary_merging:
+                    step_args.extend(["--no-merging"])
+                break
+
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
             if name == args.stop_after:
@@ -440,6 +452,7 @@ def parse_args() -> argparse.Namespace:
     collect_group = parser.add_argument_group("Stage 01 - collect_pcaps / Stage 02 - dedup_pcaps")
     extract_group = parser.add_argument_group("Stage 03 - extract_messages")
     family_group = parser.add_argument_group("Stage 04 - discover_families")
+    boundary_group = parser.add_argument_group("Stage 07 - infer_boundaries")
     discriminator_group = parser.add_argument_group("Stage 09 - discriminator/opcode discovery")
     relations_group = parser.add_argument_group("Stage 10 - infer_relations")
     llm_analysis_group = parser.add_argument_group("Stage 15 - analyze_with_llm")
@@ -518,6 +531,29 @@ def parse_args() -> argparse.Namespace:
         "--enable-neural-quality-check",
         action="store_true",
         help="Enable neural feature quality checks with automatic fallback to raw_bytes if quality is poor. Experimental.",
+    )
+
+    boundary_group.add_argument(
+        "--enhanced-boundaries",
+        action="store_true",
+        help="Use enhanced boundary detection to reduce over-segmentation (A2 fix). Recommended.",
+    )
+    boundary_group.add_argument(
+        "--boundary-score-threshold",
+        type=float,
+        default=2.0,
+        help="Boundary score threshold (default: 2.0 for enhanced, 1.5 for original).",
+    )
+    boundary_group.add_argument(
+        "--boundary-max-fields",
+        type=int,
+        default=15,
+        help="Maximum fields per family (enhanced mode only, default: 15).",
+    )
+    boundary_group.add_argument(
+        "--no-boundary-merging",
+        action="store_true",
+        help="Disable segment merging in enhanced mode.",
     )
 
     discriminator_group.add_argument(
