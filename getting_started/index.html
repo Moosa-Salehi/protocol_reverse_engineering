@@ -1,0 +1,2475 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Protocol-agnostic reverse engineering pipeline for binary protocols">
+      
+      
+        <meta name="author" content="Moosa Salehi">
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Getting Started - Protocol Reverse Engineering</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#getting-started" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Protocol Reverse Engineering" class="md-header__button md-logo" aria-label="Protocol Reverse Engineering" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Protocol Reverse Engineering
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Getting Started
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Moosa-Salehi/protocol_reverse_engineering" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../contributing/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Protocol Reverse Engineering" class="md-nav__button md-logo" aria-label="Protocol Reverse Engineering" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Protocol Reverse Engineering
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Moosa-Salehi/protocol_reverse_engineering" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-clone-or-download-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Clone or Download the Repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-create-a-virtual-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create a Virtual Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-install-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Install Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-first-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your First Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Your First Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-analyze-modbus-tcp-traffic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 1: Analyze Modbus TCP Traffic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Guide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Guide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collection-and-deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collection and Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tcp-port-extraction-alternative-to-tshark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TCP Port Extraction (Alternative to TShark)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-boundary-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhanced Boundary Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-layer-protocol-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Layer Protocol Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message Limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feature Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#raw-bytes-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Bytes Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structural-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structural Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neural-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hybrid-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hybrid Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-with-llm-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run with LLM Refinement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-specific-llm-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage-Specific LLM Refinement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ground-truth-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ground Truth Evaluation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ground Truth Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare-ground-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prepare Ground Truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-with-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run with Evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-evaluation-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Evaluation Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostic-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostic Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Diagnostic Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagnose-neural-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnose Neural Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-enhanced-neural-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Enhanced Neural Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-boundary-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Boundary Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-learned-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Learned Fusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-boundary-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Boundary Refinement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-by-step-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step-by-Step Execution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tshark-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TShark Not Found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-messages-extracted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No Messages Extracted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#poor-clustering-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Poor Clustering Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#over-segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Over-Segmentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-api-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM API Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slow-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slow Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modulenotfounderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ModuleNotFoundError
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#main-pipeline-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Main Pipeline Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Step
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-clone-or-download-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Clone or Download the Repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-create-a-virtual-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create a Virtual Environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-install-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Install Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#your-first-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your First Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Your First Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-analyze-modbus-tcp-traffic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 1: Analyze Modbus TCP Traffic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Guide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Guide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collection-and-deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collection and Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tcp-port-extraction-alternative-to-tshark" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TCP Port Extraction (Alternative to TShark)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-boundary-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhanced Boundary Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-layer-protocol-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Layer Protocol Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message Limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feature Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#raw-bytes-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Bytes Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structural-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structural Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neural-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hybrid-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hybrid Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-with-llm-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run with LLM Refinement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-specific-llm-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage-Specific LLM Refinement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ground-truth-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ground Truth Evaluation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ground Truth Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare-ground-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prepare Ground Truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-with-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run with Evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-evaluation-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Evaluation Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostic-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostic Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Diagnostic Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagnose-neural-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnose Neural Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-enhanced-neural-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Enhanced Neural Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-boundary-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Boundary Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-learned-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Learned Fusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-boundary-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Boundary Refinement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-by-step-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step-by-Step Execution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tshark-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TShark Not Found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-messages-extracted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No Messages Extracted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#poor-clustering-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Poor Clustering Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#over-segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Over-Segmentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-api-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM API Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slow-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slow Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modulenotfounderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ModuleNotFoundError
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#main-pipeline-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Main Pipeline Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Step
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
+<p>This comprehensive guide covers installation, usage, configuration, and troubleshooting for the Protocol Reverse Engineering pipeline.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#your-first-analysis">Your First Analysis</a></li>
+<li><a href="#usage-guide">Usage Guide</a></li>
+<li><a href="#feature-modes">Feature Modes</a></li>
+<li><a href="#llm-integration">LLM Integration</a></li>
+<li><a href="#ground-truth-evaluation">Ground Truth Evaluation</a></li>
+<li><a href="#diagnostic-tools">Diagnostic Tools</a></li>
+<li><a href="#step-by-step-execution">Step-by-Step Execution</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#configuration-reference">Configuration Reference</a></li>
+</ul>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>Before you begin, ensure you have:</p>
+<ol>
+<li><strong>Python 3.10 or higher</strong></li>
+<li>Check: <code>python --version</code> or <code>python3 --version</code></li>
+<li>
+<p>Download: https://www.python.org/downloads/</p>
+</li>
+<li>
+<p><strong>TShark (Wireshark CLI)</strong></p>
+</li>
+<li>Check: <code>tshark --version</code></li>
+<li>Download: https://www.wireshark.org/download.html</li>
+<li>
+<p>Note: Install Wireshark, which includes TShark</p>
+</li>
+<li>
+<p><strong>PCAP files</strong> containing protocol traffic you want to analyze</p>
+</li>
+</ol>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<h3 id="step-1-clone-or-download-the-repository">Step 1: Clone or Download the Repository<a class="headerlink" href="#step-1-clone-or-download-the-repository" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>&lt;repository-url&gt;
+<span class="nb">cd</span><span class="w"> </span>protocol_re
+</code></pre></div>
+<h3 id="step-2-create-a-virtual-environment">Step 2: Create a Virtual Environment<a class="headerlink" href="#step-2-create-a-virtual-environment" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create virtual environment</span>
+python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+
+<span class="c1"># Activate it</span>
+<span class="c1"># On Linux/Mac:</span>
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+
+<span class="c1"># On Windows (PowerShell):</span>
+venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+
+<span class="c1"># On Windows (Command Prompt):</span>
+venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate.bat
+</code></pre></div>
+<h3 id="step-3-install-dependencies">Step 3: Install Dependencies<a class="headerlink" href="#step-3-install-dependencies" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+<p><strong>Dependencies installed:</strong>
+- <code>numpy</code> - Numerical computing
+- <code>scikit-learn</code> - Machine learning and clustering
+- <code>hdbscan</code> - Hierarchical density-based clustering
+- <code>scapy</code> - Packet manipulation (optional extraction method)
+- <code>torch</code> - PyTorch for neural features (optional)
+- <code>colorama</code> - Colored terminal output</p>
+<h2 id="your-first-analysis">Your First Analysis<a class="headerlink" href="#your-first-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="example-1-analyze-modbus-tcp-traffic">Example 1: Analyze Modbus TCP Traffic<a class="headerlink" href="#example-1-analyze-modbus-tcp-traffic" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Assuming PCAP file are in pcaps/ folder.</span>
+<span class="c1"># Run the pipeline, without using LLM.</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--llm-render-only
+</code></pre></div>
+<p><strong>What happens:</strong>
+1. Extracts Modbus TCP payloads from PCAPs
+2. Discovers message families using clustering
+3. Infers field boundaries
+4. Detects request/response pairs
+5. Assigns semantic labels to fields
+6. Generates comprehensive protocol specification</p>
+<p><strong>Output:</strong>
+- <code>output/protocol_report.md</code> - Human-readable specification
+- <code>output/protocol_report.html</code> - Interactive HTML report
+- <code>data/10_protocol_model.json</code> - Machine-readable model</p>
+<h2 id="usage-guide">Usage Guide<a class="headerlink" href="#usage-guide" title="Permanent link">&para;</a></h2>
+<h3 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic analysis</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>&lt;filter&gt;
+
+<span class="c1"># Use existing messages (skip extraction)</span>
+python<span class="w"> </span>main.py<span class="w"> </span>--use-existing-messages
+</code></pre></div>
+<p><strong>Common TShark filters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Protocol</th>
+<th>Filter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Modbus TCP</td>
+<td><code>mbtcp</code></td>
+<td>Modbus TCP protocol</td>
+</tr>
+<tr>
+<td>S7comm</td>
+<td><code>s7comm</code></td>
+<td>Siemens S7 communication</td>
+</tr>
+<tr>
+<td>DNP3</td>
+<td><code>dnp3</code></td>
+<td>DNP3 SCADA protocol</td>
+</tr>
+<tr>
+<td>IEC 60870-5-104</td>
+<td><code>iec104</code></td>
+<td>IEC 104 protocol</td>
+</tr>
+<tr>
+<td>Custom TCP</td>
+<td><code>tcp.port == 2000</code></td>
+<td>TCP port 2000</td>
+</tr>
+<tr>
+<td>Custom UDP</td>
+<td><code>udp.port == 2222</code></td>
+<td>UDP port 2222</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Find available filters:</strong>
+<div class="highlight"><pre><span></span><code>tshark<span class="w"> </span>-G<span class="w"> </span>protocols
+</code></pre></div></p>
+<h3 id="advanced-usage">Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permanent link">&para;</a></h3>
+<h4 id="collection-and-deduplication">Collection and Deduplication<a class="headerlink" href="#collection-and-deduplication" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>source_files/<span class="w"> </span>--collect<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp
+</code></pre></div>
+<p>This will:
+1. Collect all PCAPs from <code>source_files/</code> into <code>pcaps/</code>
+2. Remove duplicate captures
+3. Run the full pipeline</p>
+<h4 id="tcp-port-extraction-alternative-to-tshark">TCP Port Extraction (Alternative to TShark)<a class="headerlink" href="#tcp-port-extraction-alternative-to-tshark" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--extraction-method<span class="w"> </span>tcp<span class="w"> </span>--service-port<span class="w"> </span><span class="m">502</span>
+</code></pre></div>
+<p><strong>When to use:</strong>
+- TShark filter is not available for your protocol
+- You want to extract by TCP/UDP port only
+- TShark is not installed</p>
+<h4 id="enhanced-boundary-detection">Enhanced Boundary Detection<a class="headerlink" href="#enhanced-boundary-detection" title="Permanent link">&para;</a></h4>
+<p><strong>Options:</strong>
+- <code>--boundary-max-fields 12</code> - Limit maximum fields per family (default: 15)
+- <code>--enable-merging</code> - Enable multi-pass segment merging</p>
+<p><strong>Impact:</strong>
+- Reduces false positive boundaries
+- Eliminates excessive 1-byte fields</p>
+<h4 id="multi-layer-protocol-detection">Multi-Layer Protocol Detection<a class="headerlink" href="#multi-layer-protocol-detection" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--enable-layer-detection
+</code></pre></div>
+<p><strong>Options:</strong>
+- <code>--enable-layer-detection</code> - Enable layer detection
+- <code>--layer-min-confidence 0.7</code> - Minimum confidence threshold</p>
+<p><strong>Use cases:</strong>
+- Protocols with stable outer headers
+- Transport framing + application payload
+- Protocol tunneling scenarios</p>
+<h4 id="message-limits">Message Limits<a class="headerlink" href="#message-limits" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--max-messages<span class="w"> </span><span class="m">50000</span>
+</code></pre></div>
+<p><strong>Default:</strong> 200,000 messages</p>
+<p><strong>When to adjust:</strong>
+- Small captures: reduce for faster processing
+- Large captures: increase for better coverage
+- Memory constraints: reduce to limit memory usage</p>
+<h2 id="feature-modes">Feature Modes<a class="headerlink" href="#feature-modes" title="Permanent link">&para;</a></h2>
+<h3 id="raw-bytes-mode">Raw Bytes Mode<a class="headerlink" href="#raw-bytes-mode" title="Permanent link">&para;</a></h3>
+<p>Use padded byte vectors:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>raw_bytes
+</code></pre></div>
+<p><strong>Pros:</strong>
+- good accuracy on simple protocols
+- Fast and deterministic
+- No external dependencies</p>
+<p><strong>Use when:</strong>
+- A trained neural model is not available
+- Protocol has clear structural patterns</p>
+<h3 id="structural-mode">Structural Mode<a class="headerlink" href="#structural-mode" title="Permanent link">&para;</a></h3>
+<p>Use symbolic protocol features:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>structural
+</code></pre></div>
+<p><strong>Pros:</strong>
+- Protocol-agnostic feature extraction
+- Interpretable features</p>
+<p><strong>Use when:</strong>
+- You want to understand feature importance
+- Raw bytes mode is not working well</p>
+<h3 id="neural-mode">Neural Mode<a class="headerlink" href="#neural-mode" title="Permanent link">&para;</a></h3>
+<p>Use VAE latent vectors:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>neural<span class="w"> </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+</code></pre></div>
+<p><strong>Pros:</strong>
+- Can capture complex patterns
+- Learned representations</p>
+<p><strong>Cons:</strong>
+- May produce poor clustering (collapsed latent space)
+- Requires PyTorch and trained model</p>
+<p><strong>Use when:</strong>
+- A well-trained VAE model is available
+- Protocol has complex, non-obvious patterns</p>
+<h3 id="hybrid-mode">Hybrid Mode<a class="headerlink" href="#hybrid-mode" title="Permanent link">&para;</a></h3>
+<p>Combine neural and structural features:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Adaptive fusion (recommended)</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>hybrid<span class="w"> </span>--fusion-method<span class="w"> </span>adaptive<span class="w"> </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+
+<span class="c1"># Learned fusion with MLP</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>hybrid<span class="w"> </span>--fusion-method<span class="w"> </span>learned<span class="w"> </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+
+<span class="c1"># Fixed weights</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--family-feature-mode<span class="w"> </span>hybrid<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--fusion-method<span class="w"> </span>fixed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--fusion-neural-weight<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--fusion-structural-weight<span class="w"> </span><span class="m">0</span>.7<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+</code></pre></div>
+<p><strong>Fusion methods:</strong>
+- <code>adaptive</code> - Quality-based automatic weighting (default)
+- <code>learned</code> - MLP-based feature importance learning
+- <code>fixed</code> - Manual weight specification
+- <code>concat</code> - Simple concatenation</p>
+<p><strong>Features:</strong>
+- Automatic neural collapse detection
+- Fallback to structural features when neural fails
+- Latent vector caching for speed</p>
+<h2 id="llm-integration">LLM Integration<a class="headerlink" href="#llm-integration" title="Permanent link">&para;</a></h2>
+<h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Create <code>LLM_config.json</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;api_key_required&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;yes&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;openai_base_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.openai.com/v1&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;temperature&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timeout&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span>
+<span class="p">}</span>
+</code></pre></div>
+<ol>
+<li>Set API key:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Linux/Mac</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>&lt;your-api-key&gt;
+
+<span class="c1"># Windows PowerShell</span>
+<span class="nv">$env</span>:OPENAI_API_KEY<span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&lt;your-api-key&gt;&quot;</span>
+</code></pre></div>
+<h3 id="run-with-llm-refinement">Run with LLM Refinement<a class="headerlink" href="#run-with-llm-refinement" title="Permanent link">&para;</a></h3>
+<p>The runner tries to load <code>LLM_config.json</code> from root folder.</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp
+</code></pre></div>
+<h3 id="llm-options">LLM Options<a class="headerlink" href="#llm-options" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Custom prompt template</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-config<span class="w"> </span>LLM_config.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-template<span class="w"> </span>custom_prompt.md
+
+<span class="c1"># Render prompt only (no API call)</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--llm-render-only
+
+<span class="c1"># Adjust LLM parameters</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-config<span class="w"> </span>LLM_config.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-temperature<span class="w"> </span><span class="m">0</span>.2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-max-tokens<span class="w"> </span><span class="m">8000</span>
+</code></pre></div>
+<h3 id="stage-specific-llm-refinement">Stage-Specific LLM Refinement<a class="headerlink" href="#stage-specific-llm-refinement" title="Permanent link">&para;</a></h3>
+<p>Run individual LLM refinement stages:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Boundary refinement</span>
+python<span class="w"> </span>scripts/07b_refine_boundaries_llm.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/05_families.refined.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>LLM_config.json
+
+<span class="c1"># Semantic labeling</span>
+python<span class="w"> </span>scripts/11b_label_semantics_llm.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/09_semantics.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/09_semantics.llm.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>LLM_config.json
+
+<span class="c1"># Relation validation</span>
+python<span class="w"> </span>scripts/10b_validate_relations_llm.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/08_relations.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/08_relations.validated.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>LLM_config.json
+</code></pre></div>
+<h2 id="ground-truth-evaluation">Ground Truth Evaluation<a class="headerlink" href="#ground-truth-evaluation" title="Permanent link">&para;</a></h2>
+<h3 id="prepare-ground-truth">Prepare Ground Truth<a class="headerlink" href="#prepare-ground-truth" title="Permanent link">&para;</a></h3>
+<p>Create a ground truth JSON file (see <code>truth-files/modbus.json</code> for example).</p>
+<h3 id="run-with-evaluation">Run with Evaluation<a class="headerlink" href="#run-with-evaluation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ground-truth-json<span class="w"> </span>truth-files/modbus.json
+</code></pre></div>
+<h3 id="view-evaluation-results">View Evaluation Results<a class="headerlink" href="#view-evaluation-results" title="Permanent link">&para;</a></h3>
+<p>Check <code>output/protocol_report.html</code>, the final evaluation section:
+- Message type matching (accuracy/F1)
+- Field boundary detection (accuracy/F1)
+- Semantic labeling (accuracy/F1)
+- Relation detection (accuracy/F1)
+- Overall score</p>
+<h2 id="diagnostic-tools">Diagnostic Tools<a class="headerlink" href="#diagnostic-tools" title="Permanent link">&para;</a></h2>
+<h3 id="diagnose-neural-features">Diagnose Neural Features<a class="headerlink" href="#diagnose-neural-features" title="Permanent link">&para;</a></h3>
+<p>Analyze neural feature quality and detect collapsed latent spaces:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/20_diagnose_neural_features.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sample-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model-path<span class="w"> </span>pre_trained/industrial_VAE.pth<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--latent-cache<span class="w"> </span>data/latent_cache.json
+</code></pre></div>
+<p><strong>Output:</strong>
+- Latent space variance analysis
+- Separation metrics
+- Comparison with structural features
+- Recommendations</p>
+<h3 id="test-enhanced-neural-features">Test Enhanced Neural Features<a class="headerlink" href="#test-enhanced-neural-features" title="Permanent link">&para;</a></h3>
+<p>Compare original vs enhanced neural features:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/21_test_enhanced_neural.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sample-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+</code></pre></div>
+<h3 id="test-boundary-detection">Test Boundary Detection<a class="headerlink" href="#test-boundary-detection" title="Permanent link">&para;</a></h3>
+<p>Test boundary detection with different thresholds:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/22_test_boundary_detection.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--features-json<span class="w"> </span>data/03_family_features.json
+</code></pre></div>
+<h3 id="test-learned-fusion">Test Learned Fusion<a class="headerlink" href="#test-learned-fusion" title="Permanent link">&para;</a></h3>
+<p>Test hybrid feature fusion methods:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/23_test_learned_fusion.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+</code></pre></div>
+<h3 id="test-boundary-refinement">Test Boundary Refinement<a class="headerlink" href="#test-boundary-refinement" title="Permanent link">&para;</a></h3>
+<p>Compute boundary quality metrics and test LLM refinement:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/24_test_boundary_refinement.py<span class="w"> </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--messages-json<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json
+</code></pre></div>
+<h2 id="step-by-step-execution">Step-by-Step Execution<a class="headerlink" href="#step-by-step-execution" title="Permanent link">&para;</a></h2>
+<p>For debugging or custom workflows, run stages individually:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set Python path</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>src<span class="w">  </span><span class="c1"># Windows: $env:PYTHONPATH=&quot;src&quot;</span>
+
+<span class="c1"># Stage 03: Extract messages</span>
+python<span class="w"> </span>scripts/03_extract_messages.py<span class="w"> </span>pcaps<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--extraction-method<span class="w"> </span>tshark<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--max-messages<span class="w"> </span><span class="m">200000</span>
+
+<span class="c1"># Stage 04: Discover families</span>
+python<span class="w"> </span>scripts/04_discover_families.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sample-size<span class="w"> </span><span class="m">100000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--feature-mode<span class="w"> </span>raw_bytes
+
+<span class="c1"># Stage 05: Infer framing</span>
+python<span class="w"> </span>scripts/05_infer_framing.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/04_framing.json
+
+<span class="c1"># Stage 06: Extract features</span>
+python<span class="w"> </span>scripts/06_extract_features.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/03_family_features.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json
+
+<span class="c1"># Stage 07: Infer boundaries</span>
+python<span class="w"> </span>scripts/07_infer_boundaries.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--features-json<span class="w"> </span>data/03_family_features.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--framing-json<span class="w"> </span>data/04_framing.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--enhanced<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--max-fields<span class="w"> </span><span class="m">15</span>
+
+<span class="c1"># Stage 08: Pair requests/responses</span>
+python<span class="w"> </span>scripts/08_pair_requests_responses.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/06_pairs.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json
+
+<span class="c1"># Stage 09: Infer discriminators</span>
+python<span class="w"> </span>scripts/09_infer_keywords.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/07_keywords.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--features-json<span class="w"> </span>data/03_family_features.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--framing-json<span class="w"> </span>data/04_framing.json
+
+<span class="c1"># Stage 10: Infer relations</span>
+python<span class="w"> </span>scripts/10_infer_relations.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/06_pairs.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/08_relations.json
+
+<span class="c1"># Stage 11: Infer semantics</span>
+python<span class="w"> </span>scripts/11_infer_semantics.py<span class="w"> </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/08_relations.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/09_semantics.json
+
+<span class="c1"># Stage 12: Build protocol model</span>
+python<span class="w"> </span>scripts/12_build_protocol_model.py<span class="w"> </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/10_protocol_model.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--features-json<span class="w"> </span>data/03_family_features.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--keywords-json<span class="w"> </span>data/07_keywords.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--relations-json<span class="w"> </span>data/08_relations.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--semantics-json<span class="w"> </span>data/09_semantics.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--framing-json<span class="w"> </span>data/04_framing.json
+
+<span class="c1"># Stage 13: Evaluate pipeline</span>
+python<span class="w"> </span>scripts/13_evaluate_pipeline.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/06_pairs.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/08_relations.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/11_evaluation.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--semantics-json<span class="w"> </span>data/09_semantics.json
+
+<span class="c1"># Stage 14: Export LLM evidence</span>
+python<span class="w"> </span>scripts/14_export_llm_evidence.py<span class="w"> </span>data/10_protocol_model.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/12_llm_evidence.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--evaluation-json<span class="w"> </span>data/11_evaluation.json
+
+<span class="c1"># Stage 15: Analyze with LLM</span>
+python<span class="w"> </span>scripts/15_analyze_with_llm.py<span class="w"> </span>data/12_llm_evidence.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/13_llm_analysis.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>LLM_config.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--prompt-out<span class="w"> </span>data/13_llm_prompt.md
+
+<span class="c1"># Stage 15b: Apply LLM refinement</span>
+python<span class="w"> </span>scripts/15b_apply_llm_refinement.py<span class="w"> </span>data/10_protocol_model.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/13_llm_analysis.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/10_protocol_model.refined.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--evidence-json<span class="w"> </span>data/12_llm_evidence.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--schema-json<span class="w"> </span>schema/protocol_model.schema.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patches-out<span class="w"> </span>data/13_llm_patches.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--validation-out<span class="w"> </span>data/13_llm_patch_validation.json
+
+<span class="c1"># Stage 16: Prepare evaluation data</span>
+python<span class="w"> </span>scripts/16_prepare_evaluation_data.py<span class="w"> </span>data/10_protocol_model.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/11_evaluation.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/13_llm_analysis.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/14_evaluation_model_data.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--refined-protocol-model-json<span class="w"> </span>data/10_protocol_model.refined.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patch-validation-json<span class="w"> </span>data/13_llm_patch_validation.json
+
+<span class="c1"># Stage 17: Evaluate against ground truth</span>
+python<span class="w"> </span>scripts/17_evaluate_protocol_spec.py<span class="w"> </span>data/14_evaluation_model_data.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>truth-files/modbus.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>data/15_evaluation_result.json
+
+<span class="c1"># Stage 18: Export Markdown</span>
+python<span class="w"> </span>scripts/18_export_markdown.py<span class="w"> </span>data/10_protocol_model.refined.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>output/protocol_report.md<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--evaluation-json<span class="w"> </span>data/11_evaluation.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-analysis-json<span class="w"> </span>data/13_llm_analysis.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--final-evaluation-json<span class="w"> </span>data/15_evaluation_result.json
+
+<span class="c1"># Stage 19: Export HTML</span>
+python<span class="w"> </span>scripts/19_export_html.py<span class="w"> </span>data/10_protocol_model.refined.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>output/protocol_report.html<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--evaluation-json<span class="w"> </span>data/11_evaluation.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-analysis-json<span class="w"> </span>data/13_llm_analysis.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--final-evaluation-json<span class="w"> </span>data/15_evaluation_result.json
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="tshark-not-found">TShark Not Found<a class="headerlink" href="#tshark-not-found" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong> <code>tshark: command not found</code></p>
+<p><strong>Solution:</strong>
+1. Install Wireshark (includes TShark)
+2. Add TShark to PATH
+3. Verify: <code>tshark --version</code></p>
+<h3 id="no-messages-extracted">No Messages Extracted<a class="headerlink" href="#no-messages-extracted" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong> <code>No messages found in corpus</code></p>
+<p><strong>Possible causes:</strong>
+- Incorrect TShark filter
+- PCAP files don't contain matching traffic
+- Extraction method mismatch</p>
+<p><strong>Solutions:</strong>
+- Verify filter: <code>tshark -r capture.pcap -Y "mbtcp" -T fields -e data</code>
+- Try alternative extraction: <code>--extraction-method tcp --service-port 502</code>
+- Check PCAP contents: <code>tshark -r capture.pcap</code></p>
+<h3 id="poor-clustering-results">Poor Clustering Results<a class="headerlink" href="#poor-clustering-results" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong>
+- Too few families
+- All messages in one cluster
+- Low silhouette score</p>
+<p><strong>Solutions:</strong>
+1. Try different feature mode: <code>--family-feature-mode raw_bytes</code>
+2. Diagnose neural features: <code>python scripts/20_diagnose_neural_features.py</code>
+3. Adjust clustering parameters: <code>--sample-size 50000</code>
+4. Check message diversity: ensure captures contain varied traffic</p>
+<h3 id="over-segmentation">Over-Segmentation<a class="headerlink" href="#over-segmentation" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong>
+- Too many 1-byte fields
+- Low boundary precision
+- Excessive field count (too many fields per family)</p>
+<p><strong>Solutions:</strong>
+1. Reduce field limit: <code>--boundary-max-fields 12</code>
+2. Use LLM refinement: <code>--llm-config LLM_config.json</code></p>
+<h3 id="llm-api-errors">LLM API Errors<a class="headerlink" href="#llm-api-errors" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong> <code>OpenAI API error: 401 Unauthorized</code></p>
+<p><strong>Solution:</strong>
+- Check API key: <code>echo $OPENAI_API_KEY</code>
+- Verify config: <code>cat LLM_config.json</code>
+- Test API: <code>curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models</code></p>
+<p><strong>Error:</strong> <code>Timeout waiting for LLM response</code></p>
+<p><strong>Solution:</strong>
+- Increase timeout: <code>--llm-timeout 300</code>
+- Reduce evidence size: <code>--family-limit 10</code></p>
+<h3 id="memory-issues">Memory Issues<a class="headerlink" href="#memory-issues" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong> <code>MemoryError</code> or system slowdown</p>
+<p><strong>Solutions:</strong>
+1. Reduce message limit: <code>--max-messages 50000</code>
+2. Reduce clustering sample: <code>--sample-size 10000</code>
+3. Close other applications
+4. Use 64-bit Python</p>
+<h3 id="slow-performance">Slow Performance<a class="headerlink" href="#slow-performance" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong>
+- Pipeline takes &gt; 15 minutes for 200K messages
+- Stages hang or appear frozen</p>
+<p><strong>Solutions:</strong>
+1. Check TShark performance: time the extraction stage
+2. Reduce sample size: <code>--sample-size 50000</code>
+3. Use raw_bytes mode (fastest): <code>--family-feature-mode raw_bytes</code></p>
+<h3 id="modulenotfounderror">ModuleNotFoundError<a class="headerlink" href="#modulenotfounderror" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong> <code>ModuleNotFoundError: No module named 'protocol_re'</code></p>
+<p><strong>Solution:</strong>
+Set Python path before running individual scripts:
+<div class="highlight"><pre><span></span><code><span class="c1"># Linux/Mac</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>src
+
+<span class="c1"># Windows PowerShell</span>
+<span class="nv">$env</span>:PYTHONPATH<span class="o">=</span><span class="s2">&quot;src&quot;</span>
+</code></pre></div></p>
+<p>Note: <code>main.py</code> sets this automatically; only needed for individual scripts.</p>
+<h2 id="configuration-reference">Configuration Reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h2>
+<h3 id="main-pipeline-options">Main Pipeline Options<a class="headerlink" href="#main-pipeline-options" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>&lt;pcap-dir&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+
+Required<span class="w"> </span><span class="o">(</span>one<span class="w"> </span>of<span class="o">)</span>:
+<span class="w">  </span>--tshark-filter<span class="w"> </span>FILTER<span class="w">        </span>TShark<span class="w"> </span>display<span class="w"> </span>filter<span class="w"> </span><span class="o">(</span>e.g.,<span class="w"> </span>mbtcp<span class="o">)</span>
+<span class="w">  </span>--extraction-method<span class="w"> </span>tcp<span class="w">       </span>Use<span class="w"> </span>TCP<span class="w"> </span>port<span class="w"> </span>extraction
+<span class="w">  </span>--use-existing-messages<span class="w">       </span>Skip<span class="w"> </span>extraction,<span class="w"> </span>use<span class="w"> </span>existing<span class="w"> </span>data/01_messages.jsonl
+
+Extraction:
+<span class="w">  </span>--max-messages<span class="w"> </span>N<span class="w">              </span>Maximum<span class="w"> </span>messages<span class="w"> </span>to<span class="w"> </span>extract<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">200000</span><span class="o">)</span>
+<span class="w">  </span>--service-port<span class="w"> </span>PORT<span class="w">           </span>TCP<span class="w"> </span>port<span class="w"> </span><span class="k">for</span><span class="w"> </span>extraction<span class="w"> </span><span class="o">(</span>with<span class="w"> </span>--extraction-method<span class="w"> </span>tcp<span class="o">)</span>
+
+Clustering:
+<span class="w">  </span>--family-feature-mode<span class="w"> </span>MODE<span class="w">    </span>Feature<span class="w"> </span>mode:<span class="w"> </span>raw_bytes<span class="w"> </span><span class="o">(</span>default<span class="o">)</span>,<span class="w"> </span>structural,<span class="w"> </span>neural,<span class="w"> </span>hybrid
+<span class="w">  </span>--sample-size<span class="w"> </span>N<span class="w">               </span>Clustering<span class="w"> </span>sample<span class="w"> </span>size<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">100000</span><span class="o">)</span>
+<span class="w">  </span>--family-neural-model-path<span class="w">    </span>Path<span class="w"> </span>to<span class="w"> </span>neural<span class="w"> </span>model<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>pre_trained/industrial_VAE.pth<span class="o">)</span>
+
+Boundaries:
+<span class="w">  </span>--boundary-max-fields<span class="w"> </span>N<span class="w">       </span>Maximum<span class="w"> </span>fields<span class="w"> </span>per<span class="w"> </span>family<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">15</span><span class="o">)</span>
+
+Layer<span class="w"> </span>Detection:
+<span class="w">  </span>--enable-layer-detection<span class="w">      </span>Enable<span class="w"> </span>multi-layer<span class="w"> </span>protocol<span class="w"> </span>detection
+<span class="w">  </span>--layer-min-confidence<span class="w"> </span>N<span class="w">      </span>Minimum<span class="w"> </span>confidence<span class="w"> </span><span class="k">for</span><span class="w"> </span>layer<span class="w"> </span>detection<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.6<span class="o">)</span>
+
+LLM:
+<span class="w">  </span>--llm-config<span class="w"> </span>FILE<span class="w">             </span>LLM<span class="w"> </span>configuration<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>LLM_config.json<span class="o">)</span>
+<span class="w">  </span>--llm-render-only<span class="w">             </span>Skip<span class="w"> </span>LLM<span class="w"> </span>API<span class="w"> </span>calls
+<span class="w">  </span>--llm-temperature<span class="w"> </span>N<span class="w">           </span>LLM<span class="w"> </span>temperature<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.1<span class="o">)</span>
+<span class="w">  </span>--llm-max-tokens<span class="w"> </span>N<span class="w">            </span>LLM<span class="w"> </span>max<span class="w"> </span>tokens<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">4000</span><span class="o">)</span>
+
+Evaluation:
+<span class="w">  </span>--ground-truth-json<span class="w"> </span>FILE<span class="w">      </span>Ground<span class="w"> </span>truth<span class="w"> </span>protocol<span class="w"> </span><span class="k">for</span><span class="w"> </span>evaluation
+
+Other:
+<span class="w">  </span>--collect<span class="w">                     </span>Collect<span class="w"> </span>PCAPs<span class="w"> </span>from<span class="w"> </span><span class="nb">source</span><span class="w"> </span>tree<span class="w"> </span>first
+</code></pre></div>
+<h2 id="next-step">Next Step<a class="headerlink" href="#next-step" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Read <a href="../architecture/">Architecture</a> for system design details</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Moosa-Salehi/protocol_reverse_engineering" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
