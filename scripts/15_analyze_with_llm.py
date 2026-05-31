@@ -1,124 +1,226 @@
 #!/usr/bin/env python3
+"""
+Stage 15: Protocol Structure Synthesis (Refactored)
+
+Synthesize protocol specification using multi-stage LLM results.
+This replaces the monolithic evidence bundle approach with focused synthesis.
+"""
 from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
-from protocol_re.llm.analyze import (
-    LLMRequestConfig,
-    call_openai_compatible_chat,
-    extract_message_json,
-    extract_message_text,
-    render_analysis_prompt,
-)
+from protocol_re.llm.multi_stage import StageConfig, LLMStage
+from protocol_re.llm.stage_synthesis import run_protocol_synthesis_stage
+from protocol_re.llm.analyze import LLMRequestConfig
 
 
-def _load_json(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
+def load_json(path: str) -> dict:
+    """Load JSON file."""
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
-def _load_template(path: str | None) -> str | None:
-    if not path:
+def load_llm_config(config_path: str) -> dict:
+    """Load LLM configuration from JSON file."""
+    with open(config_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_stage_summary(path: str) -> dict | None:
+    """Load stage summary if file exists."""
+    if not Path(path).exists():
         return None
-    return Path(path).read_text(encoding="utf-8")
-
-
-def _load_config(path: str) -> dict:
-    config_path = Path(path)
-    if not config_path.is_file():
-        raise SystemExit(f"Error: LLM config file does not exist: {config_path}")
-    with open(config_path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def _env_api_key() -> str | None:
-    import os
-
-    return os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_API_KEY")
+    try:
+        return load_json(path)
+    except Exception:
+        return None
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Render an LLM prompt from llm_evidence.json and optionally call an OpenAI-compatible chat-completions API."
+        description="Synthesize protocol specification using multi-stage LLM results (refactored from monolithic approach)."
     )
-    parser.add_argument("llm_evidence_json", help="Input evidence bundle from 14_export_llm_evidence.py")
-    parser.add_argument("output_json", help="Output LLM analysis JSON")
-    parser.add_argument("--config", default="LLM_config.json", help="LLM config JSON containing openai_base_url and model")
-    parser.add_argument("--prompt-out", help="Optional path to write the rendered prompt Markdown")
-    parser.add_argument("--template", help="Optional custom prompt-template Markdown file")
-    parser.add_argument("--render-only", action="store_true", help="Only render prompt and metadata; do not call the LLM API")
-    parser.add_argument("--temperature", type=float, help="Override temperature from LLM_config.json")
-    parser.add_argument("--max-tokens", type=int, help="Override max_tokens from LLM_config.json")
-    parser.add_argument("--timeout", type=int, help="Override timeout from LLM_config.json")
+    parser.add_argument("protocol_model_json", help="Input protocol model JSON (refined if available)")
+    parser.add_argument("output_json", help="Output LLM synthesis JSON")
+    parser.add_argument("--config", default="LLM_config.json", help="LLM config JSON")
+    parser.add_argument("--prompt-out", help="Optional path to write the rendered prompt")
+    parser.add_argument("--template", help="Optional custom prompt template")
+    parser.add_argument("--render-only", action="store_true", help="Only render prompt, don't call LLM")
+    parser.add_argument("--temperature", type=float, help="Override temperature")
+    parser.add_argument("--max-tokens", type=int, help="Override max_tokens")
+    parser.add_argument("--timeout", type=int, help="Override timeout")
+
+    # Multi-stage result inputs (optional)
+    parser.add_argument("--boundary-summary", help="Boundary refinement summary JSON from stage 07b")
+    parser.add_argument("--semantic-summary", help="Semantic labeling summary JSON from stage 11b")
+    parser.add_argument("--relation-summary", help="Relation validation summary JSON from stage 10b")
+    parser.add_argument("--evaluation-json", help="Pipeline evaluation metrics JSON")
+
+    # Legacy compatibility
+    parser.add_argument("--llm-evidence-json", help="[DEPRECATED] Legacy evidence bundle (ignored)")
+
     args = parser.parse_args()
 
-    model = ''
-    if not args.render_only:
-        config = _load_config(args.config)
-        model = config.get("model")
-        base_url = config.get("openai_base_url")
-        if not model:
-            raise SystemExit("Error: LLM_config.json must define model.")
-        if not base_url:
-            raise SystemExit("Error: LLM_config.json must define openai_base_url.")
-        temperature = args.temperature if args.temperature is not None else float(config.get("temperature", 0.1))
-        max_tokens = args.max_tokens if args.max_tokens is not None else int(config.get("max_tokens", 4000))
-        timeout = args.timeout if args.timeout is not None else int(config.get("timeout", 180))
+    # Load protocol model
+    print(f"[+] Loading protocol model from {args.protocol_model_json}")
+    protocol_model = load_json(args.protocol_model_json)
 
-    evidence = _load_json(args.llm_evidence_json)
-    template = _load_template(args.template)
-    prompt = render_analysis_prompt(evidence, template=template) if template else render_analysis_prompt(evidence)
-    llm_prompt = (
-        render_analysis_prompt(evidence, template=template, minify_json=True)
-        if template
-        else render_analysis_prompt(evidence, minify_json=True)
+    # Load multi-stage summaries if available
+    boundary_summary = None
+    semantic_summary = None
+    relation_summary = None
+    evaluation_metrics = None
+
+    if args.boundary_summary:
+        print(f"[+] Loading boundary refinement summary from {args.boundary_summary}")
+        boundary_summary = load_stage_summary(args.boundary_summary)
+
+    if args.semantic_summary:
+        print(f"[+] Loading semantic labeling summary from {args.semantic_summary}")
+        semantic_summary = load_stage_summary(args.semantic_summary)
+
+    if args.relation_summary:
+        print(f"[+] Loading relation validation summary from {args.relation_summary}")
+        relation_summary = load_stage_summary(args.relation_summary)
+
+    if args.evaluation_json:
+        print(f"[+] Loading evaluation metrics from {args.evaluation_json}")
+        evaluation_metrics = load_stage_summary(args.evaluation_json)
+
+    # Auto-detect summaries from standard locations if not provided
+    data_dir = Path(args.protocol_model_json).parent
+
+    if not boundary_summary:
+        auto_path = data_dir / "05_families_refined.json"
+        if auto_path.exists():
+            print(f"[*] Auto-detected boundary refinement: {auto_path}")
+            data = load_json(str(auto_path))
+            boundary_summary = data.get("llm_refinement_summary")
+
+    if not semantic_summary:
+        auto_path = data_dir / "05_families_labeled.json"
+        if auto_path.exists():
+            print(f"[*] Auto-detected semantic labeling: {auto_path}")
+            data = load_json(str(auto_path))
+            semantic_summary = data.get("llm_labeling_summary")
+
+    if not relation_summary:
+        auto_path = data_dir / "08_relations_validated.json"
+        if auto_path.exists():
+            print(f"[*] Auto-detected relation validation: {auto_path}")
+            data = load_json(str(auto_path))
+            relation_summary = data.get("llm_validation_summary")
+
+    if not evaluation_metrics:
+        auto_path = data_dir / "11_evaluation.json"
+        if auto_path.exists():
+            print(f"[*] Auto-detected evaluation metrics: {auto_path}")
+            evaluation_metrics = load_json(str(auto_path))
+
+    # Load LLM config
+    model = ""
+    if not args.render_only:
+        print(f"[+] Loading LLM config from {args.config}")
+        config_dict = load_llm_config(args.config)
+        model = config_dict.get("model", "gpt-4o-mini")
+        base_url = config_dict.get("openai_base_url", "https://api.openai.com/v1")
+        api_key = os.environ.get("OPENAI_API_KEY")
+
+        if not api_key:
+            print("[!] Warning: OPENAI_API_KEY not set in environment")
+            api_key = config_dict.get("api_key", "")
+
+        temperature = args.temperature if args.temperature is not None else float(config_dict.get("temperature", 0.2))
+        max_tokens = args.max_tokens if args.max_tokens is not None else int(config_dict.get("max_tokens", 4000))
+        timeout = args.timeout if args.timeout is not None else int(config_dict.get("timeout", 180))
+
+        llm_config = LLMRequestConfig(
+            model=model,
+            base_url=base_url,
+            api_key=api_key,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout=timeout,
+        )
+    else:
+        llm_config = None
+
+    # Create stage config
+    stage_config = StageConfig(
+        stage=LLMStage.PROTOCOL_SYNTHESIS,
+        prompt_template_path=args.template or "prompts/protocol_synthesis.md",
+        render_only=args.render_only,
+        max_tokens=4000,
+        temperature=0.2,
     )
 
+    print(f"\n[*] Running protocol synthesis stage...")
+    print(f"[*] Multi-stage summaries available:")
+    print(f"    - Boundary refinement: {'Yes' if boundary_summary else 'No'}")
+    print(f"    - Semantic labeling: {'Yes' if semantic_summary else 'No'}")
+    print(f"    - Relation validation: {'Yes' if relation_summary else 'No'}")
+    print(f"    - Evaluation metrics: {'Yes' if evaluation_metrics else 'No'}")
+
+    # Run synthesis stage
+    result = run_protocol_synthesis_stage(
+        protocol_model=protocol_model,
+        config=stage_config,
+        llm_config=llm_config,
+        boundary_summary=boundary_summary,
+        semantic_summary=semantic_summary,
+        relation_summary=relation_summary,
+        evaluation_metrics=evaluation_metrics,
+    )
+
+    # Save prompt if requested
     if args.prompt_out:
         Path(args.prompt_out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.prompt_out).write_text(prompt, encoding="utf-8")
+        with open(args.prompt_out, "w", encoding="utf-8") as f:
+            f.write(result.prompt)
+        print(f"[+] Saved prompt to {args.prompt_out}")
 
+    # Prepare output
     output = {
-        "artifact_type": "llm_protocol_analysis",
-        "source_evidence": args.llm_evidence_json,
-        "prompt_path": args.prompt_out,
-        "config_path": args.config,
+        "artifact_type": "llm_protocol_synthesis",
+        "source_model": args.protocol_model_json,
+        "multi_stage_summaries": {
+            "boundary_refinement": boundary_summary is not None,
+            "semantic_labeling": semantic_summary is not None,
+            "relation_validation": relation_summary is not None,
+            "evaluation_metrics": evaluation_metrics is not None,
+        },
         "model": model,
         "render_only": args.render_only,
-        "analysis_markdown": None,
-        "patches": [],
-        "usage": None,
-        "raw_response": None,
+        "success": result.success,
+        "error": result.error,
+        "synthesis": None,
+        "markdown_summary": None,
     }
 
-    if not args.render_only:
-        api_key = _env_api_key()
-        if not api_key and config.get("api_key_required") == "yes":
-            raise SystemExit("Error: API key required via OPENAI_API_KEY or LLM_API_KEY. Use --render-only to skip API call.")
-        response = call_openai_compatible_chat(
-            llm_prompt,
-            LLMRequestConfig(
-                model=model,
-                base_url=base_url,
-                api_key=api_key if api_key else "api_key",
-                temperature=temperature,
-                max_tokens=max_tokens,
-                timeout=timeout,
-            ),
-        )
-        parsed = extract_message_json(response)
-        output["analysis_markdown"] = parsed.get("analysis_markdown") or extract_message_text(response)
-        output["patches"] = parsed.get("patches", []) or parsed.get("json_patches", []) or []
-        output["usage"] = response.get("usage")
-        output["raw_response"] = response
+    if result.success and result.suggestions:
+        synthesis_data = result.suggestions[0]
+        output["synthesis"] = synthesis_data
+        output["markdown_summary"] = synthesis_data.get("markdown_summary", "")
 
-    with open(args.output_json, "w", encoding="utf-8") as handle:
-        json.dump(output, handle, indent=2, ensure_ascii=False)
+        # For backward compatibility, also include as analysis_markdown
+        output["analysis_markdown"] = output["markdown_summary"]
+        output["patches"] = []  # No patches in synthesis stage
 
-    status = "prompt rendered" if args.render_only else "analysis completed"
-    print(f"[+] LLM {status}; wrote {args.output_json}")
+    # Save output
+    with open(args.output_json, "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    status = "prompt rendered" if args.render_only else "synthesis completed"
+    print(f"\n[+] Protocol {status}")
+    print(f"[+] Wrote output to {args.output_json}")
+
+    if result.success and not args.render_only:
+        print(f"[+] Synthesis includes {len(protocol_model.get('families', []))} families")
+        if output.get("markdown_summary"):
+            print(f"[+] Generated {len(output['markdown_summary'])} characters of documentation")
 
 
 if __name__ == "__main__":

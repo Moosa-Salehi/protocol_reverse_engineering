@@ -418,25 +418,24 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
     llm_steps = [
         (
-            "14_export_llm_evidence",
-            [
-                _script("14_export_llm_evidence.py"),
-                _path(model_json),
-                _path(llm_evidence_json),
-                "--evaluation-json",
-                _path(evaluation_json),
-            ],
-        ),
-        (
             "15_analyze_with_llm",
             [
                 _script("15_analyze_with_llm.py"),
-                _path(llm_evidence_json),
+                _path(model_json),  # Changed from llm_evidence_json to model_json
                 _path(llm_analysis_json),
                 "--config",
                 _path(args.llm_config),
                 "--prompt-out",
                 _path(llm_prompt_md),
+                "--evaluation-json",
+                _path(evaluation_json),
+                # Multi-stage summaries (auto-detected if files exist)
+                "--boundary-summary",
+                _path(families_refined_json) if args.enable_llm_boundary_refinement else _path(data_dir / "05_families_refined.json"),
+                "--semantic-summary",
+                _path(families_labeled_json) if args.enable_llm_semantic_labeling else _path(data_dir / "05_families_labeled.json"),
+                "--relation-summary",
+                _path(relations_validated_json) if args.enable_llm_relation_validation else _path(data_dir / "08_relations_validated.json"),
             ],
         ),
         (
@@ -485,13 +484,21 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             )
         )
     if args.llm_render_only:
-        llm_steps[1][1].append("--render-only")
+        for step_name, step_args in llm_steps:
+            if step_name == "15_analyze_with_llm":
+                step_args.append("--render-only")
     if args.llm_template:
-        llm_steps[1][1].extend(["--template", _path(args.llm_template)])
+        for step_name, step_args in llm_steps:
+            if step_name == "15_analyze_with_llm":
+                step_args.extend(["--template", _path(args.llm_template)])
     if args.llm_temperature is not None:
-        llm_steps[1][1].extend(["--temperature", str(args.llm_temperature)])
+        for step_name, step_args in llm_steps:
+            if step_name == "15_analyze_with_llm":
+                step_args.extend(["--temperature", str(args.llm_temperature)])
     if args.llm_max_tokens is not None:
-        llm_steps[1][1].extend(["--max-tokens", str(args.llm_max_tokens)])
+        for step_name, step_args in llm_steps:
+            if step_name == "15_analyze_with_llm":
+                step_args.extend(["--max-tokens", str(args.llm_max_tokens)])
     insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "18_export_markdown")
     pipeline[insert_at:insert_at] = llm_steps
     for step_name, step_args in pipeline:
