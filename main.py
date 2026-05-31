@@ -71,9 +71,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     family_features_json = data_dir / "03_family_features.json"
     framing_json = data_dir / "04_framing.json"
     families_json = data_dir / "05_families.json"
+    families_refined_json = data_dir / "05_families_refined.json"  # A5: LLM boundary refinement
+    families_labeled_json = data_dir / "05_families_labeled.json"  # A5: LLM semantic labeling
     pairs_json = data_dir / "06_pairs.json"
     keywords_json = data_dir / "07_keywords.json"
     relations_json = data_dir / "08_relations.json"
+    relations_validated_json = data_dir / "08_relations_validated.json"  # A5: LLM relation validation
     semantics_json = data_dir / "09_semantics.json"
     model_json = data_dir / "10_protocol_model.json"
     refined_model_json = data_dir / "10_protocol_model.refined.json"
@@ -193,6 +196,34 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     str(args.boundary_score_threshold),
                 ],
             ),
+        ]
+
+        # A5: Stage 07b - LLM Boundary Refinement (optional)
+        if args.enable_llm_boundary_refinement:
+            pipeline.append(
+                (
+                    "07b_refine_boundaries_llm",
+                    [
+                        _script("07b_refine_boundaries_llm.py"),
+                        _path(messages_jsonl),
+                        _path(families_json),
+                        _path(families_refined_json),
+                        "--assignments-json",
+                        _path(assignments_json),
+                        "--llm-config",
+                        _path(args.llm_config),
+                        "--min-confidence",
+                        str(args.llm_boundary_confidence),
+                    ]
+                    + (["--render-only"] if args.llm_render_only else []),
+                )
+            )
+            # Use refined families for subsequent stages
+            families_for_model = families_refined_json
+        else:
+            families_for_model = families_json
+
+        pipeline.extend([
             (
                 "08_pair_requests_responses",
                 [
@@ -243,12 +274,39 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     str(args.min_relation_confidence),
                 ],
             ),
+        ])
+
+        # A5: Stage 10b - LLM Relation Validation (optional)
+        if args.enable_llm_relation_validation:
+            pipeline.append(
+                (
+                    "10b_validate_relations_llm",
+                    [
+                        _script("10b_validate_relations_llm.py"),
+                        _path(relations_json),
+                        _path(relations_validated_json),
+                        "--families-json",
+                        _path(families_for_model),
+                        "--llm-config",
+                        _path(args.llm_config),
+                        "--min-confidence",
+                        str(args.llm_relation_confidence),
+                    ]
+                    + (["--render-only"] if args.llm_render_only else []),
+                )
+            )
+            # Use validated relations for subsequent stages
+            relations_for_model = relations_validated_json
+        else:
+            relations_for_model = relations_json
+
+        pipeline.extend([
             (
                 "11_infer_semantics",
                 [
                     _script("11_infer_semantics.py"),
-                    _path(families_json),
-                    _path(relations_json),
+                    _path(families_for_model),
+                    _path(relations_for_model),
                     _path(semantics_json),
                     "--framing-json",
                     _path(framing_json),
@@ -258,18 +316,45 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(keywords_json),
                 ],
             ),
+        ])
+
+        # A5: Stage 11b - LLM Semantic Labeling (optional)
+        if args.enable_llm_semantic_labeling:
+            pipeline.append(
+                (
+                    "11b_label_semantics_llm",
+                    [
+                        _script("11b_label_semantics_llm.py"),
+                        _path(families_for_model),
+                        _path(families_labeled_json),
+                        "--relations-json",
+                        _path(relations_for_model),
+                        "--features-json",
+                        _path(family_features_json),
+                        "--llm-config",
+                        _path(args.llm_config),
+                        "--min-confidence",
+                        str(args.llm_semantic_confidence),
+                    ]
+                    + (["--render-only"] if args.llm_render_only else []),
+                )
+            )
+            # Use labeled families for protocol model
+            families_for_model = families_labeled_json
+
+        pipeline.extend([
             (
                 "12_build_protocol_model",
                 [
                     _script("12_build_protocol_model.py"),
-                    _path(families_json),
+                    _path(families_for_model),
                     _path(model_json),
                     "--features-json",
                     _path(family_features_json),
                     "--keywords-json",
                     _path(keywords_json),
                     "--relations-json",
-                    _path(relations_json),
+                    _path(relations_for_model),
                     "--semantics-json",
                     _path(semantics_json),
                     "--framing-json",
@@ -623,6 +708,14 @@ def parse_args() -> argparse.Namespace:
     llm_analysis_group.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
     llm_analysis_group.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
     llm_analysis_group.add_argument("--llm-max-tokens", type=int, default=4000, help="Max output tokens for stage 15 LLM analysis.")
+
+    # Multi-stage LLM integration (A5)
+    llm_analysis_group.add_argument("--enable-llm-boundary-refinement", action="store_true", help="Enable LLM-assisted boundary refinement (stage 07b) to reduce over-segmentation.")
+    llm_analysis_group.add_argument("--enable-llm-semantic-labeling", action="store_true", help="Enable LLM-assisted semantic field labeling (stage 11b).")
+    llm_analysis_group.add_argument("--enable-llm-relation-validation", action="store_true", help="Enable LLM-assisted relation validation (stage 10b) to filter false positives.")
+    llm_analysis_group.add_argument("--llm-boundary-confidence", type=float, default=0.6, help="Minimum confidence for LLM boundary merge suggestions (default: 0.6).")
+    llm_analysis_group.add_argument("--llm-semantic-confidence", type=float, default=0.5, help="Minimum confidence for LLM semantic labels (default: 0.5).")
+    llm_analysis_group.add_argument("--llm-relation-confidence", type=float, default=0.7, help="Minimum confidence for LLM relation validation (default: 0.7).")
 
     final_eval_group.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation.")
     return parser.parse_args()
