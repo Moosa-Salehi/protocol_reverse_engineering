@@ -13,10 +13,9 @@ This pipeline analyzes binary protocol traffic from PCAP files and automatically
 
 ### Technical Documentation
 - **[Architecture](architecture.md)** - System design, components, and data flow
-- **[Testing Guide](testing.md)** - Testing practices, diagnostic tools, and evaluation
 
 ### Contributing
-- **[Documentation Guide](Readme.md)** - How to build and contribute to documentation
+- **[Documentation Guide](contributing.md)** - How to build and contribute to documentation
 
 ## Quick Links
 
@@ -29,16 +28,39 @@ This pipeline analyzes binary protocol traffic from PCAP files and automatically
 - [LLM Integration](getting_started.md#llm-integration)
 - [Ground Truth Evaluation](getting_started.md#ground-truth-evaluation)
 
-## Key Features
+## Building Documentation
 
-- Protocol-agnostic analysis
-- ML-powered message clustering
-- Intelligent field boundary detection
-- Semantic role labeling
-- Request/response pairing
-- Multi-layer protocol detection
-- LLM-assisted refinement
-- Comprehensive HTML/Markdown reports
+This project uses [MkDocs](https://www.mkdocs.org/) with the [Material theme](https://squidfunk.github.io/mkdocs-material/).
+
+### Install MkDocs
+
+```bash
+pip install mkdocs mkdocs-material mkdocstrings mkdocstrings-python
+``` 
+
+### Serve Locally
+
+```bash
+# From project root
+mkdocs serve
+
+# Open browser to http://127.0.0.1:8000
+``` 
+
+### Build Static Site
+
+```bash
+# From project root
+mkdocs build
+
+# Output in site/ directory
+```
+
+### Deploy to GitHub Pages
+
+```bash
+mkdocs gh-deploy
+```
 
 ## Support
 

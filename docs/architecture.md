@@ -7,117 +7,116 @@ This document describes the technical architecture, design principles, and imple
 1. **Protocol-Agnostic**: All inference is based on statistical patterns and structural analysis, not protocol-specific knowledge
 2. **Evidence-Preserving**: Each stage retains upstream evidence in the protocol model rather than discarding it
 3. **Modular**: Stages can be run independently or as part of the full pipeline
-4. **Deterministic with Optional ML**: Core functionality uses deterministic algorithms; ML features (neural clustering, LLM refinement) are optional enhancements
+4. **Deterministic with ML**: Core functionality uses deterministic algorithms; ML features (neural clustering, LLM refinement) are added as enhancements
 
 ## Pipeline Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Input: PCAP/PCAPNG Files                      │
+│                    Input: PCAP/PCAPNG Files                     │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 01-02: Collection & Deduplication (Optional)              │
-│  - Collect PCAPs from source tree                                │
-│  - Remove duplicate captures                                     │
+│  Stage 01-02: Collection & Deduplication (Optional)             │
+│  - Collect PCAPs from source tree                               │
+│  - Remove duplicate captures                                    │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 03: Message Extraction                                    │
-│  - Extract payloads using TShark or Scapy                        │
-│  - Create canonical message corpus (JSONL)                       │
-│  Output: data/01_messages.jsonl                                  │
+│  Stage 03: Message Extraction                                   │
+│  - Extract payloads using TShark or Scapy                       │
+│  - Create canonical message corpus (JSONL)                      │
+│  Output: data/01_messages.jsonl                                 │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 04: Family Discovery                                      │
-│  - Cluster messages into families using HDBSCAN/DBSCAN           │
-│  - Support multiple feature modes (raw_bytes, structural,        │
-│    neural, hybrid)                                               │
-│  Output: data/02_family_assignments.json                         │
+│  Stage 04: Family Discovery                                     │
+│  - Cluster messages into families using HDBSCAN/DBSCAN          │
+│  - Support multiple feature modes (raw_bytes, structural,       │
+│    neural, hybrid)                                              │
+│  Output: data/02_family_assignments.json                        │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 05: Framing Inference                                     │
-│  - Detect stable prefixes and header patterns                    │
-│  - Identify length fields, counters, discriminators              │
-│  - Optional: Multi-layer protocol detection                      │
-│  Output: data/04_framing.json                                    │
+│  Stage 05: Framing Inference                                    │
+│  - Detect stable prefixes and header patterns                   │
+│  - Identify length fields, counters, discriminators             │
+│  - Optional: Multi-layer protocol detection                     │
+│  Output: data/04_framing.json                                   │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 06: Feature Extraction                                    │
-│  - Extract per-family statistical features                       │
-│  - Entropy, uniqueness, byte histograms, n-grams                 │
-│  Output: data/03_family_features.json                            │
+│  Stage 06: Feature Extraction                                   │
+│  - Extract per-family statistical features                      │
+│  - Entropy, uniqueness, byte histograms, n-grams                │
+│  Output: data/03_family_features.json                           │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 07: Boundary Detection                                    │
-│  - Infer field boundaries within messages                        │
-│  - Enhanced mode: reduce over-segmentation                       │
-│  - Optional: LLM-assisted boundary refinement                    │
-│  Output: data/05_families.json                                   │
+│  Stage 07: Boundary Detection                                   │
+│  - Infer field boundaries within messages                       │
+│  - Enhanced mode: reduce over-segmentation                      │
+│  - LLM-assisted boundary refinement                             │
+│  Output: data/05_families.json                                  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 08: Request/Response Pairing                              │
-│  - Pair likely requests and responses within sessions            │
-│  Output: data/06_pairs.json                                      │
+│  Stage 08: Request/Response Pairing                             │
+│  - Pair likely requests and responses within sessions           │
+│  Output: data/06_pairs.json                                     │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 09: Discriminator/Opcode Discovery                        │
-│  - Identify discriminator bytes using learned salience           │
-│  - Detect opcode candidates and subformats                       │
-│  Output: data/07_keywords.json                                   │
+│  Stage 09: Discriminator/Opcode Discovery                       │
+│  - Identify discriminator bytes using learned salience          │
+│  - Detect opcode candidates and subformats                      │
+│  Output: data/07_keywords.json                                  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 10: Relation Inference                                    │
-│  - Infer family-to-family relations                              │
-│  - Detect echo fields, length relations                          │
-│  - Optional: LLM-assisted relation validation                    │
-│  Output: data/08_relations.json                                  │
+│  Stage 10: Relation Inference                                   │
+│  - Infer family-to-family relations                             │
+│  - Detect echo fields, length relations                         │
+│  - LLM-assisted relation validation                             │
+│  Output: data/08_relations.json                                 │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 11: Semantic Labeling                                     │
-│  - Assign semantic roles to fields                               │
-│  - Detect length, transaction_id, address, opcode fields         │
-│  - Optional: LLM-assisted semantic labeling                      │
-│  Output: data/09_semantics.json                                  │
+│  Stage 11: Semantic Labeling                                    │
+│  - Assign semantic roles to fields                              │
+│  - LLM-assisted semantic labeling                               │
+│  Output: data/09_semantics.json                                 │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 12: Protocol Model Assembly                               │
-│  - Combine all evidence into unified protocol model              │
-│  Output: data/10_protocol_model.json                             │
+│  Stage 12: Protocol Model Assembly                              │
+│  - Combine all evidence into unified protocol model             │
+│  Output: data/10_protocol_model.json                            │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 13: Pipeline Evaluation                                   │
-│  - Compute quality metrics                                       │
-│  Output: data/11_evaluation.json                                 │
+│  Stage 13: Pipeline Evaluation                                  │
+│  - Compute quality metrics                                      │
+│  Output: data/11_evaluation.json                                │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 14-15b: LLM Analysis & Refinement (Optional)              │
-│  - Export compact evidence for LLM                               │
-│  - Call LLM API for analysis                                     │
-│  - Validate and apply evidence-gated patches                     │
-│  Output: data/10_protocol_model.refined.json                     │
+│  Stage 14-15b: LLM Analysis & Refinement                        │
+│  - Export compact evidence for LLM                              │
+│  - Call LLM API for analysis                                    │
+│  - Validate and apply evidence-gated patches                    │
+│  Output: data/10_protocol_model.refined.json                    │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 16-17: Ground Truth Evaluation (Optional)                 │
-│  - Compare against ground truth protocol                         │
-│  Output: data/15_evaluation_result.json                          │
+│  Stage 16-17: Ground Truth Evaluation (Optional)                │
+│  - Compare against ground truth protocol                        │
+│  Output: data/15_evaluation_result.json                         │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│  Stage 18-19: Report Generation                                  │
-│  - Export Markdown and HTML reports                              │
+│  Stage 18-19: Report Generation                                 │
+│  - Export Markdown and HTML reports                             │
 │  Output: output/protocol_report.md, output/protocol_report.html │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -136,9 +135,9 @@ The canonical message representation used throughout the pipeline. Each message 
 
 Message family discovery using multiple feature extraction modes:
 
-- **raw_bytes**: Padded byte vectors with volatile offset downweighting (recommended for production)
+- **raw_bytes**: Padded byte vectors with volatile offset downweighting
 - **structural**: Symbolic protocol features (length buckets, stable prefixes, discriminators)
-- **neural**: 32D VAE latent vectors (experimental)
+- **neural**: 32D VAE latent vectors
 - **hybrid**: Combined neural + structural features with adaptive fusion
 
 Supports HDBSCAN, DBSCAN, and heuristic fallback clustering.
@@ -149,7 +148,7 @@ Protocol structure inference modules:
 
 - **Framing**: Detect headers, length fields, counters, discriminators
 - **Boundary Detection**: Infer field boundaries using entropy, mutual information, and variability
-- **Semantic Labeling**: Assign semantic roles (opcode, length, transaction_id, etc.)
+- **Semantic Labeling**: Assign semantic roles
 - **Relations**: Discover request/response pairs and field correlations
 - **Layer Detection**: Identify multi-layer protocols (transport + application)
 
@@ -164,11 +163,10 @@ Statistical feature extraction per family:
 
 ### 5. LLM Integration (`src/protocol_re/llm/`)
 
-Optional LLM-assisted refinement with evidence gating:
+LLM-assisted refinement with evidence gating:
 - Stage-specific LLM interactions (boundaries, semantics, relations)
 - RFC 6902 JSON patch validation
 - Evidence-based patch acceptance/rejection
-- Multi-stage refinement pipeline
 
 ### 6. Evaluation (`src/protocol_re/evaluation/`)
 
@@ -222,9 +220,9 @@ Final reports are stored in the `output/` directory:
 
 ### Raw Bytes Mode
 
-Uses padded byte vectors with downweighting of volatile offsets. Achieves 90%+ accuracy on test protocols.
+Uses padded byte vectors with downweighting of volatile offsets. Achieved 90%+ accuracy on tested protocol.
 
-**Implementation:**
+Implementation:
 - Pad messages to fixed length (default: 512 bytes)
 - Extract byte values as features
 - Downweight positions with high variance
@@ -238,7 +236,7 @@ Uses symbolic protocol features extracted from message structure:
 - Discriminator-like bytes
 - Header/body split hints
 
-**Implementation:**
+Implementation:
 - Extract length distribution features
 - Compute stable byte positions
 - Identify discriminator candidates
@@ -246,15 +244,13 @@ Uses symbolic protocol features extracted from message structure:
 
 ### Neural Mode
 
-Uses 32D VAE latent vectors from `industrial_VAE.pth`.
+Uses 32D VAE latent vectors from `pre_trained/industrial_VAE.pth`.
 
-**Implementation:**
+Implementation:
 - Load pre-trained VAE model
 - Encode messages to latent space
 - Use latent vectors as features
 - Detect collapsed latent spaces
-
-**Note:** Currently produces poor clustering results for small payloads. Use with caution.
 
 ### Hybrid Mode
 
@@ -264,7 +260,7 @@ Combines neural and structural features with adaptive fusion:
 - **learned**: MLP-based feature importance learning
 - **fixed**: Manual weight specification
 
-**Implementation:**
+Implementation:
 - Extract both neural and structural features
 - Detect neural collapse (low variance, poor separation)
 - Automatically adjust fusion weights
@@ -280,7 +276,7 @@ Reduces over-segmentation through:
 - Multi-pass segment merging (up to 3 passes with 6 merging rules)
 - Maximum field count limit (default: 15 fields per family)
 
-**Merging Rules:**
+Merging Rules:
 1. Merge adjacent 1-byte fields
 2. Merge low-entropy neighbors
 3. Merge fields with similar byte distributions
@@ -296,7 +292,7 @@ Detects layered protocols (transport + application) using:
 - Transaction/counter fields in header region
 - Confidence scoring based on evidence strength
 
-**Detection Criteria:**
+Detection Criteria:
 - Length field at offset < 8 pointing to offset > 8
 - Stable prefix (entropy < 0.5) for first N bytes
 - Variable suffix (entropy > 2.0) for remaining bytes
@@ -309,84 +305,17 @@ Stage-specific LLM interactions for:
 - Semantic labeling (assign field roles)
 - Relation validation (filter false positives)
 
-**Evidence Gating:**
+Evidence Gating:
 - All LLM suggestions validated against statistical evidence
 - Patches rejected if they contradict strong evidence
 - Confidence scores used to weight decisions
 - Fallback to statistical inference if LLM unavailable
 
-## Extensibility
-
-### Adding New Stages
-
-1. Create script in `scripts/` directory (e.g., `XX_new_stage.py`)
-2. Implement stage logic in `src/protocol_re/` module
-3. Update `main.py` to call new stage
-4. Add output artifact to `data/` directory
-5. Update schema if needed
-
-### Adding New Feature Modes
-
-1. Implement feature extractor in `src/protocol_re/clustering/`
-2. Add mode to `scripts/04_discover_families.py`
-3. Update documentation
-4. Add tests
-
-### Adding New Semantic Roles
-
-1. Update field type taxonomy in `src/protocol_re/inference/semantic_labeling.py`
-2. Add detection logic for new role
-3. Update schema in `schema/protocol_model.schema.json`
-4. Update exporters to handle new role
-
-## Performance Considerations
-
-### Memory Usage
-
-- Message corpus is loaded into memory (limit with `--max-messages`)
-- Clustering samples up to 100K unique messages by default
-- Large payloads (>512 bytes) are truncated for feature extraction
-
-### Runtime Optimization
-
-- Typical runtime for 200K messages: 6 minutes
-- Message extraction: ~3 minutes (TShark)
-- Clustering: ~30 seconds
-- Inference stages: ~2 minutes
-- LLM analysis: ~2 minutes (depends on API latency)
-
 ### Scalability
 
 - Supports up to 200K messages by default (configurable)
 - Clustering uses sampling for large corpora
-- Feature extraction is parallelizable (future work)
-- Incremental processing support (future work)
 
-## Dependencies
+## Next Step
 
-### Required
-- Python 3.10+
-- TShark (Wireshark CLI)
-- NumPy, scikit-learn, HDBSCAN
-
-### Optional
-- PyTorch (for neural features)
-- OpenAI-compatible LLM API (for refinement)
-- Scapy (alternative extraction method)
-
-## Security Considerations
-
-- PCAP files may contain sensitive data - handle appropriately
-- LLM API calls send protocol evidence (no raw payloads by default)
-- Ground truth files may contain proprietary protocol information
-- Output reports may reveal protocol internals
-
-## Future Enhancements
-
-See `TODO_COMPREHENSIVE.md` for detailed roadmap:
-- Improved neural feature extraction (A1)
-- Better semantic labeling (A3)
-- Multi-stage LLM integration (A5)
-- Active learning for ground truth generation (D1)
-- Transfer learning from known protocols (D2)
-- Anomaly detection for protocol deviations (D3)
+- Read [Contribution](contributing.md) for contributing

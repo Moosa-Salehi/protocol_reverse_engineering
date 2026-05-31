@@ -5,19 +5,6 @@
 
 A protocol-agnostic reverse engineering pipeline that analyzes binary protocol traffic from PCAP files and automatically infers protocol structure, message types, field boundaries, and semantic roles.
 
-## Quick Start
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Analyze protocol traffic
-python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
-
-# View results
-open output/protocol_report.html
-```
-
 ## Key Features
 
 - **Protocol-Agnostic Analysis** - Works with any binary protocol without prior knowledge
@@ -33,27 +20,13 @@ open output/protocol_report.html
 
 - **[Getting Started](docs/getting_started.md)** - Installation, first analysis, and basic usage
 - **[Architecture](docs/architecture.md)** - System design and technical details
-- **[Testing](docs/testing.md)** - Testing guide and diagnostic tools
-- **[Documentation Guide](docs/Readme.md)** - How to build and contribute to docs
+- **[Documentation Guide](docs/contributing.md)** - How to build and contribute to docs
 
 ## Requirements
 
 - Python 3.10+
 - TShark (Wireshark CLI)
-- Dependencies: numpy, scikit-learn, hdbscan, scapy, torch (optional)
-
-## Basic Usage
-
-```bash
-# Analyze Modbus TCP traffic
-python main.py pcaps/ --tshark-filter mbtcp
-
-# With enhanced boundary detection (recommended)
-python main.py pcaps/ --tshark-filter mbtcp --enhanced-boundaries
-
-# With ground truth evaluation
-python main.py pcaps/ --tshark-filter mbtcp --ground-truth-json truth-files/modbus.json
-```
+- Dependencies: numpy, scikit-learn, hdbscan, scapy, torch
 
 ## Project Structure
 
@@ -64,27 +37,26 @@ protocol_re/
 ├── docs/                     # Documentation
 ├── data/                     # Intermediate artifacts
 ├── output/                   # Final reports
-├── pcaps/                    # Input PCAP files
 └── main.py                   # Pipeline runner
 ```
 
 ## Supported Protocols
 
 The pipeline is protocol-agnostic and has been tested with:
-- Modbus TCP, S7comm, DNP3, IEC 60870-5-104, and custom protocols
+- Modbus TCP
 
 ## Performance
 
-Typical runtime for 200K messages: ~6 minutes
+Typical runtime for 200K Modbus messages: ~6 minutes
 
 Accuracy on Modbus TCP:
 - Message type detection: 90%+ precision/recall
 - Field boundary recall: 88%+
-- Field boundary precision: 65%+ (with enhanced mode)
+- Field boundary precision: 65%+
 
 ## License
 
-MIT License - See LICENSE file for details.
+MIT License - See [LICENSE](LICENSE) file for details.
 
 ## Contact
 
