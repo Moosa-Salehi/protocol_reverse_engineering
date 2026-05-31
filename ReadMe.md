@@ -12,7 +12,7 @@ A protocol-agnostic reverse engineering pipeline that analyzes binary protocol t
 - **Field Boundary Detection** - Infers field boundaries with enhanced anti-fragmentation
 - **Semantic Labeling** - Identifies opcodes, addresses, lengths, transaction IDs
 - **Request/Response Pairing** - Discovers protocol interactions and relations
-- **LLM-Assisted Refinement** - Optional LLM integration for improved analysis
+- **LLM-Assisted Refinement** - LLM integration for improved analysis
 - **Comprehensive Reports** - Generates Markdown and interactive HTML specifications
 - **Ground Truth Evaluation** - Validates results against known protocol specifications
 

@@ -261,7 +261,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
         ])
 
-    # Stage 10b - LLM Relation Validation (optional)
+    # Stage 10b - LLM Relation Validation
     pipeline.append(
         (
             "10b_validate_relations_llm",
@@ -300,7 +300,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
         ])
 
-    # Stage 11b - LLM Semantic Labeling (optional)
+    # Stage 11b - LLM Semantic Labeling
     pipeline.append(
         (
             "11b_label_semantics_llm",

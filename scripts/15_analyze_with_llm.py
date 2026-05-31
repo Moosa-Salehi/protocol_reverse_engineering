@@ -57,7 +57,7 @@ def main() -> None:
     parser.add_argument("--max-tokens", type=int, help="Override max_tokens")
     parser.add_argument("--timeout", type=int, help="Override timeout")
 
-    # Multi-stage result inputs (optional)
+    # Multi-stage result inputs
     parser.add_argument("--boundary-summary", help="Boundary refinement summary JSON from stage 07b")
     parser.add_argument("--semantic-summary", help="Semantic labeling summary JSON from stage 11b")
     parser.add_argument("--relation-summary", help="Relation validation summary JSON from stage 10b")
