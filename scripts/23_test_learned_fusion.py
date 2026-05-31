@@ -25,6 +25,7 @@ from protocol_re.clustering.learned_fusion import (
     detect_neural_collapse,
     should_override_with_structural,
 )
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def test_fusion_methods(records, corpus_records):

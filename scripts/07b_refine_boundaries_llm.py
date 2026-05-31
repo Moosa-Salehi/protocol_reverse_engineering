@@ -11,6 +11,10 @@ import json
 import os
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from protocol_re.utils.logging import setup_stage_logging
+
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.model.schema import FamilyAssignment
 from protocol_re.llm.multi_stage import StageConfig, LLMStage

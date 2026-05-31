@@ -9,11 +9,15 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_semantics import run_semantic_labeling_stage
 from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def load_llm_config(config_path: str) -> dict:

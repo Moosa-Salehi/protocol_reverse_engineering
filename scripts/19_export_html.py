@@ -3,9 +3,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 from protocol_re.export.html import render_protocol_model_html
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def _load_optional_json(path: str | None):
@@ -45,24 +49,53 @@ def main() -> None:
     parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 13_evaluate_pipeline.py")
     parser.add_argument("--llm-analysis-json", help="Optional LLM analysis JSON from 15_analyze_with_llm.py")
     parser.add_argument("--final-evaluation-json", help="Optional final evaluation report JSON from 17_evaluate_protocol_spec.py")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    with open(args.protocol_model_json, "r", encoding="utf-8") as handle:
-        model = json.load(handle)
-    llm_analysis = _load_optional_json(args.llm_analysis_json)
-    if llm_analysis is not None:
-        llm_analysis["prompt_stats"] = _load_prompt_stats(llm_analysis)
+    # Setup logging
+    logger = setup_stage_logging("19_export_html", Path(args.log_dir))
 
-    html = render_protocol_model_html(
-        model,
-        evaluation=_load_optional_json(args.evaluation_json),
-        llm_analysis=llm_analysis,
-        final_evaluation=_load_optional_json(args.final_evaluation_json),
-    )
-    with open(args.output_html, "w", encoding="utf-8") as handle:
-        handle.write(html)
+    logger.info("Exporting HTML protocol report")
+
+    with logger.stage("load_protocol_model"):
+        logger.info(f"Loading protocol model from {args.protocol_model_json}")
+        with open(args.protocol_model_json, "r", encoding="utf-8") as handle:
+            model = json.load(handle)
+        logger.metric("families_in_model", len(model.get("families", [])), "families")
+
+    with logger.stage("load_optional_data"):
+        llm_analysis = _load_optional_json(args.llm_analysis_json)
+        if llm_analysis is not None:
+            logger.info(f"Loaded LLM analysis from {args.llm_analysis_json}")
+            llm_analysis["prompt_stats"] = _load_prompt_stats(llm_analysis)
+
+        evaluation = _load_optional_json(args.evaluation_json)
+        if evaluation:
+            logger.info(f"Loaded evaluation from {args.evaluation_json}")
+
+        final_evaluation = _load_optional_json(args.final_evaluation_json)
+        if final_evaluation:
+            logger.info(f"Loaded final evaluation from {args.final_evaluation_json}")
+
+    with logger.stage("render_html"):
+        html = render_protocol_model_html(
+            model,
+            evaluation=evaluation,
+            llm_analysis=llm_analysis,
+            final_evaluation=final_evaluation,
+        )
+        logger.metric("html_size", len(html), "characters")
+        logger.metric("html_size_kb", len(html.encode('utf-8')) / 1024, "KB")
+
+    with logger.stage("write_output"):
+        with open(args.output_html, "w", encoding="utf-8") as handle:
+            handle.write(html)
+        logger.info(f"Wrote HTML report to {args.output_html}")
 
     print(f"[+] Wrote HTML protocol report to {args.output_html}")
+
+    # Log performance summary
+    logger.log_stage_summary()
 
 
 if __name__ == "__main__":

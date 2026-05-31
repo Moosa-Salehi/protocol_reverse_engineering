@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def _load_json(path: str) -> Dict[str, Any]:
@@ -70,22 +75,55 @@ def main() -> None:
     parser.add_argument("output_json", help="Output evaluation input JSON conforming to schema/evaluation_input.schema.json")
     parser.add_argument("--refined-protocol-model-json", help="Optional refined model JSON from stage 15b")
     parser.add_argument("--patch-validation-json", help="Optional patch validation JSON from stage 15b")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    output = build_evaluation_model_data(
-        _load_json(args.protocol_model_json),
-        _load_json(args.evaluation_json),
-        _load_json(args.llm_analysis_json),
-        _load_json(args.refined_protocol_model_json) if args.refined_protocol_model_json else None,
-        _load_json(args.patch_validation_json) if args.patch_validation_json else None,
-    )
+    # Setup logging
+    logger = setup_stage_logging("16_prepare_evaluation_data", Path(args.log_dir))
 
-    output_path = Path(args.output_json)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as handle:
-        json.dump(output, handle, indent=2, ensure_ascii=False)
+    logger.info("Preparing evaluation model data")
+
+    with logger.stage("load_data"):
+        logger.info(f"Loading protocol model from {args.protocol_model_json}")
+        protocol_model = _load_json(args.protocol_model_json)
+
+        logger.info(f"Loading evaluation from {args.evaluation_json}")
+        evaluation = _load_json(args.evaluation_json)
+
+        logger.info(f"Loading LLM analysis from {args.llm_analysis_json}")
+        llm_analysis = _load_json(args.llm_analysis_json)
+
+        refined_protocol_model = None
+        if args.refined_protocol_model_json:
+            logger.info(f"Loading refined model from {args.refined_protocol_model_json}")
+            refined_protocol_model = _load_json(args.refined_protocol_model_json)
+
+        patch_validation = None
+        if args.patch_validation_json:
+            logger.info(f"Loading patch validation from {args.patch_validation_json}")
+            patch_validation = _load_json(args.patch_validation_json)
+
+    with logger.stage("build_evaluation_data"):
+        output = build_evaluation_model_data(
+            protocol_model,
+            evaluation,
+            llm_analysis,
+            refined_protocol_model,
+            patch_validation,
+        )
+        logger.metric("families_in_output", len(output.get("predicted_protocol", {}).get("families", [])), "families")
+
+    with logger.stage("write_output"):
+        output_path = Path(args.output_json)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as handle:
+            json.dump(output, handle, indent=2, ensure_ascii=False)
+        logger.info(f"Wrote evaluation data to {output_path}")
 
     print(f"[+] Wrote evaluation model data to {output_path}")
+
+    # Log performance summary
+    logger.log_stage_summary()
 
 
 if __name__ == "__main__":

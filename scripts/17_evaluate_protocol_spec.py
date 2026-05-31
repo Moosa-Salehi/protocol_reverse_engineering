@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def _load_json(path: str) -> Dict[str, Any]:
@@ -374,18 +379,48 @@ def main() -> None:
     parser.add_argument("evaluation_model_data_json", help="Prepared model data from 16_prepare_evaluation_data.py")
     parser.add_argument("ground_truth_json", help="Ground truth JSON using evaluation_input.schema.json ground_truth_protocol shape")
     parser.add_argument("output_json", help="Output final evaluation report JSON")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    report = evaluate_protocol_spec_with_refinement(_load_json(args.evaluation_model_data_json), _load_json(args.ground_truth_json))
-    report["inputs"] = {
-        "predicted_protocol_file": args.evaluation_model_data_json,
-        "ground_truth_protocol_file": args.ground_truth_json,
-    }
-    output_path = Path(args.output_json)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2, ensure_ascii=False)
+    # Setup logging
+    logger = setup_stage_logging("17_evaluate_protocol_spec", Path(args.log_dir))
+
+    logger.info("Evaluating protocol specification against ground truth")
+
+    with logger.stage("load_data"):
+        logger.info(f"Loading evaluation model data from {args.evaluation_model_data_json}")
+        evaluation_model_data = _load_json(args.evaluation_model_data_json)
+
+        logger.info(f"Loading ground truth from {args.ground_truth_json}")
+        ground_truth = _load_json(args.ground_truth_json)
+
+    with logger.stage("evaluate_protocol"):
+        report = evaluate_protocol_spec_with_refinement(evaluation_model_data, ground_truth)
+        report["inputs"] = {
+            "predicted_protocol_file": args.evaluation_model_data_json,
+            "ground_truth_protocol_file": args.ground_truth_json,
+        }
+
+        # Log key metrics
+        if "overall_score" in report:
+            logger.metric("overall_score", report["overall_score"], "score")
+        if "message_types" in report:
+            mt = report["message_types"]
+            logger.metric("message_type_precision", mt.get("precision", 0), "ratio")
+            logger.metric("message_type_recall", mt.get("recall", 0), "ratio")
+            logger.metric("message_type_f1", mt.get("f1_score", 0), "score")
+
+    with logger.stage("write_output"):
+        output_path = Path(args.output_json)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as handle:
+            json.dump(report, handle, indent=2, ensure_ascii=False)
+        logger.info(f"Wrote evaluation report to {output_path}")
+
     print(f"[+] Wrote final protocol evaluation report to {output_path}")
+
+    # Log performance summary
+    logger.log_stage_summary()
 
 
 if __name__ == "__main__":

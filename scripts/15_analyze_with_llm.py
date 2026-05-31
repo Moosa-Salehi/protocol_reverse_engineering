@@ -10,11 +10,15 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_synthesis import run_protocol_synthesis_stage
 from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def load_json(path: str) -> dict:
@@ -61,12 +65,25 @@ def main() -> None:
 
     # Legacy compatibility
     parser.add_argument("--llm-evidence-json", help="[DEPRECATED] Legacy evidence bundle (ignored)")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
 
     args = parser.parse_args()
 
-    # Load protocol model
-    print(f"[+] Loading protocol model from {args.protocol_model_json}")
-    protocol_model = load_json(args.protocol_model_json)
+    # Setup logging
+    logger = setup_stage_logging("15_analyze_with_llm", Path(args.log_dir))
+
+    logger.info("Starting LLM protocol synthesis")
+    logger.decision(
+        decision="LLM synthesis mode",
+        reason="User configuration",
+        render_only=args.render_only,
+        has_template=args.template is not None,
+    )
+
+    with logger.stage("load_protocol_model"):
+        logger.info(f"Loading protocol model from {args.protocol_model_json}")
+        protocol_model = load_json(args.protocol_model_json)
+        logger.metric("families_in_model", len(protocol_model.get('families', [])), "families")
 
     # Load multi-stage summaries if available
     boundary_summary = None

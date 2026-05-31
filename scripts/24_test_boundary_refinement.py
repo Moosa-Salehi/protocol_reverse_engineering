@@ -26,6 +26,7 @@ from protocol_re.inference.llm_boundary_refinement import (
     refine_boundaries_with_llm,
     format_refinement_summary,
 )
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def test_quality_metrics():

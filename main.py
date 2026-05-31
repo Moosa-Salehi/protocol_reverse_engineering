@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
-import logging
 import os
 import re
 import shlex
@@ -11,17 +10,9 @@ import sys
 import time
 from pathlib import Path
 
-# ---------------------------------------------------------
-# Logging setup
-# ---------------------------------------------------------
-logging.basicConfig(
-    filename="main.log",
-    filemode="a",
-    level=logging.INFO,
-    format="[%(levelname)s] %(message)s",
-)
-
-logger = logging.getLogger(__name__)
+# Import structured logging
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from protocol_re.utils.logging import setup_pipeline_logging
 
 # ---------------------------------------------------------
 # Color output (fallback if colorama absent)
@@ -44,13 +35,6 @@ DEFAULT_MAX_MESSAGES = 200_000
 
 # Ensure child scripts can import the local package without installation.
 os.environ["PYTHONPATH"] = str(SRC_PATH)
-
-logger.info("\n")
-logger.info("-" * 110)
-logger.info('-' + " " * 108 + '-')
-logger.info("-" * 110)
-logger.info("Project root: %s", PROJECT_ROOT)
-logger.info("PYTHONPATH set to: %s", SRC_PATH)
 
 
 def _script(name: str) -> str:
@@ -857,10 +841,19 @@ def output_paths(args: argparse.Namespace) -> list[Path]:
 
 def main() -> None:
     print(f"{CYAN}=== Protocol RE Pipeline Runner ==={RESET}")
+
+    # Setup structured logging
+    log_dir = PROJECT_ROOT / "logs"
+    logger = setup_pipeline_logging(log_dir)
+
     logger.info("Pipeline started")
     start = time.time()
 
     args = parse_args()
+
+    logger.info(f"Project root: {PROJECT_ROOT}")
+    logger.info(f"PYTHONPATH set to: {SRC_PATH}")
+
     warn_missing_requirements()
     validate_args(args)
     prepare_output_dirs(args)
@@ -871,20 +864,25 @@ def main() -> None:
     else:
         source = args.input_folder
         mode = "PCAP"
-    logger.info("Input %s folder: %s", mode, source)
+    logger.info(f"Input {mode} folder: {source}")
     print(f"{GREEN}{mode} input:{RESET} {source}\n")
 
     try:
-        pipeline = build_pipeline(args)
+        with logger.stage("build_pipeline"):
+            pipeline = build_pipeline(args)
+            logger.metric("pipeline_stages", len(pipeline), "stages")
     except ValueError as exc:
+        logger.error(f"Pipeline build failed: {exc}")
         raise SystemExit(f"{RED}Error:{RESET} {exc}") from exc
 
-    for name, step_args in pipeline:
-        ok = run_step(name, step_args)
-        if not ok:
-            print(f"{RED}\nPipeline aborted due to failure in step: {name}{RESET}")
-            logger.error("Pipeline aborted at step: %s", name)
-            sys.exit(1)
+    for idx, (name, step_args) in enumerate(pipeline, 1):
+        logger.info(f"Stage {idx}/{len(pipeline)}: {name}")
+        with logger.stage(name):
+            ok = run_step(name, step_args)
+            if not ok:
+                print(f"{RED}\nPipeline aborted due to failure in step: {name}{RESET}")
+                logger.error(f"Pipeline aborted at step: {name}")
+                sys.exit(1)
 
     elapsed = time.time() - start
     print(f"\n{GREEN}Pipeline completed successfully!{RESET}")
@@ -892,8 +890,12 @@ def main() -> None:
     print(f"{GREEN}Output files:{RESET}")
     for path in output_paths(args):
         print(f"  - {path}")
+
     logger.info("Pipeline finished successfully")
-    logger.info(f"Total execution time: {elapsed:.2f}s")
+    logger.metric("total_execution_time", elapsed, "seconds")
+
+    # Log performance summary
+    logger.log_stage_summary()
 
 
 if __name__ == "__main__":

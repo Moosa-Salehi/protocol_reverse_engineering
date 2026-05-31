@@ -3,10 +3,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.corpus.message_corpus import iter_corpus_jsonl
 from protocol_re.features.extraction import stream_feature_artifacts
 from protocol_re.model.schema import FamilyAssignment
+from protocol_re.utils.logging import setup_stage_logging
 
 
 def main() -> None:
@@ -19,28 +24,49 @@ def main() -> None:
     parser.add_argument("--neural-model-path", default=None, help="Optional neural model path metadata passthrough")
     parser.add_argument("--latent-cache-path", default=None, help="Optional latent cache path metadata passthrough")
     parser.add_argument("--neural-batch-size", type=int, default=256, help="Optional neural batch size metadata passthrough")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    assignments = None
-    if args.assignments_json:
-        with open(args.assignments_json, "r", encoding="utf-8") as handle:
-            payload = json.load(handle)
-        assignments = [FamilyAssignment(**item) for item in payload["assignments"]]
+    # Setup logging
+    logger = setup_stage_logging("06_extract_features", Path(args.log_dir))
+
+    logger.info(f"Extracting features from {args.input_jsonl}")
+
+    with logger.stage("load_assignments"):
+        assignments = None
+        if args.assignments_json:
+            logger.info(f"Loading family assignments from {args.assignments_json}")
+            with open(args.assignments_json, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            assignments = [FamilyAssignment(**item) for item in payload["assignments"]]
+            logger.metric("assignments_loaded", len(assignments), "assignments")
+        else:
+            logger.info("No assignments provided, using heuristic grouping")
 
     family_path = args.output
 
-    family_features = stream_feature_artifacts(
-        iter_corpus_jsonl(args.input_jsonl),
-        assignments=assignments,
-        include_unassigned=args.include_unassigned,
-    )
-
-    with open(family_path, "w", encoding="utf-8") as handle:
-        json.dump(family_features, handle, indent=2)
+    with logger.stage("extract_features"):
+        family_features = stream_feature_artifacts(
+            iter_corpus_jsonl(args.input_jsonl),
+            assignments=assignments,
+            include_unassigned=args.include_unassigned,
+        )
 
     message_count = sum(item["message_count"] for item in family_features.values())
+    logger.metric("families_processed", len(family_features), "families")
+    logger.metric("messages_processed", message_count, "messages")
+    logger.info(f"Extracted features for {len(family_features)} families")
+
+    with logger.stage("write_output"):
+        with open(family_path, "w", encoding="utf-8") as handle:
+            json.dump(family_features, handle, indent=2)
+        logger.info(f"Wrote features to {family_path}")
+
     print(f"[+] Processed {message_count} assigned messages")
     print(f"[+] Wrote {len(family_features)} family feature records to {family_path}")
+
+    # Log performance summary
+    logger.log_stage_summary()
 
 
 if __name__ == "__main__":

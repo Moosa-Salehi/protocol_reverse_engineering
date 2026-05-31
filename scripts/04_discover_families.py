@@ -4,9 +4,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from protocol_re.clustering.family_discovery import discover_families
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
+from protocol_re.utils.logging import setup_stage_logging, ProgressTracker
 
 
 def main() -> None:
@@ -28,36 +30,75 @@ def main() -> None:
     parser.add_argument("--layer-aware", action="store_true", help="Enable layer-aware clustering (A6, experimental)")
     parser.add_argument("--framing-json", help="Framing JSON for layer detection (required with --layer-aware)")
     parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer detection")
+    parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
+    # Setup logging
+    logger = setup_stage_logging("04_discover_families", Path(args.log_dir))
+
+    logger.info(f"Loading messages from {args.input_jsonl}")
+
     if args.layer_aware and not args.framing_json:
+        logger.error("--framing-json is required when --layer-aware is enabled")
         print("[!] Error: --framing-json is required when --layer-aware is enabled", file=sys.stderr)
         sys.exit(1)
 
-    records = load_corpus_jsonl(args.input_jsonl)
+    with logger.stage("load_corpus"):
+        records = load_corpus_jsonl(args.input_jsonl)
+        logger.metric("message_count", len(records), "messages")
+        logger.info(f"Loaded {len(records)} messages")
 
     framing_data = None
     if args.layer_aware and args.framing_json:
+        logger.info(f"Loading framing data from {args.framing_json}")
         with open(args.framing_json, "r", encoding="utf-8") as handle:
             framing_data = json.load(handle)
 
-    result = discover_families(
-        records,
-        method=args.method,
+    logger.info(f"Starting family discovery with method={args.method}, feature_mode={args.feature_mode}")
+    logger.decision(
+        decision=f"Using {args.method} clustering with {args.feature_mode} features",
+        reason=f"User configuration",
         sample_size=args.sample_size,
         pca_components=args.pca_components,
-        dbscan_eps=args.dbscan_eps,
-        dbscan_min_samples=args.dbscan_min_samples,
-        hdbscan_min_cluster_size=args.hdbscan_min_cluster_size,
-        feature_mode=args.feature_mode,
-        neural_model_path=args.neural_model_path,
-        latent_cache_path=args.latent_cache_path,
-        neural_batch_size=args.neural_batch_size,
-        fusion_method=args.fusion_method,
-        layer_aware=args.layer_aware,
-        framing_data=framing_data,
-        layer_min_confidence=args.layer_min_confidence,
     )
+
+    with logger.stage("discover_families"):
+        result = discover_families(
+            records,
+            method=args.method,
+            sample_size=args.sample_size,
+            pca_components=args.pca_components,
+            dbscan_eps=args.dbscan_eps,
+            dbscan_min_samples=args.dbscan_min_samples,
+            hdbscan_min_cluster_size=args.hdbscan_min_cluster_size,
+            feature_mode=args.feature_mode,
+            neural_model_path=args.neural_model_path,
+            latent_cache_path=args.latent_cache_path,
+            neural_batch_size=args.neural_batch_size,
+            fusion_method=args.fusion_method,
+            layer_aware=args.layer_aware,
+            framing_data=framing_data,
+            layer_min_confidence=args.layer_min_confidence,
+        )
+    family_count = len({assignment.family_id for assignment in result.assignments})
+
+    logger.metric("families_discovered", family_count, "families")
+    logger.metric("assignments_created", len(result.assignments), "assignments")
+    logger.metric("sample_size", result.sample_size, "messages")
+    logger.metric("feature_shape", result.feature_shape)
+
+    if result.feature_mode != result.requested_feature_mode or result.fallback_reason:
+        logger.warning(
+            f"Feature mode fallback: {result.requested_feature_mode} -> {result.feature_mode}",
+            fallback_reason=result.fallback_reason or "unspecified"
+        )
+        logger.decision(
+            decision=f"Fallback to {result.feature_mode} mode",
+            reason=result.fallback_reason or "unspecified",
+            requested_mode=result.requested_feature_mode,
+            effective_mode=result.feature_mode,
+        )
+
     requested_sample = args.sample_size if args.sample_size is not None else len(records)
     assignment_strategy = (
         "full_corpus_clustering"
@@ -85,10 +126,12 @@ def main() -> None:
             "fallback_reason": result.fallback_reason,
         },
     }
-    with open(args.output_json, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2)
 
-    family_count = len({assignment.family_id for assignment in result.assignments})
+    with logger.stage("write_output"):
+        with open(args.output_json, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
+        logger.info(f"Wrote family assignments to {args.output_json}")
+
     print(f"[+] Family discovery clustering method: {args.method}")
     print(f"[+] Family discovery requested feature mode: {result.requested_feature_mode}")
     print(f"[+] Family discovery effective feature mode: {result.feature_mode}")
@@ -101,6 +144,9 @@ def main() -> None:
         )
     print(f"[+] Discovered {family_count} families")
     print(f"[+] Wrote {len(result.assignments)} family assignments to {args.output_json}")
+
+    # Log performance summary
+    logger.log_stage_summary()
 
 
 if __name__ == "__main__":
