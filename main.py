@@ -36,6 +36,9 @@ DEFAULT_MAX_MESSAGES = 200_000
 # Ensure child scripts can import the local package without installation.
 os.environ["PYTHONPATH"] = str(SRC_PATH)
 
+# Setup structured logging
+log_dir = PROJECT_ROOT / "logs"
+logger = setup_pipeline_logging(log_dir)
 
 def _script(name: str) -> str:
     return str(PROJECT_ROOT / "scripts" / name)
@@ -55,12 +58,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     family_features_json = data_dir / "03_family_features.json"
     framing_json = data_dir / "04_framing.json"
     families_json = data_dir / "05_families.json"
-    families_refined_json = data_dir / "05_families_refined.json"  # A5: LLM boundary refinement
-    families_labeled_json = data_dir / "05_families_labeled.json"  # A5: LLM semantic labeling
+    families_refined_json = data_dir / "05_families_refined.json" 
+    families_labeled_json = data_dir / "05_families_labeled.json"
     pairs_json = data_dir / "06_pairs.json"
     keywords_json = data_dir / "07_keywords.json"
     relations_json = data_dir / "08_relations.json"
-    relations_validated_json = data_dir / "08_relations_validated.json"  # A5: LLM relation validation
+    relations_validated_json = data_dir / "08_relations_validated.json"
     semantics_json = data_dir / "09_semantics.json"
     model_json = data_dir / "10_protocol_model.json"
     refined_model_json = data_dir / "10_protocol_model.refined.json"
@@ -183,30 +186,27 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         ]
     )
 
-    # A5: Stage 07b - LLM Boundary Refinement (optional)
-    if args.enable_llm_boundary_refinement:
-        pipeline.append(
-            (
-                "07b_refine_boundaries_llm",
-                [
-                    _script("07b_refine_boundaries_llm.py"),
-                    _path(messages_jsonl),
-                    _path(families_json),
-                    _path(families_refined_json),
-                    "--assignments-json",
-                    _path(assignments_json),
-                    "--llm-config",
-                    _path(args.llm_config),
-                    "--min-confidence",
-                    str(args.llm_boundary_confidence),
-                ]
-                + (["--render-only"] if args.llm_render_only else []),
-            )
+    # Stage 07b - LLM Boundary Refinement
+    pipeline.append(
+        (
+            "07b_refine_boundaries_llm",
+            [
+                _script("07b_refine_boundaries_llm.py"),
+                _path(messages_jsonl),
+                _path(families_json),
+                _path(families_refined_json),
+                "--assignments-json",
+                _path(assignments_json),
+                "--llm-config",
+                _path(args.llm_config),
+                "--min-confidence",
+                str(args.llm_boundary_confidence),
+            ]
+            + (["--render-only"] if args.llm_render_only else []),
         )
-        # Use refined families for subsequent stages
-        families_for_model = families_refined_json
-    else:
-        families_for_model = families_json
+    )
+    # Use refined families for subsequent stages
+    families_for_model = families_refined_json
 
     pipeline.extend([
             (
@@ -261,29 +261,26 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
         ])
 
-    # A5: Stage 10b - LLM Relation Validation (optional)
-    if args.enable_llm_relation_validation:
-        pipeline.append(
-            (
-                "10b_validate_relations_llm",
-                [
-                    _script("10b_validate_relations_llm.py"),
-                    _path(relations_json),
-                    _path(relations_validated_json),
-                    "--families-json",
-                    _path(families_for_model),
-                    "--llm-config",
-                    _path(args.llm_config),
-                    "--min-confidence",
-                    str(args.llm_relation_confidence),
-                ]
-                + (["--render-only"] if args.llm_render_only else []),
-            )
+    # Stage 10b - LLM Relation Validation (optional)
+    pipeline.append(
+        (
+            "10b_validate_relations_llm",
+            [
+                _script("10b_validate_relations_llm.py"),
+                _path(relations_json),
+                _path(relations_validated_json),
+                "--families-json",
+                _path(families_for_model),
+                "--llm-config",
+                _path(args.llm_config),
+                "--min-confidence",
+                str(args.llm_relation_confidence),
+            ]
+            + (["--render-only"] if args.llm_render_only else []),
         )
-        # Use validated relations for subsequent stages
-        relations_for_model = relations_validated_json
-    else:
-        relations_for_model = relations_json
+    )
+    # Use validated relations for subsequent stages
+    relations_for_model = relations_validated_json
 
     pipeline.extend([
             (
@@ -303,29 +300,28 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
         ])
 
-    # A5: Stage 11b - LLM Semantic Labeling (optional)
-    if args.enable_llm_semantic_labeling:
-        pipeline.append(
-            (
-                "11b_label_semantics_llm",
-                [
-                    _script("11b_label_semantics_llm.py"),
-                    _path(families_for_model),
-                    _path(families_labeled_json),
-                    "--relations-json",
-                    _path(relations_for_model),
-                    "--features-json",
-                    _path(family_features_json),
-                    "--llm-config",
-                    _path(args.llm_config),
-                    "--min-confidence",
-                    str(args.llm_semantic_confidence),
-                ]
-                + (["--render-only"] if args.llm_render_only else []),
-            )
+    # Stage 11b - LLM Semantic Labeling (optional)
+    pipeline.append(
+        (
+            "11b_label_semantics_llm",
+            [
+                _script("11b_label_semantics_llm.py"),
+                _path(families_for_model),
+                _path(families_labeled_json),
+                "--relations-json",
+                _path(relations_for_model),
+                "--features-json",
+                _path(family_features_json),
+                "--llm-config",
+                _path(args.llm_config),
+                "--min-confidence",
+                str(args.llm_semantic_confidence),
+            ]
+            + (["--render-only"] if args.llm_render_only else []),
         )
-        # Use labeled families for protocol model
-        families_for_model = families_labeled_json
+    )
+    # Use labeled families for protocol model
+    families_for_model = families_labeled_json
 
     pipeline.extend([
             (
@@ -401,7 +397,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_args.extend(["--fusion-method", args.fusion_method])
                 break
 
-    # A6: Add layer detection flags if enabled
+    # Add layer detection flags if enabled
     if args.enable_layer_detection:
         for step_name, step_args in pipeline:
             if step_name == "05_infer_framing":
@@ -409,7 +405,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             elif step_name == "04_discover_families":
                 step_args.extend(["--layer-aware", "--framing-json", _path(framing_json), "--layer-min-confidence", str(args.layer_min_confidence)])
 
-    # Add boundary detection parameters (enhanced mode is now default)
+    # Add boundary detection parameters
     for step_name, step_args in pipeline:
         if step_name == "07_infer_boundaries":
             step_args.extend(["--max-fields", str(args.boundary_max_fields)])
@@ -508,7 +504,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 if args.ground_truth_json:
                     step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
 
-    # Add boundary detection parameters (enhanced mode is now default)
+    # Add boundary detection parameters
     for step_name, step_args in pipeline:
         if step_name == "07_infer_boundaries":
             step_args.extend(["--max-fields", str(args.boundary_max_fields)])
@@ -617,7 +613,7 @@ def parse_args() -> argparse.Namespace:
         "--family-feature-mode",
         choices=["raw_bytes", "structural", "neural", "hybrid"],
         default="raw_bytes",
-        help="Feature encoding for family discovery. Default: raw_bytes (recommended). Neural mode is experimental.",
+        help="Feature encoding for family discovery. Default: raw_bytes.",
     )
     family_group.add_argument(
         "--family-neural-model-path",
@@ -665,12 +661,6 @@ def parse_args() -> argparse.Namespace:
         default=0.5,
         help="Structural feature weight for fixed fusion method (0.0-1.0). Default: 0.5.",
     )
-
-    boundary_group.add_argument(
-        "--enhanced-boundaries",
-        action="store_true",
-        help="(Deprecated: enhanced mode is now default) Use enhanced boundary detection with anti-fragmentation.",
-    )
     boundary_group.add_argument(
         "--boundary-score-threshold",
         type=float,
@@ -689,12 +679,11 @@ def parse_args() -> argparse.Namespace:
         help="Disable multi-pass segment merging (not recommended).",
     )
 
-    # A6: Multi-layer protocol detection
-    layer_group = parser.add_argument_group("A6 - Multi-layer protocol detection")
+    layer_group = parser.add_argument_group("Multi-layer protocol detection")
     layer_group.add_argument(
         "--enable-layer-detection",
         action="store_true",
-        help="Enable multi-layer protocol detection (A6). Detects transport headers and clusters on inner protocol only. Experimental.",
+        help="Enable multi-layer protocol detection. Detects transport headers and clusters on inner protocol only. Experimental.",
     )
     layer_group.add_argument(
         "--layer-min-confidence",
@@ -729,10 +718,6 @@ def parse_args() -> argparse.Namespace:
     llm_analysis_group.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
     llm_analysis_group.add_argument("--llm-max-tokens", type=int, default=4000, help="Max output tokens for stage 15 LLM analysis.")
 
-    # Multi-stage LLM integration (A5)
-    llm_analysis_group.add_argument("--enable-llm-boundary-refinement", action="store_true", help="Enable LLM-assisted boundary refinement (stage 07b) to reduce over-segmentation.")
-    llm_analysis_group.add_argument("--enable-llm-semantic-labeling", action="store_true", help="Enable LLM-assisted semantic field labeling (stage 11b).")
-    llm_analysis_group.add_argument("--enable-llm-relation-validation", action="store_true", help="Enable LLM-assisted relation validation (stage 10b) to filter false positives.")
     llm_analysis_group.add_argument("--llm-boundary-confidence", type=float, default=0.6, help="Minimum confidence for LLM boundary merge suggestions (default: 0.6).")
     llm_analysis_group.add_argument("--llm-semantic-confidence", type=float, default=0.5, help="Minimum confidence for LLM semantic labels (default: 0.5).")
     llm_analysis_group.add_argument("--llm-relation-confidence", type=float, default=0.7, help="Minimum confidence for LLM relation validation (default: 0.7).")
@@ -841,10 +826,6 @@ def output_paths(args: argparse.Namespace) -> list[Path]:
 
 def main() -> None:
     print(f"{CYAN}=== Protocol RE Pipeline Runner ==={RESET}")
-
-    # Setup structured logging
-    log_dir = PROJECT_ROOT / "logs"
-    logger = setup_pipeline_logging(log_dir)
 
     logger.info("Pipeline started")
     start = time.time()
