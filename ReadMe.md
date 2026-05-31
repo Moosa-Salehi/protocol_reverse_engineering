@@ -131,6 +131,44 @@ python scripts/07_infer_boundaries.py data/01_messages.jsonl data/05_families.js
 
 See `docs/BOUNDARY_REFINEMENT_GUIDE.md` for detailed usage examples and `A2_COMPLETE.md` for full implementation details.
 
+## Multi-layer protocol detection (A6)
+
+Many real-world protocols have stable outer headers (transport layer) followed by variable application payloads. Examples include Modbus TCP (MBAP header + Modbus PDU), S7comm (TPKT/COTP + S7 payload), and similar industrial protocols. The pipeline can detect these layer boundaries automatically and report them separately.
+
+**Layer detection is opt-in** via `--enable-layer-detection`. When enabled:
+
+1. **Stage 05 (framing)** detects layer boundaries using length fields, stable prefixes, and transaction counters
+2. **Layer information** is added to framing output (`data/04_framing.json`)
+3. **Protocol model** includes layer metadata per family
+4. **Fields** are marked with layer attribution (`transport` vs `application`)
+
+**Detection strategy:**
+- Length fields pointing past their position suggest transport headers
+- Stable prefix + variable suffix suggests layer boundary
+- Transaction/counter fields in header region indicate transport layer
+- Confidence scoring based on evidence strength and consistency
+
+**Usage:**
+```bash
+# Enable layer detection (experimental)
+python main.py pcaps --tshark-filter mbtcp --enable-layer-detection
+
+# Adjust confidence threshold
+python main.py pcaps --tshark-filter mbtcp --enable-layer-detection --layer-min-confidence 0.7
+```
+
+**Impact:**
+- Better field organization for layered protocols
+- Clearer separation of transport vs application logic
+- No impact on flat protocols (layer detection returns no layers)
+
+**Limitations:**
+- Layer-aware clustering (re-clustering on inner protocol only) is not yet implemented
+- Currently detects layers but clustering still uses full messages
+- Future work: two-pass clustering (initial → detect layers → re-cluster on inner protocol)
+
+**Note:** All layer detection is protocol-agnostic and based on statistical patterns from framing analysis.
+
 ## Discriminator salience
 
 Stage 09 now treats the legacy keyword step as discriminator/opcode candidate discovery. It keeps `data/07_keywords.json` and the `keyword` field for compatibility, but also emits `discriminator_candidates`/`opcode_candidates` with `salience_score`, `mutual_information`, `contrastive_separation`, `excluded_roles`, and `confidence`. Learned salience uses a small cached attention classifier over byte offsets, optional gradient salience from `--neural-model-path` when a compatible PyTorch encoder is available, and symbolic gates for cardinality, offset stability, family/direction mutual information, length-profile separation, and known framing roles. Fields already classified as length, transaction/counter, checksum, timestamp, or payload blob are suppressed.

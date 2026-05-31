@@ -57,8 +57,22 @@ def infer_framing_hypotheses(
     max_header_bytes: int = 32,
     max_hypotheses_per_family: int = 3,
     min_messages: int = 3,
+    detect_layers: bool = False,
+    layer_min_confidence: float = 0.6,
 ) -> Dict[str, Any]:
-    """Infer protocol-agnostic frame/header layouts per family and globally."""
+    """Infer protocol-agnostic frame/header layouts per family and globally.
+
+    Args:
+        family_messages: Dictionary mapping family_id to list of message hex strings
+        max_header_bytes: Maximum prefix bytes to scan for framing fields
+        max_hypotheses_per_family: Layout hypotheses retained per family
+        min_messages: Minimum messages needed for non-fallback family inference
+        detect_layers: Enable multi-layer protocol detection (A6)
+        layer_min_confidence: Minimum confidence for layer boundary detection
+
+    Returns:
+        Dictionary with framing hypotheses and optional layer information
+    """
     family_results: Dict[str, Any] = {}
     global_header_votes: Counter[int] = Counter()
     global_field_votes: Counter[str] = Counter()
@@ -73,6 +87,18 @@ def infer_framing_hypotheses(
             max_hypotheses=max_hypotheses_per_family,
             min_messages=min_messages,
         )
+
+        # A6: Add layer boundary detection if enabled
+        if detect_layers:
+            from protocol_re.inference.layer_detection import detect_layer_boundary_from_framing
+            layer_boundary = detect_layer_boundary_from_framing(result, layer_min_confidence)
+            result["layer_boundary"] = {
+                "detected": layer_boundary is not None,
+                "boundary_offset": layer_boundary.offset if layer_boundary else 0,
+                "confidence": layer_boundary.confidence if layer_boundary else 0.0,
+                "evidence": layer_boundary.evidence if layer_boundary else {},
+            }
+
         family_results[family_id] = result
         best = (result.get("layout_hypotheses") or [{}])[0]
         if best:
@@ -86,14 +112,27 @@ def infer_framing_hypotheses(
         {"header_end": header_end, "family_count": count, "family_ratio": round(count / max(family_count, 1), 4)}
         for header_end, count in global_header_votes.most_common(10)
     ]
+
+    metadata = {
+        "algorithm": "protocol_agnostic_framing_v1",
+        "family_count": family_count,
+        "max_header_bytes": max_header_bytes,
+        "max_hypotheses_per_family": max_hypotheses_per_family,
+        "min_messages": min_messages,
+    }
+
+    # A6: Add layer detection metadata
+    if detect_layers:
+        metadata["layer_detection_enabled"] = True
+        metadata["layer_min_confidence"] = layer_min_confidence
+        layered_count = sum(
+            1 for result in family_results.values()
+            if result.get("layer_boundary", {}).get("detected", False)
+        )
+        metadata["families_with_layers"] = layered_count
+
     return {
-        "metadata": {
-            "algorithm": "protocol_agnostic_framing_v1",
-            "family_count": family_count,
-            "max_header_bytes": max_header_bytes,
-            "max_hypotheses_per_family": max_hypotheses_per_family,
-            "min_messages": min_messages,
-        },
+        "metadata": metadata,
         "global": {
             "common_header_ends": common_header_ends,
             "field_type_counts": dict(global_field_votes.most_common()),

@@ -42,6 +42,7 @@
         "field_type": {"type": "string"},
         "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
         "endian": {"type": ["string", "null"]},
+        "layer": {"type": ["string", "null"], "enum": ["transport", "application", "unknown", null], "description": "A6: Protocol layer attribution"},
         "evidence": {"type": "object"},
         "attributes": {"type": "object"}
       }
@@ -139,6 +140,17 @@
         "framing_summary": {
           "type": ["object", "null"],
           "description": "Protocol-agnostic framing/header layout hypotheses from stage 04."
+        },
+        "layer_info": {
+          "type": ["object", "null"],
+          "description": "A6: Multi-layer protocol structure information",
+          "properties": {
+            "has_layers": {"type": "boolean"},
+            "outer_header_end": {"type": "integer", "minimum": 0},
+            "inner_payload_start": {"type": "integer", "minimum": 0},
+            "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+            "evidence": {"type": "object"}
+          }
         },
         "related_families": {
           "type": "array",

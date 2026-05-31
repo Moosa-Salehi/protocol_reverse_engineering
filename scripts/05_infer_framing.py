@@ -19,6 +19,8 @@ def main() -> None:
     parser.add_argument("--max-header-bytes", type=int, default=32, help="Maximum prefix bytes to scan for framing fields")
     parser.add_argument("--max-hypotheses-per-family", type=int, default=3, help="Layout hypotheses retained per family")
     parser.add_argument("--min-messages", type=int, default=3, help="Minimum messages needed for non-fallback family inference")
+    parser.add_argument("--detect-layers", action="store_true", help="Enable multi-layer protocol detection (A6)")
+    parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer boundary detection (default: 0.6)")
     args = parser.parse_args()
 
     records = load_corpus_jsonl(args.input_jsonl)
@@ -38,6 +40,8 @@ def main() -> None:
         max_header_bytes=args.max_header_bytes,
         max_hypotheses_per_family=args.max_hypotheses_per_family,
         min_messages=args.min_messages,
+        detect_layers=args.detect_layers,
+        layer_min_confidence=args.layer_min_confidence,
     )
 
     with open(args.output_json, "w", encoding="utf-8") as handle:
@@ -51,6 +55,9 @@ def main() -> None:
             fallback_counts[reason] = fallback_counts.get(reason, 0) + 1
 
     print(f"[+] Framing inference algorithm: {result.get('metadata', {}).get('algorithm', 'unknown')}")
+    if detect_layers := result.get('metadata', {}).get('layer_detection_enabled', False):
+        layered_count = result.get('metadata', {}).get('families_with_layers', 0)
+        print(f"[+] Layer detection enabled: {layered_count} families with detected layers")
     if fallback_counts:
         reasons = ", ".join(f"{reason}={count}" for reason, count in sorted(fallback_counts.items()))
         print(f"[!] Warning: framing fallback applied for {sum(fallback_counts.values())} families ({reasons})", file=sys.stderr)

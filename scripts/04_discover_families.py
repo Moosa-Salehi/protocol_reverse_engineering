@@ -25,9 +25,22 @@ def main() -> None:
     parser.add_argument("--neural-batch-size", type=int, default=256)
     parser.add_argument("--fusion-method", choices=["concat", "adaptive", "learned", "fixed"], default="adaptive",
                         help="Hybrid feature fusion method (default: adaptive)")
+    parser.add_argument("--layer-aware", action="store_true", help="Enable layer-aware clustering (A6, experimental)")
+    parser.add_argument("--framing-json", help="Framing JSON for layer detection (required with --layer-aware)")
+    parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer detection")
     args = parser.parse_args()
 
+    if args.layer_aware and not args.framing_json:
+        print("[!] Error: --framing-json is required when --layer-aware is enabled", file=sys.stderr)
+        sys.exit(1)
+
     records = load_corpus_jsonl(args.input_jsonl)
+
+    framing_data = None
+    if args.layer_aware and args.framing_json:
+        with open(args.framing_json, "r", encoding="utf-8") as handle:
+            framing_data = json.load(handle)
+
     result = discover_families(
         records,
         method=args.method,
@@ -41,6 +54,9 @@ def main() -> None:
         latent_cache_path=args.latent_cache_path,
         neural_batch_size=args.neural_batch_size,
         fusion_method=args.fusion_method,
+        layer_aware=args.layer_aware,
+        framing_data=framing_data,
+        layer_min_confidence=args.layer_min_confidence,
     )
     requested_sample = args.sample_size if args.sample_size is not None else len(records)
     assignment_strategy = (

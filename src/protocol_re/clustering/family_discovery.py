@@ -202,9 +202,13 @@ def discover_families(
     latent_cache_path: str | None = None,
     neural_batch_size: int = 256,
     fusion_method: str = "adaptive",  # New parameter for learned fusion
+    layer_aware: bool = False,  # A6: Enable layer-aware clustering
+    framing_data: Dict[str, Any] | None = None,  # A6: Framing data for layer detection
+    layer_min_confidence: float = 0.6,  # A6: Minimum confidence for layer detection
 ) -> ClusteringResult:
     if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
         raise ValueError(f"Unsupported feature mode: {feature_mode}")
+
     working_records = unique_messages(records)
     if sample_size is not None and len(working_records) > sample_size:
         working_records = working_records[:sample_size]
