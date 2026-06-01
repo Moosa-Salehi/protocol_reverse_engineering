@@ -18,7 +18,7 @@ from pathlib import Path
 from statistics import mean, stdev
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.clustering.hybrid_features import build_feature_matrix

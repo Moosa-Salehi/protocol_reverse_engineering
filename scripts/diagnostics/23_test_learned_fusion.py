@@ -14,7 +14,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 import json
 import numpy as np
@@ -40,7 +40,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="neural",
-        model_path="pre_trained/industrial_VAE.pth",
+        model_path="assets/pre_trained/industrial_VAE.pth",
         latent_cache_path="data/02_latent_cache.json",
     )
 
@@ -70,7 +70,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="hybrid",
-        model_path="pre_trained/industrial_VAE.pth",
+        model_path="assets/pre_trained/industrial_VAE.pth",
         latent_cache_path="data/02_latent_cache.json",
         fusion_method="concat",
     )
@@ -87,7 +87,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="hybrid",
-        model_path="pre_trained/industrial_VAE.pth",
+        model_path="assets/pre_trained/industrial_VAE.pth",
         latent_cache_path="data/02_latent_cache.json",
         fusion_method="adaptive",
     )
@@ -110,7 +110,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="hybrid",
-        model_path="pre_trained/industrial_VAE.pth",
+        model_path="assets/pre_trained/industrial_VAE.pth",
         latent_cache_path="data/02_latent_cache.json",
         fusion_method="learned",
     )

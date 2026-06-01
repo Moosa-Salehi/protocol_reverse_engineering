@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from protocol_re.inference.boundary_detection import infer_segments
 from protocol_re.inference.boundary_quality_metrics import (

@@ -33,15 +33,18 @@ A protocol-agnostic reverse engineering pipeline that analyzes binary protocol t
 ```
 protocol_re/
 ├── src/protocol_re/          # Core library
-├── scripts/                  # Pipeline stages (01-24)
+├── scripts/                  # Pipeline stages (01-19)
+│   └── diagnostics/          # Standalone diagnostic/test scripts (20-24)
 ├── docs/                     # Documentation
 ├── data/                     # Intermediate artifacts
 ├── output/                   # Final reports
-├── pre_trained/              # Trained nueral models
-├── prompts/                  # Prompts used in LLM assisted stages
-├── schema/                   # protocol model, evaluation schema
+├── assets/                   # Static runtime resources
+│   ├── pre_trained/          # Trained neural models
+│   ├── prompts/              # Prompts used in LLM assisted stages
+│   └── schema/               # protocol model, evaluation schema
+├── config/                   # Config (e.g. llm_config.json)
 ├── tests/                    # test modules
-├── truth-files/              # Real protocol specification, used for evaluation
+├── truth_files/              # Real protocol specification, used for evaluation
 └── main.py                   # Pipeline runner
 ```
 

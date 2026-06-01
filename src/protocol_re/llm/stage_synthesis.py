@@ -155,7 +155,7 @@ def render_synthesis_prompt(evidence: Dict[str, Any], template_path: Optional[st
     if template_path:
         template = load_prompt_template(template_path)
     else:
-        template = load_prompt_template("prompts/protocol_synthesis.md")
+        template = load_prompt_template("assets/prompts/protocol_synthesis.md")
 
     evidence_json = json.dumps(evidence, indent=2, ensure_ascii=False)
     prompt = template + "\n\n## Evidence Bundle\n\n```json\n" + evidence_json + "\n```\n"

@@ -36,7 +36,7 @@ def main() -> None:
     parser.add_argument("families_json", help="Input families JSON from stage 07")
     parser.add_argument("output_json", help="Output refined families JSON")
     parser.add_argument("--assignments-json", help="Family assignments from stage 04")
-    parser.add_argument("--llm-config", default="LLM_config.json", help="LLM configuration JSON")
+    parser.add_argument("--llm-config", default="config/llm_config.json", help="LLM configuration JSON")
     parser.add_argument("--render-only", action="store_true", help="Only render prompts, don't call LLM")
     parser.add_argument("--min-confidence", type=float, default=0.6, help="Minimum confidence for merge suggestions")
     parser.add_argument("--max-samples", type=int, default=10, help="Maximum sample messages per family")
@@ -109,7 +109,7 @@ def main() -> None:
     # Create stage config
     stage_config = StageConfig(
         stage=LLMStage.BOUNDARY_REFINEMENT,
-        prompt_template_path=args.prompt_template or "prompts/boundary_refinement.md",
+        prompt_template_path=args.prompt_template or "assets/prompts/boundary_refinement.md",
         min_confidence=args.min_confidence,
         render_only=args.render_only,
         max_tokens=3000,

@@ -33,7 +33,7 @@ def main() -> None:
     parser.add_argument("relations_json", help="Input relations JSON from stage 10")
     parser.add_argument("output_json", help="Output validated relations JSON")
     parser.add_argument("--families-json", help="Families JSON for family summaries")
-    parser.add_argument("--llm-config", default="LLM_config.json", help="LLM configuration JSON")
+    parser.add_argument("--llm-config", default="config/llm_config.json", help="LLM configuration JSON")
     parser.add_argument("--render-only", action="store_true", help="Only render prompts, don't call LLM")
     parser.add_argument("--min-confidence", type=float, default=0.7, help="Minimum confidence for keeping relations")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
@@ -106,7 +106,7 @@ def main() -> None:
     # Create stage config
     stage_config = StageConfig(
         stage=LLMStage.RELATION_VALIDATION,
-        prompt_template_path=args.prompt_template or "prompts/relation_validation.md",
+        prompt_template_path=args.prompt_template or "assets/prompts/relation_validation.md",
         min_confidence=args.min_confidence,
         render_only=args.render_only,
         max_tokens=3000,

@@ -42,7 +42,7 @@ def main() -> None:
     parser.add_argument("llm_analysis_json", help="Input LLM analysis artifact from scripts/15_analyze_with_llm.py")
     parser.add_argument("refined_model_json", help="Output refined protocol model, normally data/10_protocol_model.refined.json")
     parser.add_argument("--evidence-json", default="data/12_llm_evidence.json", help="Evidence bundle used for support gating")
-    parser.add_argument("--schema-json", default="schema/protocol_model.schema.json", help="Protocol model JSON schema")
+    parser.add_argument("--schema-json", default="assets/schema/protocol_model.schema.json", help="Protocol model JSON schema")
     parser.add_argument("--patches-out", default="data/13_llm_patches.json", help="Output collected patch artifact")
     parser.add_argument(
         "--validation-out",

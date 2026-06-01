@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.inference.boundary_detection import infer_segments

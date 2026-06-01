@@ -244,7 +244,7 @@ Implementation:
 
 ### Neural Mode
 
-Uses 32D VAE latent vectors from `pre_trained/industrial_VAE.pth`.
+Uses 32D VAE latent vectors from `assets/pre_trained/industrial_VAE.pth`.
 
 Implementation:
 - Load pre-trained VAE model

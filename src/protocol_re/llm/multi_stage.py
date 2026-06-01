@@ -80,7 +80,7 @@ def create_default_pipeline(
     if enable_boundary_refinement:
         stages.append(StageConfig(
             stage=LLMStage.BOUNDARY_REFINEMENT,
-            prompt_template_path="prompts/boundary_refinement.md",
+            prompt_template_path="assets/prompts/boundary_refinement.md",
             max_tokens=3000,
             temperature=0.1,
             min_confidence=0.6,
@@ -90,7 +90,7 @@ def create_default_pipeline(
     if enable_semantic_labeling:
         stages.append(StageConfig(
             stage=LLMStage.SEMANTIC_LABELING,
-            prompt_template_path="prompts/semantic_labeling.md",
+            prompt_template_path="assets/prompts/semantic_labeling.md",
             max_tokens=4000,
             temperature=0.1,
             min_confidence=0.5,
@@ -100,7 +100,7 @@ def create_default_pipeline(
     if enable_relation_validation:
         stages.append(StageConfig(
             stage=LLMStage.RELATION_VALIDATION,
-            prompt_template_path="prompts/relation_validation.md",
+            prompt_template_path="assets/prompts/relation_validation.md",
             max_tokens=3000,
             temperature=0.1,
             min_confidence=0.7,

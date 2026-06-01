@@ -34,7 +34,7 @@ def main() -> None:
     parser.add_argument("output_json", help="Output families JSON with semantic labels")
     parser.add_argument("--relations-json", help="Relations JSON for semantic inference")
     parser.add_argument("--features-json", help="Family features JSON for field statistics")
-    parser.add_argument("--llm-config", default="LLM_config.json", help="LLM configuration JSON")
+    parser.add_argument("--llm-config", default="config/llm_config.json", help="LLM configuration JSON")
     parser.add_argument("--render-only", action="store_true", help="Only render prompts, don't call LLM")
     parser.add_argument("--min-confidence", type=float, default=0.5, help="Minimum confidence for semantic labels")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
@@ -128,7 +128,7 @@ def main() -> None:
     # Create stage config
     stage_config = StageConfig(
         stage=LLMStage.SEMANTIC_LABELING,
-        prompt_template_path=args.prompt_template or "prompts/semantic_labeling.md",
+        prompt_template_path=args.prompt_template or "assets/prompts/semantic_labeling.md",
         min_confidence=args.min_confidence,
         render_only=args.render_only,
         max_tokens=4000,

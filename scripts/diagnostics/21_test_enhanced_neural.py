@@ -14,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.clustering.hybrid_features import build_feature_matrix
@@ -64,7 +64,7 @@ def analyze_features(matrix: np.ndarray, name: str):
 def main():
     parser = argparse.ArgumentParser(description="Test enhanced neural features")
     parser.add_argument("messages_jsonl", help="Path to messages JSONL")
-    parser.add_argument("--model-path", default="pre_trained/industrial_VAE.pth")
+    parser.add_argument("--model-path", default="assets/pre_trained/industrial_VAE.pth")
     parser.add_argument("--latent-cache", default="data/latent_cache_test.json")
     parser.add_argument("--sample-size", type=int, default=5000)
     args = parser.parse_args()

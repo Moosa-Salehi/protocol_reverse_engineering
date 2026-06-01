@@ -60,7 +60,7 @@ def render_semantic_prompt(evidence: Dict[str, Any], template_path: Optional[str
     if template_path:
         template = load_prompt_template(template_path)
     else:
-        template = load_prompt_template("prompts/semantic_labeling.md")
+        template = load_prompt_template("assets/prompts/semantic_labeling.md")
 
     evidence_json = json.dumps(evidence, indent=2, ensure_ascii=False)
     return template + "\n\n## Evidence Bundle\n\n```json\n" + evidence_json + "\n```\n"

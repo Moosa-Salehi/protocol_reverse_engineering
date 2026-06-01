@@ -49,7 +49,7 @@ def main() -> None:
     )
     parser.add_argument("protocol_model_json", help="Input protocol model JSON (refined if available)")
     parser.add_argument("output_json", help="Output LLM synthesis JSON")
-    parser.add_argument("--config", default="LLM_config.json", help="LLM config JSON")
+    parser.add_argument("--config", default="config/llm_config.json", help="LLM config JSON")
     parser.add_argument("--prompt-out", help="Optional path to write the rendered prompt")
     parser.add_argument("--template", help="Optional custom prompt template")
     parser.add_argument("--render-only", action="store_true", help="Only render prompt, don't call LLM")
@@ -168,7 +168,7 @@ def main() -> None:
     # Create stage config
     stage_config = StageConfig(
         stage=LLMStage.PROTOCOL_SYNTHESIS,
-        prompt_template_path=args.template or "prompts/protocol_synthesis.md",
+        prompt_template_path=args.template or "assets/prompts/protocol_synthesis.md",
         render_only=args.render_only,
         max_tokens=4000,
         temperature=0.2,

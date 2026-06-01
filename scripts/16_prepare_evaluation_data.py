@@ -72,7 +72,7 @@ def main() -> None:
     parser.add_argument("protocol_model_json", help="Input protocol model JSON from stage 12")
     parser.add_argument("evaluation_json", help="Input pipeline evaluation JSON from stage 13")
     parser.add_argument("llm_analysis_json", help="Input LLM analysis JSON from stage 15")
-    parser.add_argument("output_json", help="Output evaluation input JSON conforming to schema/evaluation_input.schema.json")
+    parser.add_argument("output_json", help="Output evaluation input JSON conforming to assets/schema/evaluation_input.schema.json")
     parser.add_argument("--refined-protocol-model-json", help="Optional refined model JSON from stage 15b")
     parser.add_argument("--patch-validation-json", help="Optional patch validation JSON from stage 15b")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")

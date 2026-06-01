@@ -224,7 +224,7 @@ python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode structural
 Use VAE latent vectors:
 
 ```bash
-python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode neural --family-neural-model-path pre_trained/industrial_VAE.pth
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode neural --family-neural-model-path assets/pre_trained/industrial_VAE.pth
 ```
 
 **Pros:**
@@ -245,10 +245,10 @@ Combine neural and structural features:
 
 ```bash
 # Adaptive fusion (recommended)
-python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method adaptive --family-neural-model-path pre_trained/industrial_VAE.pth
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method adaptive --family-neural-model-path assets/pre_trained/industrial_VAE.pth
 
 # Learned fusion with MLP
-python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method learned --family-neural-model-path pre_trained/industrial_VAE.pth
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method learned --family-neural-model-path assets/pre_trained/industrial_VAE.pth
 
 # Fixed weights
 python main.py pcaps/ --tshark-filter mbtcp \
@@ -256,7 +256,7 @@ python main.py pcaps/ --tshark-filter mbtcp \
     --fusion-method fixed \
     --fusion-neural-weight 0.3 \
     --fusion-structural-weight 0.7 \
-    --family-neural-model-path pre_trained/industrial_VAE.pth
+    --family-neural-model-path assets/pre_trained/industrial_VAE.pth
 ```
 
 **Fusion methods:**
@@ -274,7 +274,7 @@ python main.py pcaps/ --tshark-filter mbtcp \
 
 ### Setup
 
-1. Create `LLM_config.json`:
+1. Create `config/llm_config.json`:
 
 ```json
 {
@@ -299,7 +299,7 @@ $env:OPENAI_API_KEY = "<your-api-key>"
 
 ### Run with LLM Refinement
 
-The runner tries to load `LLM_config.json` from root folder.
+The runner tries to load `config/llm_config.json` from root folder.
 
 ```bash
 python main.py pcaps/ --tshark-filter mbtcp
@@ -310,7 +310,7 @@ python main.py pcaps/ --tshark-filter mbtcp
 ```bash
 # Custom prompt template
 python main.py pcaps/ --tshark-filter mbtcp \
-    --llm-config LLM_config.json \
+    --llm-config config/llm_config.json \
     --llm-template custom_prompt.md
 
 # Render prompt only (no API call)
@@ -318,7 +318,7 @@ python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 
 # Adjust LLM parameters
 python main.py pcaps/ --tshark-filter mbtcp \
-    --llm-config LLM_config.json \
+    --llm-config config/llm_config.json \
     --llm-temperature 0.2 \
     --llm-max-tokens 8000
 ```
@@ -332,33 +332,33 @@ Run individual LLM refinement stages:
 python scripts/07b_refine_boundaries_llm.py \
     data/05_families.json \
     data/05_families.refined.json \
-    --config LLM_config.json
+    --config config/llm_config.json
 
 # Semantic labeling
 python scripts/11b_label_semantics_llm.py \
     data/05_families.json \
     data/09_semantics.json \
     data/09_semantics.llm.json \
-    --config LLM_config.json
+    --config config/llm_config.json
 
 # Relation validation
 python scripts/10b_validate_relations_llm.py \
     data/08_relations.json \
     data/08_relations.validated.json \
-    --config LLM_config.json
+    --config config/llm_config.json
 ```
 
 ## Ground Truth Evaluation
 
 ### Prepare Ground Truth
 
-Create a ground truth JSON file (see `truth-files/modbus.json` for example).
+Create a ground truth JSON file (see `truth_files/modbus.json` for example).
 
 ### Run with Evaluation
 
 ```bash
 python main.py pcaps/ --tshark-filter mbtcp \
-    --ground-truth-json truth-files/modbus.json
+    --ground-truth-json truth_files/modbus.json
 ```
 
 ### View Evaluation Results
@@ -377,9 +377,9 @@ Check `output/protocol_report.html`, the final evaluation section:
 Analyze neural feature quality and detect collapsed latent spaces:
 
 ```bash
-python scripts/20_diagnose_neural_features.py data/01_messages.jsonl \
+python scripts/diagnostics/20_diagnose_neural_features.py data/01_messages.jsonl \
     --sample-size 5000 \
-    --model-path pre_trained/industrial_VAE.pth \
+    --model-path assets/pre_trained/industrial_VAE.pth \
     --latent-cache data/latent_cache.json
 ```
 
@@ -394,9 +394,9 @@ python scripts/20_diagnose_neural_features.py data/01_messages.jsonl \
 Compare original vs enhanced neural features:
 
 ```bash
-python scripts/21_test_enhanced_neural.py data/01_messages.jsonl \
+python scripts/diagnostics/21_test_enhanced_neural.py data/01_messages.jsonl \
     --sample-size 5000 \
-    --model-path pre_trained/industrial_VAE.pth
+    --model-path assets/pre_trained/industrial_VAE.pth
 ```
 
 ### Test Boundary Detection
@@ -404,7 +404,7 @@ python scripts/21_test_enhanced_neural.py data/01_messages.jsonl \
 Test boundary detection with different thresholds:
 
 ```bash
-python scripts/22_test_boundary_detection.py data/01_messages.jsonl \
+python scripts/diagnostics/22_test_boundary_detection.py data/01_messages.jsonl \
     --assignments-json data/02_family_assignments.json \
     --features-json data/03_family_features.json
 ```
@@ -414,8 +414,8 @@ python scripts/22_test_boundary_detection.py data/01_messages.jsonl \
 Test hybrid feature fusion methods:
 
 ```bash
-python scripts/23_test_learned_fusion.py data/01_messages.jsonl \
-    --model-path pre_trained/industrial_VAE.pth
+python scripts/diagnostics/23_test_learned_fusion.py data/01_messages.jsonl \
+    --model-path assets/pre_trained/industrial_VAE.pth
 ```
 
 ### Test Boundary Refinement
@@ -423,7 +423,7 @@ python scripts/23_test_learned_fusion.py data/01_messages.jsonl \
 Compute boundary quality metrics and test LLM refinement:
 
 ```bash
-python scripts/24_test_boundary_refinement.py data/05_families.json \
+python scripts/diagnostics/24_test_boundary_refinement.py data/05_families.json \
     --messages-json data/01_messages.jsonl \
     --assignments-json data/02_family_assignments.json
 ```
@@ -516,7 +516,7 @@ python scripts/14_export_llm_evidence.py data/10_protocol_model.json \
 # Stage 15: Analyze with LLM
 python scripts/15_analyze_with_llm.py data/12_llm_evidence.json \
     data/13_llm_analysis.json \
-    --config LLM_config.json \
+    --config config/llm_config.json \
     --prompt-out data/13_llm_prompt.md
 
 # Stage 15b: Apply LLM refinement
@@ -524,7 +524,7 @@ python scripts/15b_apply_llm_refinement.py data/10_protocol_model.json \
     data/13_llm_analysis.json \
     data/10_protocol_model.refined.json \
     --evidence-json data/12_llm_evidence.json \
-    --schema-json schema/protocol_model.schema.json \
+    --schema-json assets/schema/protocol_model.schema.json \
     --patches-out data/13_llm_patches.json \
     --validation-out data/13_llm_patch_validation.json
 
@@ -538,7 +538,7 @@ python scripts/16_prepare_evaluation_data.py data/10_protocol_model.json \
 
 # Stage 17: Evaluate against ground truth
 python scripts/17_evaluate_protocol_spec.py data/14_evaluation_model_data.json \
-    truth-files/modbus.json \
+    truth_files/modbus.json \
     data/15_evaluation_result.json
 
 # Stage 18: Export Markdown
@@ -590,7 +590,7 @@ python scripts/19_export_html.py data/10_protocol_model.refined.json \
 
 **Solutions:**
 1. Try different feature mode: `--family-feature-mode raw_bytes`
-2. Diagnose neural features: `python scripts/20_diagnose_neural_features.py`
+2. Diagnose neural features: `python scripts/diagnostics/20_diagnose_neural_features.py`
 3. Adjust clustering parameters: `--sample-size 50000`
 4. Check message diversity: ensure captures contain varied traffic
 
@@ -603,7 +603,7 @@ python scripts/19_export_html.py data/10_protocol_model.refined.json \
 
 **Solutions:**
 1. Reduce field limit: `--boundary-max-fields 12`
-2. Use LLM refinement: `--llm-config LLM_config.json`
+2. Use LLM refinement: `--llm-config config/llm_config.json`
 
 ### LLM API Errors
 
@@ -611,7 +611,7 @@ python scripts/19_export_html.py data/10_protocol_model.refined.json \
 
 **Solution:**
 - Check API key: `echo $OPENAI_API_KEY`
-- Verify config: `cat LLM_config.json`
+- Verify config: `cat config/llm_config.json`
 - Test API: `curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models`
 
 **Error:** `Timeout waiting for LLM response`
@@ -676,7 +676,7 @@ Extraction:
 Clustering:
   --family-feature-mode MODE    Feature mode: raw_bytes (default), structural, neural, hybrid
   --sample-size N               Clustering sample size (default: 100000)
-  --family-neural-model-path    Path to neural model (default: pre_trained/industrial_VAE.pth)
+  --family-neural-model-path    Path to neural model (default: assets/pre_trained/industrial_VAE.pth)
 
 Boundaries:
   --boundary-max-fields N       Maximum fields per family (default: 15)
@@ -686,7 +686,7 @@ Layer Detection:
   --layer-min-confidence N      Minimum confidence for layer detection (default: 0.6)
 
 LLM:
-  --llm-config FILE             LLM configuration file (default: LLM_config.json)
+  --llm-config FILE             LLM configuration file (default: config/llm_config.json)
   --llm-render-only             Skip LLM API calls
   --llm-temperature N           LLM temperature (default: 0.1)
   --llm-max-tokens N            LLM max tokens (default: 4000)
