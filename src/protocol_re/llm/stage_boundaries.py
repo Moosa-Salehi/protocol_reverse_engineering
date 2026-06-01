@@ -42,7 +42,7 @@ def prepare_boundary_evidence(
         sample_messages.append({
             "msg_id": msg.msg_id,
             "payload_hex": msg.payload_hex,
-            "length": msg.length,
+            "length": msg.payload_len,
         })
 
     evidence = {

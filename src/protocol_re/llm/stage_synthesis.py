@@ -74,8 +74,14 @@ def prepare_synthesis_evidence(
             "role": family.get("role_hint", "unknown"),
         })
 
-    # Extract compact relation summaries (top N by pair count)
-    relations = protocol_model.get("relations", {}).get("family_edges", [])
+    # Extract compact relation summaries (top N by pair count). The protocol model
+    # stores relations as a list of family edges, but older artifacts nested them
+    # under {"family_edges": [...]} — accept both shapes.
+    relations_obj = protocol_model.get("relations", [])
+    if isinstance(relations_obj, dict):
+        relations = relations_obj.get("family_edges", []) or []
+    else:
+        relations = relations_obj or []
     relations_sorted = sorted(relations, key=lambda r: r.get("pair_count", 0), reverse=True)
 
     compact_relations = []
