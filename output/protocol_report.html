@@ -79,7 +79,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="metric-grid">
         <article class="metric"><strong>11</strong><span>Families</span><small>message types</small></article>
         <article class="metric"><strong>200000</strong><span>Messages represented</span><small>assigned family messages</small></article>
-        <article class="metric"><strong>20</strong><span>Relations</span><small>family-to-family edges</small></article>
+        <article class="metric"><strong>18</strong><span>Relations</span><small>family-to-family edges</small></article>
         <article class="metric"><strong>0.1</strong><span>Version</span></article>
       </div>
     </div>
@@ -93,7 +93,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         <article class="metric"><strong>50.0%</strong><span>Clustering sample</span><small>100000 messages</small></article>
         <article class="metric"><strong>100.0%</strong><span>Parseable families</span><small>11 families</small></article>
         <article class="metric"><strong>100000</strong><span>Pair hypotheses</span><small>0.0% direction-known</small></article>
-        <article class="metric"><strong>20</strong><span>Relation edges</span><small>20 with echoes</small></article>
+        <article class="metric"><strong>18</strong><span>Relation edges</span><small>1 with echoes</small></article>
       </div>
       <h3>Clustering Diagnostics</h3><div class="metric-grid"><article class="metric"><strong>5</strong><span>Warning families</span></article><article class="metric"><strong>0</strong><span>Split candidates</span></article><article class="metric"><strong>0</strong><span>Merge candidates</span></article></div><table><thead><tr><th>Family</th><th>Messages</th><th>Split</th><th>Over-split</th><th>Warnings</th></tr></thead><tbody><tr><td><code>family_1</code></td><td>120667</td><td>0.2</td><td>0.0</td><td>mixed length profile</td></tr><tr><td><code>family_6</code></td><td>38027</td><td>0.2</td><td>0.0</td><td>mixed length profile</td></tr><tr><td><code>family_4</code></td><td>14904</td><td>0.2</td><td>0.0</td><td>mixed length profile</td></tr><tr><td><code>family_5</code></td><td>13239</td><td>0.2</td><td>0.0</td><td>mixed length profile</td></tr><tr><td><code>noise</code></td><td>763</td><td>0.0</td><td>0.0</td><td>noise family</td></tr></tbody></table>
     </section>
@@ -102,33 +102,33 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
     <section class="panel eval-panel">
       <h2>Final Ground Truth Evaluation</h2>
       <div class="metric-grid">
-        <article class="metric"><strong>0.492868</strong><span>Overall score</span><small>fail</small></article>
-        <article class="metric"><strong>10</strong><span>Matched message types</span><small>of 11</small></article>
-        <article class="metric"><strong>0.833333</strong><span>Message type accuracy</span></article>
-        <article class="metric"><strong>0.909091</strong><span>Message type F1</span></article>
-        <article class="metric"><strong>0.373494</strong><span>Field boundary accuracy</span></article>
-        <article class="metric"><strong>0.54386</strong><span>Field boundary F1</span></article>
+        <article class="metric"><strong>0.515</strong><span>Overall score</span><small>partial</small></article>
+        <article class="metric"><strong>11</strong><span>Matched message types</span><small>of 11</small></article>
+        <article class="metric"><strong>1.0</strong><span>Message type accuracy</span></article>
+        <article class="metric"><strong>1.0</strong><span>Message type F1</span></article>
+        <article class="metric"><strong>0.333333</strong><span>Field boundary accuracy</span></article>
+        <article class="metric"><strong>0.5</strong><span>Field boundary F1</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics accuracy</span></article>
         <article class="metric"><strong>0.0</strong><span>Field semantics F1</span></article>
-        <article class="metric"><strong>0.35</strong><span>Relation accuracy</span></article>
-        <article class="metric"><strong>0.518519</strong><span>Relation F1</span></article>
+        <article class="metric"><strong>0.388889</strong><span>Relation accuracy</span></article>
+        <article class="metric"><strong>0.56</strong><span>Relation F1</span></article>
       </div>
     </section>
     
   
     <section class="panel llm-panel">
       <h2>LLM Analysis</h2>
-      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>222542</strong><span>Prompt bytes</span><small>D:\tez\practical\protocol_re\data\13_llm_prompt.md</small></article><article class="metric"><strong>222542</strong><span>Prompt chars</span></article><article class="metric"><strong>55636</strong><span>Prompt est. tokens</span></article></div>
+      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>0</strong><span>Prompt bytes</span><small>prompt</small></article><article class="metric"><strong>0</strong><span>Prompt chars</span></article><article class="metric"><strong>0</strong><span>Prompt est. tokens</span></article></div>
       <p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>
     </section>
     
   <section class="panel">
     <h2>Metadata</h2>
-    <table class="meta-table"><tbody><tr><th>source_family_summary</th><td>D:\tez\practical\protocol_re\data\05_families.json</td></tr><tr><th>source_feature_summary</th><td>D:\tez\practical\protocol_re\data\03_family_features.json</td></tr><tr><th>source_keyword_summary</th><td>D:\tez\practical\protocol_re\data\07_keywords.json</td></tr><tr><th>source_framing_summary</th><td>D:\tez\practical\protocol_re\data\04_framing.json</td></tr><tr><th>source_relations_summary</th><td>D:\tez\practical\protocol_re\data\08_relations.json</td></tr><tr><th>source_semantics_summary</th><td>D:\tez\practical\protocol_re\data\09_semantics.json</td></tr><tr><th>framing_global_summary</th><td>{&#x27;common_header_ends&#x27;: [{&#x27;header_end&#x27;: 6, &#x27;family_count&#x27;: 11, &#x27;family_ratio&#x27;: 1.0}], &#x27;field_type_counts&#x27;: {&#x27;length&#x27;: 33, &#x27;transaction_or_counter&#x27;: 20, &#x27;constant&#x27;: 5, &#x27;discriminator&#x27;: 5}, &#x27;mean_best_confidence&#x27;: 1.0, &#x27;families_with_header_candidate&#x27;: 11}</td></tr><tr><th>notes</th><td>Initial auto-generated protocol model assembled from family summaries.</td></tr><tr><th>llm_refinement</th><td>{&#x27;artifact_type&#x27;: &#x27;llm_refinement_summary&#x27;, &#x27;created_at&#x27;: &#x27;2026-05-31T05:01:21.112198+00:00&#x27;, &#x27;input_patch_count&#x27;: 0, &#x27;accepted_patch_count&#x27;: 0, &#x27;rejected_patch_count&#x27;: 0}</td></tr></tbody></table>
+    <table class="meta-table"><tbody><tr><th>source_family_summary</th><td>D:\tez\practical\protocol_re\data\05_families_labeled.json</td></tr><tr><th>source_feature_summary</th><td>D:\tez\practical\protocol_re\data\03_family_features.json</td></tr><tr><th>source_keyword_summary</th><td>D:\tez\practical\protocol_re\data\07_keywords.json</td></tr><tr><th>source_framing_summary</th><td>D:\tez\practical\protocol_re\data\04_framing.json</td></tr><tr><th>source_relations_summary</th><td>D:\tez\practical\protocol_re\data\08_relations_validated.json</td></tr><tr><th>source_semantics_summary</th><td>D:\tez\practical\protocol_re\data\09_semantics.json</td></tr><tr><th>framing_global_summary</th><td>{&#x27;common_header_ends&#x27;: [{&#x27;header_end&#x27;: 6, &#x27;family_count&#x27;: 11, &#x27;family_ratio&#x27;: 1.0}], &#x27;field_type_counts&#x27;: {&#x27;length&#x27;: 33, &#x27;transaction_or_counter&#x27;: 20, &#x27;constant&#x27;: 5, &#x27;discriminator&#x27;: 5}, &#x27;mean_best_confidence&#x27;: 1.0, &#x27;families_with_header_candidate&#x27;: 11}</td></tr><tr><th>notes</th><td>Initial auto-generated protocol model assembled from family summaries.</td></tr><tr><th>llm_refinement</th><td>{&#x27;artifact_type&#x27;: &#x27;llm_refinement_summary&#x27;, &#x27;created_at&#x27;: &#x27;2026-06-01T06:34:44.753869+00:00&#x27;, &#x27;input_patch_count&#x27;: 0, &#x27;accepted_patch_count&#x27;: 0, &#x27;rejected_patch_count&#x27;: 0}</td></tr></tbody></table>
   </section>
   <section class="panel">
     <h2>Strongest Relations</h2>
-    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody><tr><td><code>family_6</code></td><td><code>family_6</code></td><td>16624</td><td>5.2102</td><td>0.888604</td><td>4.599637</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>0</td></tr><tr><td><code>family_4</code></td><td><code>family_4</code></td><td>5900</td><td>5.1794</td><td>0.847701</td><td>10.670961</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>0</td></tr><tr><td><code>family_5</code></td><td><code>family_5</code></td><td>5210</td><td>5.1828</td><td>0.818025</td><td>11.907202</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>0</td></tr><tr><td><code>family_9</code></td><td><code>family_1</code></td><td>2353</td><td>5.4451</td><td>0.803346</td><td>1.221094</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>4</td></tr><tr><td><code>family_7</code></td><td><code>family_1</code></td><td>1737</td><td>5.4468</td><td>0.998276</td><td>1.51739</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_3</code></td><td><code>family_1</code></td><td>1539</td><td>5.4445</td><td>0.777665</td><td>1.18206</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>4</td></tr><tr><td><code>family_8</code></td><td><code>family_6</code></td><td>852</td><td>5.4468</td><td>0.382577</td><td>1.980317</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>noise</code></td><td><code>family_1</code></td><td>719</td><td>5.3887</td><td>1.0</td><td>1.520011</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>4</td></tr><tr><td><code>family_2</code></td><td><code>family_5</code></td><td>547</td><td>5.4451</td><td>0.214847</td><td>3.127319</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>4</td></tr><tr><td><code>family_0</code></td><td><code>family_6</code></td><td>545</td><td>5.4156</td><td>0.57672</td><td>2.985245</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>4</td></tr><tr><td><code>family_2</code></td><td><code>family_4</code></td><td>389</td><td>5.4443</td><td>0.152789</td><td>1.923322</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>4</td></tr><tr><td><code>family_9</code></td><td><code>family_4</code></td><td>337</td><td>5.4467</td><td>0.115056</td><td>1.448343</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_3</code></td><td><code>family_4</code></td><td>260</td><td>5.4394</td><td>0.131379</td><td>1.65382</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>4</td></tr><tr><td><code>family_9</code></td><td><code>family_5</code></td><td>239</td><td>5.4468</td><td>0.081598</td><td>1.187741</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_3</code></td><td><code>family_5</code></td><td>180</td><td>5.4467</td><td>0.090955</td><td>1.323945</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_1</code></td><td><code>noise</code></td><td>44</td><td>5.4665</td><td>0.000802</td><td>1.822224</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_6</code></td><td><code>family_0</code></td><td>20</td><td>5.4668</td><td>0.001069</td><td>4.85937</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_1</code></td><td><code>family_3</code></td><td>4</td><td>5.4673</td><td>7.3e-05</td><td>1.214816</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_1</code></td><td><code>family_9</code></td><td>3</td><td>5.4663</td><td>5.5e-05</td><td>1.366668</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr><tr><td><code>family_4</code></td><td><code>family_3</code></td><td>2</td><td>5.4642</td><td>0.000287</td><td>4.789272</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>20</td><td>2</td></tr></tbody></table>
+    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody><tr><td><code>family_6</code></td><td><code>family_6</code></td><td>16624</td><td>5.2102</td><td>0.888604</td><td>4.599637</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_4</code></td><td><code>family_4</code></td><td>5900</td><td>5.1794</td><td>0.847701</td><td>10.670961</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_5</code></td><td><code>family_5</code></td><td>5210</td><td>5.1828</td><td>0.818025</td><td>11.907202</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_9</code></td><td><code>family_1</code></td><td>2353</td><td>5.4451</td><td>0.803346</td><td>1.221094</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_7</code></td><td><code>family_1</code></td><td>1737</td><td>5.4468</td><td>0.998276</td><td>1.51739</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_3</code></td><td><code>family_1</code></td><td>1539</td><td>5.4445</td><td>0.777665</td><td>1.18206</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_8</code></td><td><code>family_6</code></td><td>852</td><td>5.4468</td><td>0.382577</td><td>1.980317</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>noise</code></td><td><code>family_1</code></td><td>719</td><td>5.3887</td><td>1.0</td><td>1.520011</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_2</code></td><td><code>family_5</code></td><td>547</td><td>5.4451</td><td>0.214847</td><td>3.127319</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_0</code></td><td><code>family_6</code></td><td>545</td><td>5.4156</td><td>0.57672</td><td>2.985245</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_2</code></td><td><code>family_4</code></td><td>389</td><td>5.4443</td><td>0.152789</td><td>1.923322</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_9</code></td><td><code>family_4</code></td><td>337</td><td>5.4467</td><td>0.115056</td><td>1.448343</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_3</code></td><td><code>family_4</code></td><td>260</td><td>5.4394</td><td>0.131379</td><td>1.65382</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_9</code></td><td><code>family_5</code></td><td>239</td><td>5.4468</td><td>0.081598</td><td>1.187741</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_3</code></td><td><code>family_5</code></td><td>180</td><td>5.4467</td><td>0.090955</td><td>1.323945</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_1</code></td><td><code>noise</code></td><td>44</td><td>5.4665</td><td>0.000802</td><td>1.822224</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_6</code></td><td><code>family_0</code></td><td>20</td><td>5.4668</td><td>0.001069</td><td>4.85937</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>0</td><td>0</td></tr><tr><td><code>family_4</code></td><td><code>family_3</code></td><td>2</td><td>5.4642</td><td>0.000287</td><td>4.789272</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>1</td><td>1</td></tr></tbody></table>
   </section>
   <main>
     <section class="panel"><h2>Families</h2><p class="muted">Showing 11 largest families.</p></section>
@@ -141,10 +141,10 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:99.2%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:99.3%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:16.67%" title="8..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:33.33%" title="7..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
@@ -152,11 +152,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>1.0</td></tr><tr><td><code>8..9</code></td><td>keyword</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9984</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9979</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>7..10</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>8..9</code></td><td>discriminator</td><td>1.0</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>discriminator</td><td>0.9999</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>discriminator</td><td>0.9999</td></tr><tr><td><code>7..10</code></td><td>discriminator</td><td>0.9998</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>7..10</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -181,7 +181,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:52.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:33.33%" title="7..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
@@ -189,11 +189,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9991</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9976</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9933</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..10</code></td><td>keyword</td><td>0.9986</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9976</td></tr><tr><td><code>1..1</code></td><td>discriminator</td><td>0.9933</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>7..10</code></td><td>discriminator</td><td>0.9986</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>7..10</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -218,7 +218,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:53.8%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:33.33%" title="7..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
@@ -226,11 +226,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9994</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9983</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9903</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>7..10</code></td><td>keyword</td><td>0.9975</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9903</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>discriminator</td><td>0.9898</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>2..5</code></td><td>transaction_or_correlation_id</td><td>0.95</td></tr><tr><td><code>7..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>11..11</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>7..10</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -255,7 +255,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:54.2%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg constant" style="width:25.00%" title="2..4 constant"></span><span class="seg variable" style="width:8.33%" title="5..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:16.67%" title="9..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:33.33%" title="7..10 variable"></span><span class="seg variable" style="width:8.33%" title="11..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
@@ -263,11 +263,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>keyword</td><td>0.9998</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..7</code></td><td>keyword</td><td>0.9996</td></tr><tr><td><code>9..10</code></td><td>keyword</td><td>0.9977</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9911</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>keyword</td><td>0.9997</td></tr><tr><td><code>7..10</code></td><td>keyword</td><td>0.9974</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..4</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>5..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>9..10</code></td><td>discriminator</td><td>0.9977</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9911</td></tr><tr><td><code>2..4</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>1..1</code></td><td>discriminator</td><td>0.9825</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>7..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>11..11</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>7..10</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -289,10 +289,10 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:99.9%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 2c ?? 00</code>
@@ -300,11 +300,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9942</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9806</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.9127</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9942</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>counter_or_transaction_id</td><td>0.95</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.998</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9806</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.998</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>transaction_id</td><td>0.85</td></tr><tr><td><code>6..9</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -329,7 +329,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 2c ?? 00</code>
@@ -337,11 +337,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.991</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9776</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8995</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9965</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.991</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>counter_or_transaction_id</td><td>0.95</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>0.9982</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.9965</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9776</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.9965</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>transaction_id</td><td>0.85</td></tr><tr><td><code>6..9</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -366,7 +366,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:9.09%" title="0..0 variable"></span><span class="seg variable" style="width:9.09%" title="1..1 variable"></span><span class="seg constant" style="width:36.36%" title="2..5 constant"></span><span class="seg variable" style="width:36.36%" title="6..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:36.36%" title="2..5 constant"></span><span class="seg variable" style="width:36.36%" title="6..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 2c ??</code>
@@ -374,11 +374,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>6..9</code></td><td>keyword</td><td>0.9969</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9758</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.885</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>6..9</code></td><td>keyword</td><td>0.9969</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9915</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>counter_or_transaction_id</td><td>0.95</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.9969</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9758</td></tr><tr><td><code>1..1</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.9969</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>transaction_id</td><td>0.85</td></tr><tr><td><code>6..9</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -400,10 +400,10 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:99.7%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:99.9%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 2c ?? 00</code>
@@ -411,11 +411,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9955</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9814</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.871</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.998</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9955</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>counter_or_transaction_id</td><td>0.95</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>0..0</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.998</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9814</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.998</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>transaction_id</td><td>0.85</td></tr><tr><td><code>6..9</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -440,7 +440,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:9.09%" title="0..0 variable"></span><span class="seg variable" style="width:9.09%" title="1..1 variable"></span><span class="seg constant" style="width:36.36%" title="2..5 constant"></span><span class="seg variable" style="width:36.36%" title="6..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:36.36%" title="2..5 constant"></span><span class="seg variable" style="width:36.36%" title="6..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 2d ??</code>
@@ -448,11 +448,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>6..9</code></td><td>keyword</td><td>0.9971</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9891</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9736</td></tr><tr><td><code>1..1</code></td><td>keyword</td><td>0.8529</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>6..9</code></td><td>keyword</td><td>0.9971</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9891</td></tr><tr><td><code>0..1</code></td><td>counter_or_transaction_id</td><td>0.95</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.9971</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9736</td></tr><tr><td><code>1..1</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.9971</td></tr><tr><td><code>2..5</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>transaction_id</td><td>0.85</td></tr><tr><td><code>6..9</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -477,7 +477,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:96.5%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 ?? ?? 00</code>
@@ -485,11 +485,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9897</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9824</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.9721</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9897</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9824</td></tr><tr><td><code>0..1</code></td><td>counter_or_transaction_id</td><td>0.95</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.9721</td></tr><tr><td><code>2..5</code></td><td>transaction_or_correlation_id</td><td>0.95</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>6..9</code></td><td>response_size_selector</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>transaction_id</td><td>0.85</td></tr><tr><td><code>6..9</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -514,7 +514,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:94.2%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:8.33%" title="0..0 variable"></span><span class="seg variable" style="width:8.33%" title="1..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:25.00%" title="6..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:33.33%" title="2..5 variable"></span><span class="seg variable" style="width:33.33%" title="6..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00</code>
@@ -522,11 +522,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>9..9</code></td><td>keyword</td><td>0.9777</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9201</td></tr><tr><td><code>0..0</code></td><td>keyword</td><td>0.8899</td></tr><tr><td><code>1..1</code></td><td>blob</td><td>0.5</td></tr><tr><td><code>6..8</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..9</code></td><td>keyword</td><td>0.9777</td></tr><tr><td><code>0..1</code></td><td>counter_or_transaction_id</td><td>0.9423</td></tr><tr><td><code>10..10</code></td><td>keyword</td><td>0.9201</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>2..5</code></td><td>echoed_request_field</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>response_size_selector</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>0..0</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>2..5</code></td><td>transaction_or_correlation_id</td><td>0.95</td></tr><tr><td><code>9..9</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..5</code></td><td>length</td><td>1.0</td></tr><tr><td><code>11..11</code></td><td>constant</td><td>0.99</td></tr><tr><td><code>6..9</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>10..10</code></td><td>discriminator</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>transaction_id</td><td>0.85</td></tr><tr><td><code>6..9</code></td><td>payload</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>

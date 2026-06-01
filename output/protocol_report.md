@@ -4,15 +4,15 @@ Version: `0.1`
 
 ## Metadata
 
-- **source_family_summary**: D:\tez\practical\protocol_re\data\05_families.json
+- **source_family_summary**: D:\tez\practical\protocol_re\data\05_families_labeled.json
 - **source_feature_summary**: D:\tez\practical\protocol_re\data\03_family_features.json
 - **source_keyword_summary**: D:\tez\practical\protocol_re\data\07_keywords.json
 - **source_framing_summary**: D:\tez\practical\protocol_re\data\04_framing.json
-- **source_relations_summary**: D:\tez\practical\protocol_re\data\08_relations.json
+- **source_relations_summary**: D:\tez\practical\protocol_re\data\08_relations_validated.json
 - **source_semantics_summary**: D:\tez\practical\protocol_re\data\09_semantics.json
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 6, 'family_count': 11, 'family_ratio': 1.0}], 'field_type_counts': {'length': 33, 'transaction_or_counter': 20, 'constant': 5, 'discriminator': 5}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 11}
 - **notes**: Initial auto-generated protocol model assembled from family summaries.
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-05-31T05:01:21.112198+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-01T06:34:44.753869+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
 
 ## Evaluation
 
@@ -21,9 +21,9 @@ Version: `0.1`
 - Clustering sample: `100000` messages ratio=`0.5`
 - Parseable families: `11` of `11`
 - Pair hypotheses: `100000` direction_unknown_ratio=`1`
-- Relation edges: `20` echo_edges=`20` length_relation_edges=`17`
+- Relation edges: `18` echo_edges=`1` length_relation_edges=`1`
 - Semantic coverage: `11` of `11` families ratio=`1`
-- Top semantic labels: `discriminator`x56, `echoed_request_field`x18, `response_size_selector`x15, `constant`x15, `length`x11, `payload`x7, `transaction_or_correlation_id`x5
+- Top semantic labels: `discriminator`x22, `length`x11, `payload`x11, `constant`x11, `transaction_id`x7, `echoed_request_field`x1, `transaction_or_correlation_id`x1, `response_size_selector`x1
 - Framing coverage: `11` of `11` families ratio=`1`
 - Clustering diagnostics: warning_families=`5` split_candidates=`0` merge_candidates=`0`
 
@@ -37,57 +37,53 @@ Version: `0.1`
 
 ### Evaluation Top Relation Edges
 
-- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` echo_fields=`20` length_rules=`0`
-- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` echo_fields=`20` length_rules=`0`
-- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` echo_fields=`20` length_rules=`0`
-- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` echo_fields=`20` length_rules=`4`
-- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` echo_fields=`20` length_rules=`2`
-- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` echo_fields=`20` length_rules=`4`
-- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` echo_fields=`20` length_rules=`2`
-- `noise` -> `family_1` | pairs=`719` avg_score=`5.3887` support=`1` lift=`1.52` direction=`1` order=`1` echo_fields=`20` length_rules=`4`
-- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` echo_fields=`20` length_rules=`4`
-- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` echo_fields=`20` length_rules=`4`
+- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `noise` -> `family_1` | pairs=`719` avg_score=`5.3887` support=`1` lift=`1.52` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.4929`
-- Verdict: `fail`
-- Matched message types: `10` of `11`
-- Message type matching: accuracy=`0.8333` precision=`0.9091` recall=`0.9091` f1=`0.9091`
-- Field boundary: accuracy=`0.3735` precision=`0.3924` recall=`0.8857` f1=`0.5439`
+- Overall score: `0.515`
+- Verdict: `partial`
+- Matched message types: `11` of `11`
+- Message type matching: accuracy=`1` precision=`1` recall=`1` f1=`1`
+- Field boundary: accuracy=`0.3333` precision=`0.4151` recall=`0.6286` f1=`0.5`
 - Field semantics: accuracy=`0` precision=`0` recall=`0` f1=`0`
-- Relations: accuracy=`0.35` precision=`0.35` recall=`1` f1=`0.5185`
+- Relations: accuracy=`0.3889` precision=`0.3889` recall=`1` f1=`0.56`
 
 ## LLM Analysis
-
-- Prompt size: `222542` bytes, `222542` characters, estimated tokens=`55636`
 
 _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ## Family Relations
 
-- Total inferred family edges: `20`
+- Total inferred family edges: `18`
 - Strongest edges:
-- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20`
-- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20`
-- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20`
-- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`4`
-- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`4`
-- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `noise` -> `family_1` | pairs=`719` avg_score=`5.3887` support=`1` lift=`1.52` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`4`
-- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`4`
-- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`4`
-- `family_2` -> `family_4` | pairs=`389` avg_score=`5.4443` support=`0.1528` lift=`1.9233` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`4`
-- `family_9` -> `family_4` | pairs=`337` avg_score=`5.4467` support=`0.1151` lift=`1.4483` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_3` -> `family_4` | pairs=`260` avg_score=`5.4394` support=`0.1314` lift=`1.6538` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`4`
-- `family_9` -> `family_5` | pairs=`239` avg_score=`5.4468` support=`0.0816` lift=`1.1877` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_3` -> `family_5` | pairs=`180` avg_score=`5.4467` support=`0.091` lift=`1.3239` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_1` -> `noise` | pairs=`44` avg_score=`5.4665` support=`0.0008` lift=`1.8222` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_6` -> `family_0` | pairs=`20` avg_score=`5.4668` support=`0.0011` lift=`4.8594` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_1` -> `family_3` | pairs=`4` avg_score=`5.4673` support=`0.0001` lift=`1.2148` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_1` -> `family_9` | pairs=`3` avg_score=`5.4663` support=`0.0001` lift=`1.3667` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
-- `family_4` -> `family_3` | pairs=`2` avg_score=`5.4642` support=`0.0003` lift=`4.7893` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`20` length_rules=`2`
+- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` flow=`unknown->unknown`
+- `noise` -> `family_1` | pairs=`719` avg_score=`5.3887` support=`1` lift=`1.52` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_2` -> `family_4` | pairs=`389` avg_score=`5.4443` support=`0.1528` lift=`1.9233` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_9` -> `family_4` | pairs=`337` avg_score=`5.4467` support=`0.1151` lift=`1.4483` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_3` -> `family_4` | pairs=`260` avg_score=`5.4394` support=`0.1314` lift=`1.6538` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_9` -> `family_5` | pairs=`239` avg_score=`5.4468` support=`0.0816` lift=`1.1877` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_3` -> `family_5` | pairs=`180` avg_score=`5.4467` support=`0.091` lift=`1.3239` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_1` -> `noise` | pairs=`44` avg_score=`5.4665` support=`0.0008` lift=`1.8222` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_6` -> `family_0` | pairs=`20` avg_score=`5.4668` support=`0.0011` lift=`4.8594` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_4` -> `family_3` | pairs=`2` avg_score=`5.4642` support=`0.0003` lift=`4.7893` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`1` length_rules=`1`
 
 ## Families
 
@@ -101,7 +97,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_3`, `family_7`, `family_9`, `noise`
 - Role hint: `response`
-- Semantic confidence: `0.992`
+- Semantic confidence: `0.9931`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314913`
 - Candidate discriminator offset: `0` cardinality=`197` entropy=`7.562829` salience=`1.0` mutual_information=`0.109894` contrastive_separation=`1.0` confidence=`0.48592`
@@ -110,27 +106,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.6504`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6409`
-- bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.85`
+- bytes `0`..`1` | kind=`variable` confidence=`0.608855`
+- bytes `2`..`5` | kind=`variable` confidence=`0.8075`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7786`
-- bytes `8`..`9` | kind=`variable` confidence=`0.5103`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7611`
+- bytes `7`..`10` | kind=`variable` confidence=`0.6868927499999999`
 - bytes `11`..`11` | kind=`variable` confidence=`0.7786`
 
 #### Field Hypotheses
 
-- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `7`..`7` | type=`keyword` confidence=`1.0`
-- bytes `8`..`9` | type=`keyword` confidence=`1.0`
-- bytes `10`..`10` | type=`keyword` confidence=`0.9999`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9999`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9984`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9979`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `7`..`10` | type=`keyword` confidence=`0.9998`
 - bytes `6`..`6` | type=`constant` confidence=`0.99`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -140,24 +128,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
-- bytes `5`..`5` | label=`length` confidence=`1.0`
-- bytes `6`..`6` | label=`response_size_selector` confidence=`1.0`
-- bytes `8`..`9` | label=`discriminator` confidence=`1.0`
-- bytes `10`..`10` | label=`discriminator` confidence=`0.9999`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
 - bytes `11`..`11` | label=`discriminator` confidence=`0.9999`
-- bytes `2`..`4` | label=`constant` confidence=`0.99`
+- bytes `7`..`10` | label=`discriminator` confidence=`0.9998`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`10` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_3 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_3.
-- Echoes request fields from family_7 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_7.
-- Echoes request fields from family_9 with up to 20 strong offset matches.
+- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -181,29 +160,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.6775`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6425`
-- bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.85`
+- bytes `0`..`1` | kind=`variable` confidence=`0.6103749999999999`
+- bytes `2`..`5` | kind=`variable` confidence=`0.8075`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7755`
-- bytes `8`..`8` | kind=`variable` confidence=`0.7867`
-- bytes `9`..`9` | kind=`variable` confidence=`0.7727`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7506`
+- bytes `7`..`10` | kind=`variable` confidence=`0.6774165`
 - bytes `11`..`11` | kind=`variable` confidence=`0.7738`
 
 #### Field Hypotheses
 
-- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `7`..`7` | type=`keyword` confidence=`0.9999`
-- bytes `8`..`8` | type=`keyword` confidence=`0.9999`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9997`
-- bytes `9`..`9` | type=`keyword` confidence=`0.9996`
-- bytes `10`..`10` | type=`keyword` confidence=`0.9991`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9976`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9933`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `7`..`10` | type=`keyword` confidence=`0.9986`
 - bytes `6`..`6` | type=`constant` confidence=`0.99`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -213,24 +182,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
-- bytes `5`..`5` | label=`length` confidence=`1.0`
-- bytes `6`..`6` | label=`response_size_selector` confidence=`1.0`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9976`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.9933`
-- bytes `2`..`4` | label=`constant` confidence=`0.99`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
+- bytes `7`..`10` | label=`discriminator` confidence=`0.9986`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
-- bytes `8`..`8` | label=`discriminator` confidence=`0.95`
+- bytes `11`..`11` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`10` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_0 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_0.
-- Echoes request fields from family_6 with up to 20 strong offset matches.
-- Echoes request fields from family_8 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_8.
+- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -254,29 +214,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.6699`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6731`
-- bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.85`
+- bytes `0`..`1` | kind=`variable` confidence=`0.636405`
+- bytes `2`..`5` | kind=`variable` confidence=`0.8075`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7764`
-- bytes `8`..`8` | kind=`variable` confidence=`0.7873`
-- bytes `9`..`9` | kind=`variable` confidence=`0.7741`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7537`
+- bytes `7`..`10` | kind=`variable` confidence=`0.6802142499999999`
 - bytes `11`..`11` | kind=`variable` confidence=`0.7778`
 
 #### Field Hypotheses
 
-- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `8`..`8` | type=`keyword` confidence=`0.9998`
-- bytes `7`..`7` | type=`keyword` confidence=`0.9997`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9996`
-- bytes `9`..`9` | type=`keyword` confidence=`0.9994`
-- bytes `10`..`10` | type=`keyword` confidence=`0.9983`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9903`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `7`..`10` | type=`keyword` confidence=`0.9975`
 - bytes `6`..`6` | type=`constant` confidence=`0.99`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9898`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -286,24 +236,18 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
-- bytes `5`..`5` | label=`length` confidence=`1.0`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
+- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `6`..`6` | label=`response_size_selector` confidence=`1.0`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9903`
-- bytes `2`..`4` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.9898`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
-- bytes `8`..`8` | label=`discriminator` confidence=`0.95`
+- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `7`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `11`..`11` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`10` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_2 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_2.
-- Echoes request fields from family_3 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_3.
-- Echoes request fields from family_4 with up to 20 strong offset matches.
+- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -327,27 +271,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.6818`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6649`
-- bytes `2`..`4` | kind=`constant` confidence=`1.0`
-- bytes `5`..`5` | kind=`variable` confidence=`0.85`
+- bytes `0`..`1` | kind=`variable` confidence=`0.631655`
+- bytes `2`..`5` | kind=`variable` confidence=`0.8075`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`7` | kind=`variable` confidence=`0.7765`
-- bytes `8`..`8` | kind=`variable` confidence=`0.7869`
-- bytes `9`..`10` | kind=`variable` confidence=`0.4879`
+- bytes `7`..`10` | kind=`variable` confidence=`0.67858975`
 - bytes `11`..`11` | kind=`variable` confidence=`0.7765`
 
 #### Field Hypotheses
 
-- bytes `5`..`5` | type=`length` confidence=`1.0` endian=`big`
-- bytes `8`..`8` | type=`keyword` confidence=`0.9998`
+- bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `11`..`11` | type=`keyword` confidence=`0.9997`
-- bytes `7`..`7` | type=`keyword` confidence=`0.9996`
-- bytes `9`..`10` | type=`keyword` confidence=`0.9977`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9911`
-- bytes `2`..`4` | type=`constant` confidence=`0.99`
+- bytes `7`..`10` | type=`keyword` confidence=`0.9974`
 - bytes `6`..`6` | type=`constant` confidence=`0.99`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9825`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -357,24 +293,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`4` | label=`echoed_request_field` confidence=`1.0`
-- bytes `5`..`5` | label=`length` confidence=`1.0`
-- bytes `9`..`10` | label=`discriminator` confidence=`0.9977`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9911`
-- bytes `2`..`4` | label=`constant` confidence=`0.99`
+- bytes `2`..`5` | label=`length` confidence=`1.0`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.9825`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
-- bytes `8`..`8` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `11`..`11` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`10` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_2 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_2.
-- Echoes request fields from family_3 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_3.
-- Echoes request fields from family_5 with up to 20 strong offset matches.
+- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -389,7 +316,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_1`, `family_4`, `family_5`
 - Role hint: `request`
-- Semantic confidence: `0.999`
+- Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020272`
 - Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.078001` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.275923`
@@ -398,8 +325,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7005`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6717`
+- bytes `0`..`1` | kind=`variable` confidence=`0.638115`
 - bytes `2`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7442`
@@ -411,8 +337,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `6`..`9` | type=`keyword` confidence=`0.998`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9942`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9806`
-- bytes `1`..`1` | type=`keyword` confidence=`0.9127`
+- bytes `0`..`1` | type=`counter_or_transaction_id` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -422,22 +347,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`9` | label=`response_size_selector` confidence=`1.0`
-- bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `6`..`9` | label=`discriminator` confidence=`0.998`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9806`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.95`
-- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+- bytes `6`..`9` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_1 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_1.
-- Detected common protocol pattern: length field, discriminator
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
@@ -461,8 +380,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.6993`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6763`
+- bytes `0`..`1` | kind=`variable` confidence=`0.642485`
 - bytes `2`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.753`
@@ -474,8 +392,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `6`..`9` | type=`keyword` confidence=`0.9965`
 - bytes `10`..`10` | type=`keyword` confidence=`0.991`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9776`
-- bytes `1`..`1` | type=`keyword` confidence=`0.8995`
+- bytes `0`..`1` | type=`counter_or_transaction_id` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -485,20 +402,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
-- bytes `6`..`9` | label=`response_size_selector` confidence=`0.9982`
 - bytes `6`..`9` | label=`discriminator` confidence=`0.9965`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9776`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.95`
-- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+- bytes `6`..`9` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Detected common protocol pattern: length field, discriminator
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
@@ -522,8 +435,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.706`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6817`
+- bytes `0`..`1` | kind=`variable` confidence=`0.6476149999999999`
 - bytes `2`..`5` | kind=`constant` confidence=`0.85`
 - bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7566`
@@ -533,8 +445,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `6`..`9` | type=`keyword` confidence=`0.9969`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9915`
 - bytes `2`..`5` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9758`
-- bytes `1`..`1` | type=`keyword` confidence=`0.885`
+- bytes `0`..`1` | type=`counter_or_transaction_id` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -545,18 +456,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 #### Semantic Labels
 
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`9` | label=`response_size_selector` confidence=`1.0`
 - bytes `6`..`9` | label=`discriminator` confidence=`0.9969`
 - bytes `2`..`5` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9758`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 - bytes `6`..`9` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Detected common protocol pattern: length field, discriminator
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
@@ -571,7 +479,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_1`, `family_4`, `family_5`
 - Role hint: `request`
-- Semantic confidence: `0.997`
+- Semantic confidence: `0.999`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.018191`
 - Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.078001` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.3255`
@@ -580,8 +488,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7135`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6868`
+- bytes `0`..`1` | kind=`variable` confidence=`0.6524599999999999`
 - bytes `2`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7603`
@@ -593,8 +500,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `6`..`9` | type=`keyword` confidence=`0.998`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9955`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9814`
-- bytes `1`..`1` | type=`keyword` confidence=`0.871`
+- bytes `0`..`1` | type=`counter_or_transaction_id` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -604,24 +510,18 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `0`..`0` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`9` | label=`response_size_selector` confidence=`1.0`
-- bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `6`..`9` | label=`discriminator` confidence=`0.998`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9814`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.95`
-- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+- bytes `6`..`9` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_1 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_1.
-- Echoes request fields from family_4 with up to 20 strong offset matches.
+- Echoes request fields from family_4 with up to 1 strong offset matches.
 - Response size is tied to request fields from family_4.
-- Detected common protocol pattern: length field, discriminator
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
@@ -645,8 +545,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7121`
-- bytes `1`..`1` | kind=`variable` confidence=`0.6955`
+- bytes `0`..`1` | kind=`variable` confidence=`0.660725`
 - bytes `2`..`5` | kind=`constant` confidence=`0.85`
 - bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7547`
@@ -656,8 +555,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `6`..`9` | type=`keyword` confidence=`0.9971`
 - bytes `2`..`5` | type=`constant` confidence=`0.99`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9891`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9736`
-- bytes `1`..`1` | type=`keyword` confidence=`0.8529`
+- bytes `0`..`1` | type=`counter_or_transaction_id` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -668,18 +566,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 #### Semantic Labels
 
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`9` | label=`response_size_selector` confidence=`1.0`
 - bytes `6`..`9` | label=`discriminator` confidence=`0.9971`
 - bytes `2`..`5` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9736`
-- bytes `1`..`1` | label=`discriminator` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 - bytes `6`..`9` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Detected common protocol pattern: length field, discriminator
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
@@ -703,8 +598,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7432`
-- bytes `1`..`1` | kind=`variable` confidence=`0.7366`
+- bytes `0`..`1` | kind=`variable` confidence=`0.69977`
 - bytes `2`..`5` | kind=`variable` confidence=`0.85`
 - bytes `6`..`9` | kind=`variable` confidence=`0.85`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7702`
@@ -716,8 +610,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
 - bytes `6`..`9` | type=`keyword` confidence=`0.9897`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9824`
-- bytes `0`..`0` | type=`keyword` confidence=`0.9721`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
+- bytes `0`..`1` | type=`counter_or_transaction_id` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -728,21 +621,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 #### Semantic Labels
 
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.9721`
-- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `6`..`9` | label=`discriminator` confidence=`0.95`
-- bytes `6`..`9` | label=`response_size_selector` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 - bytes `6`..`9` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_6 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_6.
-- Detected common protocol pattern: length field, discriminator
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
@@ -766,11 +653,9 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`0` | kind=`variable` confidence=`0.7384`
-- bytes `1`..`1` | kind=`variable` confidence=`0.768`
+- bytes `0`..`1` | kind=`variable` confidence=`0.7014799999999999`
 - bytes `2`..`5` | kind=`variable` confidence=`0.85`
-- bytes `6`..`8` | kind=`variable` confidence=`0.85`
-- bytes `9`..`9` | kind=`variable` confidence=`0.7849`
+- bytes `6`..`9` | kind=`variable` confidence=`0.745655`
 - bytes `10`..`10` | kind=`variable` confidence=`0.7707`
 - bytes `11`..`11` | kind=`constant` confidence=`0.8806`
 
@@ -778,11 +663,9 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 - bytes `2`..`5` | type=`length` confidence=`1.0` endian=`big`
 - bytes `11`..`11` | type=`constant` confidence=`0.99`
-- bytes `9`..`9` | type=`keyword` confidence=`0.9777`
+- bytes `6`..`9` | type=`keyword` confidence=`0.9777`
+- bytes `0`..`1` | type=`counter_or_transaction_id` confidence=`0.9423` endian=`big`
 - bytes `10`..`10` | type=`keyword` confidence=`0.9201`
-- bytes `0`..`0` | type=`keyword` confidence=`0.8899`
-- bytes `1`..`1` | type=`blob` confidence=`0.5`
-- bytes `6`..`8` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -793,21 +676,15 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 #### Semantic Labels
 
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `11`..`11` | label=`response_size_selector` confidence=`1.0`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`0` | label=`discriminator` confidence=`0.95`
-- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `9`..`9` | label=`discriminator` confidence=`0.95`
+- bytes `6`..`9` | label=`discriminator` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
-- bytes `6`..`8` | label=`response_size_selector` confidence=`0.9388`
-- bytes `6`..`8` | label=`payload` confidence=`0.6`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+- bytes `6`..`9` | label=`payload` confidence=`0.6`
 
 #### Notes
 
-- Echoes request fields from family_1 with up to 20 strong offset matches.
-- Response size is tied to request fields from family_1.
-- Detected common protocol pattern: length field, discriminator
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
