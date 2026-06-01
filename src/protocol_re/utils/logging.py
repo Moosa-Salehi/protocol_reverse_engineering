@@ -63,7 +63,7 @@ class StructuredLogger:
         log_dir: Optional[Path] = None,
         console_level: int = logging.INFO,
         file_level: int = logging.DEBUG,
-        enable_json: bool = True,
+        enable_json: bool = False,
     ):
         self.name = name
         self.logger = logging.getLogger(name)
@@ -91,8 +91,8 @@ class StructuredLogger:
             log_dir = Path(log_dir)
             log_dir.mkdir(parents=True, exist_ok=True)
 
-            # Human-readable log
-            text_handler = logging.FileHandler(log_dir / f"{name}.log", mode='a')
+            # Human-readable log (overwrite previous run's log)
+            text_handler = logging.FileHandler(log_dir / f"{name}.log", mode='w')
             text_handler.setLevel(file_level)
             text_formatter = logging.Formatter(
                 '%(asctime)s [%(levelname)s] %(message)s',
@@ -104,7 +104,7 @@ class StructuredLogger:
             # JSON structured log
             if enable_json:
                 self.json_log_path = log_dir / f"{name}.jsonl"
-                self.json_handler = logging.FileHandler(self.json_log_path, mode='a')
+                self.json_handler = logging.FileHandler(self.json_log_path, mode='w')
                 self.json_handler.setLevel(file_level)
                 self.json_handler.setFormatter(logging.Formatter('%(message)s'))
                 self.logger.addHandler(self.json_handler)
@@ -372,6 +372,7 @@ def setup_pipeline_logging(
     log_dir: Path,
     console_level: int = logging.INFO,
     file_level: int = logging.DEBUG,
+    enable_json: bool = False,
 ) -> StructuredLogger:
     """
     Set up logging for the entire pipeline.
@@ -380,6 +381,7 @@ def setup_pipeline_logging(
         log_dir: Directory for log files
         console_level: Console logging level
         file_level: File logging level
+        enable_json: Write structured JSON logs (disabled by default)
 
     Returns:
         Configured StructuredLogger instance
@@ -392,7 +394,7 @@ def setup_pipeline_logging(
         log_dir=log_dir,
         console_level=console_level,
         file_level=file_level,
-        enable_json=True,
+        enable_json=enable_json,
     )
 
     logger.info("=" * 60)
@@ -409,6 +411,7 @@ def setup_stage_logging(
     stage_name: str,
     log_dir: Path,
     console_level: int = logging.INFO,
+    enable_json: bool = False,
 ) -> StructuredLogger:
     """
     Set up logging for a specific pipeline stage.
@@ -417,6 +420,7 @@ def setup_stage_logging(
         stage_name: Name of the stage (e.g., 'extract_messages')
         log_dir: Directory for log files
         console_level: Console logging level
+        enable_json: Write structured JSON logs (disabled by default)
 
     Returns:
         Configured StructuredLogger instance
@@ -429,19 +433,19 @@ def setup_stage_logging(
         log_dir=log_dir,
         console_level=console_level,
         file_level=logging.DEBUG,
-        enable_json=True,
+        enable_json=enable_json,
     )
 
     return logger
 
 
 # Convenience function for quick logging setup
-def get_logger(name: str, log_dir: Optional[Path] = None) -> StructuredLogger:
+def get_logger(name: str, log_dir: Optional[Path] = None, enable_json: bool = False) -> StructuredLogger:
     """Get a logger instance with optional file logging."""
     return StructuredLogger(
         name=name,
         log_dir=log_dir,
         console_level=logging.INFO,
         file_level=logging.DEBUG,
-        enable_json=log_dir is not None,
+        enable_json=enable_json,
     )

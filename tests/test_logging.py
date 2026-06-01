@@ -26,9 +26,9 @@ def simulate_work(duration: float = 0.1):
 
 
 def main():
-    # Setup logging
+    # Setup logging (explicitly enable JSON: this script demonstrates that output)
     log_dir = Path("logs/test")
-    logger = setup_stage_logging("logging_test", log_dir)
+    logger = setup_stage_logging("logging_test", log_dir, enable_json=True)
 
     logger.info("Starting logging system test")
 
