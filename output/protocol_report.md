@@ -4,26 +4,19 @@ Version: `0.1`
 
 ## Metadata
 
-- **source_family_summary**: D:\tez\practical\protocol_re\data\05_families_labeled.json
-- **source_feature_summary**: D:\tez\practical\protocol_re\data\03_family_features.json
-- **source_keyword_summary**: D:\tez\practical\protocol_re\data\07_keywords.json
-- **source_framing_summary**: D:\tez\practical\protocol_re\data\04_framing.json
-- **source_relations_summary**: D:\tez\practical\protocol_re\data\08_relations_validated.json
-- **source_semantics_summary**: D:\tez\practical\protocol_re\data\09_semantics.json
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 6, 'family_count': 11, 'family_ratio': 1.0}], 'field_type_counts': {'length': 33, 'transaction_or_counter': 20, 'constant': 5, 'discriminator': 5}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 11}
-- **notes**: Initial auto-generated protocol model assembled from family summaries.
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-01T06:34:44.753869+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-01T10:14:58.681015+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
 
 ## Evaluation
 
-- Messages: `200000` across `1` sessions
+- Messages: `200000` across `100001` sessions
 - Corpus assignment coverage: `1` with `11` families
 - Clustering sample: `100000` messages ratio=`0.5`
 - Parseable families: `11` of `11`
-- Pair hypotheses: `100000` direction_unknown_ratio=`1`
-- Relation edges: `18` echo_edges=`1` length_relation_edges=`1`
+- Pair hypotheses: `99999` direction_unknown_ratio=`1`
+- Relation edges: `17` echo_edges=`2` length_relation_edges=`0`
 - Semantic coverage: `11` of `11` families ratio=`1`
-- Top semantic labels: `discriminator`x22, `length`x11, `payload`x11, `constant`x11, `transaction_id`x7, `echoed_request_field`x1, `transaction_or_correlation_id`x1, `response_size_selector`x1
+- Top semantic labels: `discriminator`x22, `length`x11, `payload`x11, `constant`x11, `transaction_id`x7
 - Framing coverage: `11` of `11` families ratio=`1`
 - Clustering diagnostics: warning_families=`5` split_candidates=`0` merge_candidates=`0`
 
@@ -37,26 +30,26 @@ Version: `0.1`
 
 ### Evaluation Top Relation Edges
 
-- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `noise` -> `family_1` | pairs=`719` avg_score=`5.3887` support=`1` lift=`1.52` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
-- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_6` -> `family_6` | pairs=`16660` avg_score=`5.448` support=`0.8624` lift=`4.6096` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_4` -> `family_4` | pairs=`5936` avg_score=`5.4461` support=`0.7472` lift=`10.736` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_5` -> `family_5` | pairs=`5262` avg_score=`5.446` support=`0.7661` lift=`12.0277` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_1` -> `family_9` | pairs=`2345` avg_score=`5.4675` support=`0.0356` lift=`1.2169` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_1` -> `family_7` | pairs=`1736` avg_score=`5.4676` support=`0.0264` lift=`1.5165` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_1` -> `family_3` | pairs=`1536` avg_score=`5.4675` support=`0.0233` lift=`1.1797` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_6` -> `family_8` | pairs=`853` avg_score=`5.4676` support=`0.0442` lift=`1.9826` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_1` -> `noise` | pairs=`675` avg_score=`5.4674` support=`0.0103` lift=`1.427` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_5` -> `family_2` | pairs=`547` avg_score=`5.4677` support=`0.0796` lift=`3.1277` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
+- `family_6` -> `family_0` | pairs=`527` avg_score=`5.4675` support=`0.0273` lift=`2.8897` direction=`1` order=`1` echo_fields=`0` length_rules=`0`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.515`
-- Verdict: `partial`
+- Overall score: `0.4527`
+- Verdict: `fail`
 - Matched message types: `11` of `11`
 - Message type matching: accuracy=`1` precision=`1` recall=`1` f1=`1`
-- Field boundary: accuracy=`0.3333` precision=`0.4151` recall=`0.6286` f1=`0.5`
+- Field boundary: accuracy=`0.3134` precision=`0.3962` recall=`0.6` f1=`0.4773`
 - Field semantics: accuracy=`0` precision=`0` recall=`0` f1=`0`
-- Relations: accuracy=`0.3889` precision=`0.3889` recall=`1` f1=`0.56`
+- Relations: accuracy=`0.2` precision=`0.2353` recall=`0.5714` f1=`0.3333`
 
 ## LLM Analysis
 
@@ -64,26 +57,25 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ## Family Relations
 
-- Total inferred family edges: `18`
+- Total inferred family edges: `17`
 - Strongest edges:
-- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` flow=`unknown->unknown`
-- `noise` -> `family_1` | pairs=`719` avg_score=`5.3887` support=`1` lift=`1.52` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_2` -> `family_4` | pairs=`389` avg_score=`5.4443` support=`0.1528` lift=`1.9233` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_9` -> `family_4` | pairs=`337` avg_score=`5.4467` support=`0.1151` lift=`1.4483` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_3` -> `family_4` | pairs=`260` avg_score=`5.4394` support=`0.1314` lift=`1.6538` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_9` -> `family_5` | pairs=`239` avg_score=`5.4468` support=`0.0816` lift=`1.1877` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_3` -> `family_5` | pairs=`180` avg_score=`5.4467` support=`0.091` lift=`1.3239` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_1` -> `noise` | pairs=`44` avg_score=`5.4665` support=`0.0008` lift=`1.8222` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_6` -> `family_0` | pairs=`20` avg_score=`5.4668` support=`0.0011` lift=`4.8594` direction=`1` order=`1` flow=`unknown->unknown`
-- `family_4` -> `family_3` | pairs=`2` avg_score=`5.4642` support=`0.0003` lift=`4.7893` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`1` length_rules=`1`
+- `family_6` -> `family_6` | pairs=`16660` avg_score=`5.448` support=`0.8624` lift=`4.6096` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_4` -> `family_4` | pairs=`5936` avg_score=`5.4461` support=`0.7472` lift=`10.736` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_5` -> `family_5` | pairs=`5262` avg_score=`5.446` support=`0.7661` lift=`12.0277` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_1` -> `family_9` | pairs=`2345` avg_score=`5.4675` support=`0.0356` lift=`1.2169` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_1` -> `family_7` | pairs=`1736` avg_score=`5.4676` support=`0.0264` lift=`1.5165` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_1` -> `family_3` | pairs=`1536` avg_score=`5.4675` support=`0.0233` lift=`1.1797` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_6` -> `family_8` | pairs=`853` avg_score=`5.4676` support=`0.0442` lift=`1.9826` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_1` -> `noise` | pairs=`675` avg_score=`5.4674` support=`0.0103` lift=`1.427` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_5` -> `family_2` | pairs=`547` avg_score=`5.4677` support=`0.0796` lift=`3.1277` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_6` -> `family_0` | pairs=`527` avg_score=`5.4675` support=`0.0273` lift=`2.8897` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_4` -> `family_2` | pairs=`386` avg_score=`5.4674` support=`0.0486` lift=`1.9085` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_4` -> `family_9` | pairs=`339` avg_score=`5.4676` support=`0.0427` lift=`1.4569` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_4` -> `family_3` | pairs=`257` avg_score=`5.4673` support=`0.0324` lift=`1.6347` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_5` -> `family_9` | pairs=`241` avg_score=`5.4673` support=`0.0351` lift=`1.1978` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_5` -> `family_3` | pairs=`180` avg_score=`5.4672` support=`0.0262` lift=`1.3241` direction=`1` order=`1` flow=`unknown->unknown`
+- `noise` -> `noise` | pairs=`44` avg_score=`5.4969` support=`1` lift=`139.0807` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`2`
+- `family_0` -> `family_0` | pairs=`22` avg_score=`5.4966` support=`1` lift=`105.9311` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`2`
 
 ## Families
 
@@ -92,16 +84,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_1
 
-- Role: `response`
+- Role: `request`
 - Messages: `120667`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_3`, `family_7`, `family_9`, `noise`
-- Role hint: `response`
-- Semantic confidence: `0.9931`
+- Role hint: `request`
+- Semantic confidence: `1.0`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314913`
-- Candidate discriminator offset: `0` cardinality=`197` entropy=`7.562829` salience=`1.0` mutual_information=`0.109894` contrastive_separation=`1.0` confidence=`0.48592`
-- Top discriminator candidates: offset `0` conf=`0.48592` salience=`1.0`, offset `9` conf=`0.313845` salience=`0.075267`, offset `7` conf=`0.303386` salience=`0.11326`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.841241` salience=`0.746807` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.493451`
+- Top discriminator candidates: offset `7` conf=`0.493451` salience=`0.746807`, offset `0` conf=`0.48592` salience=`1.0`, offset `9` conf=`0.378374` salience=`0.290365`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -146,16 +138,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_6
 
-- Role: `response`
+- Role: `request`
 - Messages: `38027`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_0`, `family_6`, `family_8`
-- Role hint: `response`
+- Role hint: `request`
 - Semantic confidence: `0.5199`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.485475` max=`3.027169` mean=`2.389712`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.98095` salience=`0.11326` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.307632`
-- Top discriminator candidates: offset `7` conf=`0.307632` salience=`0.11326`, offset `8` conf=`0.297921` salience=`0.117035`, offset `9` conf=`0.246409` salience=`0.075267`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.98095` salience=`0.746807` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.497696`
+- Top discriminator candidates: offset `7` conf=`0.497696` salience=`0.746807`, offset `8` conf=`0.371024` salience=`0.360711`, offset `9` conf=`0.310938` salience=`0.290365`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -200,16 +192,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_4
 
-- Role: `response`
+- Role: `request`
 - Messages: `14904`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_2`, `family_3`, `family_4`, `family_9`
-- Role hint: `response`
-- Semantic confidence: `0.5385`
+- Role hint: `request`
+- Semantic confidence: `0.5382`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`3.027169` mean=`2.379388`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.941612` salience=`0.11326` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.307369`
-- Top discriminator candidates: offset `7` conf=`0.307369` salience=`0.11326`, offset `8` conf=`0.296583` salience=`0.117035`, offset `9` conf=`0.288801` salience=`0.075267`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.941612` salience=`0.746807` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.497433`
+- Top discriminator candidates: offset `7` conf=`0.497433` salience=`0.746807`, offset `8` conf=`0.369686` salience=`0.360711`, offset `9` conf=`0.35333` salience=`0.290365`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -237,10 +229,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 #### Semantic Labels
 
 - bytes `2`..`5` | label=`length` confidence=`1.0`
-- bytes `2`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`6` | label=`response_size_selector` confidence=`1.0`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `2`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `7`..`10` | label=`discriminator` confidence=`0.95`
 - bytes `11`..`11` | label=`discriminator` confidence=`0.95`
 - bytes `7`..`10` | label=`payload` confidence=`0.6`
@@ -257,16 +246,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_5
 
-- Role: `response`
+- Role: `request`
 - Messages: `13239`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_2`, `family_3`, `family_5`, `family_9`
-- Role hint: `response`
-- Semantic confidence: `0.5424`
+- Role hint: `request`
+- Semantic confidence: `0.5421`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.846439` max=`3.027169` mean=`2.402529`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.93922` salience=`0.11326` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.307135`
-- Top discriminator candidates: offset `7` conf=`0.307135` salience=`0.11326`, offset `8` conf=`0.297434` salience=`0.117035`, offset `9` conf=`0.274702` salience=`0.075267`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.93922` salience=`0.746807` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.497199`
+- Top discriminator candidates: offset `7` conf=`0.497199` salience=`0.746807`, offset `8` conf=`0.370537` salience=`0.360711`, offset `9` conf=`0.339231` salience=`0.290365`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -311,16 +300,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_9
 
-- Role: `request`
+- Role: `response`
 - Messages: `2933`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_1`, `family_4`, `family_5`
-- Role hint: `request`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020272`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.078001` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.275923`
-- Top discriminator candidates: offset `10` conf=`0.275923` salience=`0.078001`, offset `9` conf=`0.273982` salience=`0.075267`, offset `8` conf=`0.258443` salience=`0.117035`
+- Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.345561` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.356191`
+- Top discriminator candidates: offset `10` conf=`0.356191` salience=`0.345561`, offset `9` conf=`0.338512` salience=`0.290365`, offset `8` conf=`0.331546` salience=`0.360711`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -366,16 +355,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_2
 
-- Role: `request`
+- Role: `response`
 - Messages: `2548`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_4`, `family_5`
-- Role hint: `request`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.02023`
-- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.016887` salience=`0.117035` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.258374`
-- Top discriminator candidates: offset `8` conf=`0.258374` salience=`0.117035`, offset `9` conf=`0.252454` salience=`0.075267`, offset `10` conf=`0.249181` salience=`0.078001`
+- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.016887` salience=`0.360711` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.331477`
+- Top discriminator candidates: offset `8` conf=`0.331477` salience=`0.360711`, offset `10` conf=`0.329449` salience=`0.345561`, offset `9` conf=`0.316983` salience=`0.290365`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -421,16 +410,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_8
 
-- Role: `request`
+- Role: `response`
 - Messages: `2227`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ??`
 - Related families: `family_6`
-- Role hint: `request`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.550341` max=`3.027169` mean=`3.017568`
-- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.30222` salience=`0.075267` mutual_information=`0.184592` contrastive_separation=`0.859375` confidence=`0.269426`
-- Top discriminator candidates: offset `9` conf=`0.269426` salience=`0.075267`, offset `10` conf=`0.248657` salience=`0.078001`
+- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.30222` salience=`0.290365` mutual_information=`0.184592` contrastive_separation=`0.859375` confidence=`0.333955`
+- Top discriminator candidates: offset `9` conf=`0.333955` salience=`0.290365`, offset `10` conf=`0.328925` salience=`0.345561`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -474,16 +463,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_3
 
-- Role: `request`
+- Role: `response`
 - Messages: `1985`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_1`, `family_4`, `family_5`
-- Role hint: `request`
-- Semantic confidence: `0.999`
+- Role hint: `response`
+- Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.018191`
-- Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.078001` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.3255`
-- Top discriminator candidates: offset `10` conf=`0.3255` salience=`0.078001`, offset `9` conf=`0.288525` salience=`0.075267`, offset `8` conf=`0.258642` salience=`0.117035`
+- Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.345561` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.405768`
+- Top discriminator candidates: offset `10` conf=`0.405768` salience=`0.345561`, offset `9` conf=`0.353055` salience=`0.290365`, offset `8` conf=`0.331745` salience=`0.360711`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -519,8 +508,6 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Notes
 
-- Echoes request fields from family_4 with up to 1 strong offset matches.
-- Response size is tied to request fields from family_4.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -531,16 +518,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_7
 
-- Role: `request`
+- Role: `response`
 - Messages: `1740`
 - Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
 - Related families: `family_1`
-- Role hint: `request`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023486`
-- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.02806` salience=`0.075267` mutual_information=`0.184592` contrastive_separation=`0.828125` confidence=`0.281083`
-- Top discriminator candidates: offset `9` conf=`0.281083` salience=`0.075267`, offset `10` conf=`0.25461` salience=`0.078001`
+- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.02806` salience=`0.290365` mutual_information=`0.184592` contrastive_separation=`0.828125` confidence=`0.345612`
+- Top discriminator candidates: offset `9` conf=`0.345612` salience=`0.290365`, offset `10` conf=`0.334878` salience=`0.345561`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -584,16 +571,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### family_0
 
-- Role: `request`
+- Role: `response`
 - Messages: `967`
 - Template: `?? ?? 00 00 00 05 01 04 02 ?? ?? 00`
-- Related families: `family_6`
-- Role hint: `request`
-- Semantic confidence: `0.9646`
+- Related families: `family_0`, `family_6`
+- Role hint: `response`
+- Semantic confidence: `0.9615`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.40401` max=`3.027169` mean=`2.97951`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`2.492763` salience=`0.078001` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.266634`
-- Top discriminator candidates: offset `10` conf=`0.266634` salience=`0.078001`, offset `8` conf=`0.26101` salience=`0.117035`, offset `9` conf=`0.248296` salience=`0.075267`
+- Candidate discriminator offset: `10` cardinality=`17` entropy=`2.492763` salience=`0.345561` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.346901`
+- Top discriminator candidates: offset `10` conf=`0.346901` salience=`0.345561`, offset `8` conf=`0.334112` salience=`0.360711`, offset `9` conf=`0.312825` salience=`0.290365`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -629,6 +616,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Notes
 
+- Echoes request fields from family_0 with up to 2 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -639,16 +627,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ### noise
 
-- Role: `request`
+- Role: `response`
 - Messages: `763`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00`
-- Related families: `family_1`
-- Role hint: `request`
+- Related families: `family_1`, `noise`
+- Role hint: `response`
 - Semantic confidence: `0.9423`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.450826` max=`3.027169` mean=`2.958612`
-- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.515799` salience=`0.117035` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.2652`
-- Top discriminator candidates: offset `8` conf=`0.2652` salience=`0.117035`, offset `10` conf=`0.243685` salience=`0.078001`, offset `9` conf=`0.22671` salience=`0.075267`
+- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.515799` salience=`0.360711` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.338302`
+- Top discriminator candidates: offset `8` conf=`0.338302` salience=`0.360711`, offset `10` conf=`0.323953` salience=`0.345561`, offset `9` conf=`0.29124` salience=`0.290365`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -684,6 +672,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Notes
 
+- Echoes request fields from noise with up to 2 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
