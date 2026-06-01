@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Reorganize project structure
 - Comprehensive documentation with MkDocs
 - Getting started guide
 - Architecture documentation
