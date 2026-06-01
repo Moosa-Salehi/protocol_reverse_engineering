@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_semantics import run_semantic_labeling_stage
 from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
 from protocol_re.utils.logging import setup_stage_logging
 
 
@@ -142,6 +143,7 @@ def main() -> None:
     labeled_families = {}
     total_applied = 0
     total_rejected = 0
+    stage_results: list[tuple[str, object]] = []
 
     for family_id, details in families_data.items():
         labeled_details = dict(details)
@@ -178,6 +180,8 @@ def main() -> None:
             relations=family_relations,
             family_role=family_role,
         )
+
+        stage_results.append((family_id, result))
 
         # Save stage result
         result_path = results_dir / f"semantic_labeling_{family_id}.json"
@@ -240,6 +244,10 @@ def main() -> None:
     print(f"[+] Total labels applied: {total_applied}")
     print(f"[+] Total labels rejected: {total_rejected}")
     print(f"[+] Stage results saved to {args.results_dir}")
+
+    # Surface per-family failures loudly (swallowed exceptions / empty prompts).
+    failures = collect_stage_failures(stage_results, render_only=args.render_only)
+    fail_loudly_if_any(failures, stage_name="11b_label_semantics_llm", logger=logger)
 
 
 if __name__ == "__main__":

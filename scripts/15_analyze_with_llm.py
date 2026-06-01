@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_synthesis import run_protocol_synthesis_stage
 from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
 from protocol_re.utils.logging import setup_stage_logging
 
 
@@ -231,6 +232,11 @@ def main() -> None:
     status = "prompt rendered" if args.render_only else "synthesis completed"
     print(f"\n[+] Protocol {status}")
     print(f"[+] Wrote output to {args.output_json}")
+
+    # Surface internal failures loudly (e.g. an exception swallowed into the
+    # StageResult that would otherwise leave an empty prompt + exit 0).
+    failures = collect_stage_failures([("protocol_synthesis", result)], render_only=args.render_only)
+    fail_loudly_if_any(failures, stage_name="15_analyze_with_llm", logger=logger)
 
     if result.success and not args.render_only:
         print(f"[+] Synthesis includes {len(protocol_model.get('families', []))} families")

@@ -20,6 +20,7 @@ from protocol_re.model.schema import FamilyAssignment
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_boundaries import run_boundary_refinement_stage
 from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
 
 
 def load_llm_config(config_path: str) -> dict:
@@ -125,6 +126,7 @@ def main() -> None:
     refined_families = {}
     total_applied = 0
     total_rejected = 0
+    stage_results: list[tuple[str, object]] = []
 
     for family_id, details in families_data.items():
         refined_details = dict(details)
@@ -158,6 +160,8 @@ def main() -> None:
             boundary_scores=details.get("boundary_scores"),
             family_stats=details.get("statistics"),
         )
+
+        stage_results.append((family_id, result))
 
         # Save stage result
         result_path = results_dir / f"boundary_refinement_{family_id}.json"
@@ -209,6 +213,10 @@ def main() -> None:
     print(f"[+] Total merges applied: {total_applied}")
     print(f"[+] Total merges rejected: {total_rejected}")
     print(f"[+] Stage results saved to {args.results_dir}")
+
+    # Surface per-family failures loudly (swallowed exceptions / empty prompts).
+    failures = collect_stage_failures(stage_results, render_only=args.render_only)
+    fail_loudly_if_any(failures, stage_name="07b_refine_boundaries_llm", logger=logger)
 
 
 if __name__ == "__main__":
