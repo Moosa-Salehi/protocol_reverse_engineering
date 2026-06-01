@@ -428,11 +428,11 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 _path(evaluation_json),
                 # Multi-stage summaries (auto-detected if files exist)
                 "--boundary-summary",
-                _path(families_refined_json) if args.enable_llm_boundary_refinement else _path(data_dir / "05_families_refined.json"),
+                _path(families_refined_json),
                 "--semantic-summary",
-                _path(families_labeled_json) if args.enable_llm_semantic_labeling else _path(data_dir / "05_families_labeled.json"),
+                _path(families_labeled_json),
                 "--relation-summary",
-                _path(relations_validated_json) if args.enable_llm_relation_validation else _path(data_dir / "08_relations_validated.json"),
+                _path(relations_validated_json),
             ],
         ),
         (
