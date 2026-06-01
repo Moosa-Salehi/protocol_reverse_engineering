@@ -4,12 +4,27 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import fields as dataclass_fields
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.model.schema import FamilyFeatureSummary, FamilyModel, FamilyRelation, FamilySemanticSummary, FieldHypothesis, ProtocolModel, Segment
 from protocol_re.utils.logging import setup_stage_logging
+
+
+def _build_relation(edge: dict) -> FamilyRelation:
+    """Construct a FamilyRelation from a stage-10 edge dict, tolerating extra keys.
+
+    Stage 10 emits ``relation_confidence``; the schema field is ``confidence``.
+    Unknown keys are dropped so the model stays forward-compatible with new
+    relation metrics added upstream.
+    """
+    edge = dict(edge)
+    if "relation_confidence" in edge and "confidence" not in edge:
+        edge["confidence"] = edge.pop("relation_confidence")
+    valid = {f.name for f in dataclass_fields(FamilyRelation)}
+    return FamilyRelation(**{k: v for k, v in edge.items() if k in valid})
 
 
 def main() -> None:
@@ -122,7 +137,7 @@ def main() -> None:
         logger.metric("family_models_built", len(families), "families")
 
     with logger.stage("build_protocol_model"):
-        relations = [FamilyRelation(**edge) for edge in relations_payload.get("family_edges", [])]
+        relations = [_build_relation(edge) for edge in relations_payload.get("family_edges", [])]
 
         model = ProtocolModel(
             families=families,

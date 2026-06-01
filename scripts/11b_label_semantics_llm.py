@@ -57,7 +57,7 @@ def main() -> None:
         logger.info(f"Loading families from {args.families_json}")
         with open(args.families_json, "r", encoding="utf-8") as f:
             families_data = json.load(f)
-        logger.metric("families_loaded", len(families_data.get("families", [])), "families")
+        logger.metric("families_loaded", len(families_data), "families")  # dict keyed by family_id
 
     with logger.stage("load_relations"):
         # Load relations if provided
@@ -122,8 +122,6 @@ def main() -> None:
         else:
             llm_config = None
             logger.info("Render-only mode: LLM will not be called")
-    else:
-        llm_config = None
 
     # Create stage config
     stage_config = StageConfig(
@@ -139,18 +137,19 @@ def main() -> None:
     results_dir = Path(args.results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    # Process each family
-    labeled_families = []
+    # Process each family. Stage 07 emits a dict keyed by family_id; we label fields
+    # in place and re-emit the same dict schema so downstream stages (12) consume it.
+    labeled_families = {}
     total_applied = 0
     total_rejected = 0
 
-    for family in families_data.get("families", []):
-        family_id = family["family_id"]
-        fields = family.get("fields", [])
+    for family_id, details in families_data.items():
+        labeled_details = dict(details)
+        fields = details.get("field_hypotheses", [])
 
         if not fields:
             print(f"[*] Skipping {family_id}: no fields")
-            labeled_families.append(family)
+            labeled_families[family_id] = labeled_details
             continue
 
         print(f"\n[*] Processing {family_id} ({len(fields)} fields)")
@@ -197,12 +196,12 @@ def main() -> None:
             with open(prompt_path, "w", encoding="utf-8") as f:
                 f.write(result.prompt)
             print(f"[+] Saved prompt to {prompt_path}")
-            labeled_families.append(family)
+            labeled_families[family_id] = labeled_details
             continue
 
         if not result.success:
             print(f"[!] Error processing {family_id}: {result.error}")
-            labeled_families.append(family)
+            labeled_families[family_id] = labeled_details
             continue
 
         print(f"[+] Applied: {result.applied_count}, Rejected: {result.rejected_count}")
@@ -211,41 +210,28 @@ def main() -> None:
 
         # Apply semantic labels to family
         if result.applied_count > 0:
-            labeled_family = family.copy()
-
             # Apply labels from validation log
-            labeled_fields = fields.copy()
+            labeled_fields = [dict(f) for f in fields]
             for log_entry in result.validation_log:
                 if log_entry.get("applied", False):
                     label = log_entry.get("label", {})
                     field_index = label.get("field_index")
                     if field_index is not None and field_index < len(labeled_fields):
-                        labeled_fields[field_index] = labeled_fields[field_index].copy()
                         labeled_fields[field_index]["semantic_role"] = label.get("semantic_role")
                         labeled_fields[field_index]["semantic_confidence"] = label.get("confidence")
                         labeled_fields[field_index]["semantic_evidence"] = label.get("evidence", [])
 
-            labeled_family["fields"] = labeled_fields
-            labeled_family["llm_semantic_labeling"] = {
+            labeled_details["field_hypotheses"] = labeled_fields
+            labeled_details["llm_semantic_labeling"] = {
                 "applied": result.applied_count,
                 "rejected": result.rejected_count,
                 "stage": "semantic_labeling",
             }
-            labeled_families.append(labeled_family)
-        else:
-            labeled_families.append(family)
 
-    # Save labeled families
-    output_data = {
-        "families": labeled_families,
-        "metadata": families_data.get("metadata", {}),
-        "llm_labeling_summary": {
-            "stage": "semantic_labeling",
-            "total_families": len(labeled_families),
-            "total_labels_applied": total_applied,
-            "total_labels_rejected": total_rejected,
-        }
-    }
+        labeled_families[family_id] = labeled_details
+
+    # Save labeled families, preserving the stage-07 dict schema
+    output_data = labeled_families
 
     with open(args.output_json, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2)

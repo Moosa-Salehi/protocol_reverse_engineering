@@ -70,13 +70,13 @@ def main() -> None:
             with open(args.families_json, "r", encoding="utf-8") as f:
                 families_data = json.load(f)
 
-            for family in families_data.get("families", []):
-                family_id = family["family_id"]
+            # Stage 07 emits a dict keyed by family_id
+            for family_id, details in families_data.items():
                 family_summaries[family_id] = {
                     "family_id": family_id,
-                    "message_count": family.get("message_count", 0),
-                    "field_count": len(family.get("fields", [])),
-                    "avg_length": family.get("statistics", {}).get("avg_length", 0),
+                    "message_count": details.get("message_count", 0),
+                    "field_count": len(details.get("field_hypotheses", [])),
+                    "avg_length": details.get("statistics", {}).get("avg_length", 0),
                 }
             logger.metric("family_summaries_loaded", len(family_summaries), "families")
 

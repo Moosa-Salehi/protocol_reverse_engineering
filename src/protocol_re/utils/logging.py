@@ -158,28 +158,43 @@ class StructuredLogger:
         finally:
             self.context_stack.pop()
 
-    def debug(self, message: str, **kwargs):
+    @staticmethod
+    def _format(message: str, args: tuple) -> str:
+        """Apply %-style formatting like the stdlib logger, when args are given."""
+        if args:
+            try:
+                return message % args
+            except (TypeError, ValueError):
+                return message + " " + " ".join(str(a) for a in args)
+        return message
+
+    def debug(self, message: str, *args, **kwargs):
         """Log debug message."""
+        message = self._format(message, args)
         self.logger.debug(message)
         self._log_json('DEBUG', message, **kwargs)
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, *args, **kwargs):
         """Log info message."""
+        message = self._format(message, args)
         self.logger.info(message)
         self._log_json('INFO', message, **kwargs)
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, *args, **kwargs):
         """Log warning message."""
+        message = self._format(message, args)
         self.logger.warning(message)
         self._log_json('WARNING', message, **kwargs)
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, *args, **kwargs):
         """Log error message."""
+        message = self._format(message, args)
         self.logger.error(message)
         self._log_json('ERROR', message, **kwargs)
 
-    def critical(self, message: str, **kwargs):
+    def critical(self, message: str, *args, **kwargs):
         """Log critical message."""
+        message = self._format(message, args)
         self.logger.critical(message)
         self._log_json('CRITICAL', message, **kwargs)
 

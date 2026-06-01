@@ -66,7 +66,7 @@ def main() -> None:
         logger.info(f"Loading families from {args.families_json}")
         with open(args.families_json, "r", encoding="utf-8") as f:
             families_data = json.load(f)
-        logger.metric("families_loaded", len(families_data), "families")
+        logger.metric("families_loaded", len(families_data), "families")  # dict keyed by family_id
 
     # Load assignments if provided
     with logger.stage("load_assignments"):
@@ -120,18 +120,19 @@ def main() -> None:
     results_dir = Path(args.results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    # Process each family
-    refined_families = []
+    # Process each family. Stage 07 emits a dict keyed by family_id; we refine in
+    # place and re-emit the same dict schema so downstream stages (11, 12) consume it.
+    refined_families = {}
     total_applied = 0
     total_rejected = 0
 
-    for family in families_data.get("families", []):
-        family_id = family["family_id"]
-        fields = family.get("fields", [])
+    for family_id, details in families_data.items():
+        refined_details = dict(details)
+        fields = details.get("field_hypotheses", [])
 
         if not fields:
             print(f"[*] Skipping {family_id}: no fields")
-            refined_families.append(family)
+            refined_families[family_id] = refined_details
             continue
 
         print(f"\n[*] Processing {family_id} ({len(fields)} fields)")
@@ -144,7 +145,7 @@ def main() -> None:
 
         if not sample_messages:
             print(f"[*] No sample messages for {family_id}, skipping LLM refinement")
-            refined_families.append(family)
+            refined_families[family_id] = refined_details
             continue
 
         # Run boundary refinement stage
@@ -154,8 +155,8 @@ def main() -> None:
             messages=sample_messages,
             config=stage_config,
             llm_config=llm_config,
-            boundary_scores=family.get("boundary_scores"),
-            family_stats=family.get("statistics"),
+            boundary_scores=details.get("boundary_scores"),
+            family_stats=details.get("statistics"),
         )
 
         # Save stage result
@@ -175,12 +176,12 @@ def main() -> None:
             with open(prompt_path, "w", encoding="utf-8") as f:
                 f.write(result.prompt)
             print(f"[+] Saved prompt to {prompt_path}")
-            refined_families.append(family)
+            refined_families[family_id] = refined_details
             continue
 
         if not result.success:
             print(f"[!] Error processing {family_id}: {result.error}")
-            refined_families.append(family)
+            refined_families[family_id] = refined_details
             continue
 
         print(f"[+] Applied: {result.applied_count}, Rejected: {result.rejected_count}")
@@ -189,29 +190,17 @@ def main() -> None:
 
         # Apply refinements to family
         if result.applied_count > 0:
-            # Update fields with merged boundaries
             # Note: The actual field updates are in the validation_log
-            refined_family = family.copy()
-            refined_family["llm_boundary_refinement"] = {
+            refined_details["llm_boundary_refinement"] = {
                 "applied": result.applied_count,
                 "rejected": result.rejected_count,
                 "stage": "boundary_refinement",
             }
-            refined_families.append(refined_family)
-        else:
-            refined_families.append(family)
 
-    # Save refined families
-    output_data = {
-        "families": refined_families,
-        "metadata": families_data.get("metadata", {}),
-        "llm_refinement_summary": {
-            "stage": "boundary_refinement",
-            "total_families": len(refined_families),
-            "total_applied": total_applied,
-            "total_rejected": total_rejected,
-        }
-    }
+        refined_families[family_id] = refined_details
+
+    # Save refined families, preserving the stage-07 dict schema
+    output_data = refined_families
 
     with open(args.output_json, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2)
