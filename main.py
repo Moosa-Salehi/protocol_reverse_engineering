@@ -589,7 +589,7 @@ def parse_args() -> argparse.Namespace:
         default="tshark",
         help="Message extraction method. tshark uses --tshark-filter; tcp is the legacy Scapy TCP port extractor.",
     )
-    extract_group.add_argument("--tshark-filter", help="TShark display filter for the target protocol, for example mbtcp or s7comm.")
+    extract_group.add_argument("--tshark-filter", help="TShark display filter for the target protocol, for example modbus or s7comm.")
     extract_group.add_argument("--tshark-workers", type=int, default=4, help="Maximum parallel TShark worker processes.")
     extract_group.add_argument("--service-port", type=int, help="Legacy TCP extractor port filter. Used with --extraction-method tcp.")
     extract_group.add_argument(

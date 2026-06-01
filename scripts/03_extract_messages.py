@@ -23,7 +23,7 @@ def main() -> None:
         help="Use tshark display-filter extraction or legacy Scapy TCP port extraction.",
     )
     parser.add_argument("--service-port", type=int, help="Optional TCP port filter. If omitted, all TCP payloads are extracted.")
-    parser.add_argument("--tshark-filter", help="TShark display filter for the target protocol, for example mbtcp or s7comm.")
+    parser.add_argument("--tshark-filter", help="TShark display filter for the target protocol, for example modbus or s7comm.")
     parser.add_argument(
         "--packets-dir",
         default="data/payload_extraction/packets",
