@@ -352,6 +352,60 @@ def _final_evaluation_block(final_evaluation: Optional[Dict[str, Any]]) -> str:
     """
 
 
+def _framing_summary_block(summary: Optional[Dict[str, Any]]) -> str:
+    if not summary:
+        return ""
+    header_ends = summary.get("common_header_ends", []) or []
+    field_type_counts = summary.get("field_type_counts", {}) or {}
+    top_metrics = (
+        f'{_metric("Mean best confidence", summary.get("mean_best_confidence", 0.0))}'
+        f'{_metric("Families with header candidate", summary.get("families_with_header_candidate", 0))}'
+    )
+    header_cards = "".join(
+        _metric(
+            f"Header end {item.get('header_end', 0)}",
+            f"{item.get('family_count', 0)} families",
+            _pct(item.get('family_ratio', 0)) + " of families",
+        )
+        for item in header_ends
+    ) or '<p class="muted">No common header ends.</p>'
+    field_pills = "".join(
+        _pill(f"{key} x{value}", "field") for key, value in field_type_counts.items()
+    ) or '<span class="muted">None</span>'
+    return f"""
+    <section class="panel">
+      <h2>Framing Summary</h2>
+      <div class="metric-grid">{top_metrics}</div>
+      <h4>Common Header Ends</h4>
+      <div class="metric-grid">{header_cards}</div>
+      <h4>Field Type Counts</h4>
+      <div class="motif-row">{field_pills}</div>
+    </section>
+    """
+
+
+def _llm_refinement_block(summary: Optional[Dict[str, Any]]) -> str:
+    if not summary:
+        return ""
+    metrics = (
+        f'{_metric("Input patches", summary.get("input_patch_count", 0))}'
+        f'{_metric("Accepted patches", summary.get("accepted_patch_count", 0))}'
+        f'{_metric("Rejected patches", summary.get("rejected_patch_count", 0))}'
+    )
+    created = summary.get("created_at")
+    caption = " · ".join(
+        part for part in (summary.get("artifact_type"), created) if part
+    )
+    caption_html = f'<p class="muted">{_text(caption)}</p>' if caption else ""
+    return f"""
+    <section class="panel">
+      <h2>LLM Refinement</h2>
+      <div class="metric-grid">{metrics}</div>
+      {caption_html}
+    </section>
+    """
+
+
 def render_protocol_model_html(
     model: Dict[str, Any],
     evaluation: Optional[Dict[str, Any]] = None,
@@ -360,7 +414,17 @@ def render_protocol_model_html(
 ) -> str:
     families = _families(model)
     family_cards = "\n".join(_family_card(family) for family in families)
-    metadata_rows = _kv_rows(model.get("metadata", {}) or {})
+    # Pull structured summaries out of the flat metadata table so they can be
+    # rendered as their own card-based blocks instead of stringified dicts.
+    metadata = dict(model.get("metadata", {}) or {})
+    framing_summary_block = _framing_summary_block(metadata.pop("framing_global_summary", None))
+    llm_refinement_block = _llm_refinement_block(metadata.pop("llm_refinement", None))
+    metadata_rows = _kv_rows(metadata)
+    metadata_section = (
+        f'<section class="panel"><h2>Metadata</h2>'
+        f'<table class="meta-table"><tbody>{metadata_rows}</tbody></table></section>'
+        if metadata_rows else ""
+    )
     relation_rows = _relation_rows(model)
     llm_block = _llm_analysis_block(llm_analysis)
     final_evaluation_block = _final_evaluation_block(final_evaluation)
@@ -454,10 +518,9 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
   {_evaluation_block(evaluation)}
   {final_evaluation_block}
   {llm_block}
-  <section class="panel">
-    <h2>Metadata</h2>
-    <table class="meta-table"><tbody>{metadata_rows or '<tr><td>No metadata.</td></tr>'}</tbody></table>
-  </section>
+  {llm_refinement_block}
+  {framing_summary_block}
+  {metadata_section}
   <section class="panel">
     <h2>Strongest Relations</h2>
     <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody>{relation_rows}</tbody></table>
