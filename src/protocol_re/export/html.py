@@ -306,7 +306,7 @@ def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
     stats_html = (
         '<div class="metric-grid">'
         f'{_metric("Model", llm_analysis.get("model", "unknown"))}'
-        f'{_metric("Prompt bytes", prompt_stats.get("bytes", 0), prompt_hint)}'
+        # f'{_metric("Prompt bytes", prompt_stats.get("bytes", 0), prompt_hint)}'
         f'{_metric("Prompt chars", prompt_stats.get("characters", 0))}'
         f'{_metric("Prompt est. tokens", prompt_stats.get("estimated_tokens", 0))}'
         f'{usage_metrics}'

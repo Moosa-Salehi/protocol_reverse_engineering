@@ -143,14 +143,14 @@ def main() -> None:
             families=families,
             relations=relations,
             metadata={
-                "source_family_summary": args.family_json,
-                "source_feature_summary": args.features_json,
-                "source_keyword_summary": args.keywords_json,
-                "source_framing_summary": args.framing_json,
-                "source_relations_summary": args.relations_json,
-                "source_semantics_summary": args.semantics_json,
+                # "source_family_summary": args.family_json,
+                # "source_feature_summary": args.features_json,
+                # "source_keyword_summary": args.keywords_json,
+                # "source_framing_summary": args.framing_json,
+                # "source_relations_summary": args.relations_json,
+                # "source_semantics_summary": args.semantics_json,
                 "framing_global_summary": framing_payload.get("global", {}),
-                "notes": "Initial auto-generated protocol model assembled from family summaries.",
+                # "notes": "Initial auto-generated protocol model assembled from family summaries.",
             },
         )
 
