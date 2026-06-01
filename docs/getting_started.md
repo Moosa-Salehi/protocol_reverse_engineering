@@ -78,7 +78,7 @@ pip install -r requirements.txt
 ```bash
 # Assuming PCAP file are in pcaps/ folder.
 # Run the pipeline, without using LLM.
-python main.py pcaps/ --tshark-filter modbus --llm-render-only
+python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 ```
 
 **What happens:**
@@ -110,7 +110,7 @@ python main.py --use-existing-messages
 
 | Protocol | Filter | Description |
 |----------|--------|-------------|
-| Modbus TCP | `modbus` or `mbtcp` | Modbus protocol |
+| Modbus TCP | `mbtcp` | Modbus TCP protocol |
 | S7comm | `s7comm` | Siemens S7 communication |
 | DNP3 | `dnp3` | DNP3 SCADA protocol |
 | IEC 60870-5-104 | `iec104` | IEC 104 protocol |
@@ -127,7 +127,7 @@ tshark -G protocols
 #### Collection and Deduplication
 
 ```bash
-python main.py source_files/ --collect --tshark-filter modbus
+python main.py source_files/ --collect --tshark-filter mbtcp
 ```
 
 This will:
@@ -159,7 +159,7 @@ python main.py pcaps/ --extraction-method tcp --service-port 502
 #### Multi-Layer Protocol Detection
 
 ```bash
-python main.py pcaps/ --tshark-filter modbus --enable-layer-detection
+python main.py pcaps/ --tshark-filter mbtcp --enable-layer-detection
 ```
 
 **Options:**
@@ -174,7 +174,7 @@ python main.py pcaps/ --tshark-filter modbus --enable-layer-detection
 #### Message Limits
 
 ```bash
-python main.py pcaps/ --tshark-filter modbus --max-messages 50000
+python main.py pcaps/ --tshark-filter mbtcp --max-messages 50000
 ```
 
 **Default:** 200,000 messages
@@ -191,7 +191,7 @@ python main.py pcaps/ --tshark-filter modbus --max-messages 50000
 Use padded byte vectors:
 
 ```bash
-python main.py pcaps/ --tshark-filter modbus --family-feature-mode raw_bytes
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode raw_bytes
 ```
 
 **Pros:**
@@ -208,7 +208,7 @@ python main.py pcaps/ --tshark-filter modbus --family-feature-mode raw_bytes
 Use symbolic protocol features:
 
 ```bash
-python main.py pcaps/ --tshark-filter modbus --family-feature-mode structural
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode structural
 ```
 
 **Pros:**
@@ -224,7 +224,7 @@ python main.py pcaps/ --tshark-filter modbus --family-feature-mode structural
 Use VAE latent vectors:
 
 ```bash
-python main.py pcaps/ --tshark-filter modbus --family-feature-mode neural --family-neural-model-path assets/pre_trained/industrial_VAE.pth
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode neural --family-neural-model-path assets/pre_trained/industrial_VAE.pth
 ```
 
 **Pros:**
@@ -245,13 +245,13 @@ Combine neural and structural features:
 
 ```bash
 # Adaptive fusion (recommended)
-python main.py pcaps/ --tshark-filter modbus --family-feature-mode hybrid --fusion-method adaptive --family-neural-model-path assets/pre_trained/industrial_VAE.pth
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method adaptive --family-neural-model-path assets/pre_trained/industrial_VAE.pth
 
 # Learned fusion with MLP
-python main.py pcaps/ --tshark-filter modbus --family-feature-mode hybrid --fusion-method learned --family-neural-model-path assets/pre_trained/industrial_VAE.pth
+python main.py pcaps/ --tshark-filter mbtcp --family-feature-mode hybrid --fusion-method learned --family-neural-model-path assets/pre_trained/industrial_VAE.pth
 
 # Fixed weights
-python main.py pcaps/ --tshark-filter modbus \
+python main.py pcaps/ --tshark-filter mbtcp \
     --family-feature-mode hybrid \
     --fusion-method fixed \
     --fusion-neural-weight 0.3 \
@@ -302,23 +302,23 @@ $env:OPENAI_API_KEY = "<your-api-key>"
 The runner tries to load `config/llm_config.json` from root folder.
 
 ```bash
-python main.py pcaps/ --tshark-filter modbus
+python main.py pcaps/ --tshark-filter mbtcp
 ```
 
 ### LLM Options
 
 ```bash
 # Custom prompt template
-python main.py pcaps/ --tshark-filter modbus \
+python main.py pcaps/ --tshark-filter mbtcp \
     --llm-config config/llm_config.json \
     --llm-template custom_prompt.md
 
 # Render prompt only (no API call)
-python main.py pcaps/ --tshark-filter modbus --llm-render-only
+python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 
 # Adjust LLM parameters (temperature, max_tokens, timeout are read from the
 # config file only — edit config/llm_config.json to change them)
-python main.py pcaps/ --tshark-filter modbus \
+python main.py pcaps/ --tshark-filter mbtcp \
     --llm-config config/llm_config.json
 ```
 
@@ -356,7 +356,7 @@ Create a ground truth JSON file (see `truth_files/modbus.json` for example).
 ### Run with Evaluation
 
 ```bash
-python main.py pcaps/ --tshark-filter modbus \
+python main.py pcaps/ --tshark-filter mbtcp \
     --ground-truth-json truth_files/modbus.json
 ```
 
@@ -438,7 +438,7 @@ export PYTHONPATH=src  # Windows: $env:PYTHONPATH="src"
 # Stage 03: Extract messages
 python scripts/03_extract_messages.py pcaps data/01_messages.jsonl \
     --extraction-method tshark \
-    --tshark-filter modbus \
+    --tshark-filter mbtcp \
     --max-messages 200000
 
 # Stage 04: Discover families
@@ -576,7 +576,7 @@ python scripts/19_export_html.py data/10_protocol_model.refined.json \
 - Extraction method mismatch
 
 **Solutions:**
-- Verify filter: `tshark -r capture.pcap -Y "modbus" -T fields -e data`
+- Verify filter: `tshark -r capture.pcap -Y "mbtcp" -T fields -e data`
 - Try alternative extraction: `--extraction-method tcp --service-port 502`
 - Check PCAP contents: `tshark -r capture.pcap`
 
@@ -664,7 +664,7 @@ Note: `main.py` sets this automatically; only needed for individual scripts.
 python main.py <pcap-dir> [OPTIONS]
 
 Required (one of):
-  --tshark-filter FILTER        TShark display filter (e.g., modbus)
+  --tshark-filter FILTER        TShark display filter (e.g., mbtcp)
   --extraction-method tcp       Use TCP port extraction
   --use-existing-messages       Skip extraction, use existing data/01_messages.jsonl
 
