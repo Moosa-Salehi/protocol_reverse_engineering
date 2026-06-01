@@ -28,7 +28,7 @@ from protocol_re.clustering.learned_fusion import (
 from protocol_re.utils.logging import setup_stage_logging
 
 
-def test_fusion_methods(records, corpus_records):
+def test_fusion_methods(records, corpus_records, model_path="assets/pre_trained/industrial_VAE.pth"):
     """Test different fusion methods."""
     print("\n" + "="*80)
     print("TESTING FUSION METHODS")
@@ -40,7 +40,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="neural",
-        model_path="assets/pre_trained/industrial_VAE.pth",
+        model_path=model_path,
         latent_cache_path="data/02_latent_cache.json",
     )
 
@@ -70,7 +70,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="hybrid",
-        model_path="assets/pre_trained/industrial_VAE.pth",
+        model_path=model_path,
         latent_cache_path="data/02_latent_cache.json",
         fusion_method="concat",
     )
@@ -87,7 +87,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="hybrid",
-        model_path="assets/pre_trained/industrial_VAE.pth",
+        model_path=model_path,
         latent_cache_path="data/02_latent_cache.json",
         fusion_method="adaptive",
     )
@@ -110,7 +110,7 @@ def test_fusion_methods(records, corpus_records):
         records[:1000],
         corpus_records,
         feature_mode="hybrid",
-        model_path="assets/pre_trained/industrial_VAE.pth",
+        model_path=model_path,
         latent_cache_path="data/02_latent_cache.json",
         fusion_method="learned",
     )
@@ -201,6 +201,8 @@ def main():
     parser = argparse.ArgumentParser(description="Test learned hybrid feature fusion")
     parser.add_argument("messages_jsonl", help="Path to messages JSONL")
     parser.add_argument("--sample-size", type=int, default=1000, help="Number of messages to test")
+    parser.add_argument("--model-path", default="assets/pre_trained/industrial_VAE.pth",
+                        help="Path to neural VAE model checkpoint")
     args = parser.parse_args()
 
     print("="*80)
@@ -214,7 +216,7 @@ def main():
     sample_records = records[:args.sample_size]
     print(f"Testing with {len(sample_records)} messages")
 
-    test_fusion_methods(sample_records, records)
+    test_fusion_methods(sample_records, records, model_path=args.model_path)
 
     print("\n" + "="*80)
     print("TEST COMPLETE")

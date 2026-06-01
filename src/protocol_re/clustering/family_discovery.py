@@ -202,6 +202,8 @@ def discover_families(
     latent_cache_path: str | None = None,
     neural_batch_size: int = 256,
     fusion_method: str = "adaptive",  # New parameter for learned fusion
+    fusion_neural_weight: float | None = None,  # Manual weight for fixed fusion
+    fusion_structural_weight: float | None = None,  # Manual weight for fixed fusion
     layer_aware: bool = False,  # A6: Enable layer-aware clustering
     framing_data: Dict[str, Any] | None = None,  # A6: Framing data for layer detection
     layer_min_confidence: float = 0.6,  # A6: Minimum confidence for layer detection
@@ -266,6 +268,8 @@ def discover_families(
             latent_cache_path=latent_cache_path,
             neural_batch_size=neural_batch_size,
             fusion_method=fusion_method,  # Pass fusion method
+            neural_weight=fusion_neural_weight,
+            structural_weight=fusion_structural_weight,
         )
         matrix = feature_info.matrix
         if feature_info.latent_dim > 0:
@@ -280,6 +284,8 @@ def discover_families(
                 latent_cache_path=latent_cache_path,
                 neural_batch_size=neural_batch_size,
                 fusion_method=fusion_method,  # Pass fusion method
+                neural_weight=fusion_neural_weight,
+                structural_weight=fusion_structural_weight,
             ).matrix
 
         unsampled_matrix_builder = build_feature_unsampled

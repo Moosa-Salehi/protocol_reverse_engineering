@@ -56,6 +56,8 @@ def build_feature_matrix(
     neural_batch_size: int = 256,
     latent_dim: int = 32,
     fusion_method: str = "adaptive",  # New parameter
+    neural_weight: float | None = None,
+    structural_weight: float | None = None,
 ) -> FeatureBuildResult:
     if np is None:
         raise RuntimeError("NumPy is required for feature matrix construction")
@@ -116,7 +118,9 @@ def build_feature_matrix(
                 matrix, fusion_weights = fuse_features_adaptive(
                     neural_features=neural,
                     structural_features=structural,
-                    method=fusion_method
+                    method=fusion_method,
+                    neural_weight=neural_weight,
+                    structural_weight=structural_weight,
                 )
 
                 return FeatureBuildResult(

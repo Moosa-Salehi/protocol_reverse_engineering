@@ -27,6 +27,10 @@ def main() -> None:
     parser.add_argument("--neural-batch-size", type=int, default=256)
     parser.add_argument("--fusion-method", choices=["concat", "adaptive", "learned", "fixed"], default="adaptive",
                         help="Hybrid feature fusion method (default: adaptive)")
+    parser.add_argument("--fusion-neural-weight", type=float, default=None,
+                        help="Neural feature weight for --fusion-method fixed (0.0-1.0)")
+    parser.add_argument("--fusion-structural-weight", type=float, default=None,
+                        help="Structural feature weight for --fusion-method fixed (0.0-1.0)")
     parser.add_argument("--layer-aware", action="store_true", help="Enable layer-aware clustering (A6, experimental)")
     parser.add_argument("--framing-json", help="Framing JSON for layer detection (required with --layer-aware)")
     parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer detection")
@@ -50,9 +54,25 @@ def main() -> None:
 
     framing_data = None
     if args.layer_aware and args.framing_json:
-        logger.info(f"Loading framing data from {args.framing_json}")
-        with open(args.framing_json, "r", encoding="utf-8") as handle:
-            framing_data = json.load(handle)
+        # Framing (stage 05) runs after this stage, so on a clean first run the file
+        # does not exist yet. Degrade gracefully instead of aborting the pipeline:
+        # layer-aware clustering simply uses framing produced by a previous run, if any.
+        if Path(args.framing_json).is_file():
+            logger.info(f"Loading framing data from {args.framing_json}")
+            with open(args.framing_json, "r", encoding="utf-8") as handle:
+                framing_data = json.load(handle)
+        else:
+            logger.warning(
+                "Layer-aware clustering requested but framing file not found (%s); "
+                "proceeding without layer awareness. Re-run after framing exists to enable it.",
+                args.framing_json,
+            )
+            print(
+                f"[!] Warning: framing file not found ({args.framing_json}); "
+                "layer-aware clustering disabled for this run.",
+                file=sys.stderr,
+            )
+            args.layer_aware = False
 
     logger.info(f"Starting family discovery with method={args.method}, feature_mode={args.feature_mode}")
     logger.decision(
@@ -76,6 +96,8 @@ def main() -> None:
             latent_cache_path=args.latent_cache_path,
             neural_batch_size=args.neural_batch_size,
             fusion_method=args.fusion_method,
+            fusion_neural_weight=args.fusion_neural_weight,
+            fusion_structural_weight=args.fusion_structural_weight,
             layer_aware=args.layer_aware,
             framing_data=framing_data,
             layer_min_confidence=args.layer_min_confidence,

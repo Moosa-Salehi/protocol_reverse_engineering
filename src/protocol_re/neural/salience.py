@@ -139,12 +139,15 @@ def encoder_gradient_salience(
     encoder = load_result.encoder
     if encoder is None:
         return {"available": False, "reason": load_result.reason or "encoder_unavailable", "offset_scores": []}
+    # The encoder's fixed input width (e.g. ConvVAE expects exactly 256 bytes); padding
+    # to the data-derived max_length instead would break the model's matmul.
+    model_length = int(getattr(encoder, "max_length", 0) or max_length)
     try:
         rows: List[List[float]] = []
         for payload in payloads[:sample_limit]:
-            clipped = payload[:max_length]
+            clipped = payload[:model_length]
             row = [value / 255.0 for value in clipped]
-            row.extend([0.0] * (max_length - len(row)))
+            row.extend([0.0] * (model_length - len(row)))
             rows.append(row)
         x = torch.tensor(rows, dtype=torch.float32, requires_grad=True)
         output = encoder.model(x)

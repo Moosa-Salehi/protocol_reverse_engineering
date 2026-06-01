@@ -395,6 +395,11 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         for step_name, step_args in pipeline:
             if step_name == "04_discover_families":
                 step_args.extend(["--fusion-method", args.fusion_method])
+                if args.fusion_method == "fixed":
+                    step_args.extend([
+                        "--fusion-neural-weight", str(args.fusion_neural_weight),
+                        "--fusion-structural-weight", str(args.fusion_structural_weight),
+                    ])
                 break
 
     # Add layer detection flags if enabled
@@ -445,7 +450,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 "--evidence-json",
                 _path(llm_evidence_json),
                 "--schema-json",
-                _path(PROJECT_ROOT / "schema" / "protocol_model.schema.json"),
+                _path(PROJECT_ROOT / "assets" / "schema" / "protocol_model.schema.json"),
                 "--patches-out",
                 _path(llm_patches_json),
                 "--validation-out",
@@ -495,14 +500,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_args.extend(["--llm-analysis-json", _path(llm_analysis_json)])
                 if args.ground_truth_json:
                     step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
-
-    # Add boundary detection parameters
-    for step_name, step_args in pipeline:
-        if step_name == "07_infer_boundaries":
-            step_args.extend(["--max-fields", str(args.boundary_max_fields)])
-            if args.no_boundary_merging:
-                step_args.extend(["--no-merging"])
-            break
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
