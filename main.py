@@ -515,15 +515,17 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
 def run_step(name: str, step_args: list[str]) -> bool:
     print(f"\n{CYAN}--- Running step: {name} ---{RESET}")
-    logger.info(" ")
-    logger.info("------------------------------------- Starting step: %s", name)
+    # These mirror the print()s above/below for the on-disk log; file_only keeps
+    # them out of the console so output isn't duplicated.
+    logger.info(" ", file_only=True)
+    logger.info("------------------------------------- Starting step: %s", name, file_only=True)
 
     start = time.time()
     cmd = [sys.executable] + step_args
     cmd_str = " ".join(shlex.quote(part) for part in cmd)
 
     print(f"{YELLOW}Command: {cmd_str}{RESET}")
-    logger.info("Command: %s", cmd_str)
+    logger.info("Command: %s", cmd_str, file_only=True)
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SRC_PATH)
@@ -534,18 +536,18 @@ def run_step(name: str, step_args: list[str]) -> bool:
             print(result.stdout.rstrip())
         if result.stderr:
             print(result.stderr.rstrip(), file=sys.stderr)
-        logger.info("STDOUT:\n%s", result.stdout.strip())
+        logger.info("STDOUT:\n%s", result.stdout.strip(), file_only=True)
         if result.stderr:
-            logger.warning("STDERR:\n%s", result.stderr)
+            logger.warning("STDERR:\n%s", result.stderr, file_only=True)
         result.check_returncode()
         elapsed = time.time() - start
         print(f"{GREEN}[OK]{RESET} {name} completed in {elapsed:.2f}s")
-        logger.info("Step completed: %s (%.2fs)", name, elapsed)
+        logger.info("Step completed: %s (%.2fs)", name, elapsed, file_only=True)
         return True
     except subprocess.CalledProcessError:
         elapsed = time.time() - start
         print(f"{RED}[FAILED]{RESET} {name} (after {elapsed:.2f}s)")
-        logger.error("Step FAILED: %s (%.2fs)", name, elapsed)
+        logger.error("Step FAILED: %s (%.2fs)", name, elapsed, file_only=True)
         return False
 
 
@@ -835,7 +837,7 @@ def main() -> None:
     else:
         source = args.input_folder
         mode = "PCAP"
-    logger.info(f"Input {mode} folder: {source}")
+    logger.info(f"Input {mode} folder: {source}", file_only=True)
     print(f"{GREEN}{mode} input:{RESET} {source}\n")
 
     try:

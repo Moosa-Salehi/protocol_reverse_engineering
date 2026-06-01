@@ -77,13 +77,16 @@ class StructuredLogger:
         self.stage_timings: dict[str, float] = {}
         self.stage_start_times: dict[str, float] = {}
 
-        # Console handler with colors
+        # Console handler with colors. Records flagged ``no_console`` are written
+        # to the file/JSON handlers only, so callers that already print to the
+        # console (e.g. the pipeline runner) don't get duplicated output.
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(console_level)
         console_formatter = ColoredFormatter(
             '[%(levelname)s] %(message)s'
         )
         console_handler.setFormatter(console_formatter)
+        console_handler.addFilter(lambda record: not getattr(record, 'no_console', False))
         self.logger.addHandler(console_handler)
 
         # File handlers
@@ -168,34 +171,39 @@ class StructuredLogger:
                 return message + " " + " ".join(str(a) for a in args)
         return message
 
-    def debug(self, message: str, *args, **kwargs):
-        """Log debug message."""
+    @staticmethod
+    def _extra(file_only: bool) -> dict:
+        """Build the LogRecord ``extra`` mapping; ``file_only`` skips the console."""
+        return {'no_console': True} if file_only else {}
+
+    def debug(self, message: str, *args, file_only: bool = False, **kwargs):
+        """Log debug message. Set ``file_only`` to skip console output."""
         message = self._format(message, args)
-        self.logger.debug(message)
+        self.logger.debug(message, extra=self._extra(file_only))
         self._log_json('DEBUG', message, **kwargs)
 
-    def info(self, message: str, *args, **kwargs):
-        """Log info message."""
+    def info(self, message: str, *args, file_only: bool = False, **kwargs):
+        """Log info message. Set ``file_only`` to skip console output."""
         message = self._format(message, args)
-        self.logger.info(message)
+        self.logger.info(message, extra=self._extra(file_only))
         self._log_json('INFO', message, **kwargs)
 
-    def warning(self, message: str, *args, **kwargs):
-        """Log warning message."""
+    def warning(self, message: str, *args, file_only: bool = False, **kwargs):
+        """Log warning message. Set ``file_only`` to skip console output."""
         message = self._format(message, args)
-        self.logger.warning(message)
+        self.logger.warning(message, extra=self._extra(file_only))
         self._log_json('WARNING', message, **kwargs)
 
-    def error(self, message: str, *args, **kwargs):
-        """Log error message."""
+    def error(self, message: str, *args, file_only: bool = False, **kwargs):
+        """Log error message. Set ``file_only`` to skip console output."""
         message = self._format(message, args)
-        self.logger.error(message)
+        self.logger.error(message, extra=self._extra(file_only))
         self._log_json('ERROR', message, **kwargs)
 
-    def critical(self, message: str, *args, **kwargs):
-        """Log critical message."""
+    def critical(self, message: str, *args, file_only: bool = False, **kwargs):
+        """Log critical message. Set ``file_only`` to skip console output."""
         message = self._format(message, args)
-        self.logger.critical(message)
+        self.logger.critical(message, extra=self._extra(file_only))
         self._log_json('CRITICAL', message, **kwargs)
 
     def decision(self, decision: str, reason: str, **evidence):
