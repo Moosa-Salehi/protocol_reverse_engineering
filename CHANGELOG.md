@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive documentation with MkDocs
 - Getting started guide
 - Architecture documentation
-- How-to-use guide with examples
-- Testing guide
 - Contributing guidelines
 
 ## [1.0.0] - 2026-05-31
