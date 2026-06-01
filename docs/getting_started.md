@@ -316,11 +316,10 @@ python main.py pcaps/ --tshark-filter mbtcp \
 # Render prompt only (no API call)
 python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 
-# Adjust LLM parameters
+# Adjust LLM parameters (temperature, max_tokens, timeout are read from the
+# config file only — edit config/llm_config.json to change them)
 python main.py pcaps/ --tshark-filter mbtcp \
-    --llm-config config/llm_config.json \
-    --llm-temperature 0.2 \
-    --llm-max-tokens 8000
+    --llm-config config/llm_config.json
 ```
 
 ### Stage-Specific LLM Refinement
@@ -688,8 +687,7 @@ Layer Detection:
 LLM:
   --llm-config FILE             LLM configuration file (default: config/llm_config.json)
   --llm-render-only             Skip LLM API calls
-  --llm-temperature N           LLM temperature (default: 0.1)
-  --llm-max-tokens N            LLM max tokens (default: 4000)
+  (temperature, max_tokens and timeout are set in the --llm-config file)
 
 Evaluation:
   --ground-truth-json FILE      Ground truth protocol for evaluation

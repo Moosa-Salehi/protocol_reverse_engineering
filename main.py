@@ -488,14 +488,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         for step_name, step_args in llm_steps:
             if step_name == "15_analyze_with_llm":
                 step_args.extend(["--template", _path(args.llm_template)])
-    if args.llm_temperature is not None:
-        for step_name, step_args in llm_steps:
-            if step_name == "15_analyze_with_llm":
-                step_args.extend(["--temperature", str(args.llm_temperature)])
-    if args.llm_max_tokens is not None:
-        for step_name, step_args in llm_steps:
-            if step_name == "15_analyze_with_llm":
-                step_args.extend(["--max-tokens", str(args.llm_max_tokens)])
     insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "18_export_markdown")
     pipeline[insert_at:insert_at] = llm_steps
     for step_name, step_args in pipeline:
@@ -715,8 +707,6 @@ def parse_args() -> argparse.Namespace:
     llm_analysis_group.add_argument("--llm-config", type=Path, default=Path("config/llm_config.json"), help="LLM config JSON for stage 15.")
     llm_analysis_group.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
     llm_analysis_group.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
-    llm_analysis_group.add_argument("--llm-temperature", type=float, default=0.1, help="Sampling temperature for stage 15 LLM analysis.")
-    llm_analysis_group.add_argument("--llm-max-tokens", type=int, default=4000, help="Max output tokens for stage 15 LLM analysis.")
 
     llm_analysis_group.add_argument("--llm-boundary-confidence", type=float, default=0.6, help="Minimum confidence for LLM boundary merge suggestions (default: 0.6).")
     llm_analysis_group.add_argument("--llm-semantic-confidence", type=float, default=0.5, help="Minimum confidence for LLM semantic labels (default: 0.5).")

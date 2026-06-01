@@ -53,9 +53,6 @@ def main() -> None:
     parser.add_argument("--prompt-out", help="Optional path to write the rendered prompt")
     parser.add_argument("--template", help="Optional custom prompt template")
     parser.add_argument("--render-only", action="store_true", help="Only render prompt, don't call LLM")
-    parser.add_argument("--temperature", type=float, help="Override temperature")
-    parser.add_argument("--max-tokens", type=int, help="Override max_tokens")
-    parser.add_argument("--timeout", type=int, help="Override timeout")
 
     # Multi-stage result inputs
     parser.add_argument("--boundary-summary", help="Boundary refinement summary JSON from stage 07b")
@@ -150,9 +147,10 @@ def main() -> None:
             print("[!] Warning: OPENAI_API_KEY not set in environment")
             api_key = config_dict.get("api_key", "")
 
-        temperature = args.temperature if args.temperature is not None else float(config_dict.get("temperature", 0.2))
-        max_tokens = args.max_tokens if args.max_tokens is not None else int(config_dict.get("max_tokens", 4000))
-        timeout = args.timeout if args.timeout is not None else int(config_dict.get("timeout", 180))
+        # temperature, max_tokens and timeout are sourced solely from llm-config.json
+        temperature = float(config_dict.get("temperature", 0.2))
+        max_tokens = int(config_dict.get("max_tokens", 4000))
+        timeout = int(config_dict.get("timeout", 180))
 
         llm_config = LLMRequestConfig(
             model=model,
