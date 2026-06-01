@@ -2009,7 +2009,7 @@ python<span class="w"> </span>main.py<span class="w"> </span>--use-existing-mess
 - Raw bytes mode is not working well</p>
 <h3 id="neural-mode">Neural Mode<a class="headerlink" href="#neural-mode" title="Permanent link">&para;</a></h3>
 <p>Use VAE latent vectors:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>neural<span class="w"> </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>neural<span class="w"> </span>--family-neural-model-path<span class="w"> </span>assets/pre_trained/industrial_VAE.pth
 </code></pre></div>
 <p><strong>Pros:</strong>
 - Can capture complex patterns
@@ -2023,10 +2023,10 @@ python<span class="w"> </span>main.py<span class="w"> </span>--use-existing-mess
 <h3 id="hybrid-mode">Hybrid Mode<a class="headerlink" href="#hybrid-mode" title="Permanent link">&para;</a></h3>
 <p>Combine neural and structural features:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Adaptive fusion (recommended)</span>
-python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>hybrid<span class="w"> </span>--fusion-method<span class="w"> </span>adaptive<span class="w"> </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>hybrid<span class="w"> </span>--fusion-method<span class="w"> </span>adaptive<span class="w"> </span>--family-neural-model-path<span class="w"> </span>assets/pre_trained/industrial_VAE.pth
 
 <span class="c1"># Learned fusion with MLP</span>
-python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>hybrid<span class="w"> </span>--fusion-method<span class="w"> </span>learned<span class="w"> </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--family-feature-mode<span class="w"> </span>hybrid<span class="w"> </span>--fusion-method<span class="w"> </span>learned<span class="w"> </span>--family-neural-model-path<span class="w"> </span>assets/pre_trained/industrial_VAE.pth
 
 <span class="c1"># Fixed weights</span>
 python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
@@ -2034,7 +2034,7 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 <span class="w">    </span>--fusion-method<span class="w"> </span>fixed<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--fusion-neural-weight<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--fusion-structural-weight<span class="w"> </span><span class="m">0</span>.7<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--family-neural-model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+<span class="w">    </span>--family-neural-model-path<span class="w"> </span>assets/pre_trained/industrial_VAE.pth
 </code></pre></div>
 <p><strong>Fusion methods:</strong>
 - <code>adaptive</code> - Quality-based automatic weighting (default)
@@ -2048,7 +2048,7 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 <h2 id="llm-integration">LLM Integration<a class="headerlink" href="#llm-integration" title="Permanent link">&para;</a></h2>
 <h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h3>
 <ol>
-<li>Create <code>LLM_config.json</code>:</li>
+<li>Create <code>config/llm_config.json</code>:</li>
 </ol>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;api_key_required&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;yes&quot;</span><span class="p">,</span>
@@ -2069,13 +2069,13 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 <span class="nv">$env</span>:OPENAI_API_KEY<span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&lt;your-api-key&gt;&quot;</span>
 </code></pre></div>
 <h3 id="run-with-llm-refinement">Run with LLM Refinement<a class="headerlink" href="#run-with-llm-refinement" title="Permanent link">&para;</a></h3>
-<p>The runner tries to load <code>LLM_config.json</code> from root folder.</p>
+<p>The runner tries to load <code>config/llm_config.json</code> from root folder.</p>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp
 </code></pre></div>
 <h3 id="llm-options">LLM Options<a class="headerlink" href="#llm-options" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Custom prompt template</span>
 python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--llm-config<span class="w"> </span>LLM_config.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-config<span class="w"> </span>config/llm_config.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--llm-template<span class="w"> </span>custom_prompt.md
 
 <span class="c1"># Render prompt only (no API call)</span>
@@ -2083,7 +2083,7 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 
 <span class="c1"># Adjust LLM parameters</span>
 python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--llm-config<span class="w"> </span>LLM_config.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--llm-config<span class="w"> </span>config/llm_config.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--llm-temperature<span class="w"> </span><span class="m">0</span>.2<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--llm-max-tokens<span class="w"> </span><span class="m">8000</span>
 </code></pre></div>
@@ -2093,27 +2093,27 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 python<span class="w"> </span>scripts/07b_refine_boundaries_llm.py<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/05_families.refined.json<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--config<span class="w"> </span>LLM_config.json
+<span class="w">    </span>--config<span class="w"> </span>config/llm_config.json
 
 <span class="c1"># Semantic labeling</span>
 python<span class="w"> </span>scripts/11b_label_semantics_llm.py<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/09_semantics.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/09_semantics.llm.json<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--config<span class="w"> </span>LLM_config.json
+<span class="w">    </span>--config<span class="w"> </span>config/llm_config.json
 
 <span class="c1"># Relation validation</span>
 python<span class="w"> </span>scripts/10b_validate_relations_llm.py<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/08_relations.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/08_relations.validated.json<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--config<span class="w"> </span>LLM_config.json
+<span class="w">    </span>--config<span class="w"> </span>config/llm_config.json
 </code></pre></div>
 <h2 id="ground-truth-evaluation">Ground Truth Evaluation<a class="headerlink" href="#ground-truth-evaluation" title="Permanent link">&para;</a></h2>
 <h3 id="prepare-ground-truth">Prepare Ground Truth<a class="headerlink" href="#prepare-ground-truth" title="Permanent link">&para;</a></h3>
-<p>Create a ground truth JSON file (see <code>truth-files/modbus.json</code> for example).</p>
+<p>Create a ground truth JSON file (see <code>truth_files/modbus.json</code> for example).</p>
 <h3 id="run-with-evaluation">Run with Evaluation<a class="headerlink" href="#run-with-evaluation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--ground-truth-json<span class="w"> </span>truth-files/modbus.json
+<span class="w">    </span>--ground-truth-json<span class="w"> </span>truth_files/modbus.json
 </code></pre></div>
 <h3 id="view-evaluation-results">View Evaluation Results<a class="headerlink" href="#view-evaluation-results" title="Permanent link">&para;</a></h3>
 <p>Check <code>output/protocol_report.html</code>, the final evaluation section:
@@ -2125,9 +2125,9 @@ python<span class="w"> </span>scripts/10b_validate_relations_llm.py<span class="
 <h2 id="diagnostic-tools">Diagnostic Tools<a class="headerlink" href="#diagnostic-tools" title="Permanent link">&para;</a></h2>
 <h3 id="diagnose-neural-features">Diagnose Neural Features<a class="headerlink" href="#diagnose-neural-features" title="Permanent link">&para;</a></h3>
 <p>Analyze neural feature quality and detect collapsed latent spaces:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/20_diagnose_neural_features.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/diagnostics/20_diagnose_neural_features.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--sample-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--model-path<span class="w"> </span>pre_trained/industrial_VAE.pth<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model-path<span class="w"> </span>assets/pre_trained/industrial_VAE.pth<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--latent-cache<span class="w"> </span>data/latent_cache.json
 </code></pre></div>
 <p><strong>Output:</strong>
@@ -2137,24 +2137,24 @@ python<span class="w"> </span>scripts/10b_validate_relations_llm.py<span class="
 - Recommendations</p>
 <h3 id="test-enhanced-neural-features">Test Enhanced Neural Features<a class="headerlink" href="#test-enhanced-neural-features" title="Permanent link">&para;</a></h3>
 <p>Compare original vs enhanced neural features:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/21_test_enhanced_neural.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/diagnostics/21_test_enhanced_neural.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--sample-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+<span class="w">    </span>--model-path<span class="w"> </span>assets/pre_trained/industrial_VAE.pth
 </code></pre></div>
 <h3 id="test-boundary-detection">Test Boundary Detection<a class="headerlink" href="#test-boundary-detection" title="Permanent link">&para;</a></h3>
 <p>Test boundary detection with different thresholds:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/22_test_boundary_detection.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/diagnostics/22_test_boundary_detection.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--features-json<span class="w"> </span>data/03_family_features.json
 </code></pre></div>
 <h3 id="test-learned-fusion">Test Learned Fusion<a class="headerlink" href="#test-learned-fusion" title="Permanent link">&para;</a></h3>
 <p>Test hybrid feature fusion methods:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/23_test_learned_fusion.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--model-path<span class="w"> </span>pre_trained/industrial_VAE.pth
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/diagnostics/23_test_learned_fusion.py<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model-path<span class="w"> </span>assets/pre_trained/industrial_VAE.pth
 </code></pre></div>
 <h3 id="test-boundary-refinement">Test Boundary Refinement<a class="headerlink" href="#test-boundary-refinement" title="Permanent link">&para;</a></h3>
 <p>Compute boundary quality metrics and test LLM refinement:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/24_test_boundary_refinement.py<span class="w"> </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/diagnostics/24_test_boundary_refinement.py<span class="w"> </span>data/05_families.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--messages-json<span class="w"> </span>data/01_messages.jsonl<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--assignments-json<span class="w"> </span>data/02_family_assignments.json
 </code></pre></div>
@@ -2243,7 +2243,7 @@ python<span class="w"> </span>scripts/14_export_llm_evidence.py<span class="w"> 
 <span class="c1"># Stage 15: Analyze with LLM</span>
 python<span class="w"> </span>scripts/15_analyze_with_llm.py<span class="w"> </span>data/12_llm_evidence.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/13_llm_analysis.json<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--config<span class="w"> </span>LLM_config.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>config/llm_config.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--prompt-out<span class="w"> </span>data/13_llm_prompt.md
 
 <span class="c1"># Stage 15b: Apply LLM refinement</span>
@@ -2251,7 +2251,7 @@ python<span class="w"> </span>scripts/15b_apply_llm_refinement.py<span class="w"
 <span class="w">    </span>data/13_llm_analysis.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/10_protocol_model.refined.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--evidence-json<span class="w"> </span>data/12_llm_evidence.json<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--schema-json<span class="w"> </span>schema/protocol_model.schema.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--schema-json<span class="w"> </span>assets/schema/protocol_model.schema.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--patches-out<span class="w"> </span>data/13_llm_patches.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--validation-out<span class="w"> </span>data/13_llm_patch_validation.json
 
@@ -2265,7 +2265,7 @@ python<span class="w"> </span>scripts/16_prepare_evaluation_data.py<span class="
 
 <span class="c1"># Stage 17: Evaluate against ground truth</span>
 python<span class="w"> </span>scripts/17_evaluate_protocol_spec.py<span class="w"> </span>data/14_evaluation_model_data.json<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>truth-files/modbus.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>truth_files/modbus.json<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>data/15_evaluation_result.json
 
 <span class="c1"># Stage 18: Export Markdown</span>
@@ -2306,7 +2306,7 @@ python<span class="w"> </span>scripts/19_export_html.py<span class="w"> </span>d
 - Low silhouette score</p>
 <p><strong>Solutions:</strong>
 1. Try different feature mode: <code>--family-feature-mode raw_bytes</code>
-2. Diagnose neural features: <code>python scripts/20_diagnose_neural_features.py</code>
+2. Diagnose neural features: <code>python scripts/diagnostics/20_diagnose_neural_features.py</code>
 3. Adjust clustering parameters: <code>--sample-size 50000</code>
 4. Check message diversity: ensure captures contain varied traffic</p>
 <h3 id="over-segmentation">Over-Segmentation<a class="headerlink" href="#over-segmentation" title="Permanent link">&para;</a></h3>
@@ -2316,12 +2316,12 @@ python<span class="w"> </span>scripts/19_export_html.py<span class="w"> </span>d
 - Excessive field count (too many fields per family)</p>
 <p><strong>Solutions:</strong>
 1. Reduce field limit: <code>--boundary-max-fields 12</code>
-2. Use LLM refinement: <code>--llm-config LLM_config.json</code></p>
+2. Use LLM refinement: <code>--llm-config config/llm_config.json</code></p>
 <h3 id="llm-api-errors">LLM API Errors<a class="headerlink" href="#llm-api-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Error:</strong> <code>OpenAI API error: 401 Unauthorized</code></p>
 <p><strong>Solution:</strong>
 - Check API key: <code>echo $OPENAI_API_KEY</code>
-- Verify config: <code>cat LLM_config.json</code>
+- Verify config: <code>cat config/llm_config.json</code>
 - Test API: <code>curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models</code></p>
 <p><strong>Error:</strong> <code>Timeout waiting for LLM response</code></p>
 <p><strong>Solution:</strong>
@@ -2369,7 +2369,7 @@ Extraction:
 Clustering:
 <span class="w">  </span>--family-feature-mode<span class="w"> </span>MODE<span class="w">    </span>Feature<span class="w"> </span>mode:<span class="w"> </span>raw_bytes<span class="w"> </span><span class="o">(</span>default<span class="o">)</span>,<span class="w"> </span>structural,<span class="w"> </span>neural,<span class="w"> </span>hybrid
 <span class="w">  </span>--sample-size<span class="w"> </span>N<span class="w">               </span>Clustering<span class="w"> </span>sample<span class="w"> </span>size<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">100000</span><span class="o">)</span>
-<span class="w">  </span>--family-neural-model-path<span class="w">    </span>Path<span class="w"> </span>to<span class="w"> </span>neural<span class="w"> </span>model<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>pre_trained/industrial_VAE.pth<span class="o">)</span>
+<span class="w">  </span>--family-neural-model-path<span class="w">    </span>Path<span class="w"> </span>to<span class="w"> </span>neural<span class="w"> </span>model<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>assets/pre_trained/industrial_VAE.pth<span class="o">)</span>
 
 Boundaries:
 <span class="w">  </span>--boundary-max-fields<span class="w"> </span>N<span class="w">       </span>Maximum<span class="w"> </span>fields<span class="w"> </span>per<span class="w"> </span>family<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">15</span><span class="o">)</span>
@@ -2379,7 +2379,7 @@ Layer<span class="w"> </span>Detection:
 <span class="w">  </span>--layer-min-confidence<span class="w"> </span>N<span class="w">      </span>Minimum<span class="w"> </span>confidence<span class="w"> </span><span class="k">for</span><span class="w"> </span>layer<span class="w"> </span>detection<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.6<span class="o">)</span>
 
 LLM:
-<span class="w">  </span>--llm-config<span class="w"> </span>FILE<span class="w">             </span>LLM<span class="w"> </span>configuration<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>LLM_config.json<span class="o">)</span>
+<span class="w">  </span>--llm-config<span class="w"> </span>FILE<span class="w">             </span>LLM<span class="w"> </span>configuration<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>config/llm_config.json<span class="o">)</span>
 <span class="w">  </span>--llm-render-only<span class="w">             </span>Skip<span class="w"> </span>LLM<span class="w"> </span>API<span class="w"> </span>calls
 <span class="w">  </span>--llm-temperature<span class="w"> </span>N<span class="w">           </span>LLM<span class="w"> </span>temperature<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.1<span class="o">)</span>
 <span class="w">  </span>--llm-max-tokens<span class="w"> </span>N<span class="w">            </span>LLM<span class="w"> </span>max<span class="w"> </span>tokens<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">4000</span><span class="o">)</span>
