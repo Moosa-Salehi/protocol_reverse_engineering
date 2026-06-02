@@ -36,6 +36,7 @@ protocol_re/
 ├── scripts/                  # Pipeline stages (01-19)
 │   └── diagnostics/          # Standalone diagnostic/test scripts (20-24)
 ├── docs/                     # Documentation
+├── logs/                     # Pipeline logs and per stage logs
 ├── data/                     # Intermediate artifacts
 ├── output/                   # Final reports
 ├── assets/                   # Static runtime resources
