@@ -344,7 +344,11 @@ def run_protocol_synthesis_stage(
                 if config.render_only:
                     continue
 
-                response, raw_response = call_openai_compatible_chat_with_raw(chunk_prompt, llm_config)
+                response, raw_response = call_openai_compatible_chat_with_raw(
+                    chunk_prompt,
+                    llm_config,
+                    request_label=f"stage 15 protocol synthesis chunk {i + 1}/{len(family_chunks)}",
+                )
                 response_json = extract_message_json(response)
                 chunk_results.append(response_json)
                 raw_chunk_responses.append({
@@ -400,7 +404,11 @@ def run_protocol_synthesis_stage(
                 response=None,
             )
 
-        response, raw_response = call_openai_compatible_chat_with_raw(prompt, llm_config)
+        response, raw_response = call_openai_compatible_chat_with_raw(
+            prompt,
+            llm_config,
+            request_label="stage 15 protocol synthesis",
+        )
         response_json = extract_message_json(response)
 
         return StageResult(

@@ -34,6 +34,23 @@ def load_llm_config(config_path: str) -> dict:
         return json.load(f)
 
 
+def build_llm_request_config(config_dict: dict, api_key: str, logger: object) -> LLMRequestConfig:
+    """Build request config, including retry and sequential pacing options."""
+    return LLMRequestConfig(
+        model=config_dict.get("model", "gpt-4o-mini"),
+        base_url=config_dict.get("openai_base_url", "https://api.openai.com/v1"),
+        api_key=api_key,
+        temperature=float(config_dict.get("temperature", 0.2)),
+        max_tokens=int(config_dict.get("max_tokens", 4000)),
+        timeout=int(config_dict.get("timeout", 180)),
+        max_retries=int(config_dict.get("max_retries", 3)),
+        retry_delay_seconds=float(config_dict.get("retry_delay_seconds", 1.0)),
+        max_retry_delay_seconds=float(config_dict.get("max_retry_delay_seconds", 10.0)),
+        request_interval_seconds=float(config_dict.get("request_interval_seconds", 1.0)),
+        logger=logger,
+    )
+
+
 def load_stage_summary(path: str) -> dict | None:
     """Load stage summary if file exists."""
     if not Path(path).exists():
@@ -141,26 +158,13 @@ def main() -> None:
         print(f"[+] Loading LLM config from {args.config}")
         config_dict = load_llm_config(args.config)
         model = config_dict.get("model", "gpt-4o-mini")
-        base_url = config_dict.get("openai_base_url", "https://api.openai.com/v1")
         api_key = os.environ.get("OPENAI_API_KEY")
 
         if not api_key:
             print("[!] Warning: OPENAI_API_KEY not set in environment")
             api_key = config_dict.get("api_key", "")
 
-        # temperature, max_tokens and timeout are sourced solely from llm-config.json
-        temperature = float(config_dict.get("temperature", 0.2))
-        max_tokens = int(config_dict.get("max_tokens", 4000))
-        timeout = int(config_dict.get("timeout", 180))
-
-        llm_config = LLMRequestConfig(
-            model=model,
-            base_url=base_url,
-            api_key=api_key,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout=timeout,
-        )
+        llm_config = build_llm_request_config(config_dict, api_key, logger)
     else:
         llm_config = None
 

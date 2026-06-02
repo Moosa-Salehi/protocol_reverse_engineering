@@ -29,6 +29,23 @@ def load_llm_config(config_path: str) -> dict:
         return json.load(f)
 
 
+def build_llm_request_config(config_dict: dict, api_key: str, logger: object) -> LLMRequestConfig:
+    """Build request config, including retry and sequential pacing options."""
+    return LLMRequestConfig(
+        model=config_dict.get("model", "gpt-4o-mini"),
+        base_url=config_dict.get("openai_base_url", "https://api.openai.com/v1"),
+        api_key=api_key,
+        temperature=config_dict.get("temperature", 0.1),
+        max_tokens=config_dict.get("max_tokens", 4000),
+        timeout=config_dict.get("timeout", 180),
+        max_retries=int(config_dict.get("max_retries", 3)),
+        retry_delay_seconds=float(config_dict.get("retry_delay_seconds", 1.0)),
+        max_retry_delay_seconds=float(config_dict.get("max_retry_delay_seconds", 10.0)),
+        request_interval_seconds=float(config_dict.get("request_interval_seconds", 1.0)),
+        logger=logger,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Assign semantic labels to fields using LLM based on statistical evidence."
@@ -130,14 +147,7 @@ def main() -> None:
                 logger.warning("OPENAI_API_KEY not set in environment")
                 api_key = llm_config_dict.get("api_key", "")
 
-            llm_config = LLMRequestConfig(
-                model=llm_config_dict.get("model", "gpt-4o-mini"),
-                base_url=llm_config_dict.get("openai_base_url", "https://api.openai.com/v1"),
-                api_key=api_key,
-                temperature=llm_config_dict.get("temperature", 0.1),
-                max_tokens=llm_config_dict.get("max_tokens", 4000),
-                timeout=llm_config_dict.get("timeout", 180),
-            )
+            llm_config = build_llm_request_config(llm_config_dict, api_key, logger)
             logger.info(f"LLM configured: model={llm_config.model}")
         else:
             llm_config = None

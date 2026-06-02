@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import socket
+import threading
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -113,6 +116,34 @@ class LLMRequestConfig:
     temperature: float = 0.1
     max_tokens: int = 4000
     timeout: int = 180
+    max_retries: int = 3
+    retry_delay_seconds: float = 1.0
+    max_retry_delay_seconds: float = 10.0
+    request_interval_seconds: float = 1.0
+    logger: Optional[Any] = None
+
+
+class LLMAPIError(RuntimeError):
+    """Raised when an LLM request fails with classified API/network details."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        category: str,
+        retryable: bool,
+        status_code: Optional[int] = None,
+        details: str = "",
+    ):
+        super().__init__(message)
+        self.category = category
+        self.retryable = retryable
+        self.status_code = status_code
+        self.details = details
+
+
+_REQUEST_LOCK = threading.Lock()
+_LAST_REQUEST_COMPLETED_AT = 0.0
 
 
 def render_analysis_prompt(
@@ -140,7 +171,99 @@ def _chat_completions_url(base_url: str) -> str:
     return base + "/chat/completions"
 
 
-def call_openai_compatible_chat_with_raw(prompt: str, config: LLMRequestConfig) -> tuple[Dict[str, Any], str]:
+def _emit(config: LLMRequestConfig, level: str, message: str, **kwargs: Any) -> None:
+    logger = config.logger
+    log_method = getattr(logger, level, None) if logger is not None else None
+    if callable(log_method):
+        try:
+            log_method(message, **kwargs)
+        except TypeError:
+            log_method(message)
+    else:
+        print(message)
+
+
+def _summarize_body(body: str, limit: int = 1200) -> str:
+    compact = " ".join((body or "").split())
+    if len(compact) <= limit:
+        return compact
+    return compact[: limit - 3] + "..."
+
+
+def _classify_http_error(status_code: int, body: str) -> tuple[str, bool, str]:
+    body_lower = body.lower()
+    if status_code in (401, 403):
+        return "invalid_api_key", False, "API key is invalid or unauthorized"
+    if status_code == 429:
+        if any(token in body_lower for token in ("insufficient_quota", "quota", "billing", "exceeded your current quota")):
+            return "api_key_limit_reached", False, "API key quota or billing limit reached"
+        return "rate_limit_reached", True, "API rate limit reached"
+    if status_code in (400, 413) and any(
+        token in body_lower
+        for token in ("context_length", "maximum context", "context window", "too many tokens", "token limit")
+    ):
+        return "context_limit_reached", False, "Context limit reached"
+    if status_code in (408, 409) or status_code >= 500:
+        return "temporary_api_error", True, f"Temporary API HTTP {status_code}"
+    return "api_error", False, f"LLM API HTTP {status_code}"
+
+
+def _classify_network_error(exc: BaseException) -> tuple[str, bool, str]:
+    text = str(exc)
+    reason = getattr(exc, "reason", None)
+    if isinstance(reason, TimeoutError) or isinstance(exc, (TimeoutError, socket.timeout)):
+        return "timeout", True, "LLM API request timed out"
+    if "timed out" in text.lower():
+        return "timeout", True, "LLM API request timed out"
+    return "network_error", True, "LLM API network request failed"
+
+
+def _wait_for_request_slot(config: LLMRequestConfig) -> None:
+    global _LAST_REQUEST_COMPLETED_AT
+    interval = max(float(config.request_interval_seconds or 0.0), 0.0)
+    if interval <= 0:
+        return
+    elapsed = time.monotonic() - _LAST_REQUEST_COMPLETED_AT
+    remaining = interval - elapsed
+    if remaining > 0:
+        time.sleep(remaining)
+
+
+def _mark_request_completed() -> None:
+    global _LAST_REQUEST_COMPLETED_AT
+    _LAST_REQUEST_COMPLETED_AT = time.monotonic()
+
+
+def _raise_http_error(exc: urllib.error.HTTPError) -> None:
+    body = exc.read().decode("utf-8", errors="replace")
+    category, retryable, summary = _classify_http_error(exc.code, body)
+    detail = _summarize_body(body)
+    message = f"{summary}: HTTP {exc.code}"
+    if detail:
+        message += f" - {detail}"
+    raise LLMAPIError(
+        message,
+        category=category,
+        retryable=retryable,
+        status_code=exc.code,
+        details=detail,
+    ) from exc
+
+
+def _raise_network_error(exc: BaseException) -> None:
+    category, retryable, summary = _classify_network_error(exc)
+    detail = _summarize_body(str(exc))
+    message = summary
+    if detail:
+        message += f": {detail}"
+    raise LLMAPIError(message, category=category, retryable=retryable, details=detail) from exc
+
+
+def call_openai_compatible_chat_with_raw(
+    prompt: str,
+    config: LLMRequestConfig,
+    request_label: str = "LLM chat completion",
+) -> tuple[Dict[str, Any], str]:
     payload = {
         "model": config.model,
         "messages": [
@@ -160,19 +283,110 @@ def call_openai_compatible_chat_with_raw(prompt: str, config: LLMRequestConfig) 
         },
         method="POST",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=config.timeout) as response:
-            body = response.read().decode("utf-8")
-            return json.loads(body), body
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"LLM API HTTP {exc.code}: {body}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"LLM API request failed: {exc}") from exc
+
+    max_retries = max(int(config.max_retries or 0), 0)
+    total_attempts = max_retries + 1
+    retry_delay = max(float(config.retry_delay_seconds or 0.0), 0.0)
+    max_retry_delay = max(float(config.max_retry_delay_seconds or retry_delay), retry_delay)
+    last_error: Optional[LLMAPIError] = None
+
+    with _REQUEST_LOCK:
+        for attempt in range(1, total_attempts + 1):
+            _wait_for_request_slot(config)
+            _emit(
+                config,
+                "info",
+                f"sending request for {request_label}",
+                request_label=request_label,
+                attempt=attempt,
+                total_attempts=total_attempts,
+                model=config.model,
+                prompt_characters=len(prompt),
+            )
+            started_at = time.monotonic()
+            try:
+                with urllib.request.urlopen(request, timeout=config.timeout) as response:
+                    body = response.read().decode("utf-8")
+                    parsed = json.loads(body)
+                    elapsed = time.monotonic() - started_at
+                    _emit(
+                        config,
+                        "info",
+                        f"LLM request success for {request_label} "
+                        f"(attempt {attempt}/{total_attempts}, {elapsed:.2f}s)",
+                        request_label=request_label,
+                        attempt=attempt,
+                        total_attempts=total_attempts,
+                        duration_seconds=elapsed,
+                    )
+                    return parsed, body
+            except urllib.error.HTTPError as exc:
+                try:
+                    _raise_http_error(exc)
+                except LLMAPIError as api_error:
+                    last_error = api_error
+            except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as exc:
+                try:
+                    _raise_network_error(exc)
+                except LLMAPIError as api_error:
+                    last_error = api_error
+            except json.JSONDecodeError as exc:
+                last_error = LLMAPIError(
+                    f"LLM API returned invalid JSON: {exc}",
+                    category="invalid_response",
+                    retryable=False,
+                    details=str(exc),
+                )
+            finally:
+                _mark_request_completed()
+
+            assert last_error is not None
+            elapsed = time.monotonic() - started_at
+            _emit(
+                config,
+                "error" if not last_error.retryable or attempt >= total_attempts else "warning",
+                f"LLM request error for {request_label} "
+                f"(attempt {attempt}/{total_attempts}, {elapsed:.2f}s): "
+                f"{last_error.category}: {last_error}",
+                request_label=request_label,
+                attempt=attempt,
+                total_attempts=total_attempts,
+                duration_seconds=elapsed,
+                error_category=last_error.category,
+                status_code=last_error.status_code,
+                retryable=last_error.retryable,
+            )
+
+            if not last_error.retryable or attempt >= total_attempts:
+                raise last_error
+
+            backoff = min(retry_delay * (2 ** (attempt - 1)), max_retry_delay)
+            if backoff > 0:
+                _emit(
+                    config,
+                    "info",
+                    f"Retrying LLM request for {request_label} in {backoff:.1f}s",
+                    request_label=request_label,
+                    attempt=attempt,
+                    retry_delay_seconds=backoff,
+                )
+                time.sleep(backoff)
+
+    if last_error is not None:
+        raise last_error
+    raise LLMAPIError(
+        f"LLM API request failed for {request_label}",
+        category="unknown_error",
+        retryable=False,
+    )
 
 
-def call_openai_compatible_chat(prompt: str, config: LLMRequestConfig) -> Dict[str, Any]:
-    response_json, _raw_body = call_openai_compatible_chat_with_raw(prompt, config)
+def call_openai_compatible_chat(
+    prompt: str,
+    config: LLMRequestConfig,
+    request_label: str = "LLM chat completion",
+) -> Dict[str, Any]:
+    response_json, _raw_body = call_openai_compatible_chat_with_raw(prompt, config, request_label)
     return response_json
 
 

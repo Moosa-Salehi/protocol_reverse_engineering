@@ -261,7 +261,11 @@ def run_boundary_refinement_stage(
                 response=None,
             )
 
-        response, raw_response = call_openai_compatible_chat_with_raw(prompt, llm_config)
+        response, raw_response = call_openai_compatible_chat_with_raw(
+            prompt,
+            llm_config,
+            request_label=f"stage 07b boundary refinement for {family_id}",
+        )
         response_json = extract_message_json(response)
 
         # Extract suggestions

@@ -235,7 +235,11 @@ def run_relation_validation_stage(
                 response=None,
             )
 
-        response, raw_response = call_openai_compatible_chat_with_raw(prompt, llm_config)
+        response, raw_response = call_openai_compatible_chat_with_raw(
+            prompt,
+            llm_config,
+            request_label="stage 10b relation validation",
+        )
         response_json = extract_message_json(response)
 
         # Extract decisions
