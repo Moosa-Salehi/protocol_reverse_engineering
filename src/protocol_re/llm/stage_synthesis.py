@@ -257,8 +257,8 @@ def render_synthesis_prompt(evidence: Dict[str, Any], template_path: Optional[st
 
     # Check token estimate
     estimated_tokens = estimate_tokens(prompt)
-    if estimated_tokens > 5000:
-        print(f"[!] Warning: Prompt estimated at {estimated_tokens} tokens (target: <5000)")
+    if estimated_tokens > 10000:
+        print(f"[!] Warning: Prompt estimated at {estimated_tokens} tokens (target: <10000)")
 
     return prompt
 
@@ -366,7 +366,7 @@ def run_protocol_synthesis_stage(
         # Check if we need to split into multiple prompts
         estimated_tokens = estimate_tokens(prompt)
 
-        if estimated_tokens > 5000:
+        if estimated_tokens > 10000:
             print(f"[*] Prompt too large ({estimated_tokens} tokens), splitting into multiple calls...")
 
             # Split families into chunks
