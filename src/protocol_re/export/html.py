@@ -317,6 +317,8 @@ def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
         body = f"<pre>{_text(str(analysis_markdown).strip())}</pre>"
     elif llm_analysis.get("render_only"):
         body = '<p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>'
+    elif llm_analysis.get("error"):
+        body = f'<p class="muted">LLM analysis was unavailable: {_text(str(llm_analysis.get("error")))}.</p>'
     else:
         body = '<p class="muted">No LLM analysis text is available.</p>'
     return f"""

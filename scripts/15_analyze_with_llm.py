@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_synthesis import run_protocol_synthesis_stage
 from protocol_re.llm.analyze import LLMRequestConfig
-from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
+from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.utils.logging import setup_stage_logging
 
 
@@ -216,9 +216,12 @@ def main() -> None:
         "render_only": args.render_only,
         "success": result.success,
         "error": result.error,
+        "error_category": result.error_category,
         "response": result.response,
         "synthesis": None,
         "markdown_summary": None,
+        "analysis_markdown": None,
+        "patches": [],
     }
 
     if result.success and result.suggestions:
@@ -228,20 +231,22 @@ def main() -> None:
 
         # For backward compatibility, also include as analysis_markdown
         output["analysis_markdown"] = output["markdown_summary"]
-        output["patches"] = []  # No patches in synthesis stage
 
     # Save output
     with open(args.output_json, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    status = "prompt rendered" if args.render_only else "synthesis completed"
+    if args.render_only:
+        status = "prompt rendered"
+    elif result.success:
+        status = "synthesis completed"
+    else:
+        status = "synthesis unavailable; fallback artifact written"
     print(f"\n[+] Protocol {status}")
     print(f"[+] Wrote output to {args.output_json}")
 
-    # Surface internal failures loudly (e.g. an exception swallowed into the
-    # StageResult that would otherwise leave an empty prompt + exit 0).
-    failures = collect_stage_failures([("protocol_synthesis", result)], render_only=args.render_only)
-    fail_loudly_if_any(failures, stage_name="15_analyze_with_llm", logger=logger)
+    # API failures warn and keep fallback artifacts; other failures remain fatal.
+    warn_or_fail_stage_failures([("protocol_synthesis", result)], render_only=args.render_only, stage_name="15_analyze_with_llm", logger=logger)
 
     if result.success and not args.render_only:
         print(f"[+] Synthesis includes {len(protocol_model.get('families', []))} families")

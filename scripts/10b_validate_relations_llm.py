@@ -18,7 +18,7 @@ from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_relations import run_relation_validation_stage
 from protocol_re.llm.stage_relations import relation_passes_deterministic_gate
 from protocol_re.llm.analyze import LLMRequestConfig
-from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
+from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.utils.logging import setup_stage_logging
 
 
@@ -160,6 +160,7 @@ def main() -> None:
             "validation_log": result.validation_log,
             "response": result.response,
             "error": result.error,
+            "error_category": result.error_category,
         }, f, indent=2)
 
     if args.render_only:
@@ -172,18 +173,15 @@ def main() -> None:
         with open(args.output_json, "w", encoding="utf-8") as f:
             json.dump(relations_data, f, indent=2)
 
-        # Surface internal failures loudly (swallowed exception / empty prompt).
-        failures = collect_stage_failures([("relation_validation", result)], render_only=True)
-        fail_loudly_if_any(failures, stage_name="10b_validate_relations_llm", logger=logger)
+        # API failures warn and keep fallback artifacts; other failures remain fatal.
+        warn_or_fail_stage_failures([("relation_validation", result)], render_only=True, stage_name="10b_validate_relations_llm", logger=logger)
         return
 
     if not result.success:
-        print(f"[!] Error validating relations: {result.error}")
         # Save original relations on error
         with open(args.output_json, "w", encoding="utf-8") as f:
             json.dump(relations_data, f, indent=2)
-        failures = collect_stage_failures([("relation_validation", result)], render_only=False)
-        fail_loudly_if_any(failures, stage_name="10b_validate_relations_llm", logger=logger)
+        warn_or_fail_stage_failures([("relation_validation", result)], render_only=False, stage_name="10b_validate_relations_llm", logger=logger)
         return
 
     print(f"[+] Kept: {result.applied_count}, Discarded: {result.rejected_count}")

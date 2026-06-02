@@ -9,7 +9,8 @@ import json
 from typing import Any, Dict, List, Optional
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
-from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
+from protocol_re.llm.analyze import LLMAPIError, LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
+from protocol_re.llm.stage_errors import LLM_API_ERROR_CATEGORY
 
 
 def prepare_relation_evidence(
@@ -215,6 +216,7 @@ def run_relation_validation_stage(
     Returns:
         StageResult with validation decisions and log
     """
+    prompt = ""
     try:
         # Prepare evidence
         evidence = prepare_relation_evidence(relations, family_summaries)
@@ -266,6 +268,20 @@ def run_relation_validation_stage(
             validation_log=validation_log,
             prompt=prompt,
             response=raw_response,
+        )
+
+    except LLMAPIError as e:
+        return StageResult(
+            stage=LLMStage.RELATION_VALIDATION,
+            success=False,
+            suggestions=[],
+            applied_count=0,
+            rejected_count=0,
+            validation_log=[],
+            prompt=prompt,
+            response=None,
+            error=f"{e.category}: {e}",
+            error_category=LLM_API_ERROR_CATEGORY,
         )
 
     except Exception as e:

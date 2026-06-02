@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_semantics import run_semantic_labeling_stage
 from protocol_re.llm.analyze import LLMRequestConfig
-from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
+from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.utils.logging import setup_stage_logging
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.llm.evidence_builders import index_messages_by_family
@@ -228,6 +228,7 @@ def main() -> None:
                 "validation_log": result.validation_log,
                 "response": result.response,
                 "error": result.error,
+                "error_category": result.error_category,
             }, f, indent=2)
 
         if args.render_only:
@@ -239,7 +240,7 @@ def main() -> None:
             continue
 
         if not result.success:
-            print(f"[!] Error processing {family_id}: {result.error}")
+            print(f"[!] Warning: leaving {family_id} unlabeled: {result.error}")
             labeled_families[family_id] = labeled_details
             continue
 
@@ -280,9 +281,8 @@ def main() -> None:
     print(f"[+] Total labels rejected: {total_rejected}")
     print(f"[+] Stage results saved to {args.results_dir}")
 
-    # Surface per-family failures loudly (swallowed exceptions / empty prompts).
-    failures = collect_stage_failures(stage_results, render_only=args.render_only)
-    fail_loudly_if_any(failures, stage_name="11b_label_semantics_llm", logger=logger)
+    # API failures warn and keep fallback artifacts; other failures remain fatal.
+    warn_or_fail_stage_failures(stage_results, render_only=args.render_only, stage_name="11b_label_semantics_llm", logger=logger)
 
 
 if __name__ == "__main__":

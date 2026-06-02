@@ -195,6 +195,8 @@ def _llm_analysis_section(llm_analysis: Optional[Dict[str, object]]) -> List[str
         lines.append(str(analysis_markdown).strip())
     elif llm_analysis.get("render_only"):
         lines.append("_LLM analysis was skipped because stage 15 ran in render-only mode._")
+    elif llm_analysis.get("error"):
+        lines.append(f"_LLM analysis was unavailable: {llm_analysis.get('error')}._")
     else:
         lines.append("_No LLM analysis text is available._")
     lines.append("")

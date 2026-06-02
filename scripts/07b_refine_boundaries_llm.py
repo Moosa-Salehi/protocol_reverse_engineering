@@ -20,7 +20,7 @@ from protocol_re.model.schema import FamilyAssignment
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_boundaries import run_boundary_refinement_stage
 from protocol_re.llm.analyze import LLMRequestConfig
-from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
+from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 
 
 def load_llm_config(config_path: str) -> dict:
@@ -203,6 +203,7 @@ def main() -> None:
                 "validation_log": result.validation_log,
                 "response": result.response,
                 "error": result.error,
+                "error_category": result.error_category,
             }, f, indent=2)
 
         if args.render_only:
@@ -214,7 +215,7 @@ def main() -> None:
             continue
 
         if not result.success:
-            print(f"[!] Error processing {family_id}: {result.error}")
+            print(f"[!] Warning: leaving {family_id} unchanged: {result.error}")
             refined_families[family_id] = refined_details
             continue
 
@@ -244,9 +245,8 @@ def main() -> None:
     print(f"[+] Total merges rejected: {total_rejected}")
     print(f"[+] Stage results saved to {args.results_dir}")
 
-    # Surface per-family failures loudly (swallowed exceptions / empty prompts).
-    failures = collect_stage_failures(stage_results, render_only=args.render_only)
-    fail_loudly_if_any(failures, stage_name="07b_refine_boundaries_llm", logger=logger)
+    # API failures warn and keep fallback artifacts; other failures remain fatal.
+    warn_or_fail_stage_failures(stage_results, render_only=args.render_only, stage_name="07b_refine_boundaries_llm", logger=logger)
 
 
 if __name__ == "__main__":

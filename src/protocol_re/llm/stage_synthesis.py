@@ -9,8 +9,9 @@ import json
 from typing import Any, Dict, List, Optional
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
-from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
+from protocol_re.llm.analyze import LLMAPIError, LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
 from protocol_re.llm.evidence_builders import summarize_stage_artifact
+from protocol_re.llm.stage_errors import LLM_API_ERROR_CATEGORY
 
 
 def estimate_tokens(text: str) -> int:
@@ -306,6 +307,7 @@ def run_protocol_synthesis_stage(
     Returns:
         StageResult with synthesis output
     """
+    prompt = ""
     try:
         # Prepare compact evidence
         evidence = prepare_synthesis_evidence(
@@ -420,6 +422,20 @@ def run_protocol_synthesis_stage(
             validation_log=[],
             prompt=prompt,
             response=raw_response,
+        )
+
+    except LLMAPIError as e:
+        return StageResult(
+            stage=LLMStage.PROTOCOL_SYNTHESIS,
+            success=False,
+            suggestions=[],
+            applied_count=0,
+            rejected_count=0,
+            validation_log=[],
+            prompt=prompt,
+            response=None,
+            error=f"{e.category}: {e}",
+            error_category=LLM_API_ERROR_CATEGORY,
         )
 
     except Exception as e:

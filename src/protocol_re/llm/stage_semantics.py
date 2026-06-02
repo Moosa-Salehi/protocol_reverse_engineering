@@ -9,7 +9,8 @@ import json
 from typing import Any, Dict, List, Optional, Sequence
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
-from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
+from protocol_re.llm.analyze import LLMAPIError, LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
+from protocol_re.llm.stage_errors import LLM_API_ERROR_CATEGORY
 from protocol_re.llm.evidence_builders import build_field_statistics, build_sample_values
 from protocol_re.model.schema import MessageRecord
 
@@ -237,6 +238,7 @@ def run_semantic_labeling_stage(
     Returns:
         StageResult with suggestions and validation log
     """
+    prompt = ""
     try:
         # Prepare evidence
         evidence = prepare_semantic_evidence(
@@ -294,6 +296,20 @@ def run_semantic_labeling_stage(
             validation_log=validation_log,
             prompt=prompt,
             response=raw_response,
+        )
+
+    except LLMAPIError as e:
+        return StageResult(
+            stage=LLMStage.SEMANTIC_LABELING,
+            success=False,
+            suggestions=[],
+            applied_count=0,
+            rejected_count=0,
+            validation_log=[],
+            prompt=prompt,
+            response=None,
+            error=f"{e.category}: {e}",
+            error_category=LLM_API_ERROR_CATEGORY,
         )
 
     except Exception as e:

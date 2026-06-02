@@ -45,6 +45,7 @@ class StageResult:
     # Raw LLM API response body, preserved for auditability.
     response: Optional[str]
     error: Optional[str] = None
+    error_category: Optional[str] = None
 
 
 @dataclass
@@ -144,6 +145,7 @@ def save_stage_result(result: StageResult, output_path: str) -> None:
         "validation_log": result.validation_log,
         "response": result.response,
         "error": result.error,
+        "error_category": result.error_category,
     }
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
@@ -164,4 +166,5 @@ def load_stage_result(input_path: str) -> StageResult:
         prompt="",  # Not saved
         response=data.get("response"),
         error=data.get("error"),
+        error_category=data.get("error_category"),
     )
