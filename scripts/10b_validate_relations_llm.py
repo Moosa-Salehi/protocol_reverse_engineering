@@ -148,6 +148,7 @@ def main() -> None:
             "kept_count": result.applied_count,
             "discarded_count": result.rejected_count,
             "validation_log": result.validation_log,
+            "response": result.response,
             "error": result.error,
         }, f, indent=2)
 

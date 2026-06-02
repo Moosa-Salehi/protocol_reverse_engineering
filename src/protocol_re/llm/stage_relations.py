@@ -9,7 +9,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
-from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat, extract_message_json
+from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
 
 
 def prepare_relation_evidence(
@@ -235,7 +235,7 @@ def run_relation_validation_stage(
                 response=None,
             )
 
-        response = call_openai_compatible_chat(prompt, llm_config)
+        response, raw_response = call_openai_compatible_chat_with_raw(prompt, llm_config)
         response_json = extract_message_json(response)
 
         # Extract decisions
@@ -261,7 +261,7 @@ def run_relation_validation_stage(
             rejected_count=discarded_count,
             validation_log=validation_log,
             prompt=prompt,
-            response=json.dumps(response_json),
+            response=raw_response,
         )
 
     except Exception as e:

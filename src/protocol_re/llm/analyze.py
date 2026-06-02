@@ -140,7 +140,7 @@ def _chat_completions_url(base_url: str) -> str:
     return base + "/chat/completions"
 
 
-def call_openai_compatible_chat(prompt: str, config: LLMRequestConfig) -> Dict[str, Any]:
+def call_openai_compatible_chat_with_raw(prompt: str, config: LLMRequestConfig) -> tuple[Dict[str, Any], str]:
     payload = {
         "model": config.model,
         "messages": [
@@ -163,12 +163,17 @@ def call_openai_compatible_chat(prompt: str, config: LLMRequestConfig) -> Dict[s
     try:
         with urllib.request.urlopen(request, timeout=config.timeout) as response:
             body = response.read().decode("utf-8")
-            return json.loads(body)
+            return json.loads(body), body
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         raise RuntimeError(f"LLM API HTTP {exc.code}: {body}") from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"LLM API request failed: {exc}") from exc
+
+
+def call_openai_compatible_chat(prompt: str, config: LLMRequestConfig) -> Dict[str, Any]:
+    response_json, _raw_body = call_openai_compatible_chat_with_raw(prompt, config)
+    return response_json
 
 
 def extract_message_text(response: Dict[str, Any]) -> str:

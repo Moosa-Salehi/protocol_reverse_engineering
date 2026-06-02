@@ -212,6 +212,7 @@ def main() -> None:
         "render_only": args.render_only,
         "success": result.success,
         "error": result.error,
+        "response": result.response,
         "synthesis": None,
         "markdown_summary": None,
     }

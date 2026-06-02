@@ -9,7 +9,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
-from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat, extract_message_json
+from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
 from protocol_re.llm.evidence_builders import summarize_stage_artifact
 
 
@@ -333,6 +333,7 @@ def run_protocol_synthesis_stage(
 
             # Call LLM for each chunk
             chunk_results = []
+            raw_chunk_responses = []
             for i, chunk in enumerate(family_chunks):
                 print(f"[*] Processing chunk {i+1}/{len(family_chunks)} ({len(chunk)} families)...")
 
@@ -343,9 +344,13 @@ def run_protocol_synthesis_stage(
                 if config.render_only:
                     continue
 
-                response = call_openai_compatible_chat(chunk_prompt, llm_config)
+                response, raw_response = call_openai_compatible_chat_with_raw(chunk_prompt, llm_config)
                 response_json = extract_message_json(response)
                 chunk_results.append(response_json)
+                raw_chunk_responses.append({
+                    "chunk_index": i + 1,
+                    "response": raw_response,
+                })
 
             # Merge chunk results
             if config.render_only:
@@ -379,7 +384,7 @@ def run_protocol_synthesis_stage(
                 rejected_count=0,
                 validation_log=[],
                 prompt=prompt,
-                response=json.dumps(synthesis_output),
+                response=json.dumps({"chunk_responses": raw_chunk_responses}, ensure_ascii=False),
             )
 
         # Single prompt case
@@ -395,7 +400,7 @@ def run_protocol_synthesis_stage(
                 response=None,
             )
 
-        response = call_openai_compatible_chat(prompt, llm_config)
+        response, raw_response = call_openai_compatible_chat_with_raw(prompt, llm_config)
         response_json = extract_message_json(response)
 
         return StageResult(
@@ -406,7 +411,7 @@ def run_protocol_synthesis_stage(
             rejected_count=0,
             validation_log=[],
             prompt=prompt,
-            response=json.dumps(response_json),
+            response=raw_response,
         )
 
     except Exception as e:

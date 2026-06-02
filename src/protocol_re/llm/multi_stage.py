@@ -42,6 +42,7 @@ class StageResult:
     rejected_count: int
     validation_log: List[Dict[str, Any]]
     prompt: str
+    # Raw LLM API response body, preserved for auditability.
     response: Optional[str]
     error: Optional[str] = None
 
@@ -141,6 +142,7 @@ def save_stage_result(result: StageResult, output_path: str) -> None:
         "applied_count": result.applied_count,
         "rejected_count": result.rejected_count,
         "validation_log": result.validation_log,
+        "response": result.response,
         "error": result.error,
     }
     with open(output_path, "w", encoding="utf-8") as f:
@@ -160,6 +162,6 @@ def load_stage_result(input_path: str) -> StageResult:
         rejected_count=data["rejected_count"],
         validation_log=data["validation_log"],
         prompt="",  # Not saved
-        response=None,  # Not saved
+        response=data.get("response"),
         error=data.get("error"),
     )
