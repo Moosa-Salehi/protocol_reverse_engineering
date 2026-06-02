@@ -4,3 +4,4 @@ numpy==2.3.4
 scapy==2.7.0
 scikit_learn==1.7.2
 torch
+pytest
