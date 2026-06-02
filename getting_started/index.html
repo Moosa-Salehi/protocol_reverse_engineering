@@ -2056,7 +2056,11 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 <span class="w">  </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;temperature&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;max_tokens&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4000</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;timeout&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span>
+<span class="w">  </span><span class="nt">&quot;timeout&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_retries&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;retry_delay_seconds&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_retry_delay_seconds&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">30.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;request_interval_seconds&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span>
 <span class="p">}</span>
 </code></pre></div>
 <ol>
@@ -2081,11 +2085,9 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 <span class="c1"># Render prompt only (no API call)</span>
 python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--llm-render-only
 
-<span class="c1"># Adjust LLM parameters</span>
+<span class="c1"># Adjust LLM parameters (temperature, max_tokens, timeout are read from the config file only — edit config/llm_config.json to change them)</span>
 python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--llm-config<span class="w"> </span>config/llm_config.json<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--llm-temperature<span class="w"> </span><span class="m">0</span>.2<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--llm-max-tokens<span class="w"> </span><span class="m">8000</span>
+<span class="w">    </span>--llm-config<span class="w"> </span>config/llm_config.json
 </code></pre></div>
 <h3 id="stage-specific-llm-refinement">Stage-Specific LLM Refinement<a class="headerlink" href="#stage-specific-llm-refinement" title="Permanent link">&para;</a></h3>
 <p>Run individual LLM refinement stages:</p>
@@ -2381,8 +2383,6 @@ Layer<span class="w"> </span>Detection:
 LLM:
 <span class="w">  </span>--llm-config<span class="w"> </span>FILE<span class="w">             </span>LLM<span class="w"> </span>configuration<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>config/llm_config.json<span class="o">)</span>
 <span class="w">  </span>--llm-render-only<span class="w">             </span>Skip<span class="w"> </span>LLM<span class="w"> </span>API<span class="w"> </span>calls
-<span class="w">  </span>--llm-temperature<span class="w"> </span>N<span class="w">           </span>LLM<span class="w"> </span>temperature<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.1<span class="o">)</span>
-<span class="w">  </span>--llm-max-tokens<span class="w"> </span>N<span class="w">            </span>LLM<span class="w"> </span>max<span class="w"> </span>tokens<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">4000</span><span class="o">)</span>
 
 Evaluation:
 <span class="w">  </span>--ground-truth-json<span class="w"> </span>FILE<span class="w">      </span>Ground<span class="w"> </span>truth<span class="w"> </span>protocol<span class="w"> </span><span class="k">for</span><span class="w"> </span>evaluation
