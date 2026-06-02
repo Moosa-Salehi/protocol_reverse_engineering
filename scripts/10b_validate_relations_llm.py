@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from protocol_re.llm.multi_stage import StageConfig, LLMStage
+from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
 from protocol_re.llm.stage_relations import run_relation_validation_stage
 from protocol_re.llm.stage_relations import relation_passes_deterministic_gate
 from protocol_re.llm.analyze import LLMRequestConfig
@@ -57,6 +57,7 @@ def main() -> None:
     parser.add_argument("--min-confidence", type=float, default=0.7, help="Minimum confidence for keeping relations")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
     parser.add_argument("--results-dir", default="data/llm_stage_results", help="Directory for stage results")
+    parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing stage result response instead of calling the LLM API")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -142,16 +143,21 @@ def main() -> None:
 
     print(f"\n[*] Validating {len(relations)} relations")
 
+    result_path = results_dir / "relation_validation.json"
+    cached_response = load_cached_response(result_path) if args.reuse_llm_responses else None
+    if cached_response is not None:
+        print(f"[*] Reusing cached LLM response from {result_path}")
+
     # Run relation validation stage
     result = run_relation_validation_stage(
         relations=relations,
         config=stage_config,
         llm_config=llm_config,
+        cached_response=cached_response,
         family_summaries=family_summaries,
     )
 
     # Save stage result
-    result_path = results_dir / "relation_validation.json"
     with open(result_path, "w", encoding="utf-8") as f:
         json.dump({
             "success": result.success,

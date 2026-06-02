@@ -287,6 +287,7 @@ def run_protocol_synthesis_stage(
     protocol_model: Dict[str, Any],
     config: StageConfig,
     llm_config: LLMRequestConfig,
+    cached_response: Optional[str] = None,
     boundary_summary: Optional[Dict[str, Any]] = None,
     semantic_summary: Optional[Dict[str, Any]] = None,
     relation_summary: Optional[Dict[str, Any]] = None,
@@ -322,6 +323,45 @@ def run_protocol_synthesis_stage(
 
         # Render prompt
         prompt = render_synthesis_prompt(evidence, config.prompt_template_path)
+
+        if cached_response is not None and not config.render_only:
+            parsed_cached = json.loads(cached_response)
+            chunk_responses = parsed_cached.get("chunk_responses") if isinstance(parsed_cached, dict) else None
+            if isinstance(chunk_responses, list):
+                chunk_results = []
+                for item in chunk_responses:
+                    if not isinstance(item, dict) or item.get("response") is None:
+                        continue
+                    response = json.loads(item["response"])
+                    chunk_results.append(extract_message_json(response))
+
+                combined_markdown = "# Protocol Specification\n\n"
+                for i, result in enumerate(chunk_results):
+                    combined_markdown += f"\n## Part {i+1}\n\n"
+                    combined_markdown += result.get("markdown_summary", "")
+
+                return StageResult(
+                    stage=LLMStage.PROTOCOL_SYNTHESIS,
+                    success=True,
+                    suggestions=[{"markdown_summary": combined_markdown, "chunks": chunk_results}],
+                    applied_count=1,
+                    rejected_count=0,
+                    validation_log=[],
+                    prompt=prompt,
+                    response=cached_response,
+                )
+
+            response_json = extract_message_json(parsed_cached)
+            return StageResult(
+                stage=LLMStage.PROTOCOL_SYNTHESIS,
+                success=True,
+                suggestions=[response_json],
+                applied_count=1,
+                rejected_count=0,
+                validation_log=[],
+                prompt=prompt,
+                response=cached_response,
+            )
 
         # Check if we need to split into multiple prompts
         estimated_tokens = estimate_tokens(prompt)

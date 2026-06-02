@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from protocol_re.llm.multi_stage import StageConfig, LLMStage
+from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
 from protocol_re.llm.stage_synthesis import run_protocol_synthesis_stage
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
@@ -71,6 +71,7 @@ def main() -> None:
     parser.add_argument("--prompt-out", help="Optional path to write the rendered prompt")
     parser.add_argument("--template", help="Optional custom prompt template")
     parser.add_argument("--render-only", action="store_true", help="Only render prompt, don't call LLM")
+    parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing output response instead of calling the LLM API")
 
     # Multi-stage result inputs
     parser.add_argument("--boundary-summary", help="Boundary refinement summary JSON from stage 07b")
@@ -184,11 +185,16 @@ def main() -> None:
     print(f"    - Relation validation: {'Yes' if relation_summary else 'No'}")
     print(f"    - Evaluation metrics: {'Yes' if evaluation_metrics else 'No'}")
 
+    cached_response = load_cached_response(args.output_json) if args.reuse_llm_responses else None
+    if cached_response is not None:
+        print(f"[*] Reusing cached LLM response from {args.output_json}")
+
     # Run synthesis stage
     result = run_protocol_synthesis_stage(
         protocol_model=protocol_model,
         config=stage_config,
         llm_config=llm_config,
+        cached_response=cached_response,
         boundary_summary=boundary_summary,
         semantic_summary=semantic_summary,
         relation_summary=relation_summary,

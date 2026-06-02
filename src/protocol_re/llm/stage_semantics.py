@@ -215,6 +215,7 @@ def run_semantic_labeling_stage(
     fields: List[Dict[str, Any]],
     config: StageConfig,
     llm_config: LLMRequestConfig,
+    cached_response: Optional[str] = None,
     field_statistics: Optional[Dict[str, Any]] = None,
     relations: Optional[List[Dict[str, Any]]] = None,
     family_role: Optional[str] = None,
@@ -269,11 +270,15 @@ def run_semantic_labeling_stage(
                 response=None,
             )
 
-        response, raw_response = call_openai_compatible_chat_with_raw(
-            prompt,
-            llm_config,
-            request_label=f"stage 11b semantic labeling for {family_id}",
-        )
+        if cached_response is not None:
+            raw_response = cached_response
+            response = json.loads(cached_response)
+        else:
+            response, raw_response = call_openai_compatible_chat_with_raw(
+                prompt,
+                llm_config,
+                request_label=f"stage 11b semantic labeling for {family_id}",
+            )
         response_json = extract_message_json(response)
 
         # Extract suggestions

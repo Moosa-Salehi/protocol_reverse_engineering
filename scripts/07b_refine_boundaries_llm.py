@@ -17,7 +17,7 @@ from protocol_re.utils.logging import setup_stage_logging
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.model.schema import FamilyAssignment
-from protocol_re.llm.multi_stage import StageConfig, LLMStage
+from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
 from protocol_re.llm.stage_boundaries import run_boundary_refinement_stage
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
@@ -61,6 +61,7 @@ def main() -> None:
     parser.add_argument("--max-samples", type=int, default=10, help="Maximum sample messages per family")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
     parser.add_argument("--results-dir", default="data/llm_stage_results", help="Directory for stage results")
+    parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing stage result responses instead of calling the LLM API")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -177,6 +178,11 @@ def main() -> None:
             refined_families[family_id] = refined_details
             continue
 
+        result_path = results_dir / f"boundary_refinement_{family_id}.json"
+        cached_response = load_cached_response(result_path) if args.reuse_llm_responses else None
+        if cached_response is not None:
+            print(f"[*] Reusing cached LLM response from {result_path}")
+
         # Run boundary refinement stage
         result = run_boundary_refinement_stage(
             family_id=family_id,
@@ -184,6 +190,7 @@ def main() -> None:
             messages=sample_messages,
             config=stage_config,
             llm_config=llm_config,
+            cached_response=cached_response,
             boundary_scores=details.get("boundary_scores"),
             family_stats=details.get("statistics"),
             family_details=details,
@@ -193,7 +200,6 @@ def main() -> None:
         stage_results.append((family_id, result))
 
         # Save stage result
-        result_path = results_dir / f"boundary_refinement_{family_id}.json"
         with open(result_path, "w", encoding="utf-8") as f:
             json.dump({
                 "family_id": family_id,

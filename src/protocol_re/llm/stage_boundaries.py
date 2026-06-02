@@ -214,6 +214,7 @@ def run_boundary_refinement_stage(
     messages: Sequence[MessageRecord],
     config: StageConfig,
     llm_config: LLMRequestConfig,
+    cached_response: Optional[str] = None,
     boundary_scores: Optional[List[Dict[str, Any]]] = None,
     family_stats: Optional[Dict[str, Any]] = None,
     family_details: Optional[Dict[str, Any]] = None,
@@ -263,11 +264,15 @@ def run_boundary_refinement_stage(
                 response=None,
             )
 
-        response, raw_response = call_openai_compatible_chat_with_raw(
-            prompt,
-            llm_config,
-            request_label=f"stage 07b boundary refinement for {family_id}",
-        )
+        if cached_response is not None:
+            raw_response = cached_response
+            response = json.loads(cached_response)
+        else:
+            response, raw_response = call_openai_compatible_chat_with_raw(
+                prompt,
+                llm_config,
+                request_label=f"stage 07b boundary refinement for {family_id}",
+            )
         response_json = extract_message_json(response)
 
         # Extract suggestions

@@ -78,6 +78,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     evaluation_model_data_json = data_dir / "14_evaluation_model_data.json"
     final_evaluation_json = data_dir / "15_evaluation_result.json"
     html_report = output_dir / "protocol_report.html"
+    llm_stage_results_dir = data_dir / "llm_stage_results"
 
     pipeline: list[tuple[str, list[str]]] = []
 
@@ -204,6 +205,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 _path(args.llm_config),
                 "--min-confidence",
                 str(args.llm_boundary_confidence),
+                "--results-dir",
+                _path(llm_stage_results_dir),
             ]
             + (["--render-only"] if args.llm_render_only else []),
         )
@@ -278,6 +281,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 _path(args.llm_config),
                 "--min-confidence",
                 str(args.llm_relation_confidence),
+                "--results-dir",
+                _path(llm_stage_results_dir),
             ]
             + (["--render-only"] if args.llm_render_only else []),
         )
@@ -323,6 +328,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 _path(args.llm_config),
                 "--min-confidence",
                 str(args.llm_semantic_confidence),
+                "--results-dir",
+                _path(llm_stage_results_dir),
             ]
             + (["--render-only"] if args.llm_render_only else []),
         )
@@ -500,6 +507,15 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         for step_name, step_args in llm_steps:
             if step_name == "15_analyze_with_llm":
                 step_args.extend(["--template", _path(args.llm_template)])
+    if args.reuse_llm_responses:
+        for step_name, step_args in pipeline + llm_steps:
+            if step_name in {
+                "07b_refine_boundaries_llm",
+                "10b_validate_relations_llm",
+                "11b_label_semantics_llm",
+                "15_analyze_with_llm",
+            }:
+                step_args.append("--reuse-llm-responses")
     insert_at = next(index for index, (step_name, _) in enumerate(pipeline) if step_name == "18_export_markdown")
     pipeline[insert_at:insert_at] = llm_steps
     for step_name, step_args in pipeline:
@@ -744,6 +760,11 @@ def parse_args() -> argparse.Namespace:
     llm_analysis_group.add_argument("--llm-config", type=Path, default=Path("config/llm_config.json"), help="LLM config JSON for stage 15.")
     llm_analysis_group.add_argument("--llm-template", type=Path, help="Optional custom prompt template for stage 15 LLM analysis.")
     llm_analysis_group.add_argument("--llm-render-only", action="store_true", help="Only render the stage 15 LLM prompt; do not call the API.")
+    llm_analysis_group.add_argument(
+        "--reuse-llm-responses",
+        action="store_true",
+        help="Before each LLM API call, reuse an existing stage result JSON response when present.",
+    )
 
     llm_analysis_group.add_argument("--llm-boundary-confidence", type=float, default=0.6, help="Minimum confidence for LLM boundary merge suggestions (default: 0.6).")
     llm_analysis_group.add_argument("--llm-semantic-confidence", type=float, default=0.5, help="Minimum confidence for LLM semantic labels (default: 0.5).")

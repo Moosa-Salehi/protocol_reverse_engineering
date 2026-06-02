@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 import json
 
@@ -168,3 +169,22 @@ def load_stage_result(input_path: str) -> StageResult:
         error=data.get("error"),
         error_category=data.get("error_category"),
     )
+
+
+def load_cached_response(input_path: str | Path) -> Optional[str]:
+    """Return a previously saved raw LLM response if the result file has one."""
+    path = Path(input_path)
+    if not path.is_file():
+        return None
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    if not isinstance(data, dict) or "response" not in data:
+        return None
+    response = data.get("response")
+    if response is None:
+        return None
+    return response if isinstance(response, str) else json.dumps(response, ensure_ascii=False)

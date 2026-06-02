@@ -202,6 +202,7 @@ def run_relation_validation_stage(
     relations: List[Dict[str, Any]],
     config: StageConfig,
     llm_config: LLMRequestConfig,
+    cached_response: Optional[str] = None,
     family_summaries: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> StageResult:
     """
@@ -237,11 +238,15 @@ def run_relation_validation_stage(
                 response=None,
             )
 
-        response, raw_response = call_openai_compatible_chat_with_raw(
-            prompt,
-            llm_config,
-            request_label="stage 10b relation validation",
-        )
+        if cached_response is not None:
+            raw_response = cached_response
+            response = json.loads(cached_response)
+        else:
+            response, raw_response = call_openai_compatible_chat_with_raw(
+                prompt,
+                llm_config,
+                request_label="stage 10b relation validation",
+            )
         response_json = extract_message_json(response)
 
         # Extract decisions
