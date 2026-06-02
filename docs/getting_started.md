@@ -689,7 +689,12 @@ Layer Detection:
 
 LLM:
   --llm-config FILE             LLM configuration file (default: config/llm_config.json)
-  --llm-render-only             Skip LLM API calls
+  --llm-render-only             Skip LLM API calls, but render the prompts.
+  --llm-template                LLM template file path to override default template for stage 15.
+  --reuse-llm-responses         Before each LLM API call, reuse an existing stage result JSON response when present.
+  --llm-boundary-confidence     Minimum confidence for LLM boundary merge suggestions (default: 0.6).
+  --llm-semantic-confidence     Minimum confidence for LLM semantic labels (default: 0.5).
+  --llm-relation-confidence     Minimum confidence for LLM relation validation (default: 0.7).
 
 Evaluation:
   --ground-truth-json FILE      Ground truth protocol for evaluation
