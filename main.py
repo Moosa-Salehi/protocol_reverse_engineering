@@ -7,6 +7,7 @@ import re
 import shlex
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -524,7 +525,7 @@ def run_step(name: str, step_args: list[str]) -> bool:
     logger.info("------------------------------------- Starting step: %s", name, file_only=True)
 
     start = time.time()
-    cmd = [sys.executable] + step_args
+    cmd = [sys.executable, "-u"] + step_args
     cmd_str = " ".join(shlex.quote(part) for part in cmd)
 
     print(f"{YELLOW}Command: {cmd_str}{RESET}")
@@ -532,17 +533,48 @@ def run_step(name: str, step_args: list[str]) -> bool:
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SRC_PATH)
+    env["PYTHONUNBUFFERED"] = "1"
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=PROJECT_ROOT, env=env)
-        if result.stdout:
-            print(result.stdout.rstrip())
-        if result.stderr:
-            print(result.stderr.rstrip(), file=sys.stderr)
-        logger.info("STDOUT:\n%s", result.stdout.strip(), file_only=True)
-        if result.stderr:
-            logger.warning("STDERR:\n%s", result.stderr, file_only=True)
-        result.check_returncode()
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+            cwd=PROJECT_ROOT,
+            env=env,
+        )
+
+        stdout_lines: list[str] = []
+        stderr_lines: list[str] = []
+
+        def stream_output(stream, target, sink: list[str]) -> None:
+            try:
+                for line in stream:
+                    sink.append(line)
+                    print(line, end="", file=target, flush=True)
+            finally:
+                stream.close()
+
+        assert proc.stdout is not None
+        assert proc.stderr is not None
+        stdout_thread = threading.Thread(target=stream_output, args=(proc.stdout, sys.stdout, stdout_lines))
+        stderr_thread = threading.Thread(target=stream_output, args=(proc.stderr, sys.stderr, stderr_lines))
+        stdout_thread.start()
+        stderr_thread.start()
+
+        return_code = proc.wait()
+        stdout_thread.join()
+        stderr_thread.join()
+
+        stdout = "".join(stdout_lines)
+        stderr = "".join(stderr_lines)
+        logger.info("STDOUT:\n%s", stdout.strip(), file_only=True)
+        if stderr:
+            logger.warning("STDERR:\n%s", stderr, file_only=True)
+        if return_code != 0:
+            raise subprocess.CalledProcessError(return_code, cmd, output=stdout, stderr=stderr)
         elapsed = time.time() - start
         print(f"{GREEN}[OK]{RESET} {name} completed in {elapsed:.2f}s")
         logger.info("Step completed: %s (%.2fs)", name, elapsed, file_only=True)
