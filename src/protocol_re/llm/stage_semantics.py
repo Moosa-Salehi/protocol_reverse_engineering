@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
 from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat, extract_message_json
+from protocol_re.llm.evidence_builders import build_field_statistics, build_sample_values
+from protocol_re.model.schema import MessageRecord
 
 
 def prepare_semantic_evidence(
@@ -19,6 +21,9 @@ def prepare_semantic_evidence(
     relations: Optional[List[Dict[str, Any]]] = None,
     family_role: Optional[str] = None,
     sample_values: Optional[List[List[Any]]] = None,
+    messages: Sequence[MessageRecord] = (),
+    family_features: Optional[Dict[str, Any]] = None,
+    segments: Sequence[Dict[str, Any]] = (),
 ) -> Dict[str, Any]:
     """
     Prepare focused evidence bundle for semantic labeling of a single family.
@@ -34,13 +39,15 @@ def prepare_semantic_evidence(
     Returns:
         Evidence bundle for LLM analysis
     """
+    derived_statistics = field_statistics or build_field_statistics(fields, messages, family_features, segments)
+    derived_samples = sample_values or build_sample_values(fields, messages)
     evidence = {
         "family_id": family_id,
         "fields": fields,
-        "field_statistics": field_statistics or {},
+        "field_statistics": derived_statistics,
         "relations": relations or [],
         "family_role": family_role or "unknown",
-        "sample_values": sample_values or [],
+        "sample_values": derived_samples,
     }
 
     return evidence
@@ -210,6 +217,10 @@ def run_semantic_labeling_stage(
     field_statistics: Optional[Dict[str, Any]] = None,
     relations: Optional[List[Dict[str, Any]]] = None,
     family_role: Optional[str] = None,
+    messages: Sequence[MessageRecord] = (),
+    sample_values: Optional[List[List[Any]]] = None,
+    family_features: Optional[Dict[str, Any]] = None,
+    segments: Sequence[Dict[str, Any]] = (),
 ) -> StageResult:
     """
     Run semantic labeling stage for a single family.
@@ -229,7 +240,15 @@ def run_semantic_labeling_stage(
     try:
         # Prepare evidence
         evidence = prepare_semantic_evidence(
-            family_id, fields, field_statistics, relations, family_role
+            family_id,
+            fields,
+            field_statistics,
+            relations,
+            family_role,
+            sample_values,
+            messages,
+            family_features,
+            segments,
         )
 
         # Render prompt

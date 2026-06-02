@@ -194,6 +194,7 @@ Assign confidence based on evidence strength:
 4. **Protocol-agnostic**: Do not assume specific protocols (Modbus, DNP3, etc.)
 5. **Conservative**: When uncertain, leave field unlabeled rather than guessing
 6. **Cite sources**: Reference field_statistics, relations, or sample_values
+7. **Absent evidence**: If a section is empty or a metric is missing, state that it is unavailable and do not cite it as support
 
 ## Example Scenarios
 

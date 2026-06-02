@@ -11,8 +11,9 @@ You will receive:
 - **family_id**: The message family identifier
 - **field_boundaries**: Current field boundary hypotheses with offsets, widths, and scores
 - **sample_messages**: Representative message payloads from this family (hex format)
-- **boundary_scores**: Statistical scores for each boundary (entropy, mutual information, etc.)
+- **boundary_scores**: Statistical scores or derived boundary support for each adjacent field boundary, when available
 - **family_statistics**: Length distribution, message count, variability metrics
+- **field_statistics** and **sample_values_by_field**: Per-field statistics and field-sliced examples, when available
 
 ## Analysis Guidelines
 
@@ -81,10 +82,11 @@ Return a JSON object with:
 
 1. **Evidence-based only**: Only suggest merges supported by statistical evidence
 2. **Conservative approach**: When uncertain, preserve existing boundaries
-3. **Cite evidence**: Reference specific boundary scores, consistency metrics, or sample patterns
+3. **Cite evidence**: Reference specific boundary scores, family statistics, field statistics, or sample patterns
 4. **Confidence threshold**: Only suggest merges with confidence ≥ 0.6
 5. **Maximum merges**: Suggest at most 5 merge operations per family
 6. **Preserve semantics**: Do not merge fields with clearly different semantic roles
+7. **Absent evidence**: If a metric is missing or empty, say it is absent and do not use it as rationale
 
 ## Example Scenarios
 

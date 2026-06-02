@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
 from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat, extract_message_json
+from protocol_re.llm.evidence_builders import summarize_stage_artifact
 
 
 def estimate_tokens(text: str) -> int:
@@ -52,26 +53,46 @@ def prepare_synthesis_evidence(
 
     compact_families = []
     for family in families_sorted[:max_families]:
-        fields = family.get("fields", [])
+        fields = family.get("fields") or family.get("field_hypotheses", [])
         compact_fields = []
 
-        for field in fields:
+        for field in fields[:8]:
+            evidence = field.get("evidence", {}) or {}
+            attributes = field.get("attributes", {}) or {}
             compact_field = {
-                "offset": field.get("start_offset", field.get("offset", 0)),
-                "width": field.get("width", 1),
-                "semantic_role": field.get("semantic_role", "unknown"),
+                "offset": field.get("start", field.get("start_offset", field.get("offset", 0))),
+                "width": field.get("length", field.get("width", 1)),
+                "field_type": field.get("field_type", "unknown"),
+                "semantic_role": field.get("semantic_role", attributes.get("semantic_role", "unknown")),
+                "confidence": field.get("confidence"),
             }
-            # Add confidence if available
             if "semantic_confidence" in field:
-                compact_field["confidence"] = field["semantic_confidence"]
+                compact_field["semantic_confidence"] = field["semantic_confidence"]
+            if field.get("endian"):
+                compact_field["endian"] = field.get("endian")
+            if evidence:
+                selected_evidence = {
+                    key: evidence[key]
+                    for key in ("unique_values", "length_match_score", "cardinality_ratio")
+                    if key in evidence
+                }
+                if selected_evidence:
+                    compact_field["evidence"] = selected_evidence
+            if attributes.get("value_hex"):
+                compact_field["constant_value_hex"] = attributes["value_hex"]
             compact_fields.append(compact_field)
 
         compact_families.append({
             "family_id": family.get("family_id"),
+            "role": family.get("role", "unknown"),
             "message_count": family.get("message_count", 0),
-            "avg_length": family.get("statistics", {}).get("avg_length", 0),
+            "avg_length": (
+                family.get("statistics", {}).get("avg_length")
+                or family.get("feature_summary", {}).get("length_stats", {}).get("mean")
+                or 0
+            ),
+            "template": family.get("template", ""),
             "fields": compact_fields,
-            "role": family.get("role_hint", "unknown"),
         })
 
     # Extract compact relation summaries (top N by pair count). The protocol model
@@ -107,7 +128,8 @@ def prepare_synthesis_evidence(
     evidence = {
         "protocol_model": {
             "total_families": len(families),
-            "total_messages": protocol_model.get("metadata", {}).get("total_messages", 0),
+            "total_messages": protocol_model.get("metadata", {}).get("total_messages")
+            or sum(int(family.get("message_count", 0) or 0) for family in families),
             "families": compact_families,
             "relations": compact_relations,
         }
@@ -115,21 +137,21 @@ def prepare_synthesis_evidence(
 
     # Add multi-stage summaries if available
     if boundary_summary:
-        evidence["boundary_refinement_summary"] = {
+        evidence["boundary_refinement_summary"] = summarize_stage_artifact(boundary_summary, "boundary") or {
             "total_families": boundary_summary.get("total_families", 0),
             "total_applied": boundary_summary.get("total_applied", 0),
             "total_rejected": boundary_summary.get("total_rejected", 0),
         }
 
     if semantic_summary:
-        evidence["semantic_labeling_summary"] = {
+        evidence["semantic_labeling_summary"] = summarize_stage_artifact(semantic_summary, "semantic") or {
             "total_families": semantic_summary.get("total_families", 0),
             "total_labels_applied": semantic_summary.get("total_labels_applied", 0),
             "total_labels_rejected": semantic_summary.get("total_labels_rejected", 0),
         }
 
     if relation_summary:
-        evidence["relation_validation_summary"] = {
+        evidence["relation_validation_summary"] = summarize_stage_artifact(relation_summary, "relation") or {
             "original_count": relation_summary.get("original_count", 0),
             "kept_count": relation_summary.get("kept_count", 0),
             "discarded_count": relation_summary.get("discarded_count", 0),
@@ -226,8 +248,8 @@ def run_protocol_synthesis_stage(
             semantic_summary,
             relation_summary,
             evaluation_metrics,
-            max_families=10,
-            max_relations=10,
+            max_families=8,
+            max_relations=8,
         )
 
         # Render prompt

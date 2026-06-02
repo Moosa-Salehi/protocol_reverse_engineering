@@ -37,6 +37,7 @@ def main() -> None:
     parser.add_argument("families_json", help="Input families JSON from stage 07")
     parser.add_argument("output_json", help="Output refined families JSON")
     parser.add_argument("--assignments-json", help="Family assignments from stage 04")
+    parser.add_argument("--features-json", help="Family features JSON from stage 06")
     parser.add_argument("--llm-config", default="config/llm_config.json", help="LLM configuration JSON")
     parser.add_argument("--render-only", action="store_true", help="Only render prompts, don't call LLM")
     parser.add_argument("--min-confidence", type=float, default=0.6, help="Minimum confidence for merge suggestions")
@@ -83,6 +84,22 @@ def main() -> None:
                     family_assignments[family_id] = []
                 family_assignments[family_id].append(msg_id)
             logger.metric("assignments_loaded", len(assignments_payload.get("assignments", [])), "assignments")
+
+    with logger.stage("load_features"):
+        features_by_family = {}
+        if args.features_json:
+            logger.info(f"Loading features from {args.features_json}")
+            with open(args.features_json, "r", encoding="utf-8") as f:
+                features_payload = json.load(f)
+            if "families" in features_payload and isinstance(features_payload.get("families"), list):
+                features_by_family = {
+                    item.get("family_id"): item
+                    for item in features_payload.get("families", [])
+                    if item.get("family_id")
+                }
+            else:
+                features_by_family = features_payload
+            logger.metric("families_with_features", len(features_by_family), "families")
 
     # Load LLM config
     with logger.stage("setup_llm"):
@@ -159,6 +176,8 @@ def main() -> None:
             llm_config=llm_config,
             boundary_scores=details.get("boundary_scores"),
             family_stats=details.get("statistics"),
+            family_details=details,
+            family_features=features_by_family.get(family_id),
         )
 
         stage_results.append((family_id, result))

@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.llm.multi_stage import StageConfig, LLMStage
 from protocol_re.llm.stage_relations import run_relation_validation_stage
+from protocol_re.llm.stage_relations import relation_passes_deterministic_gate
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
 from protocol_re.utils.logging import setup_stage_logging
@@ -75,9 +76,20 @@ def main() -> None:
             for family_id, details in families_data.items():
                 family_summaries[family_id] = {
                     "family_id": family_id,
+                    "role": details.get("role", "unknown"),
                     "message_count": details.get("message_count", 0),
                     "field_count": len(details.get("field_hypotheses", [])),
+                    "fields": [
+                        {
+                            "offset": field.get("start", field.get("offset", 0)),
+                            "width": field.get("length", field.get("width", 0)),
+                            "field_type": field.get("field_type", "unknown"),
+                            "confidence": field.get("confidence"),
+                        }
+                        for field in (details.get("field_hypotheses", []) or [])[:8]
+                    ],
                     "avg_length": details.get("statistics", {}).get("avg_length", 0),
+                    "length_stats": details.get("statistics", {}).get("length_stats", details.get("statistics", {})),
                 }
             logger.metric("family_summaries_loaded", len(family_summaries), "families")
 
@@ -199,8 +211,14 @@ def main() -> None:
                     "confidence": decision.get("confidence", 0.0),
                 })
         else:
-            # No LLM decision - keep by default (conservative)
-            validated_relations.append(relation)
+            if relation_passes_deterministic_gate(relation, args.min_confidence):
+                validated_relations.append(relation)
+            else:
+                discarded_relations.append({
+                    "relation": relation,
+                    "reason": "No valid LLM decision and deterministic evidence gate failed",
+                    "confidence": relation.get("relation_confidence", relation.get("confidence", 0.0)),
+                })
 
     # Save validated relations
     output_data = {

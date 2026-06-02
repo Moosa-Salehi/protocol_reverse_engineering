@@ -26,8 +26,24 @@ def prepare_relation_evidence(
     Returns:
         Evidence bundle for LLM analysis
     """
+    enriched_relations = []
+    for relation in relations:
+        rel = dict(relation)
+        echo_fields = rel.get("echo_fields", []) or []
+        length_relations = rel.get("length_relations", []) or []
+        rel["evidence_quality"] = {
+            "has_echo_evidence": bool(echo_fields),
+            "has_length_evidence": bool(length_relations),
+            "direction_known": rel.get("dominant_direction") not in (None, "", "unknown", "unknown->unknown"),
+            "is_self_relation": rel.get("request_family_id") == rel.get("response_family_id"),
+            "low_lift": float(rel.get("edge_lift", 0.0) or 0.0) < 1.5,
+            "weak_support": float(rel.get("support_ratio", 0.0) or 0.0) < 0.05,
+            "strong_pair_count": int(rel.get("pair_count", 0) or 0) >= 10,
+        }
+        enriched_relations.append(rel)
+
     evidence = {
-        "relations": relations,
+        "relations": enriched_relations,
         "family_summaries": family_summaries or {},
     }
 
@@ -105,6 +121,20 @@ def validate_relation_decision(
     return True, "Valid relation decision"
 
 
+def relation_passes_deterministic_gate(relation: Dict[str, Any], min_confidence: float = 0.7) -> bool:
+    confidence = relation.get("relation_confidence", relation.get("confidence", 0.0)) or 0.0
+    has_echo = bool(relation.get("echo_fields"))
+    has_length = bool(relation.get("length_relations"))
+    direction_known = relation.get("dominant_direction") not in (None, "", "unknown", "unknown->unknown")
+    lift = float(relation.get("edge_lift", 0.0) or 0.0)
+    support = float(relation.get("support_ratio", 0.0) or 0.0)
+    if confidence < min_confidence:
+        return False
+    if has_echo or has_length:
+        return True
+    return direction_known and lift >= 2.0 and support >= 0.05
+
+
 def apply_relation_validation(
     relations: List[Dict[str, Any]],
     decisions: List[Dict[str, Any]],
@@ -160,8 +190,9 @@ def apply_relation_validation(
                 relation_copy["llm_rationale"] = decision["rationale"]
                 kept_relations.append(relation_copy)
         else:
-            # No LLM decision - keep by default (conservative)
-            kept_relations.append(relation)
+            # No LLM decision: keep only relations with sufficient deterministic evidence.
+            if relation_passes_deterministic_gate(relation, min_confidence):
+                kept_relations.append(relation)
 
     return kept_relations, validation_log
 

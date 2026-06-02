@@ -64,7 +64,7 @@ Incorporate insights from multi-stage LLM analysis:
 - **Boundary refinement**: Mention any over-segmentation fixes
 - **Semantic labeling**: Highlight high-confidence semantic labels
 - **Relation validation**: Note validated request/response pairs
-- **Quality improvements**: Summarize accuracy improvements
+- **Quality improvements**: Summarize accuracy improvements only when supplied metrics support them
 
 ### 8. Confidence and Limitations
 Be transparent about:
@@ -130,7 +130,7 @@ Return a JSON object with:
     "boundary_refinement": "Merged 15 over-segmented 1-byte fields into 5 multi-byte fields",
     "semantic_labeling": "Assigned semantic roles to 85% of fields with high confidence",
     "relation_validation": "Filtered 13 false positive relations, kept 7 validated pairs",
-    "quality_improvements": "Boundary precision improved from 38% to 65%, relation precision from 35% to 70%"
+    "quality_improvements": "Only include measured improvements present in evaluation_metrics or stage summaries"
   },
   "confidence_and_limitations": {
     "high_confidence": ["Message type identification", "Transaction ID matching", "Request/response pairing"],
@@ -150,6 +150,7 @@ Return a JSON object with:
 4. **Confidence levels**: Clearly distinguish high-confidence from speculative findings
 5. **Protocol-agnostic**: Do not assume specific protocols (Modbus, DNP3, etc.) unless evidence is overwhelming
 6. **Markdown summary**: Include a human-readable markdown summary in the output
+7. **Absent evidence**: If fields, samples, metrics, or stage summaries are missing, state the limitation and do not invent details
 
 ## Token Limit
 

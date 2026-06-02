@@ -13,6 +13,7 @@ You will receive:
 - **length_relations**: Length field correlations for each relation
 - **edge_features**: Statistical features (pair count, lift, direction consistency, temporal ordering)
 - **family_summaries**: Brief statistics for each family involved
+- **evidence_quality**: Derived flags summarizing missing or weak evidence, when provided
 
 ## Validation Guidelines
 
@@ -155,7 +156,7 @@ Return a JSON object with:
     "total_relations": 20,
     "kept": 7,
     "discarded": 13,
-    "precision_improvement": "Expected precision: 35% → 70%+"
+    "precision_improvement": "Describe expected precision effect only if supported by supplied metrics"
   },
   "notes": "Additional observations"
 }
@@ -168,6 +169,7 @@ Return a JSON object with:
 3. **Aggressive for discard**: Discard relations with any major red flags
 4. **Cite evidence**: Reference specific echo fields, edge features, or structural issues
 5. **Protocol-agnostic**: Do not assume specific protocols
+6. **Absent evidence**: If echo fields, length relations, direction, or family structure are absent, treat them as unavailable and do not cite them as support
 
 ## Example Scenarios
 
@@ -217,11 +219,10 @@ Rationale: Multiple strong evidence types (echo + length + edge features)
 
 ## Quality Metrics
 
-After applying your validation:
-- **Precision improvement**: Target 35% → 70%+
-- **Recall preservation**: Maintain ≥ 90% (keep all true relations)
-- **False positive reduction**: Discard ~50% of current relations
-- **Confidence distribution**: Most kept relations have confidence ≥ 0.8
+After applying your validation, summarize only evidence-backed effects:
+- **Kept evidence quality**: Why retained relations are supported
+- **Discarded evidence quality**: Which red flags drove rejection
+- **Residual uncertainty**: Which relations remain uncertain due to missing evidence
 
 ---
 

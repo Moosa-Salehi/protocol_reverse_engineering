@@ -19,6 +19,8 @@ from protocol_re.llm.stage_semantics import run_semantic_labeling_stage
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import collect_stage_failures, fail_loudly_if_any
 from protocol_re.utils.logging import setup_stage_logging
+from protocol_re.corpus.message_corpus import load_corpus_jsonl
+from protocol_re.llm.evidence_builders import index_messages_by_family
 
 
 def load_llm_config(config_path: str) -> dict:
@@ -35,6 +37,9 @@ def main() -> None:
     parser.add_argument("output_json", help="Output families JSON with semantic labels")
     parser.add_argument("--relations-json", help="Relations JSON for semantic inference")
     parser.add_argument("--features-json", help="Family features JSON for field statistics")
+    parser.add_argument("--messages-jsonl", help="Canonical message corpus JSONL for sample field values")
+    parser.add_argument("--assignments-json", help="Family assignments JSON for sample field values")
+    parser.add_argument("--max-samples", type=int, default=10, help="Maximum sample messages per family")
     parser.add_argument("--llm-config", default="config/llm_config.json", help="LLM configuration JSON")
     parser.add_argument("--render-only", action="store_true", help="Only render prompts, don't call LLM")
     parser.add_argument("--min-confidence", type=float, default=0.5, help="Minimum confidence for semantic labels")
@@ -95,11 +100,25 @@ def main() -> None:
             with open(args.features_json, "r", encoding="utf-8") as f:
                 features_data = json.load(f)
 
-            for family_feature in features_data.get("families", []):
-                family_id = family_feature.get("family_id")
-                features_by_family[family_id] = family_feature
+            if "families" in features_data and isinstance(features_data.get("families"), list):
+                for family_feature in features_data.get("families", []):
+                    family_id = family_feature.get("family_id")
+                    features_by_family[family_id] = family_feature
+            else:
+                features_by_family = features_data
 
             logger.metric("families_with_features", len(features_by_family), "families")
+
+    with logger.stage("load_sample_messages"):
+        messages_by_family = {}
+        if args.messages_jsonl and args.assignments_json:
+            logger.info(f"Loading sample messages from {args.messages_jsonl}")
+            messages = load_corpus_jsonl(args.messages_jsonl)
+            messages_by_id = {msg.msg_id: msg for msg in messages}
+            with open(args.assignments_json, "r", encoding="utf-8") as f:
+                assignments_payload = json.load(f)
+            messages_by_family = index_messages_by_family(messages_by_id, assignments_payload, args.max_samples)
+            logger.metric("families_with_sample_messages", len(messages_by_family), "families")
 
     with logger.stage("setup_llm"):
         # Load LLM config
@@ -169,6 +188,8 @@ def main() -> None:
             # Extract field-level statistics if available
             # This would need to be structured properly in the features JSON
             field_statistics = family_features.get("field_statistics", {})
+        else:
+            family_features = {}
 
         # Run semantic labeling stage
         result = run_semantic_labeling_stage(
@@ -179,6 +200,9 @@ def main() -> None:
             field_statistics=field_statistics,
             relations=family_relations,
             family_role=family_role,
+            messages=messages_by_family.get(family_id, []),
+            family_features=family_features,
+            segments=details.get("segments", []),
         )
 
         stage_results.append((family_id, result))

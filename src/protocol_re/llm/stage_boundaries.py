@@ -11,6 +11,13 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
 from protocol_re.llm.analyze import LLMRequestConfig, call_openai_compatible_chat, extract_message_json
+from protocol_re.llm.evidence_builders import (
+    build_family_statistics,
+    build_field_statistics,
+    build_sample_messages,
+    build_sample_values,
+    derive_boundary_scores,
+)
 from protocol_re.model.schema import MessageRecord
 
 
@@ -20,6 +27,8 @@ def prepare_boundary_evidence(
     messages: Sequence[MessageRecord],
     boundary_scores: Optional[List[Dict[str, Any]]] = None,
     family_stats: Optional[Dict[str, Any]] = None,
+    family_details: Optional[Dict[str, Any]] = None,
+    family_features: Optional[Dict[str, Any]] = None,
     max_samples: int = 10,
 ) -> Dict[str, Any]:
     """
@@ -36,21 +45,20 @@ def prepare_boundary_evidence(
     Returns:
         Evidence bundle for LLM analysis
     """
-    # Sample messages (limit to avoid overwhelming LLM)
-    sample_messages = []
-    for msg in messages[:max_samples]:
-        sample_messages.append({
-            "msg_id": msg.msg_id,
-            "payload_hex": msg.payload_hex,
-            "length": msg.payload_len,
-        })
+    sampled_messages = list(messages[:max_samples])
+    details = family_details or {}
+    segments = details.get("segments", []) or []
+    derived_scores = boundary_scores or derive_boundary_scores(fields, segments)
+    derived_stats = family_stats or build_family_statistics(details, family_features, sampled_messages)
 
     evidence = {
         "family_id": family_id,
         "field_boundaries": fields,
-        "sample_messages": sample_messages,
-        "boundary_scores": boundary_scores or [],
-        "family_statistics": family_stats or {},
+        "sample_messages": build_sample_messages(sampled_messages, max_samples=max_samples),
+        "sample_values_by_field": build_sample_values(fields, sampled_messages, max_samples=max_samples),
+        "boundary_scores": derived_scores,
+        "family_statistics": derived_stats,
+        "field_statistics": build_field_statistics(fields, sampled_messages, family_features, segments),
     }
 
     return evidence
@@ -207,6 +215,8 @@ def run_boundary_refinement_stage(
     llm_config: LLMRequestConfig,
     boundary_scores: Optional[List[Dict[str, Any]]] = None,
     family_stats: Optional[Dict[str, Any]] = None,
+    family_details: Optional[Dict[str, Any]] = None,
+    family_features: Optional[Dict[str, Any]] = None,
 ) -> StageResult:
     """
     Run boundary refinement stage for a single family.
@@ -226,7 +236,13 @@ def run_boundary_refinement_stage(
     try:
         # Prepare evidence
         evidence = prepare_boundary_evidence(
-            family_id, fields, messages, boundary_scores, family_stats
+            family_id,
+            fields,
+            messages,
+            boundary_scores,
+            family_stats,
+            family_details,
+            family_features,
         )
 
         # Render prompt
