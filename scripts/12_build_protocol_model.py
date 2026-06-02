@@ -27,6 +27,35 @@ def _build_relation(edge: dict) -> FamilyRelation:
     return FamilyRelation(**{k: v for k, v in edge.items() if k in valid})
 
 
+def _build_field_hypothesis(field: dict) -> FieldHypothesis:
+    """Construct a FieldHypothesis while preserving upstream field extensions.
+
+    LLM semantic labeling can annotate field hypotheses with top-level
+    ``semantic_*`` keys. The protocol model schema keeps those extension values
+    under ``attributes``, so fold unsupported keys there before constructing the
+    dataclass.
+    """
+    payload = dict(field)
+    attributes = payload.get("attributes") if isinstance(payload.get("attributes"), dict) else {}
+    attributes = dict(attributes)
+
+    for key in ("semantic_role", "semantic_confidence", "semantic_evidence"):
+        if key in payload and key not in attributes:
+            attributes[key] = payload[key]
+
+    valid = {f.name for f in dataclass_fields(FieldHypothesis)}
+    extras = {key: value for key, value in payload.items() if key not in valid}
+    if extras:
+        existing_extras = attributes.get("upstream_extras")
+        if isinstance(existing_extras, dict):
+            attributes["upstream_extras"] = {**existing_extras, **extras}
+        else:
+            attributes["upstream_extras"] = extras
+
+    payload["attributes"] = attributes
+    return FieldHypothesis(**{key: value for key, value in payload.items() if key in valid})
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Assemble a protocol-model JSON document from inferred family summaries.")
     parser.add_argument("family_json", help="Output from 07_infer_boundaries.py")
@@ -100,7 +129,7 @@ def main() -> None:
         for family_id, details in family_data.items():
             with logger.context(family_id=family_id):
                 segments = [Segment(**segment) for segment in details.get("segments", [])]
-                field_hypotheses = [FieldHypothesis(**field) for field in details.get("field_hypotheses", [])]
+                field_hypotheses = [_build_field_hypothesis(field) for field in details.get("field_hypotheses", [])]
                 feature_summary = features_payload.get(family_id)
                 keyword_summary = keywords_payload.get(family_id)
                 framing_summary = (framing_payload.get("families") or {}).get(family_id)
