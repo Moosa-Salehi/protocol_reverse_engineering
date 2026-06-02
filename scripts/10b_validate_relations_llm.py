@@ -240,7 +240,7 @@ def main() -> None:
             "original_count": len(relations),
             "kept_count": len(validated_relations),
             "discarded_count": len(discarded_relations),
-            "precision_improvement": f"{len(relations)} → {len(validated_relations)} relations",
+            "precision_improvement": f"{len(relations)} -> {len(validated_relations)} relations",
         },
         "discarded_relations": discarded_relations,
     }
@@ -252,7 +252,7 @@ def main() -> None:
     print(f"[+] Original relations: {len(relations)}")
     print(f"[+] Kept relations: {len(validated_relations)}")
     print(f"[+] Discarded relations: {len(discarded_relations)}")
-    print(f"[+] Precision improvement: {len(relations)} → {len(validated_relations)}")
+    print(f"[+] Precision improvement: {len(relations)} -> {len(validated_relations)}")
     print(f"[+] Stage results saved to {result_path}")
 
 

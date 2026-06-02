@@ -41,7 +41,7 @@ Look for relations that are likely spurious:
 
 **Structural Inconsistencies:**
 - Request and response families have very different structures
-- Direction transitions don't make sense (e.g., client→client)
+- Direction transitions don't make sense (e.g., client->client)
 - Temporal ordering violations (response before request)
 
 ### 2. Validate True Relations
@@ -68,7 +68,7 @@ Confirm relations that have strong evidence:
 
 **Structural Consistency:**
 - Compatible family structures (similar header patterns)
-- Sensible direction transitions (client→server, server→client)
+- Sensible direction transitions (client->server, server->client)
 - Consistent temporal ordering
 
 ### 3. Calculate Relation Confidence
@@ -176,7 +176,7 @@ Return a JSON object with:
 ### Scenario 1: Strong relation (KEEP)
 ```
 Request: F0, Response: F1
-Pair count: 15, Edge lift: 2.3, Direction: client→server (0.95), Temporal: 0.98
+Pair count: 15, Edge lift: 2.3, Direction: client->server (0.95), Temporal: 0.98
 Echo: 2-byte field at offset 2 (support: 0.98, confidence: 0.92)
 Decision: KEEP (confidence: 0.88)
 Rationale: Strong echo evidence + excellent edge features
@@ -194,7 +194,7 @@ Rationale: Weak echo (1-byte, deep position), low pair count, poor direction con
 ### Scenario 3: Borderline relation (DISCARD)
 ```
 Request: F4, Response: F5
-Pair count: 8, Edge lift: 1.8, Direction: client→server (0.85), Temporal: 0.88
+Pair count: 8, Edge lift: 1.8, Direction: client->server (0.85), Temporal: 0.88
 Echo: None, Length: 1-byte at offset 3 (support: 0.92, confidence: 0.55)
 Decision: DISCARD (confidence: 0.65)
 Rationale: Below confidence threshold (0.7), only weak length evidence
@@ -203,7 +203,7 @@ Rationale: Below confidence threshold (0.7), only weak length evidence
 ### Scenario 4: Multiple evidence types (KEEP)
 ```
 Request: F6, Response: F7
-Pair count: 12, Edge lift: 2.5, Direction: client→server (0.92), Temporal: 0.95
+Pair count: 12, Edge lift: 2.5, Direction: client->server (0.92), Temporal: 0.95
 Echo: 2-byte at offset 4 (support: 0.96, confidence: 0.85)
 Length: 2-byte at offset 2 (support: 0.98, confidence: 0.88)
 Decision: KEEP (confidence: 0.92)
