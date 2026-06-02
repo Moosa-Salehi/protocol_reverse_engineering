@@ -9,13 +9,13 @@ This pipeline analyzes binary protocol traffic from PCAP files and automatically
 ## Documentation
 
 ### Getting Started
-- **[Getting Started Guide](getting_started.md)** - Installation, prerequisites, first analysis, and basic usage
+- **[Getting Started Guide](getting_started.md)** - Installation, prerequisites, first analysis, basic and advanced usage
 
 ### Technical Documentation
 - **[Architecture](architecture.md)** - System design, components, and data flow
 
 ### Contributing
-- **[Documentation Guide](contributing.md)** - How to build and contribute to documentation
+- **[Contribution Guide](contributing.md)** - How to contribute to this project
 
 ## Quick Links
 

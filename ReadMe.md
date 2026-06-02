@@ -18,9 +18,9 @@ A protocol-agnostic reverse engineering pipeline that analyzes binary protocol t
 
 ## Documentation
 
-- **[Getting Started](docs/getting_started.md)** - Installation and usage
-- **[Architecture](docs/architecture.md)** - System design and technical details
-- **[Contribution Guide](docs/contributing.md)** - How to contribute to project
+- **[Getting Started](docs/getting_started.md)** - Installation, prerequisites, first analysis, basic and advanced usage
+- **[Architecture](docs/architecture.md)** - System design, components, data flow and technical details
+- **[Contribution Guide](docs/contributing.md)** - How to contribute to this project
 
 ## Requirements
 

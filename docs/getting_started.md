@@ -68,7 +68,7 @@ pip install -r requirements.txt
 - `scikit-learn` - Machine learning and clustering
 - `hdbscan` - Hierarchical density-based clustering
 - `scapy` - Packet manipulation (optional extraction method)
-- `torch` - PyTorch for neural features (optional)
+- `torch` - PyTorch for neural features
 - `colorama` - Colored terminal output
 
 ## Your First Analysis
