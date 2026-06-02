@@ -283,7 +283,11 @@ python main.py pcaps/ --tshark-filter mbtcp \
   "model": "gpt-4o-mini",
   "temperature": 0.1,
   "max_tokens": 4000,
-  "timeout": 180
+  "timeout": 180,
+  "max_retries": 5,
+  "retry_delay_seconds": 2.0,
+  "max_retry_delay_seconds": 30.0,
+  "request_interval_seconds": 1.0
 }
 ```
 
@@ -316,8 +320,7 @@ python main.py pcaps/ --tshark-filter mbtcp \
 # Render prompt only (no API call)
 python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 
-# Adjust LLM parameters (temperature, max_tokens, timeout are read from the
-# config file only — edit config/llm_config.json to change them)
+# Adjust LLM parameters (temperature, max_tokens, timeout are read from the config file only — edit config/llm_config.json to change them)
 python main.py pcaps/ --tshark-filter mbtcp \
     --llm-config config/llm_config.json
 ```
@@ -687,7 +690,6 @@ Layer Detection:
 LLM:
   --llm-config FILE             LLM configuration file (default: config/llm_config.json)
   --llm-render-only             Skip LLM API calls
-  (temperature, max_tokens and timeout are set in the --llm-config file)
 
 Evaluation:
   --ground-truth-json FILE      Ground truth protocol for evaluation
