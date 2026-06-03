@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+import json
+
+import pytest
+
 from protocol_re.llm.evidence_builders import (
     build_family_statistics,
     build_field_statistics,
     build_sample_values,
     derive_boundary_scores,
 )
+from protocol_re.llm import stage_synthesis
+from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.llm.multi_stage import LLMStage, StageConfig
 from protocol_re.llm.stage_synthesis import prepare_synthesis_evidence
 from protocol_re.model.schema import MessageRecord
 
@@ -95,3 +102,66 @@ def test_synthesis_uses_field_hypotheses_and_computes_total_messages() -> None:
     assert evidence["protocol_model"]["total_messages"] == 10
     assert evidence["protocol_model"]["families"][0]["fields"][0]["field_type"] == "counter_or_transaction_id"
     assert evidence["protocol_model"]["families"][0]["fields"][0]["offset"] == 0
+
+
+def test_synthesis_splits_large_prompt_and_uses_stage_generation_limits(monkeypatch: pytest.MonkeyPatch) -> None:
+    families = []
+    for i in range(5):
+        families.append(
+            {
+                "family_id": f"family_{i}",
+                "role": "request",
+                "message_count": 10 - i,
+                "template": "?? " * 20,
+                "field_hypotheses": [
+                    {
+                        "start": 0,
+                        "length": 2,
+                        "field_type": "counter_or_transaction_id",
+                        "confidence": 0.9,
+                    }
+                ],
+            }
+        )
+
+    requests: list[tuple[str, int]] = []
+
+    def fake_call(prompt: str, config: LLMRequestConfig, request_label: str):
+        requests.append((request_label, config.max_tokens))
+        body = json.dumps(
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps({"markdown_summary": request_label})
+                        }
+                    }
+                ]
+            }
+        )
+        return json.loads(body), body
+
+    monkeypatch.setattr(stage_synthesis, "SYNTHESIS_SPLIT_TOKEN_THRESHOLD", 1)
+    monkeypatch.setattr(stage_synthesis, "SYNTHESIS_CHUNK_FAMILY_COUNT", 2)
+    monkeypatch.setattr(stage_synthesis, "call_openai_compatible_chat_with_raw", fake_call)
+
+    result = stage_synthesis.run_protocol_synthesis_stage(
+        protocol_model={"families": families, "relations": [], "metadata": {}},
+        config=StageConfig(
+            stage=LLMStage.PROTOCOL_SYNTHESIS,
+            prompt_template_path="assets/prompts/protocol_synthesis.md",
+            max_tokens=1234,
+            temperature=0.2,
+        ),
+        llm_config=LLMRequestConfig(
+            model="test-model",
+            base_url="https://example.test/v1",
+            api_key="test-key",
+            max_tokens=4000,
+        ),
+    )
+
+    assert result.success is True
+    assert len(requests) == 3
+    assert all(label.startswith("stage 15 protocol synthesis chunk") for label, _max_tokens in requests)
+    assert {max_tokens for _label, max_tokens in requests} == {1234}
