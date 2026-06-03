@@ -152,33 +152,6 @@ Return a JSON object with:
 6. **Markdown summary**: Include a human-readable markdown summary in the output
 7. **Absent evidence**: If fields, samples, metrics, or stage summaries are missing, state the limitation and do not invent details
 
-## Token Limit
-
-This prompt should stay under 10,000 tokens. The input evidence will be:
-- **Compact**: Only essential protocol model data
-- **Summarized**: Multi-stage results as summaries, not full logs
-- **Focused**: Top families and relations only
-
-## Example Scenarios
-
-### Scenario 1: Well-analyzed protocol
-```
-Input: 11 families, 7 validated relations, 85% fields labeled
-Output: Comprehensive specification with high confidence
-```
-
-### Scenario 2: Partially analyzed protocol
-```
-Input: 5 families, 2 validated relations, 40% fields labeled
-Output: Partial specification with noted limitations
-```
-
-### Scenario 3: Minimal analysis
-```
-Input: 3 families, no relations, no semantic labels
-Output: Basic structure description with many unknowns
-```
-
 ---
 
 **Remember**: Your goal is to synthesize a clear, accurate protocol specification that helps humans understand the protocol structure and behavior. Be honest about confidence levels and limitations.
