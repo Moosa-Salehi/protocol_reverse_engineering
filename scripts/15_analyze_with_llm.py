@@ -264,6 +264,13 @@ def main() -> None:
         elif isinstance(synthesis_data.get("json_patches"), list):
             output["patches"] = synthesis_data["json_patches"]
 
+    if args.render_only:
+        if Path(args.output_json).exists():
+            print(f"[*] Preserved cached LLM response at {args.output_json}")
+        warn_or_fail_stage_failures([("protocol_synthesis", result)], render_only=args.render_only, stage_name="15_analyze_with_llm", logger=logger)
+        print("\n[+] Protocol prompt rendered")
+        return
+
     # Save output
     with open(args.output_json, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)

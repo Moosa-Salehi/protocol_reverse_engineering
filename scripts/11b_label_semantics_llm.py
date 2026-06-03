@@ -251,6 +251,15 @@ def main() -> None:
 
         stage_results.append((family_id, result))
 
+        if args.render_only:
+            with open(prompt_path, "w", encoding="utf-8") as f:
+                f.write(result.prompt)
+            print(f"[+] Saved prompt to {prompt_path}")
+            if result_path.exists():
+                print(f"[*] Preserved cached LLM response at {result_path}")
+            labeled_families[family_id] = labeled_details
+            continue
+
         # Save stage result
         with open(result_path, "w", encoding="utf-8") as f:
             json.dump({
@@ -263,13 +272,6 @@ def main() -> None:
                 "error": result.error,
                 "error_category": result.error_category,
             }, f, indent=2)
-
-        if args.render_only:
-            with open(prompt_path, "w", encoding="utf-8") as f:
-                f.write(result.prompt)
-            print(f"[+] Saved prompt to {prompt_path}")
-            labeled_families[family_id] = labeled_details
-            continue
 
         if not result.success:
             print(f"[!] Warning: leaving {family_id} unlabeled: {result.error}")

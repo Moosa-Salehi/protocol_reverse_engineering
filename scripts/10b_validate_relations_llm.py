@@ -185,6 +185,21 @@ def main() -> None:
         family_summaries=family_summaries,
     )
 
+    if args.render_only:
+        with open(prompt_path, "w", encoding="utf-8") as f:
+            f.write(result.prompt)
+        print(f"[+] Saved prompt to {prompt_path}")
+        if result_path.exists():
+            print(f"[*] Preserved cached LLM response at {result_path}")
+
+        # Save original relations (no changes in render-only mode)
+        with open(args.output_json, "w", encoding="utf-8") as f:
+            json.dump(relations_data, f, indent=2)
+
+        # API failures warn and keep fallback artifacts; other failures remain fatal.
+        warn_or_fail_stage_failures([("relation_validation", result)], render_only=True, stage_name="10b_validate_relations_llm", logger=logger)
+        return
+
     # Save stage result
     with open(result_path, "w", encoding="utf-8") as f:
         json.dump({
@@ -196,19 +211,6 @@ def main() -> None:
             "error": result.error,
             "error_category": result.error_category,
         }, f, indent=2)
-
-    if args.render_only:
-        with open(prompt_path, "w", encoding="utf-8") as f:
-            f.write(result.prompt)
-        print(f"[+] Saved prompt to {prompt_path}")
-
-        # Save original relations (no changes in render-only mode)
-        with open(args.output_json, "w", encoding="utf-8") as f:
-            json.dump(relations_data, f, indent=2)
-
-        # API failures warn and keep fallback artifacts; other failures remain fatal.
-        warn_or_fail_stage_failures([("relation_validation", result)], render_only=True, stage_name="10b_validate_relations_llm", logger=logger)
-        return
 
     if not result.success:
         # Save original relations on error
