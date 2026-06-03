@@ -154,7 +154,7 @@ Return a JSON object with:
 
 ## Token Limit
 
-This prompt should stay under 5,000 tokens. The input evidence will be:
+This prompt should stay under 10,000 tokens. The input evidence will be:
 - **Compact**: Only essential protocol model data
 - **Summarized**: Multi-stage results as summaries, not full logs
 - **Focused**: Top families and relations only
