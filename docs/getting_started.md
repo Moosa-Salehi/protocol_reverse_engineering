@@ -323,6 +323,10 @@ python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 # Adjust LLM parameters (temperature, max_tokens, timeout are read from the config file only — edit config/llm_config.json to change them)
 python main.py pcaps/ --tshark-filter mbtcp \
     --llm-config config/llm_config.json
+
+# Use saved LLM responses when available instaed of calling the api, usefull when some api call's failed in a run, and you want to rerun 
+# the pipeline and only call those api's (dont repeat successfull calls). 
+python main.py --use-existing-messages --reuse-llm-responses
 ```
 
 ### Stage-Specific LLM Refinement
