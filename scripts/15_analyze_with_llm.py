@@ -19,6 +19,11 @@ from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_respo
 from protocol_re.llm.stage_synthesis import run_protocol_synthesis_stage
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
+from protocol_re.llm.user_responses import (
+    ensure_user_response_placeholder,
+    load_user_provided_response,
+    make_user_response_path,
+)
 from protocol_re.utils.logging import setup_stage_logging
 
 
@@ -72,6 +77,7 @@ def main() -> None:
     parser.add_argument("--template", help="Optional custom prompt template")
     parser.add_argument("--render-only", action="store_true", help="Only render prompt, don't call LLM")
     parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing output response instead of calling the LLM API")
+    parser.add_argument("--use-user-provided-response", action="store_true", help="Load filled LLM response from data/user_provided_LLM_responses before calling the API")
 
     # Multi-stage result inputs
     parser.add_argument("--boundary-summary", help="Boundary refinement summary JSON from stage 07b")
@@ -155,7 +161,7 @@ def main() -> None:
 
     # Load LLM config
     model = ""
-    if not args.render_only:
+    if not args.render_only and (not args.use_user_provided_response or Path(args.config).is_file()):
         print(f"[+] Loading LLM config from {args.config}")
         config_dict = load_llm_config(args.config)
         model = config_dict.get("model", "gpt-4o-mini")
@@ -167,7 +173,10 @@ def main() -> None:
 
         llm_config = build_llm_request_config(config_dict, api_key, logger)
     else:
+        config_dict = {}
         llm_config = None
+        if not args.render_only:
+            print("[!] LLM config not loaded; API fallback is unavailable unless cached or user-provided responses are filled")
 
     # Create stage config
     stage_config = StageConfig(
@@ -185,9 +194,25 @@ def main() -> None:
     print(f"    - Relation validation: {'Yes' if relation_summary else 'No'}")
     print(f"    - Evaluation metrics: {'Yes' if evaluation_metrics else 'No'}")
 
-    cached_response = load_cached_response(args.output_json) if args.reuse_llm_responses else None
-    if cached_response is not None:
-        print(f"[*] Reusing cached LLM response from {args.output_json}")
+    user_response_path = make_user_response_path("protocol_synthesis")
+    ensure_user_response_placeholder(
+        user_response_path,
+        stage="protocol_synthesis",
+        prompt_path=args.prompt_out,
+        model=model or config_dict.get("model", ""),
+        request_label="stage 15 protocol synthesis",
+        metadata={"result_path": args.output_json, "source_model": args.protocol_model_json},
+    )
+
+    cached_response = None
+    if args.use_user_provided_response:
+        cached_response = load_user_provided_response(user_response_path)
+        if cached_response is not None:
+            print(f"[*] Using user-provided LLM response from {user_response_path}")
+    if cached_response is None and args.reuse_llm_responses:
+        cached_response = load_cached_response(args.output_json)
+        if cached_response is not None:
+            print(f"[*] Reusing cached LLM response from {args.output_json}")
 
     # Run synthesis stage
     result = run_protocol_synthesis_stage(

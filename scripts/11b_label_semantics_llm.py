@@ -21,6 +21,11 @@ from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.utils.logging import setup_stage_logging
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.llm.evidence_builders import index_messages_by_family
+from protocol_re.llm.user_responses import (
+    ensure_user_response_placeholder,
+    load_user_provided_response,
+    make_user_response_path,
+)
 
 
 def load_llm_config(config_path: str) -> dict:
@@ -63,6 +68,7 @@ def main() -> None:
     parser.add_argument("--prompt-template", help="Custom prompt template path")
     parser.add_argument("--results-dir", default="data/llm_stage_results", help="Directory for stage results")
     parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing stage result responses instead of calling the LLM API")
+    parser.add_argument("--use-user-provided-response", action="store_true", help="Load filled LLM responses from data/user_provided_LLM_responses before calling the API")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -140,7 +146,7 @@ def main() -> None:
 
     with logger.stage("setup_llm"):
         # Load LLM config
-        if not args.render_only:
+        if not args.render_only and (not args.use_user_provided_response or Path(args.llm_config).is_file()):
             logger.info(f"Loading LLM config from {args.llm_config}")
             llm_config_dict = load_llm_config(args.llm_config)
             api_key = os.environ.get("OPENAI_API_KEY")
@@ -151,8 +157,12 @@ def main() -> None:
             llm_config = build_llm_request_config(llm_config_dict, api_key, logger)
             logger.info(f"LLM configured: model={llm_config.model}")
         else:
+            llm_config_dict = {}
             llm_config = None
-            logger.info("Render-only mode: LLM will not be called")
+            if args.render_only:
+                logger.info("Render-only mode: LLM will not be called")
+            else:
+                logger.warning("LLM config not loaded; API fallback is unavailable unless cached or user-provided responses are filled")
 
     # Create stage config
     stage_config = StageConfig(
@@ -203,9 +213,26 @@ def main() -> None:
             family_features = {}
 
         result_path = results_dir / f"semantic_labeling_{family_id}.json"
-        cached_response = load_cached_response(result_path) if args.reuse_llm_responses else None
-        if cached_response is not None:
-            print(f"[*] Reusing cached LLM response from {result_path}")
+        user_response_path = make_user_response_path("semantic_labeling", family_id)
+        prompt_path = results_dir / f"semantic_labeling_{family_id}_prompt.md"
+        ensure_user_response_placeholder(
+            user_response_path,
+            stage="semantic_labeling",
+            prompt_path=prompt_path,
+            model=llm_config_dict.get("model", ""),
+            request_label=f"stage 11b semantic labeling for {family_id}",
+            metadata={"family_id": family_id, "result_path": str(result_path)},
+        )
+
+        cached_response = None
+        if args.use_user_provided_response:
+            cached_response = load_user_provided_response(user_response_path)
+            if cached_response is not None:
+                print(f"[*] Using user-provided LLM response from {user_response_path}")
+        if cached_response is None and args.reuse_llm_responses:
+            cached_response = load_cached_response(result_path)
+            if cached_response is not None:
+                print(f"[*] Reusing cached LLM response from {result_path}")
 
         # Run semantic labeling stage
         result = run_semantic_labeling_stage(
@@ -238,7 +265,6 @@ def main() -> None:
             }, f, indent=2)
 
         if args.render_only:
-            prompt_path = results_dir / f"semantic_labeling_{family_id}_prompt.md"
             with open(prompt_path, "w", encoding="utf-8") as f:
                 f.write(result.prompt)
             print(f"[+] Saved prompt to {prompt_path}")

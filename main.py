@@ -208,7 +208,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 "--results-dir",
                 _path(llm_stage_results_dir),
             ]
-            + (["--render-only"] if args.llm_render_only else []),
+            + (["--render-only"] if args.llm_render_only else [])
+            + (["--use-user-provided-response"] if args.use_user_provided_response else []),
         )
     )
     # Use refined families for subsequent stages
@@ -284,7 +285,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 "--results-dir",
                 _path(llm_stage_results_dir),
             ]
-            + (["--render-only"] if args.llm_render_only else []),
+            + (["--render-only"] if args.llm_render_only else [])
+            + (["--use-user-provided-response"] if args.use_user_provided_response else []),
         )
     )
     # Use validated relations for subsequent stages
@@ -331,7 +333,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 "--results-dir",
                 _path(llm_stage_results_dir),
             ]
-            + (["--render-only"] if args.llm_render_only else []),
+            + (["--render-only"] if args.llm_render_only else [])
+            + (["--use-user-provided-response"] if args.use_user_provided_response else []),
         )
     )
     # Use labeled families for protocol model
@@ -503,6 +506,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         for step_name, step_args in llm_steps:
             if step_name == "15_analyze_with_llm":
                 step_args.append("--render-only")
+    if args.use_user_provided_response:
+        for step_name, step_args in llm_steps:
+            if step_name == "15_analyze_with_llm":
+                step_args.append("--use-user-provided-response")
     if args.llm_template:
         for step_name, step_args in llm_steps:
             if step_name == "15_analyze_with_llm":
@@ -765,6 +772,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Before each LLM API call, reuse an existing stage result JSON response when present.",
     )
+    llm_analysis_group.add_argument(
+        "--use-user-provided-response",
+        action="store_true",
+        help="Use filled response files from data/user_provided_LLM_responses before calling the LLM API.",
+    )
 
     llm_analysis_group.add_argument("--llm-boundary-confidence", type=float, default=0.6, help="Minimum confidence for LLM boundary merge suggestions (default: 0.6).")
     llm_analysis_group.add_argument("--llm-semantic-confidence", type=float, default=0.5, help="Minimum confidence for LLM semantic labels (default: 0.5).")
@@ -826,7 +838,7 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit(f"{RED}Error:{RESET} --max-response-families-per-request must be greater than 0.")
     if args.family_neural_batch_size <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --family-neural-batch-size must be greater than 0.")
-    if not args.llm_render_only and not args.llm_config.is_file():
+    if not args.llm_render_only and not args.use_user_provided_response and not args.llm_config.is_file():
         raise SystemExit(f"{RED}Error:{RESET} LLM config file does not exist: {args.llm_config}")
     if args.llm_template:
         args.llm_template = args.llm_template.resolve()
