@@ -80,6 +80,11 @@ def extract_patches_from_analysis(analysis: Dict[str, Any]) -> List[JsonPatchOpe
     for key in ("patches", "json_patches", "accepted_patches"):
         if isinstance(analysis.get(key), list):
             return parse_patch_bundle(analysis[key])
+    synthesis = analysis.get("synthesis")
+    if isinstance(synthesis, dict):
+        for key in ("patches", "json_patches", "accepted_patches"):
+            if isinstance(synthesis.get(key), list):
+                return parse_patch_bundle(synthesis[key])
     text = analysis.get("patches_json") or analysis.get("analysis_json") or analysis.get("analysis_markdown")
     if isinstance(text, str) and text.strip():
         return parse_patch_bundle(text)

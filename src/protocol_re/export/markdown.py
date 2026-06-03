@@ -190,7 +190,7 @@ def _llm_analysis_section(llm_analysis: Optional[Dict[str, object]]) -> List[str
             )
     if model or usage_items or prompt_stats:
         lines.append("")
-    analysis_markdown = llm_analysis.get("analysis_markdown")
+    analysis_markdown = llm_analysis.get("markdown_summary") or llm_analysis.get("analysis_markdown")
     if analysis_markdown:
         lines.append(str(analysis_markdown).strip())
     elif llm_analysis.get("render_only"):

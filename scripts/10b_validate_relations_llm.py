@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
 from protocol_re.llm.stage_relations import run_relation_validation_stage
 from protocol_re.llm.stage_relations import relation_passes_deterministic_gate
+from protocol_re.llm.stage_relations import should_apply_llm_discard
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.llm.user_responses import (
@@ -244,13 +245,20 @@ def main() -> None:
                 relation_copy["llm_confidence"] = decision.get("confidence", 0.0)
                 relation_copy["llm_rationale"] = decision.get("rationale", "")
                 validated_relations.append(relation_copy)
-            else:
+            elif should_apply_llm_discard(relation, decision, args.min_confidence):
                 # Track discarded relations
                 discarded_relations.append({
                     "relation": relation,
                     "reason": decision.get("rationale", ""),
                     "confidence": decision.get("confidence", 0.0),
                 })
+            else:
+                relation_copy = relation.copy()
+                relation_copy["llm_validated"] = False
+                relation_copy["llm_discard_overridden"] = True
+                relation_copy["llm_confidence"] = decision.get("confidence", 0.0)
+                relation_copy["llm_rationale"] = decision.get("rationale", "")
+                validated_relations.append(relation_copy)
         else:
             if relation_passes_deterministic_gate(relation, args.min_confidence):
                 validated_relations.append(relation)

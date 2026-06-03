@@ -138,7 +138,16 @@ Return a JSON object with:
     "missing_information": ["Protocol version negotiation", "Authentication mechanism", "Compression support"],
     "recommendations": ["Capture more diverse message types", "Include error scenarios", "Test edge cases"]
   },
-  "markdown_summary": "# Protocol Specification\n\n## Overview\n\nThis is a binary request/response protocol..."
+  "markdown_summary": "# Protocol Specification\n\n## Overview\n\nThis is a binary request/response protocol...",
+  "patches": [
+    {
+      "op": "replace",
+      "path": "/families/0/role",
+      "value": "request",
+      "evidence_refs": ["protocol_model.families[0].role", "evaluation_metrics.semantics.role_counts"],
+      "rationale": "Only include safe RFC 6902 patches when directly supported by supplied evidence."
+    }
+  ]
 }
 ```
 
@@ -151,6 +160,7 @@ Return a JSON object with:
 5. **Protocol-agnostic**: Do not assume specific protocols (Modbus, DNP3, etc.) unless evidence is overwhelming
 6. **Markdown summary**: Include a human-readable markdown summary in the output
 7. **Absent evidence**: If fields, samples, metrics, or stage summaries are missing, state the limitation and do not invent details
+8. **Patches**: Include a `patches` array of RFC 6902 operations against the input protocol model only for evidence-supported corrections. Use only `add`, `replace`, or `test`. Return an empty array if no safe model change is justified.
 
 ---
 

@@ -312,7 +312,7 @@ def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
         f'{usage_metrics}'
         '</div>'
     )
-    analysis_markdown = llm_analysis.get("analysis_markdown")
+    analysis_markdown = llm_analysis.get("markdown_summary") or llm_analysis.get("analysis_markdown")
     if analysis_markdown:
         body = f"<pre>{_text(str(analysis_markdown).strip())}</pre>"
     elif llm_analysis.get("render_only"):

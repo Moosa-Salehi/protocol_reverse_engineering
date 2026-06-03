@@ -248,10 +248,10 @@ def main() -> None:
         "success": result.success,
         "error": result.error,
         "error_category": result.error_category,
+        "prompt_path": args.prompt_out,
         "response": result.response,
         "synthesis": None,
         "markdown_summary": None,
-        "analysis_markdown": None,
         "patches": [],
     }
 
@@ -259,9 +259,10 @@ def main() -> None:
         synthesis_data = result.suggestions[0]
         output["synthesis"] = synthesis_data
         output["markdown_summary"] = synthesis_data.get("markdown_summary", "")
-
-        # For backward compatibility, also include as analysis_markdown
-        output["analysis_markdown"] = output["markdown_summary"]
+        if isinstance(synthesis_data.get("patches"), list):
+            output["patches"] = synthesis_data["patches"]
+        elif isinstance(synthesis_data.get("json_patches"), list):
+            output["patches"] = synthesis_data["json_patches"]
 
     # Save output
     with open(args.output_json, "w", encoding="utf-8") as f:

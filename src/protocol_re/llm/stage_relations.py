@@ -123,17 +123,31 @@ def validate_relation_decision(
 
 
 def relation_passes_deterministic_gate(relation: Dict[str, Any], min_confidence: float = 0.7) -> bool:
+    if relation.get("request_family_id") == "noise" or relation.get("response_family_id") == "noise":
+        return False
     confidence = relation.get("relation_confidence", relation.get("confidence", 0.0)) or 0.0
     has_echo = bool(relation.get("echo_fields"))
     has_length = bool(relation.get("length_relations"))
     direction_known = relation.get("dominant_direction") not in (None, "", "unknown", "unknown->unknown")
     lift = float(relation.get("edge_lift", 0.0) or 0.0)
     support = float(relation.get("support_ratio", 0.0) or 0.0)
+    pair_count = int(relation.get("pair_count", 0) or 0)
+    temporal_order = float(relation.get("temporal_order_consistency", 0.0) or 0.0)
+    same_family = relation.get("request_family_id") == relation.get("response_family_id")
     if confidence < min_confidence:
         return False
     if has_echo or has_length:
         return True
-    return direction_known and lift >= 2.0 and support >= 0.05
+    strong_edge = pair_count >= 10 and lift >= 2.0 and support >= 0.05 and temporal_order >= 0.9
+    strong_self_edge = same_family and pair_count >= 10 and lift >= 2.0 and support >= 0.5 and temporal_order >= 0.9
+    return strong_edge or strong_self_edge or (direction_known and lift >= 2.0 and support >= 0.05)
+
+
+def should_apply_llm_discard(relation: Dict[str, Any], decision: Dict[str, Any], min_confidence: float = 0.7) -> bool:
+    """Only let LLM discard override relations that lack deterministic support."""
+    if decision.get("decision") != "discard":
+        return False
+    return not relation_passes_deterministic_gate(relation, min_confidence)
 
 
 def apply_relation_validation(
@@ -189,6 +203,13 @@ def apply_relation_validation(
                 relation_copy["llm_validated"] = True
                 relation_copy["llm_confidence"] = decision["confidence"]
                 relation_copy["llm_rationale"] = decision["rationale"]
+                kept_relations.append(relation_copy)
+            elif not should_apply_llm_discard(relation, decision, min_confidence):
+                relation_copy = relation.copy()
+                relation_copy["llm_validated"] = False
+                relation_copy["llm_discard_overridden"] = True
+                relation_copy["llm_confidence"] = decision.get("confidence", 0.0)
+                relation_copy["llm_rationale"] = decision.get("rationale", "")
                 kept_relations.append(relation_copy)
         else:
             # No LLM decision: keep only relations with sufficient deterministic evidence.
@@ -257,19 +278,12 @@ def run_relation_validation_stage(
             relations, decisions, config.min_confidence
         )
 
-        applied_count = sum(1 for log in validation_log if log.get("applied", False))
-        rejected_count = len(validation_log) - applied_count
-
-        # Count kept vs discarded
-        kept_count = sum(1 for d in decisions if d.get("decision") == "keep")
-        discarded_count = sum(1 for d in decisions if d.get("decision") == "discard")
-
         return StageResult(
             stage=LLMStage.RELATION_VALIDATION,
             success=True,
             suggestions=decisions,
-            applied_count=kept_count,
-            rejected_count=discarded_count,
+            applied_count=len(filtered_relations),
+            rejected_count=max(0, len(relations) - len(filtered_relations)),
             validation_log=validation_log,
             prompt=prompt,
             response=raw_response,

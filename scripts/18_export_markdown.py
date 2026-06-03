@@ -23,12 +23,14 @@ def _estimate_tokens(text: str) -> int:
     return max(1, (len(text.encode("utf-8")) + 3) // 4) if text else 0
 
 
-def _load_prompt_stats(llm_analysis: dict | None) -> dict | None:
+def _load_prompt_stats(llm_analysis: dict | None, llm_analysis_path: str | None = None) -> dict | None:
     if not llm_analysis:
         return None
     prompt_path = llm_analysis.get("prompt_path")
     if not prompt_path:
-        return None
+        if not llm_analysis_path:
+            return None
+        prompt_path = Path(llm_analysis_path).with_name("13_llm_prompt.md")
     path = Path(str(prompt_path))
     if not path.is_file():
         return {"path": str(path), "exists": False}
@@ -67,7 +69,7 @@ def main() -> None:
         llm_analysis = _load_optional_json(args.llm_analysis_json)
         if llm_analysis is not None:
             logger.info(f"Loaded LLM analysis from {args.llm_analysis_json}")
-            llm_analysis["prompt_stats"] = _load_prompt_stats(llm_analysis)
+            llm_analysis["prompt_stats"] = _load_prompt_stats(llm_analysis, args.llm_analysis_json)
 
         evaluation = _load_optional_json(args.evaluation_json)
         if evaluation:

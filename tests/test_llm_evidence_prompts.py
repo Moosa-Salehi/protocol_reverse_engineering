@@ -13,6 +13,8 @@ from protocol_re.llm.evidence_builders import (
 from protocol_re.llm import stage_synthesis
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.multi_stage import LLMStage, StageConfig
+from protocol_re.llm.patches import extract_patches_from_analysis
+from protocol_re.llm.stage_relations import apply_relation_validation
 from protocol_re.llm.stage_synthesis import prepare_synthesis_evidence
 from protocol_re.model.schema import MessageRecord
 
@@ -165,3 +167,49 @@ def test_synthesis_splits_large_prompt_and_uses_stage_generation_limits(monkeypa
     assert len(requests) == 3
     assert all(label.startswith("stage 15 protocol synthesis chunk") for label, _max_tokens in requests)
     assert {max_tokens for _label, max_tokens in requests} == {1234}
+
+
+def test_patch_extraction_reads_nested_synthesis_patches() -> None:
+    patches = extract_patches_from_analysis(
+        {
+            "synthesis": {
+                "patches": [
+                    {
+                        "op": "replace",
+                        "path": "/families/0/role",
+                        "value": "request",
+                        "rationale": "supported",
+                    }
+                ]
+            }
+        }
+    )
+
+    assert len(patches) == 1
+    assert patches[0].path == "/families/0/role"
+
+
+def test_relation_validation_does_not_apply_llm_discard_to_strong_edge() -> None:
+    relation = {
+        "request_family_id": "family_4",
+        "response_family_id": "family_4",
+        "pair_count": 5936,
+        "support_ratio": 0.747231,
+        "edge_lift": 10.735965,
+        "temporal_order_consistency": 1.0,
+        "relation_confidence": 0.8,
+    }
+    decisions = [
+        {
+            "request_family_id": "family_4",
+            "response_family_id": "family_4",
+            "decision": "discard",
+            "confidence": 0.4,
+            "rationale": "overly conservative",
+        }
+    ]
+
+    kept, _log = apply_relation_validation([relation], decisions, min_confidence=0.7)
+
+    assert len(kept) == 1
+    assert kept[0]["llm_discard_overridden"] is True
