@@ -393,6 +393,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(html_report),
                     "--evaluation-json",
                     _path(evaluation_json),
+                    "--llm-stage-results-dir",
+                    _path(llm_stage_results_dir),
                 ],
             ),
         ]

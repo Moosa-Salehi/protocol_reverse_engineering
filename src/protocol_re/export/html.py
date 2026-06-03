@@ -51,6 +51,77 @@ def _metric(label: str, value: Any, hint: str = "") -> str:
     return f'<article class="metric"><strong>{_text(value)}</strong><span>{_text(label)}</span>{hint_html}</article>'
 
 
+def _short_text(value: Any, limit: int = 12000) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit] + f"\n\n... truncated {len(text) - limit} characters ..."
+
+
+def _text_pre(value: Any, empty: str = "No text available.") -> str:
+    text = _short_text(value)
+    if not text:
+        return f'<p class="muted">{_text(empty)}</p>'
+    return f"<pre>{_text(text)}</pre>"
+
+
+def _json_pre(value: Any, empty: str = "No result details available.") -> str:
+    if value in (None, "", [], {}):
+        return f'<p class="muted">{_text(empty)}</p>'
+    try:
+        import json
+
+        text = json.dumps(value, indent=2, ensure_ascii=False)
+    except Exception:
+        text = str(value)
+    return _text_pre(text, empty=empty)
+
+
+def _stage_status_metrics(result: Optional[Dict[str, Any]], stage_label: str) -> str:
+    result = result or {}
+    success = result.get("success")
+    status = "unknown" if success is None else "success" if success else "failed"
+    applied = result.get("applied_count", result.get("kept_count", result.get("applied", 0)))
+    rejected = result.get("rejected_count", result.get("discarded_count", result.get("rejected", 0)))
+    metrics = (
+        f'{_metric("Stage", stage_label)}'
+        f'{_metric("Status", status)}'
+        f'{_metric("Applied/kept", applied)}'
+        f'{_metric("Rejected/discarded", rejected)}'
+    )
+    if result.get("error"):
+        metrics += _metric("Error", result.get("error"), str(result.get("error_category", "")))
+    return f'<div class="metric-grid">{metrics}</div>'
+
+
+def _stage_text_details(stage: Optional[Dict[str, Any]], title: str, stage_label: str) -> str:
+    if not stage:
+        return f'<section class="llm-stage-block"><h4>{_text(title)}</h4><p class="muted">No LLM stage artifact found.</p></section>'
+    result = stage.get("result") if isinstance(stage.get("result"), dict) else {}
+    response = result.get("response")
+    result_details = {
+        key: value
+        for key, value in result.items()
+        if key not in {"response"}
+    }
+    return f"""
+    <section class="llm-stage-block">
+      <h4>{_text(title)}</h4>
+      {_stage_status_metrics(result, stage_label)}
+      <details>
+        <summary>LLM Response</summary>
+        {_text_pre(response)}
+      </details>
+      <details>
+        <summary>Refinement Result</summary>
+        {_json_pre(result_details)}
+      </details>
+    </section>
+    """
+
+
 def _flatten_usage(value: Any, prefix: str = "") -> List[tuple[str, Any]]:
     if not isinstance(value, dict):
         return []
@@ -174,7 +245,22 @@ def _framing_panel(framing_summary: Dict[str, Any]) -> str:
     )
 
 
-def _family_card(family: Dict[str, Any]) -> str:
+def _family_refinement_blocks(family_id: str, llm_stage_results: Optional[Dict[str, Any]]) -> str:
+    if not llm_stage_results:
+        return ""
+    boundary = (llm_stage_results.get("boundary_refinement") or {}).get(family_id)
+    semantic = (llm_stage_results.get("semantic_labeling") or {}).get(family_id)
+    if not boundary and not semantic:
+        return ""
+    return (
+        '<h4>LLM Boundary Refinement</h4>'
+        f'{_stage_text_details(boundary, "Boundary Detection Refinement", "boundary_refinement")}'
+        '<h4>LLM Semantic Refinement</h4>'
+        f'{_stage_text_details(semantic, "Semantic Labeling Refinement", "semantic_labeling")}'
+    )
+
+
+def _family_card(family: Dict[str, Any], llm_stage_results: Optional[Dict[str, Any]] = None) -> str:
     family_id = family.get("family_id", "unknown")
     semantic = family.get("semantic_summary") or {}
     feature = family.get("feature_summary") or {}
@@ -221,15 +307,50 @@ def _family_card(family: Dict[str, Any]) -> str:
       {_format_panel(keyword)}
       <h4>Framing Evidence</h4>
       {_framing_panel(framing)}
+      {_family_refinement_blocks(str(family_id), llm_stage_results)}
       <h4>Related Families</h4>
       <div class="pill-row">{related_html}</div>
     </section>
     """
 
 
-def _relation_rows(model: Dict[str, Any]) -> str:
+def _relation_llm_decision(relation: Dict[str, Any], relation_stage: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not relation_stage:
+        return None
+    result = relation_stage.get("result") if isinstance(relation_stage.get("result"), dict) else {}
+    req = relation.get("request_family_id")
+    resp = relation.get("response_family_id")
+    for entry in result.get("validation_log", []) or []:
+        decision = entry.get("decision") or {}
+        if decision.get("request_family_id") == req and decision.get("response_family_id") == resp:
+            return {
+                "decision": decision.get("decision"),
+                "confidence": decision.get("confidence"),
+                "rationale": decision.get("rationale"),
+                "valid": entry.get("valid"),
+                "applied": entry.get("applied"),
+                "reason": entry.get("reason"),
+            }
+    return None
+
+
+def _relation_rows(model: Dict[str, Any], llm_stage_results: Optional[Dict[str, Any]] = None) -> str:
     rows = []
+    relation_stage = (llm_stage_results or {}).get("relation_validation")
     for relation in _relations(model):
+        llm_decision = _relation_llm_decision(relation, relation_stage)
+        llm_html = '<span class="muted">No decision</span>'
+        if llm_decision:
+            llm_html = (
+                f"{_pill(llm_decision.get('decision', 'unknown'), 'related')} "
+                f"{_text(llm_decision.get('confidence', ''))}"
+                f"<br><small>{_text(llm_decision.get('rationale') or llm_decision.get('reason') or '')}</small>"
+            )
+        elif relation.get("llm_rationale"):
+            llm_html = (
+                f"{_pill('model-attached', 'related')} {_text(relation.get('llm_confidence', ''))}"
+                f"<br><small>{_text(relation.get('llm_rationale'))}</small>"
+            )
         rows.append(
             "<tr>"
             f"<td><code>{_text(relation.get('request_family_id'))}</code></td>"
@@ -243,9 +364,17 @@ def _relation_rows(model: Dict[str, Any]) -> str:
             f"<td>{_text(relation.get('dominant_direction', 'unknown'))}</td>"
             f"<td>{len(relation.get('echo_fields', []) or [])}</td>"
             f"<td>{len(relation.get('length_relations', []) or [])}</td>"
+            f"<td>{llm_html}</td>"
             "</tr>"
         )
-    return "".join(rows) or '<tr><td colspan="11">No relation evidence.</td></tr>'
+    return "".join(rows) or '<tr><td colspan="12">No relation evidence.</td></tr>'
+
+
+def _relation_llm_block(llm_stage_results: Optional[Dict[str, Any]]) -> str:
+    relation_stage = (llm_stage_results or {}).get("relation_validation")
+    if not relation_stage:
+        return ""
+    return _stage_text_details(relation_stage, "Relation Validation LLM Response", "relation_validation")
 
 
 def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
@@ -413,9 +542,10 @@ def render_protocol_model_html(
     evaluation: Optional[Dict[str, Any]] = None,
     llm_analysis: Optional[Dict[str, Any]] = None,
     final_evaluation: Optional[Dict[str, Any]] = None,
+    llm_stage_results: Optional[Dict[str, Any]] = None,
 ) -> str:
     families = _families(model)
-    family_cards = "\n".join(_family_card(family) for family in families)
+    family_cards = "\n".join(_family_card(family, llm_stage_results) for family in families)
     # Pull structured summaries out of the flat metadata table so they can be
     # rendered as their own card-based blocks instead of stringified dicts.
     metadata = dict(model.get("metadata", {}) or {})
@@ -427,7 +557,8 @@ def render_protocol_model_html(
         f'<table class="meta-table"><tbody>{metadata_rows}</tbody></table></section>'
         if metadata_rows else ""
     )
-    relation_rows = _relation_rows(model)
+    relation_rows = _relation_rows(model, llm_stage_results)
+    relation_llm_block = _relation_llm_block(llm_stage_results)
     llm_block = _llm_analysis_block(llm_analysis)
     final_evaluation_block = _final_evaluation_block(final_evaluation)
     total_messages = sum(int(family.get("message_count", 0) or 0) for family in model.get("families", []) or [])
@@ -490,6 +621,10 @@ th {{ color: var(--accent-2); font-weight: 700; }}
 .pill.wide {{ color: #44d7b6; }}
 .template {{ display:block; white-space: pre-wrap; word-break: break-word; padding: 14px; background: #0b0f0e; border: 1px solid var(--line); border-radius: 14px; color: #dbe8d2; }}
 .llm-panel pre {{ white-space: pre-wrap; word-break: break-word; padding: 18px; background: #0b0f0e; border: 1px solid var(--line); border-radius: 16px; color: #dbe8d2; line-height: 1.5; }}
+.llm-stage-block {{ margin: 12px 0 18px; padding: 16px; background: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: 16px; }}
+.llm-stage-block h4 {{ margin-top: 0; }}
+.llm-stage-block pre {{ max-height: 520px; overflow:auto; white-space: pre-wrap; word-break: break-word; padding: 14px; background: #0b0f0e; border: 1px solid var(--line); border-radius: 14px; color: #dbe8d2; line-height: 1.45; }}
+.llm-stage-block .metric strong {{ font-size: 1.1rem; }}
 .segment-map {{ display:flex; height: 18px; width:100%; overflow:hidden; border-radius: 999px; background:#0b0f0e; border:1px solid var(--line); margin: 16px 0; }}
 .seg {{ min-width: 3px; border-right: 1px solid rgba(0,0,0,.35); }}
 .seg.constant {{ background: var(--accent); }}
@@ -525,7 +660,8 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
   {metadata_section}
   <section class="panel">
     <h2>Strongest Relations</h2>
-    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th></tr></thead><tbody>{relation_rows}</tbody></table>
+    {relation_llm_block}
+    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead><tbody>{relation_rows}</tbody></table>
   </section>
   <main>
     <section class="panel"><h2>Families</h2><p class="muted">Showing {len(families)} largest families.</p></section>
