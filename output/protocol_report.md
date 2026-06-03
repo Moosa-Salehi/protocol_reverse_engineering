@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 6, 'family_count': 11, 'family_ratio': 1.0}], 'field_type_counts': {'length': 33, 'transaction_or_counter': 20, 'constant': 5, 'discriminator': 5}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 11}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-03T09:56:46.130703+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-03T12:06:02.863459+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
 
 ## Evaluation
 
@@ -43,65 +43,68 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.3693`
+- Overall score: `0.411`
 - Verdict: `fail`
 - Matched message types: `11` of `11`
 - Message type matching: accuracy=`1` precision=`1` recall=`1` f1=`1`
 - Field boundary: accuracy=`0.3134` precision=`0.3962` recall=`0.6` f1=`0.4773`
 - Field semantics: accuracy=`0` precision=`0` recall=`0` f1=`0`
-- Relations: accuracy=`0` precision=`0` recall=`0` f1=`0`
+- Relations: accuracy=`0.0909` precision=`0.2` recall=`0.1429` f1=`0.1667`
 
 ## LLM Analysis
 
 - Model: `gpt-5.5`
+- Prompt size: `28139` bytes, `28139` characters, estimated tokens=`7035`
 
 # Protocol Specification
 
 ## Overview
 
-The analyzed corpus contains 200,000 messages grouped into 11 message families. The protocol appears to be a binary request/response protocol with a fixed header and length-prefixed framing. Messages are short, typically around 11 bytes long.
+The analyzed corpus contains 200,000 messages clustered into 11 protocol families. The protocol appears to be a binary, transaction-based request/response protocol with a common framing structure.
 
 ## Common Structure
 
-A common structure is present across nearly all families:
+A highly consistent 6-byte header is present across all major families:
 
-- Bytes 0-1: sequence number or transaction identifier
+- Bytes 0-1: transaction identifier or sequence counter
 - Bytes 2-5: 4-byte big-endian length field
-- Payload begins at byte 6
 
-Request messages typically contain a constant byte (0x01) followed by a 4-byte operation/address/discriminator field and a 1-byte control field.
+Request messages typically contain:
 
-Response messages typically contain a 4-byte data/function field, a 1-byte checksum-like field, and often terminate with constant byte 0x00.
+- Constant byte 0x01 at offset 6
+- A 4-byte operation discriminator at offsets 7-10
+- A 1-byte subtype or parameter field at offset 11
 
-## Request Families
+Response messages typically contain:
 
-The largest request family (family_1) represents over 120,000 messages and carries a 4-byte operation-specific field plus a flag byte. Additional request families use similar layouts but the 4-byte field is interpreted as either an address or discriminator.
+- A response discriminator at offsets 6-9
+- A status or result byte near the end of the message
+- Frequently a trailing constant byte 0x00
 
-## Response Families
+## Message Families
 
-Response families share a highly consistent structure. Most responses contain a constant length value of 0x00000005, a 4-byte result field, and a checksum-like byte. Several families differ only in the interpretation of the 4-byte payload.
+Four major request families (family_1, family_4, family_5, family_6) share nearly identical layouts but differ in discriminator values. Several response families (family_2, family_3, family_8, family_9) likewise share a common response layout.
 
-## Request/Response Relationships
+## Correlation
 
-Only one candidate request/response relation survived validation. Evidence suggests a possible mapping between family_1 requests and family_9 responses, but no strong echoed transaction fields were validated. Consequently, request-response pairing remains a moderate-confidence finding.
+The strongest transaction-correlation candidate is the 2-byte field at offset 0. Response families show nearly one unique value per message, which is consistent with transaction identifiers.
 
-## Multi-Stage Analysis Results
+## Framing and Encoding
 
-- 7 boundary refinements were applied.
-- 49 semantic labels were assigned.
-- Relation validation reduced 17 candidate relations to 1 retained relation.
-- All 11 families are parseable and semantically labeled.
+The protocol appears to use big-endian integer encoding and length-prefixed framing. All inferred fields are byte-aligned. No checksum or CRC was identified.
 
 ## Confidence Assessment
 
-High confidence exists for the header layout, length field location, request/response family separation, and byte alignment. Lower confidence applies to application-level semantics, checksum behavior, and exact request-response mappings.
-
-The protocol is therefore best described as a compact binary transaction protocol with a 6-byte header, fixed structural conventions, and a small set of operation-specific payload formats.
+Header structure, length encoding, and family separation are strongly supported. Application semantics, operation meanings, and request/response pairing remain only partially resolved because semantic-labeling and relation-validation stages did not contribute additional validated findings.
 
 ## Family Relations
 
-- Total inferred family edges: `1`
+- Total inferred family edges: `5`
 - Strongest edges:
+- `family_6` -> `family_6` | pairs=`16660` avg_score=`5.448` support=`0.8624` lift=`4.6096` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_4` -> `family_4` | pairs=`5936` avg_score=`5.4461` support=`0.7472` lift=`10.736` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_5` -> `family_5` | pairs=`5262` avg_score=`5.446` support=`0.7661` lift=`12.0277` direction=`1` order=`1` flow=`unknown->unknown`
+- `family_5` -> `family_2` | pairs=`547` avg_score=`5.4677` support=`0.0796` lift=`3.1277` direction=`1` order=`1` flow=`unknown->unknown`
 - `family_0` -> `family_0` | pairs=`22` avg_score=`5.4966` support=`1` lift=`105.9311` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`2`
 
 ## Families
@@ -118,8 +121,8 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Semantic confidence: `1.0`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314913`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.841241` salience=`0.757346` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.496612`
-- Top discriminator candidates: offset `7` conf=`0.496612` salience=`0.757346`, offset `0` conf=`0.48592` salience=`1.0`, offset `9` conf=`0.380649` salience=`0.297948`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.841241` salience=`0.729126` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.488146`
+- Top discriminator candidates: offset `7` conf=`0.488146` salience=`0.729126`, offset `0` conf=`0.48592` salience=`1.0`, offset `9` conf=`0.37816` salience=`0.289651`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -167,12 +170,13 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Role: `request`
 - Messages: `38027`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
+- Related families: `family_6`
 - Role hint: `request`
 - Semantic confidence: `0.5199`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.485475` max=`3.027169` mean=`2.389712`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.98095` salience=`0.757346` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.500858`
-- Top discriminator candidates: offset `7` conf=`0.500858` salience=`0.757346`, offset `8` conf=`0.369962` salience=`0.357174`, offset `9` conf=`0.313213` salience=`0.297948`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.98095` salience=`0.729126` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.492392`
+- Top discriminator candidates: offset `7` conf=`0.492392` salience=`0.729126`, offset `8` conf=`0.367607` salience=`0.349321`, offset `9` conf=`0.310724` salience=`0.289651`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -220,12 +224,13 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Role: `request`
 - Messages: `14904`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
+- Related families: `family_4`
 - Role hint: `request`
 - Semantic confidence: `0.5382`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`3.027169` mean=`2.379388`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.941612` salience=`0.757346` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.500595`
-- Top discriminator candidates: offset `7` conf=`0.500595` salience=`0.757346`, offset `8` conf=`0.368625` salience=`0.357174`, offset `9` conf=`0.355605` salience=`0.297948`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.941612` salience=`0.729126` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.492129`
+- Top discriminator candidates: offset `7` conf=`0.492129` salience=`0.729126`, offset `8` conf=`0.366269` salience=`0.349321`, offset `9` conf=`0.353116` salience=`0.289651`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -273,12 +278,13 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Role: `request`
 - Messages: `13239`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
+- Related families: `family_2`, `family_5`
 - Role hint: `request`
 - Semantic confidence: `0.5421`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.846439` max=`3.027169` mean=`2.402529`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.93922` salience=`0.757346` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.500361`
-- Top discriminator candidates: offset `7` conf=`0.500361` salience=`0.757346`, offset `8` conf=`0.369476` salience=`0.357174`, offset `9` conf=`0.341506` salience=`0.297948`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.93922` salience=`0.729126` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.491895`
+- Top discriminator candidates: offset `7` conf=`0.491895` salience=`0.729126`, offset `8` conf=`0.36712` salience=`0.349321`, offset `9` conf=`0.339017` salience=`0.289651`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -330,8 +336,8 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020272`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.354901` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.358993`
-- Top discriminator candidates: offset `10` conf=`0.358993` salience=`0.354901`, offset `9` conf=`0.340787` salience=`0.297948`, offset `8` conf=`0.330485` salience=`0.357174`
+- Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.346312` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.356416`
+- Top discriminator candidates: offset `10` conf=`0.356416` salience=`0.346312`, offset `9` conf=`0.338297` salience=`0.289651`, offset `8` conf=`0.328129` salience=`0.349321`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -380,12 +386,13 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Role: `response`
 - Messages: `2548`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
+- Related families: `family_5`
 - Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.02023`
-- Candidate discriminator offset: `10` cardinality=`23` entropy=`3.122259` salience=`0.354901` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.332251`
-- Top discriminator candidates: offset `10` conf=`0.332251` salience=`0.354901`, offset `8` conf=`0.330415` salience=`0.357174`, offset `9` conf=`0.319258` salience=`0.297948`
+- Candidate discriminator offset: `10` cardinality=`23` entropy=`3.122259` salience=`0.346312` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.329674`
+- Top discriminator candidates: offset `10` conf=`0.329674` salience=`0.346312`, offset `8` conf=`0.32806` salience=`0.349321`, offset `9` conf=`0.316769` salience=`0.289651`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -438,8 +445,8 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.550341` max=`3.027169` mean=`3.017568`
-- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.30222` salience=`0.297948` mutual_information=`0.184592` contrastive_separation=`0.859375` confidence=`0.33623`
-- Top discriminator candidates: offset `9` conf=`0.33623` salience=`0.297948`, offset `10` conf=`0.331727` salience=`0.354901`
+- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.30222` salience=`0.289651` mutual_information=`0.184592` contrastive_separation=`0.859375` confidence=`0.333741`
+- Top discriminator candidates: offset `9` conf=`0.333741` salience=`0.289651`, offset `10` conf=`0.32915` salience=`0.346312`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -490,8 +497,8 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.018191`
-- Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.354901` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.40857`
-- Top discriminator candidates: offset `10` conf=`0.40857` salience=`0.354901`, offset `9` conf=`0.355329` salience=`0.297948`, offset `8` conf=`0.330684` salience=`0.357174`
+- Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.346312` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.405993`
+- Top discriminator candidates: offset `10` conf=`0.405993` salience=`0.346312`, offset `9` conf=`0.35284` salience=`0.289651`, offset `8` conf=`0.328328` salience=`0.349321`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -544,8 +551,8 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023486`
-- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.02806` salience=`0.297948` mutual_information=`0.184592` contrastive_separation=`0.828125` confidence=`0.347887`
-- Top discriminator candidates: offset `9` conf=`0.347887` salience=`0.297948`, offset `10` conf=`0.33768` salience=`0.354901`
+- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.02806` salience=`0.289651` mutual_information=`0.184592` contrastive_separation=`0.828125` confidence=`0.345398`
+- Top discriminator candidates: offset `9` conf=`0.345398` salience=`0.289651`, offset `10` conf=`0.335104` salience=`0.346312`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -597,8 +604,8 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Semantic confidence: `0.9615`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.40401` max=`3.027169` mean=`2.97951`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`2.492763` salience=`0.354901` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.349704`
-- Top discriminator candidates: offset `10` conf=`0.349704` salience=`0.354901`, offset `8` conf=`0.333051` salience=`0.357174`, offset `9` conf=`0.3151` salience=`0.297948`
+- Candidate discriminator offset: `10` cardinality=`17` entropy=`2.492763` salience=`0.346312` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.347127`
+- Top discriminator candidates: offset `10` conf=`0.347127` salience=`0.346312`, offset `8` conf=`0.330696` salience=`0.349321`, offset `9` conf=`0.312611` salience=`0.289651`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
@@ -652,8 +659,8 @@ The protocol is therefore best described as a compact binary transaction protoco
 - Semantic confidence: `0.9423`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.450826` max=`3.027169` mean=`2.958612`
-- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.515799` salience=`0.357174` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.337241`
-- Top discriminator candidates: offset `8` conf=`0.337241` salience=`0.357174`, offset `10` conf=`0.326755` salience=`0.354901`, offset `9` conf=`0.293514` salience=`0.297948`
+- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.515799` salience=`0.349321` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.334886`
+- Top discriminator candidates: offset `8` conf=`0.334886` salience=`0.349321`, offset `10` conf=`0.324178` salience=`0.346312`, offset `9` conf=`0.291025` salience=`0.289651`
 - Framing hypothesis: header=`0`..`5` body_start=`6` confidence=`1.0`
 
 #### Segments
