@@ -6,11 +6,27 @@ import json
 import sys
 from dataclasses import fields as dataclass_fields
 from pathlib import Path
+from typing import Any, Dict, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.model.schema import FamilyFeatureSummary, FamilyModel, FamilyRelation, FamilySemanticSummary, FieldHypothesis, ProtocolModel, Segment
 from protocol_re.utils.logging import setup_stage_logging
+
+
+CONCRETE_FIELD_TYPES = {
+    "uint8",
+    "uint16",
+    "uint16_be",
+    "uint16_le",
+    "uint32",
+    "uint32_be",
+    "uint32_le",
+    "uint64",
+    "uint64_be",
+    "uint64_le",
+    "bytes",
+}
 
 
 def _build_relation(edge: dict) -> FamilyRelation:
@@ -27,6 +43,54 @@ def _build_relation(edge: dict) -> FamilyRelation:
     return FamilyRelation(**{k: v for k, v in edge.items() if k in valid})
 
 
+def _field_key(field: Dict[str, Any]) -> Tuple[int, int]:
+    return (int(field.get("start", 0) or 0), int(field.get("length", 0) or 0))
+
+
+def _best_semantic_labels(semantic_summary: Dict[str, Any] | None) -> Dict[Tuple[int, int], Dict[str, Any]]:
+    if not semantic_summary:
+        return {}
+    best: Dict[Tuple[int, int], Dict[str, Any]] = {}
+    for label in semantic_summary.get("field_labels", []) or []:
+        if not isinstance(label, dict):
+            continue
+        key = _field_key(label)
+        previous = best.get(key)
+        if previous is None or float(label.get("confidence", 0.0) or 0.0) > float(previous.get("confidence", 0.0) or 0.0):
+            best[key] = label
+    return best
+
+
+def _merge_semantic_label(field: Dict[str, Any], semantic_label: Dict[str, Any] | None) -> Dict[str, Any]:
+    if not semantic_label:
+        return field
+
+    payload = dict(field)
+    attributes = payload.get("attributes") if isinstance(payload.get("attributes"), dict) else {}
+    attributes = dict(attributes)
+
+    role = semantic_label.get("label") or semantic_label.get("semantic_role")
+    encoding_type = semantic_label.get("encoding_type") or semantic_label.get("field_type")
+    original_field_type = payload.get("field_type")
+
+    if role and "semantic_role" not in attributes:
+        attributes["semantic_role"] = role
+    if "semantic_confidence" not in attributes:
+        attributes["semantic_confidence"] = semantic_label.get("confidence")
+    if "semantic_evidence" not in attributes:
+        attributes["semantic_evidence"] = semantic_label.get("evidence", {})
+    if original_field_type and "inferred_role_label" not in attributes:
+        attributes["inferred_role_label"] = original_field_type
+    if encoding_type:
+        attributes["encoding_type"] = encoding_type
+        attributes.setdefault("encoding", encoding_type)
+        if str(encoding_type) in CONCRETE_FIELD_TYPES:
+            payload["field_type"] = str(encoding_type)
+
+    payload["attributes"] = attributes
+    return payload
+
+
 def _build_field_hypothesis(field: dict) -> FieldHypothesis:
     """Construct a FieldHypothesis while preserving upstream field extensions.
 
@@ -39,9 +103,11 @@ def _build_field_hypothesis(field: dict) -> FieldHypothesis:
     attributes = payload.get("attributes") if isinstance(payload.get("attributes"), dict) else {}
     attributes = dict(attributes)
 
-    for key in ("semantic_role", "semantic_confidence", "semantic_evidence"):
+    for key in ("semantic_role", "semantic_confidence", "semantic_evidence", "encoding_type"):
         if key in payload and key not in attributes:
             attributes[key] = payload[key]
+    if "encoding_type" in attributes and "encoding" not in attributes:
+        attributes["encoding"] = attributes["encoding_type"]
 
     valid = {f.name for f in dataclass_fields(FieldHypothesis)}
     extras = {key: value for key, value in payload.items() if key not in valid}
@@ -129,12 +195,16 @@ def main() -> None:
         for family_id, details in family_data.items():
             with logger.context(family_id=family_id):
                 segments = [Segment(**segment) for segment in details.get("segments", [])]
-                field_hypotheses = [_build_field_hypothesis(field) for field in details.get("field_hypotheses", [])]
                 feature_summary = features_payload.get(family_id)
                 keyword_summary = keywords_payload.get(family_id)
                 framing_summary = (framing_payload.get("families") or {}).get(family_id)
                 role_hint = relations_payload.get("role_hints", {}).get(family_id, {})
                 semantic_summary = semantics_payload.get(family_id)
+                semantic_labels = _best_semantic_labels(semantic_summary)
+                field_hypotheses = [
+                    _build_field_hypothesis(_merge_semantic_label(field, semantic_labels.get(_field_key(field))))
+                    for field in details.get("field_hypotheses", [])
+                ]
                 related_families = []
                 for edge in relations_payload.get("family_edges", []):
                     if edge["request_family_id"] == family_id:

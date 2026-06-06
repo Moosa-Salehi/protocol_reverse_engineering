@@ -6,7 +6,7 @@ from math import log2
 from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
+from protocol_re.utils.bytes import best_numeric_endian, hex_to_bytes, safe_int_from_bytes
 
 
 @dataclass
@@ -346,32 +346,36 @@ def _counter_like_fields(messages: Sequence[bytes], scan_limit: int) -> List[Fra
     for width in (1, 2, 4):
         for start in range(0, max(0, scan_limit - width + 1)):
             end = start + width
-            for endian in ("big", "little"):
-                values = [safe_int_from_bytes(message[start:end], endian=endian) for message in messages if len(message) >= end]
-                if len(values) < 3:
-                    continue
-                unique_ratio = len(set(values)) / len(values)
-                monotonic_steps = sum(1 for left, right in zip(values, values[1:]) if right >= left)
-                small_deltas = sum(1 for left, right in zip(values, values[1:]) if 0 <= right - left <= 4)
-                denom = max(len(values) - 1, 1)
-                monotonic_ratio = monotonic_steps / denom
-                small_delta_ratio = small_deltas / denom
-                score = (0.45 * unique_ratio) + (0.35 * monotonic_ratio) + (0.20 * small_delta_ratio)
-                if unique_ratio >= 0.45 and score >= 0.62:
-                    regions.append(
-                        FramingFieldRegion(
-                            start=start,
-                            end=end,
-                            field_type="transaction_or_counter",
-                            confidence=round(min(score, 0.95), 4),
-                            evidence={
-                                "unique_ratio": round(unique_ratio, 4),
-                                "monotonic_ratio": round(monotonic_ratio, 4),
-                                "small_delta_ratio": round(small_delta_ratio, 4),
-                                "endian": endian,
-                            },
-                        )
+            chunks = [message[start:end] for message in messages if len(message) >= end]
+            if len(chunks) < 3:
+                continue
+            endian, endian_stats = best_numeric_endian(chunks)
+            if endian is None:
+                continue
+            stats = endian_stats[endian]
+            unique_ratio = float(stats.get("unique_ratio", 0.0) or 0.0)
+            monotonic_ratio = float(stats.get("monotonic_ratio", 0.0) or 0.0)
+            small_delta_ratio = float(stats.get("small_delta_ratio", 0.0) or 0.0)
+            sequence_score = float(stats.get("sequence_score", 0.0) or 0.0)
+            score = (0.35 * unique_ratio) + (0.45 * sequence_score) + (0.20 * monotonic_ratio)
+            if unique_ratio >= 0.45 and score >= 0.62:
+                regions.append(
+                    FramingFieldRegion(
+                        start=start,
+                        end=end,
+                        field_type="transaction_or_counter",
+                        confidence=round(min(score, 0.95), 4),
+                        evidence={
+                            "unique_ratio": round(unique_ratio, 4),
+                            "monotonic_ratio": round(monotonic_ratio, 4),
+                            "small_delta_ratio": round(small_delta_ratio, 4),
+                            "delta_consistency": round(float(stats.get("delta_consistency", 0.0) or 0.0), 4),
+                            "low_magnitude_score": round(float(stats.get("low_magnitude_score", 0.0) or 0.0), 4),
+                            "sequence_score": round(sequence_score, 4),
+                            "endian": endian,
+                        },
                     )
+                )
     return regions
 
 

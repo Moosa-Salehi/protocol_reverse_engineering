@@ -16,7 +16,7 @@ from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FieldHypothesis, Segment
-from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
+from protocol_re.utils.bytes import best_numeric_endian, hex_to_bytes, safe_int_from_bytes
 
 # Performance limits
 MAX_BOUNDARY_DETECTION_LENGTH = 512
@@ -578,7 +578,21 @@ def infer_field_hypotheses(
             elif cardinality_ratio >= 0.8 and width in (2, 4):
                 field_type = "counter_or_transaction_id"
                 confidence = min(0.95, cardinality_ratio)
-                endian = best_endian or "big"
+                observed_chunks = [message[segment.start:segment.end] for message in messages if len(message) >= segment.end]
+                numeric_endian, endian_stats = best_numeric_endian(observed_chunks)
+                endian = numeric_endian or best_endian
+                if endian_stats:
+                    evidence["endian_inference"] = {
+                        key: {
+                            "sequence_score": round(float(stats.get("sequence_score", 0.0) or 0.0), 4),
+                            "monotonic_ratio": round(float(stats.get("monotonic_ratio", 0.0) or 0.0), 4),
+                            "small_delta_ratio": round(float(stats.get("small_delta_ratio", 0.0) or 0.0), 4),
+                            "delta_consistency": round(float(stats.get("delta_consistency", 0.0) or 0.0), 4),
+                            "low_magnitude_score": round(float(stats.get("low_magnitude_score", 0.0) or 0.0), 4),
+                        }
+                        for key, stats in endian_stats.items()
+                    }
+                    evidence["selected_endian"] = endian
             elif width == 1 and len(unique_values) <= 8:
                 field_type = "flags_or_status"
                 confidence = 0.7

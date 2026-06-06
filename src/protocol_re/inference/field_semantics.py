@@ -32,6 +32,7 @@ class SemanticHypothesis:
             "start": self.field_start,
             "length": self.field_length,
             "label": self.semantic_role,
+            "field_type": self.encoding_type,
             "confidence": round(self.confidence, 4),
             "evidence": self.evidence,
             "encoding_type": self.encoding_type,

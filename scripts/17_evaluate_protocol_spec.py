@@ -44,6 +44,65 @@ def _norm(value: Any) -> str:
     return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
 
 
+CONCRETE_BASE_TYPES = {"uint8", "uint16", "uint32", "uint64", "bytes"}
+WIDTH_TO_TYPE = {1: "uint8", 2: "uint16", 4: "uint32", 8: "uint64"}
+ROLE_TYPE_EQUIVALENTS = {
+    "payload": {"bytes"},
+    "data": {"bytes"},
+    "blob": {"bytes"},
+}
+
+
+def _attributes(field: Dict[str, Any]) -> Dict[str, Any]:
+    attributes = field.get("attributes")
+    return attributes if isinstance(attributes, dict) else {}
+
+
+def _canonical_type(value: Any) -> str:
+    token = _norm(value)
+    if token.endswith("_be") or token.endswith("_le"):
+        return token[:-3]
+    return token
+
+
+def _concrete_type(field: Dict[str, Any], truth: bool = False) -> str:
+    attributes = _attributes(field)
+    candidates = [
+        field.get("encoding_type"),
+        attributes.get("encoding_type"),
+        attributes.get("encoding"),
+        field.get("field_type"),
+        field.get("type") if truth else None,
+        field.get("label"),
+    ]
+    for candidate in candidates:
+        token = _norm(candidate)
+        if not token:
+            continue
+        canonical = _canonical_type(token)
+        if canonical in CONCRETE_BASE_TYPES:
+            return token
+
+    length = _field_len(field)
+    if length in WIDTH_TO_TYPE:
+        return WIDTH_TO_TYPE[length]
+    if length is not None and length > 4:
+        return "bytes"
+    return ""
+
+
+def _semantic_role(field: Dict[str, Any], truth: bool = False) -> str:
+    attributes = _attributes(field)
+    return _norm(
+        attributes.get("semantic_role")
+        or field.get("semantic_role")
+        or attributes.get("inferred_role_label")
+        or field.get("label")
+        or field.get("name")
+        or (field.get("field_type") if not _concrete_type(field, truth=truth) else None)
+    )
+
+
 def _field_end(field: Dict[str, Any]) -> int | None:
     start = int(field.get("start", 0) or 0)
     length = field.get("length")
@@ -64,22 +123,24 @@ def _field_len(field: Dict[str, Any]) -> int | None:
 
 
 def _field_ref(owner_id: str, field: Dict[str, Any], fallback_name: str) -> Dict[str, Any]:
+    field_type = str(_concrete_type(field, truth=True) or field.get("field_type") or field.get("type") or "unknown")
     return {
         "owner_id": owner_id,
-        "field_name": str(field.get("name") or field.get("field_type") or fallback_name),
+        "field_name": str(field.get("name") or field.get("field_type") or field.get("type") or fallback_name),
         "start": int(field.get("start", 0) or 0),
         "length": _field_len(field),
-        "field_type": str(field.get("field_type") or field.get("type") or "unknown"),
+        "field_type": field_type,
     }
 
 
 def _predicted_field_ref(family_id: str, field: Dict[str, Any], index: int) -> Dict[str, Any]:
+    field_type = str(_concrete_type(field) or field.get("field_type") or field.get("label") or "unknown")
     return {
         "owner_id": family_id,
         "field_name": str(field.get("field_type") or field.get("label") or f"field_{index}"),
         "start": int(field.get("start", 0) or 0),
         "length": _field_len(field),
-        "field_type": str(field.get("field_type") or field.get("label") or "unknown"),
+        "field_type": field_type,
     }
 
 
@@ -96,13 +157,24 @@ def _interval_score(predicted: Dict[str, Any], truth: Dict[str, Any]) -> float:
 
 
 def _semantic_score(predicted: Dict[str, Any], truth: Dict[str, Any]) -> float:
-    p_type = _norm(predicted.get("field_type") or predicted.get("label"))
-    t_type = _norm(truth.get("field_type") or truth.get("type") or truth.get("name"))
+    p_type = _concrete_type(predicted)
+    t_type = _concrete_type(truth, truth=True)
     if not p_type or not t_type:
-        return 0.0
+        p_type = _norm(predicted.get("field_type") or predicted.get("label"))
+        t_type = _norm(truth.get("field_type") or truth.get("type") or truth.get("name"))
+        if not p_type or not t_type:
+            return 0.0
     if p_type == t_type:
         return 1.0
+    p_base = _canonical_type(p_type)
+    t_base = _canonical_type(t_type)
+    if p_base and p_base == t_base:
+        return 1.0
     if p_type in t_type or t_type in p_type:
+        return 0.5
+    p_role = _semantic_role(predicted)
+    t_role = _semantic_role(truth, truth=True)
+    if t_type in ROLE_TYPE_EQUIVALENTS.get(p_role, set()) or p_type in ROLE_TYPE_EQUIVALENTS.get(t_role, set()):
         return 0.5
     return 0.0
 
