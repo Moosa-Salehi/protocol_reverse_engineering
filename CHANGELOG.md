@@ -27,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Refactored stage 15 LLM analysis with prompt splitting
-- Improved boundary detection precision from 38% to 65%+
 - Updated README with comprehensive feature documentation
 
 ### Fixed

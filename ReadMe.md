@@ -60,8 +60,8 @@ Typical runtime for 200K Modbus messages: ~6 minutes
 
 Accuracy on Modbus TCP:
 - Message type detection: 90%+ precision/recall
-- Field boundary recall: 88%+
-- Field boundary precision: 65%+
+- Field boundary recall: 60%+
+- Field boundary precision: 40%+
 
 ## License
 

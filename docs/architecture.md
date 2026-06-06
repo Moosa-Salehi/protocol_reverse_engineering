@@ -136,9 +136,9 @@ The canonical message representation used throughout the pipeline. Each message 
 Message family discovery using multiple feature extraction modes:
 
 - **raw_bytes**: Padded byte vectors with volatile offset downweighting
-- **structural**: Symbolic protocol features (length buckets, stable prefixes, discriminators)
+- **structural**: 35-dimensional symbolic protocol features (length buckets, stable prefixes, discriminators, entropy, direction)
 - **neural**: 32D VAE latent vectors
-- **hybrid**: Combined neural + structural features with adaptive fusion
+- **hybrid**: Combined neural + structural features with adaptive/learned fusion
 
 Supports HDBSCAN, DBSCAN, and heuristic fallback clustering.
 
@@ -230,17 +230,19 @@ Implementation:
 
 ### Structural Mode
 
-Uses symbolic protocol features extracted from message structure:
-- Length buckets and patterns
-- Stable prefix masks
-- Discriminator-like bytes
-- Header/body split hints
+Uses 35-dimensional symbolic protocol features:
+- Length features: log bucket, mod 2/4/8 patterns (4 dims)
+- Direction: client-to-server, server-to-client, unknown (3 dims)
+- Entropy and uniqueness ratio (2 dims)
+- Body start and length field evidence (2 dims)
+- Stable prefix mask: 16-byte stability scores (16 dims)
+- Discriminator bytes: first 8 bytes normalized (8 dims)
 
 Implementation:
 - Extract length distribution features
-- Compute stable byte positions
+- Compute stable byte positions across corpus
 - Identify discriminator candidates
-- Combine into feature vector
+- Combine into 35-dim feature vector
 
 ### Neural Mode
 
@@ -254,17 +256,18 @@ Implementation:
 
 ### Hybrid Mode
 
-Combines neural and structural features with adaptive fusion:
-- **concat**: Simple concatenation
+Combines neural and structural features with flexible fusion:
+- **concat**: Simple concatenation (baseline)
 - **adaptive**: Quality-based automatic weighting (recommended)
 - **learned**: MLP-based feature importance learning
 - **fixed**: Manual weight specification
 
 Implementation:
-- Extract both neural and structural features
+- Extract both neural (32D) and structural (35D) features
 - Detect neural collapse (low variance, poor separation)
-- Automatically adjust fusion weights
+- Automatically adjust fusion weights based on feature quality
 - Cache latent vectors for performance
+- Fallback to concat if learned fusion unavailable
 
 ## Enhanced Features
 
@@ -286,7 +289,7 @@ Merging Rules:
 
 ### Multi-Layer Protocol Detection
 
-Detects layered protocols (transport + application) using:
+Detects layered protocols (transport framing + application payload) using:
 - Length fields pointing past their position
 - Stable prefix + variable suffix patterns
 - Transaction/counter fields in header region
@@ -297,6 +300,13 @@ Detection Criteria:
 - Stable prefix (entropy < 0.5) for first N bytes
 - Variable suffix (entropy > 2.0) for remaining bytes
 - Transaction ID or counter in header region
+
+Implementation:
+- `src/protocol_re/inference/layer_detection.py` - boundary detection logic
+- `scripts/05_infer_framing.py` --detect-layers flag enables detection
+- `scripts/04_discover_families.py` --layer-aware flag for layer-aware clustering
+- Layer boundary stored in framing JSON for downstream stages
+- Clustering can run on inner payload only (post-header bytes)
 
 ### LLM-Assisted Refinement
 
