@@ -93,6 +93,33 @@ def _normalize_protocol_field_types(protocol_model: Dict[str, Any]) -> Dict[str,
     return model
 
 
+def _refresh_refined_framing(refined_protocol_model: Dict[str, Any], base_protocol_model: Dict[str, Any]) -> Dict[str, Any]:
+    refreshed = dict(refined_protocol_model)
+    base_metadata = base_protocol_model.get("metadata") if isinstance(base_protocol_model.get("metadata"), dict) else {}
+    refined_metadata = refreshed.get("metadata") if isinstance(refreshed.get("metadata"), dict) else {}
+    refined_metadata = dict(refined_metadata)
+    if "framing_global_summary" in base_metadata:
+        refined_metadata["framing_global_summary"] = base_metadata["framing_global_summary"]
+    refreshed["metadata"] = refined_metadata
+
+    base_by_family = {
+        str(family.get("family_id")): family
+        for family in base_protocol_model.get("families", []) or []
+        if isinstance(family, dict)
+    }
+    families = []
+    for family in refreshed.get("families", []) or []:
+        if not isinstance(family, dict):
+            continue
+        family_copy = dict(family)
+        base_family = base_by_family.get(str(family_copy.get("family_id"))) or {}
+        if "framing_summary" in base_family:
+            family_copy["framing_summary"] = base_family["framing_summary"]
+        families.append(family_copy)
+    refreshed["families"] = families
+    return refreshed
+
+
 def _ground_truth_placeholder(protocol_name: str) -> Dict[str, Any]:
     return {
         "protocol_name": protocol_name,
@@ -127,7 +154,7 @@ def build_evaluation_model_data(
         },
     }
     if refined_protocol_model:
-        refined = _normalize_protocol_field_types(refined_protocol_model)
+        refined = _normalize_protocol_field_types(_refresh_refined_framing(refined_protocol_model, predicted_protocol))
         refined["llm_analysis"] = llm_analysis
         refined_metadata = dict(refined.get("metadata", {}) or {})
         refined_metadata["pipeline_evaluation"] = evaluation

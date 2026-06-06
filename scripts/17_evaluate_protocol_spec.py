@@ -122,6 +122,37 @@ def _field_len(field: Dict[str, Any]) -> int | None:
     return int(end) - int(field.get("start", 0) or 0) + 1
 
 
+def _truth_uses_absolute_offsets(message_type: Dict[str, Any]) -> bool:
+    tokens = {
+        _norm(message_type.get("message_type_id")),
+        _norm(message_type.get("name")),
+        _norm(message_type.get("role")),
+    }
+    return any(token and ("header" in token or token in {"transport", "framing"}) for token in tokens)
+
+
+def _family_body_offset(family: Dict[str, Any]) -> int:
+    framing = family.get("framing_summary") if isinstance(family.get("framing_summary"), dict) else {}
+    layouts = framing.get("layout_hypotheses", []) if isinstance(framing, dict) else []
+    if layouts:
+        best = layouts[0] if isinstance(layouts[0], dict) else {}
+        body_start = best.get("body_start", best.get("header_end"))
+        if body_start is not None:
+            return max(0, int(body_start))
+    layer = family.get("layer_boundary") if isinstance(family.get("layer_boundary"), dict) else {}
+    if layer.get("detected") and layer.get("boundary_offset") is not None:
+        return max(0, int(layer.get("boundary_offset")))
+    return 0
+
+
+def _comparison_field(field: Dict[str, Any], offset_shift: int) -> Dict[str, Any]:
+    if not offset_shift:
+        return field
+    shifted = dict(field)
+    shifted["start"] = int(shifted.get("start", 0) or 0) - offset_shift
+    return shifted
+
+
 def _field_ref(owner_id: str, field: Dict[str, Any], fallback_name: str) -> Dict[str, Any]:
     field_type = str(_concrete_type(field, truth=True) or field.get("field_type") or field.get("type") or "unknown")
     return {
@@ -251,24 +282,30 @@ def _field_matches(
     for message_match in message_matches:
         family_id = message_match["predicted_family_id"]
         truth_id = message_match["ground_truth_message_type_id"]
-        predicted_fields = list((families_by_id.get(family_id) or {}).get("field_hypotheses", []) or [])
-        truth_fields = list((truth_by_id.get(truth_id) or {}).get("fields", []) or [])
+        family = families_by_id.get(family_id) or {}
+        truth_type = truth_by_id.get(truth_id) or {}
+        predicted_fields = list(family.get("field_hypotheses", []) or [])
+        truth_fields = list(truth_type.get("fields", []) or [])
+        offset_shift = 0 if _truth_uses_absolute_offsets(truth_type) else _family_body_offset(family)
         candidates = []
         for p_index, predicted in enumerate(predicted_fields):
+            predicted_for_match = _comparison_field(predicted, offset_shift)
             for t_index, truth in enumerate(truth_fields):
-                boundary = _interval_score(predicted, truth)
+                boundary = _interval_score(predicted_for_match, truth)
                 semantic = _semantic_score(predicted, truth)
                 score = max(boundary, (0.7 * boundary) + (0.3 * semantic))
                 candidates.append((str(p_index), str(t_index), score))
         for p_index, t_index, _ in _greedy_matches(candidates, 0.5):
             predicted = predicted_fields[int(p_index)]
+            predicted_for_match = _comparison_field(predicted, offset_shift)
             truth = truth_fields[int(t_index)]
             matches.append(
                 {
                     "predicted": _predicted_field_ref(family_id, predicted, int(p_index)),
                     "ground_truth": _field_ref(truth_id, truth, f"field_{t_index}"),
-                    "boundary_score": _interval_score(predicted, truth),
+                    "boundary_score": _interval_score(predicted_for_match, truth),
                     "semantic_score": _semantic_score(predicted, truth),
+                    "offset_shift": offset_shift,
                 }
             )
     return matches

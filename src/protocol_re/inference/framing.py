@@ -419,6 +419,44 @@ def _tail_variability_scores(stats: Sequence[Dict[str, Any]], scan_limit: int) -
     return scores
 
 
+def _preferred_layer_boundary(
+    stats: Sequence[Dict[str, Any]],
+    fields: Sequence[FramingFieldRegion],
+    scan_limit: int,
+) -> Optional[int]:
+    length_fields = [
+        field
+        for field in fields
+        if field.field_type == "length"
+        and (field.evidence or {}).get("relation") in {"body_after_field", "remaining_from_field"}
+        and float(field.confidence or 0.0) >= 0.65
+    ]
+    if not length_fields:
+        return None
+
+    prefix_fields = [field for field in fields if field.field_type in {"transaction_or_counter", "constant"}]
+    supported_lengths = [
+        field
+        for field in length_fields
+        if any(prefix.end <= field.start for prefix in prefix_fields) or field.start <= 2
+    ]
+    if not supported_lengths:
+        supported_lengths = length_fields
+
+    boundary = min(supported_lengths, key=lambda field: (field.end, -float(field.confidence or 0.0))).end
+    if boundary < scan_limit:
+        next_stats = stats[boundary] if boundary < len(stats) else {}
+        coverage = float(next_stats.get("coverage", 0.0) or 0.0)
+        stable_ratio = float(next_stats.get("stable_ratio", 0.0) or 0.0)
+        unique_ratio = float(next_stats.get("unique_ratio", 1.0) or 1.0)
+        cardinality = int(next_stats.get("cardinality", 0) or 0)
+        selector_like = coverage >= 0.9 and (stable_ratio >= 0.8 or unique_ratio <= 0.35 or 1 <= cardinality <= 16)
+        if selector_like:
+            boundary += 1
+
+    return min(boundary, scan_limit)
+
+
 def _header_boundary_scores(
     messages: Sequence[bytes],
     stats: Sequence[Dict[str, Any]],
@@ -427,6 +465,7 @@ def _header_boundary_scores(
     scan_limit: int,
 ) -> Dict[int, Dict[str, Any]]:
     scores: Dict[int, Dict[str, Any]] = {}
+    preferred_boundary = _preferred_layer_boundary(stats, fields, scan_limit)
     for boundary in range(0, scan_limit + 1):
         fields_in_header = [field for field in fields if field.end <= boundary]
         if boundary == 0:
@@ -439,10 +478,18 @@ def _header_boundary_scores(
             tail_jump = min(float(evidence.get("tail_variability_jump", 0.0)) / 3.0, 1.0)
             size_penalty = max(0.0, (boundary - 16) / 32.0)
             score = field_score + (0.8 * coverage_score) + (0.7 * stability_score) + (0.9 * tail_jump) - size_penalty
+            if preferred_boundary is not None:
+                if boundary == preferred_boundary:
+                    score += 0.75
+                elif boundary > preferred_boundary:
+                    score -= 0.75 * (boundary - preferred_boundary)
+                else:
+                    score -= 0.2 * (preferred_boundary - boundary)
         scores[boundary] = {
             "score": round(score, 4),
             "field_support_count": len(fields_in_header),
             "field_support_types": sorted({field.field_type for field in fields_in_header}),
+            "preferred_layer_boundary": preferred_boundary,
             **{key: round(value, 4) for key, value in tail_scores.get(boundary, {}).items()},
         }
     return scores
@@ -473,7 +520,15 @@ def _dedupe_layouts(layouts: Sequence[FramingLayoutHypothesis]) -> List[FramingL
         previous = best.get(layout.header_end)
         if previous is None or layout.confidence > previous.confidence:
             best[layout.header_end] = layout
-    return sorted(best.values(), key=lambda item: (-item.confidence, item.header_end))
+    return sorted(
+        best.values(),
+        key=lambda item: (
+            abs(item.header_end - int((item.evidence or {}).get("preferred_layer_boundary") or item.header_end)),
+            -float((item.evidence or {}).get("score", 0.0) or 0.0),
+            -item.confidence,
+            item.header_end,
+        ),
+    )
 
 
 def _compact_position_evidence(stats: Sequence[Dict[str, Any]], limit: int = 16) -> List[Dict[str, Any]]:
