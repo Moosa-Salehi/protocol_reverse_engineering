@@ -1317,9 +1317,9 @@
 <p>Message family discovery using multiple feature extraction modes:</p>
 <ul>
 <li><strong>raw_bytes</strong>: Padded byte vectors with volatile offset downweighting</li>
-<li><strong>structural</strong>: Symbolic protocol features (length buckets, stable prefixes, discriminators)</li>
+<li><strong>structural</strong>: 35-dimensional symbolic protocol features (length buckets, stable prefixes, discriminators, entropy, direction)</li>
 <li><strong>neural</strong>: 32D VAE latent vectors</li>
-<li><strong>hybrid</strong>: Combined neural + structural features with adaptive fusion</li>
+<li><strong>hybrid</strong>: Combined neural + structural features with adaptive/learned fusion</li>
 </ul>
 <p>Supports HDBSCAN, DBSCAN, and heuristic fallback clustering.</p>
 <h3 id="3-inference-srcprotocol_reinference">3. Inference (<code>src/protocol_re/inference/</code>)<a class="headerlink" href="#3-inference-srcprotocol_reinference" title="Permanent link">&para;</a></h3>
@@ -1463,16 +1463,18 @@
 - Downweight positions with high variance
 - Use cosine similarity for clustering</p>
 <h3 id="structural-mode">Structural Mode<a class="headerlink" href="#structural-mode" title="Permanent link">&para;</a></h3>
-<p>Uses symbolic protocol features extracted from message structure:
-- Length buckets and patterns
-- Stable prefix masks
-- Discriminator-like bytes
-- Header/body split hints</p>
+<p>Uses 35-dimensional symbolic protocol features:
+- Length features: log bucket, mod 2/4/8 patterns (4 dims)
+- Direction: client-to-server, server-to-client, unknown (3 dims)
+- Entropy and uniqueness ratio (2 dims)
+- Body start and length field evidence (2 dims)
+- Stable prefix mask: 16-byte stability scores (16 dims)
+- Discriminator bytes: first 8 bytes normalized (8 dims)</p>
 <p>Implementation:
 - Extract length distribution features
-- Compute stable byte positions
+- Compute stable byte positions across corpus
 - Identify discriminator candidates
-- Combine into feature vector</p>
+- Combine into 35-dim feature vector</p>
 <h3 id="neural-mode">Neural Mode<a class="headerlink" href="#neural-mode" title="Permanent link">&para;</a></h3>
 <p>Uses 32D VAE latent vectors from <code>assets/pre_trained/industrial_VAE.pth</code>.</p>
 <p>Implementation:
@@ -1481,16 +1483,17 @@
 - Use latent vectors as features
 - Detect collapsed latent spaces</p>
 <h3 id="hybrid-mode">Hybrid Mode<a class="headerlink" href="#hybrid-mode" title="Permanent link">&para;</a></h3>
-<p>Combines neural and structural features with adaptive fusion:
-- <strong>concat</strong>: Simple concatenation
+<p>Combines neural and structural features with flexible fusion:
+- <strong>concat</strong>: Simple concatenation (baseline)
 - <strong>adaptive</strong>: Quality-based automatic weighting (recommended)
 - <strong>learned</strong>: MLP-based feature importance learning
 - <strong>fixed</strong>: Manual weight specification</p>
 <p>Implementation:
-- Extract both neural and structural features
+- Extract both neural (32D) and structural (35D) features
 - Detect neural collapse (low variance, poor separation)
-- Automatically adjust fusion weights
-- Cache latent vectors for performance</p>
+- Automatically adjust fusion weights based on feature quality
+- Cache latent vectors for performance
+- Fallback to concat if learned fusion unavailable</p>
 <h2 id="enhanced-features">Enhanced Features<a class="headerlink" href="#enhanced-features" title="Permanent link">&para;</a></h2>
 <h3 id="enhanced-boundary-detection">Enhanced Boundary Detection<a class="headerlink" href="#enhanced-boundary-detection" title="Permanent link">&para;</a></h3>
 <p>Reduces over-segmentation through:
@@ -1506,7 +1509,7 @@
 5. Merge constant fields
 6. Merge fields below minimum length threshold</p>
 <h3 id="multi-layer-protocol-detection">Multi-Layer Protocol Detection<a class="headerlink" href="#multi-layer-protocol-detection" title="Permanent link">&para;</a></h3>
-<p>Detects layered protocols (transport + application) using:
+<p>Detects layered protocols (transport framing + application payload) using:
 - Length fields pointing past their position
 - Stable prefix + variable suffix patterns
 - Transaction/counter fields in header region
@@ -1516,6 +1519,12 @@
 - Stable prefix (entropy &lt; 0.5) for first N bytes
 - Variable suffix (entropy &gt; 2.0) for remaining bytes
 - Transaction ID or counter in header region</p>
+<p>Implementation:
+- <code>src/protocol_re/inference/layer_detection.py</code> - boundary detection logic
+- <code>scripts/05_infer_framing.py</code> --detect-layers flag enables detection
+- <code>scripts/04_discover_families.py</code> --layer-aware flag for layer-aware clustering
+- Layer boundary stored in framing JSON for downstream stages
+- Clustering can run on inner payload only (post-header bytes)</p>
 <h3 id="llm-assisted-refinement">LLM-Assisted Refinement<a class="headerlink" href="#llm-assisted-refinement" title="Permanent link">&para;</a></h3>
 <p>Stage-specific LLM interactions for:
 - Boundary refinement (merge over-segmented fields)

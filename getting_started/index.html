@@ -2088,7 +2088,21 @@ python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="
 <span class="c1"># Adjust LLM parameters (temperature, max_tokens, timeout are read from the config file only — edit config/llm_config.json to change them)</span>
 python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--llm-config<span class="w"> </span>config/llm_config.json
+
+<span class="c1"># Use saved LLM responses when available instead of calling the API</span>
+<span class="c1"># Useful when some API calls failed in a previous run and you want to rerun</span>
+<span class="c1"># the pipeline calling only the failed endpoints (skip successful calls).</span>
+python<span class="w"> </span>main.py<span class="w"> </span>--use-existing-messages<span class="w"> </span>--reuse-llm-responses
+
+<span class="c1"># Use user-provided LLM responses from data/user_provided_LLM_responses/</span>
+<span class="c1"># Fill in response files manually before running; pipeline uses these instead of API calls</span>
+python<span class="w"> </span>main.py<span class="w"> </span>pcaps/<span class="w"> </span>--tshark-filter<span class="w"> </span>mbtcp<span class="w"> </span>--use-user-provided-response
 </code></pre></div>
+<p><strong>LLM Response Reuse:</strong>
+- <code>--reuse-llm-responses</code>: Reads cached responses from <code>data/llm_stage_results/</code>
+- <code>--use-user-provided-response</code>: Reads from <code>data/user_provided_LLM_responses/</code>
+- Both flags prevent redundant API calls on re-runs
+- Use <code>--llm-render-only</code> to inspect prompts without any API calls</p>
 <h3 id="stage-specific-llm-refinement">Stage-Specific LLM Refinement<a class="headerlink" href="#stage-specific-llm-refinement" title="Permanent link">&para;</a></h3>
 <p>Run individual LLM refinement stages:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Boundary refinement</span>
@@ -2382,7 +2396,12 @@ Layer<span class="w"> </span>Detection:
 
 LLM:
 <span class="w">  </span>--llm-config<span class="w"> </span>FILE<span class="w">             </span>LLM<span class="w"> </span>configuration<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>config/llm_config.json<span class="o">)</span>
-<span class="w">  </span>--llm-render-only<span class="w">             </span>Skip<span class="w"> </span>LLM<span class="w"> </span>API<span class="w"> </span>calls
+<span class="w">  </span>--llm-render-only<span class="w">             </span>Skip<span class="w"> </span>LLM<span class="w"> </span>API<span class="w"> </span>calls,<span class="w"> </span>but<span class="w"> </span>render<span class="w"> </span>the<span class="w"> </span>prompts.
+<span class="w">  </span>--llm-template<span class="w">                </span>LLM<span class="w"> </span>template<span class="w"> </span>file<span class="w"> </span>path<span class="w"> </span>to<span class="w"> </span>override<span class="w"> </span>default<span class="w"> </span>template<span class="w"> </span><span class="k">for</span><span class="w"> </span>stage<span class="w"> </span><span class="m">15</span>.
+<span class="w">  </span>--reuse-llm-responses<span class="w">         </span>Before<span class="w"> </span>each<span class="w"> </span>LLM<span class="w"> </span>API<span class="w"> </span>call,<span class="w"> </span>reuse<span class="w"> </span>an<span class="w"> </span>existing<span class="w"> </span>stage<span class="w"> </span>result<span class="w"> </span>JSON<span class="w"> </span>response<span class="w"> </span>when<span class="w"> </span>present.
+<span class="w">  </span>--llm-boundary-confidence<span class="w">     </span>Minimum<span class="w"> </span>confidence<span class="w"> </span><span class="k">for</span><span class="w"> </span>LLM<span class="w"> </span>boundary<span class="w"> </span>merge<span class="w"> </span>suggestions<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.6<span class="o">)</span>.
+<span class="w">  </span>--llm-semantic-confidence<span class="w">     </span>Minimum<span class="w"> </span>confidence<span class="w"> </span><span class="k">for</span><span class="w"> </span>LLM<span class="w"> </span>semantic<span class="w"> </span>labels<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.5<span class="o">)</span>.
+<span class="w">  </span>--llm-relation-confidence<span class="w">     </span>Minimum<span class="w"> </span>confidence<span class="w"> </span><span class="k">for</span><span class="w"> </span>LLM<span class="w"> </span>relation<span class="w"> </span>validation<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span>.7<span class="o">)</span>.
 
 Evaluation:
 <span class="w">  </span>--ground-truth-json<span class="w"> </span>FILE<span class="w">      </span>Ground<span class="w"> </span>truth<span class="w"> </span>protocol<span class="w"> </span><span class="k">for</span><span class="w"> </span>evaluation
