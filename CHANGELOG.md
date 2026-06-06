@@ -8,13 +8,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Documented 35-dimensional structural feature vector
+- Documented multi-layer protocol detection implementation
+- Documented hybrid fusion design (concat, adaptive, learned, fixed)
+- Updated README accuracy metrics to reflect actual performance
+
+### Fixed
+- Field semantics labeling
+- Coordinate/layering header split logic
+
+## [1.0.0] - 2026-06-6
+
+### Added
 - Reorganize project structure
 - Comprehensive documentation with MkDocs
 - Getting started guide
 - Architecture documentation
 - Contributing guidelines
+- `--use-user-provided-response` flag for LLM stages
+- `--reuse-llm-responses` flag to skip successful API calls on re-runs
+- LLM response caching in `data/llm_stage_results/`
+- LLM request retries with exponential backoff
+- Sequential LLM requests to avoid rate limits
+- Framing summary block and LLM refinement block in HTML reports
+- Stage timing logs printed in runner as they complete
 
-## [1.0.0] - 2026-05-31
+### Changed
+- LLM options moved to config file only (`config/llm_config.json`)
+- Increased LLM prompt token limit to 10k
+- Disabled JSON logs by default; logs now override
+- Removed unnecessary data from HTML reports
+
+### Fixed
+- Field semantics labeling
+- Coordinate/layering header split logic
+- Crash in build protocol model due to key mismatch
+- Pipeline continues when LLM API fails
+- Prompts lacking proper evidence
+- Ignored errors in LLM stages
+- Empty prompt files bug
+- Over-printing in main runner
+- Multiple bug fixes in LLM integration stages
+
+## [0.9.0] - 2026-05-31
 
 ### Added
 - Enhanced boundary detection with anti-fragmentation penalties
@@ -34,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Neural feature collapse detection
 - Large payload handling optimization
 
-## [0.9.0] - 2026-05-15
+## [0.8.0] - 2026-05-15
 
 ### Added
 - Semantic field labeling with protocol-agnostic inference
@@ -50,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clustering performance issues with large corpora
 - Memory leaks in feature extraction
 
-## [0.8.0] - 2026-04-30
+## [0.7.0] - 2026-04-30
 
 ### Added
 - Neural feature mode with VAE latent vectors
@@ -62,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored clustering module for multiple feature modes
 - Improved feature extraction performance
 
-## [0.7.0] - 2026-04-15
+## [0.6.0] - 2026-04-15
 
 ### Added
 - Discriminator/opcode discovery with learned salience
@@ -74,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved pairing algorithm accuracy
 - Enhanced relation confidence scoring
 
-## [0.6.0] - 2026-04-01
+## [0.5.0] - 2026-04-01
 
 ### Added
 - Field boundary detection with entropy and mutual information
@@ -86,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved boundary detection algorithm
 - Enhanced framing hypothesis generation
 
-## [0.5.0] - 2026-03-15
+## [0.4.0] - 2026-03-15
 
 ### Added
 - Message family discovery with HDBSCAN/DBSCAN
@@ -98,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized clustering for large message corpora
 - Improved family assignment coverage
 
-## [0.4.0] - 2026-03-01
+## [0.3.0] - 2026-03-01
 
 ### Added
 - TShark-based message extraction
@@ -110,7 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved extraction performance
 - Enhanced error handling
 
-## [0.3.0] - 2026-02-15
+## [0.2.0] - 2026-02-15
 
 ### Added
 - HTML report generation with interactive elements
@@ -122,25 +158,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved report formatting and structure
 - Enhanced visualization in HTML reports
 
-## [0.2.0] - 2026-02-01
-
-### Added
-- Protocol model schema definition
-- JSON schema validation
-- Ground truth comparison framework
-- Evaluation result reporting
-
-### Changed
-- Standardized protocol model format
-- Improved schema documentation
-
-## [0.1.0] - 2026-01-15
+## [0.1.0] - 2026-02-01
 
 ### Added
 - Initial project structure
 - Basic pipeline runner
 - Core module organization
 - README and basic documentation
+- Protocol model schema definition
+- JSON schema validation
+- Ground truth comparison framework
+- Evaluation result reporting
+- Standardized protocol model format
+- Improved schema documentation
 
 ---
 
