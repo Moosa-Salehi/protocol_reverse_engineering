@@ -284,7 +284,7 @@ def _field_matches(
         truth_id = message_match["ground_truth_message_type_id"]
         family = families_by_id.get(family_id) or {}
         truth_type = truth_by_id.get(truth_id) or {}
-        predicted_fields = list(family.get("field_hypotheses", []) or [])
+        predicted_fields = _comparable_predicted_fields(family, truth_type)
         truth_fields = list(truth_type.get("fields", []) or [])
         offset_shift = 0 if _truth_uses_absolute_offsets(truth_type) else _family_body_offset(family)
         candidates = []
@@ -309,6 +309,20 @@ def _field_matches(
                 }
             )
     return matches
+
+
+def _comparable_predicted_fields(family: Dict[str, Any], truth_type: Dict[str, Any]) -> List[Dict[str, Any]]:
+    predicted_fields = list(family.get("field_hypotheses", []) or [])
+    if _truth_uses_absolute_offsets(truth_type):
+        return predicted_fields
+    body_offset = _family_body_offset(family)
+    if body_offset <= 0:
+        return predicted_fields
+    return [
+        field
+        for field in predicted_fields
+        if int(field.get("start", 0) or 0) >= body_offset
+    ]
 
 
 def _relation_matches(
@@ -391,7 +405,19 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     field_matches = _field_matches(families_by_id, truth_by_id, message_matches)
     relation_matches = _relation_matches(predicted_relations, truth_relations, family_to_truth, families_by_id, truth_by_id)
 
-    predicted_field_total = sum(len((family.get("field_hypotheses", []) or [])) for family in families)
+    matched_truth_by_family = {
+        item["predicted_family_id"]: item["ground_truth_message_type_id"]
+        for item in message_matches
+    }
+    predicted_field_total = 0
+    for family in families:
+        family_id = str(family.get("family_id"))
+        truth_id = matched_truth_by_family.get(family_id)
+        truth_type = truth_by_id.get(truth_id) if truth_id is not None else None
+        if truth_type is None:
+            predicted_field_total += len(family.get("field_hypotheses", []) or [])
+        else:
+            predicted_field_total += len(_comparable_predicted_fields(family, truth_type))
     truth_field_total = sum(len((message_type.get("fields", []) or [])) for message_type in truth_types)
     semantic_tp = sum(1 for item in field_matches if float(item.get("semantic_score", 0.0) or 0.0) >= 0.5)
 
@@ -406,7 +432,14 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     unmatched_predicted_fields = []
     for family in families:
         family_id = str(family.get("family_id"))
-        for index, field in enumerate(family.get("field_hypotheses", []) or []):
+        truth_id = matched_truth_by_family.get(family_id)
+        truth_type = truth_by_id.get(truth_id) if truth_id is not None else None
+        fields = (
+            _comparable_predicted_fields(family, truth_type)
+            if truth_type is not None
+            else list(family.get("field_hypotheses", []) or [])
+        )
+        for index, field in enumerate(fields):
             ref = _predicted_field_ref(family_id, field, index)
             if (ref["owner_id"], ref["start"], ref.get("length")) not in matched_predicted_fields:
                 unmatched_predicted_fields.append(ref)

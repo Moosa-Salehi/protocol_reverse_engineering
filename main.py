@@ -433,6 +433,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     for step_name, step_args in pipeline:
         if step_name == "07_infer_boundaries":
             step_args.extend(["--max-fields", str(args.boundary_max_fields)])
+            step_args.extend(["--merge-width-targets", args.boundary_merge_width_targets])
+            step_args.extend(["--length-match-threshold", str(args.boundary_length_match_threshold)])
+            step_args.extend(["--boundary-confidence-weight", str(args.boundary_confidence_weight)])
+            if args.boundary_entropy_weight is not None:
+                step_args.extend(["--entropy-weight", str(args.boundary_entropy_weight)])
+            if args.disable_boundary_length_validator:
+                step_args.extend(["--disable-length-validator"])
             if args.no_boundary_merging:
                 step_args.extend(["--no-merging"])
             break
@@ -731,6 +738,34 @@ def parse_args() -> argparse.Namespace:
         "--no-boundary-merging",
         action="store_true",
         help="Disable multi-pass segment merging (not recommended).",
+    )
+    boundary_group.add_argument(
+        "--boundary-entropy-weight",
+        type=float,
+        default=None,
+        help="Override entropy-jump weight for boundary scoring.",
+    )
+    boundary_group.add_argument(
+        "--boundary-merge-width-targets",
+        default="2,4",
+        help="Comma-separated merged widths allowed by standard-width merge rules (default: 2,4).",
+    )
+    boundary_group.add_argument(
+        "--boundary-length-match-threshold",
+        type=float,
+        default=0.8,
+        help="Minimum corpus match ratio for length-field boundary protection (default: 0.8).",
+    )
+    boundary_group.add_argument(
+        "--disable-boundary-length-validator",
+        action="store_true",
+        help="Disable statistical length-field boundary protection.",
+    )
+    boundary_group.add_argument(
+        "--boundary-confidence-weight",
+        type=float,
+        default=0.45,
+        help="Weight for corpus boundary-support term in segment confidence (default: 0.45).",
     )
 
     layer_group = parser.add_argument_group("Multi-layer protocol detection")

@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from protocol_re.inference.boundary_detection import infer_field_hypotheses
+from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments
 from protocol_re.inference.framing import FramingFieldRegion, FramingLayoutHypothesis, _dedupe_layouts, _header_boundary_scores
 from protocol_re.model.schema import Segment
 from protocol_re.utils.bytes import best_numeric_endian
@@ -147,6 +147,57 @@ def test_boundary_counter_endian_is_data_driven() -> None:
     assert fields[0].field_type == "counter_or_transaction_id"
     assert fields[0].endian == "big"
     assert fields[0].evidence["selected_endian"] == "big"
+
+
+def test_length_validator_preserves_adjacent_protocol_id_boundary() -> None:
+    messages = [
+        f"abcd1001{payload_len:04x}" + ("aa" * payload_len)
+        for payload_len in (1, 2, 3, 4, 5, 6)
+    ]
+
+    segments = infer_segments(
+        messages,
+        score_threshold=99.0,
+        enable_merging=True,
+        length_match_threshold=0.8,
+        framing_summary={"layout_hypotheses": [{"confidence": 1.0, "body_start": 2, "header_end": 2}]},
+    )
+    spans = [(segment.start, segment.end) for segment in segments]
+
+    assert (2, 4) in spans
+    assert (4, 6) in spans
+    assert (2, 6) not in spans
+    length_segment = next(segment for segment in segments if (segment.start, segment.end) == (4, 6))
+    assert length_segment.evidence["semantic_hint"] == "length"
+    assert length_segment.evidence["length_match_ratio"] == 1.0
+
+
+def test_boundary_support_blends_segment_confidence() -> None:
+    messages = ["01020204" for _ in range(6)]
+
+    segments = infer_segments(
+        messages,
+        score_threshold=99.0,
+        enable_merging=False,
+        enable_length_validator=False,
+        boundary_confidence_weight=0.5,
+    )
+
+    assert len(segments) == 1
+    assert segments[0].evidence["boundary_support_ratio"] == 1.0
+
+    split_segments = infer_segments(
+        messages,
+        score_threshold=99.0,
+        enable_merging=False,
+        enable_length_validator=False,
+        framing_summary={"layout_hypotheses": [{"confidence": 1.0, "body_start": 2, "header_end": 2}]},
+        boundary_confidence_weight=0.5,
+    )
+
+    assert [(segment.start, segment.end) for segment in split_segments] == [(0, 2), (2, 4)]
+    assert split_segments[0].evidence["boundary_support_ratio"] == 0.0
+    assert split_segments[0].evidence["consistency_confidence"] < segments[0].confidence
 
 
 def test_framing_layout_ranking_uses_raw_score_before_shorter_offset() -> None:
