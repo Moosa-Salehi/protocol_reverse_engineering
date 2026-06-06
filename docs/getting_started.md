@@ -324,10 +324,21 @@ python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 python main.py pcaps/ --tshark-filter mbtcp \
     --llm-config config/llm_config.json
 
-# Use saved LLM responses when available instaed of calling the api, usefull when some api call's failed in a run, and you want to rerun 
-# the pipeline and only call those api's (dont repeat successfull calls). 
+# Use saved LLM responses when available instead of calling the API
+# Useful when some API calls failed in a previous run and you want to rerun
+# the pipeline calling only the failed endpoints (skip successful calls).
 python main.py --use-existing-messages --reuse-llm-responses
+
+# Use user-provided LLM responses from data/user_provided_LLM_responses/
+# Fill in response files manually before running; pipeline uses these instead of API calls
+python main.py pcaps/ --tshark-filter mbtcp --use-user-provided-response
 ```
+
+**LLM Response Reuse:**
+- `--reuse-llm-responses`: Reads cached responses from `data/llm_stage_results/`
+- `--use-user-provided-response`: Reads from `data/user_provided_LLM_responses/`
+- Both flags prevent redundant API calls on re-runs
+- Use `--llm-render-only` to inspect prompts without any API calls
 
 ### Stage-Specific LLM Refinement
 
