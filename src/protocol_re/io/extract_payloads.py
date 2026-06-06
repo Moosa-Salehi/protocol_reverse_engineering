@@ -500,6 +500,7 @@ def _tshark_payload_record_to_message(
     payload_record: Dict[str, Any],
     pcap_name: str,
     index_in_session: int,
+    service_port: int | None = None,
 ) -> MessageRecord:
     metadata = payload_record.get("metadata", {})
     ip_meta = metadata.get("ip", {}) if isinstance(metadata, dict) else {}
@@ -539,7 +540,7 @@ def _tshark_payload_record_to_message(
         src_port=src_port,
         dst_ip=dst_ip,
         dst_port=dst_port,
-        direction="unknown",
+        direction=_direction(src_port, dst_port, service_port),
         payload_hex=payload_hex,
         payload_len=len(payload_hex) // 2,
         timestamp=iso_z_to_unix_float(str(payload_record.get("timestamp"))),        
@@ -547,8 +548,8 @@ def _tshark_payload_record_to_message(
     )
 
 
-def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, int, List[MessageRecord]]:
-    pcap_path_str, tshark_filter, packets_dir, payloads_dir = args
+def _process_tshark_pcap_worker(args: Tuple[str, str, str, str, Optional[int]]) -> Tuple[str, int, List[MessageRecord]]:
+    pcap_path_str, tshark_filter, packets_dir, payloads_dir, service_port = args
     pcap_path = Path(pcap_path_str)
     cache_stem = _tshark_cache_stem(pcap_path, tshark_filter)
     packet_json = Path(packets_dir) / f"{cache_stem}.json"
@@ -573,7 +574,7 @@ def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, i
                         "timestamp": item.get("timestamp", ""),
                         "protocol": item.get("protocol"),
                         "payload_hex": item.get("payload_hex"),
-                        # "metadata": item.get("metadata", {}),
+                        "metadata": item.get("metadata", {}),
                     }
                     for item in payload_records
                 ],
@@ -591,6 +592,7 @@ def _process_tshark_pcap_worker(args: Tuple[str, str, str, str]) -> Tuple[str, i
             payload_record,
             pcap_path.name,
             index_in_session=0,
+            service_port=service_port,
         )
         temp_message.index_in_session = session_counts[temp_message.session_id]
         session_counts[temp_message.session_id] += 1
@@ -759,6 +761,7 @@ def iter_messages_from_pcaps_tshark(
     tshark_filter: str,
     packets_dir: str,
     payloads_dir: str,
+    service_port: int | None = None,
     max_messages: int | None = None,
     max_workers: int = 4,
 ) -> Iterator[MessageRecord]:
@@ -772,7 +775,7 @@ def iter_messages_from_pcaps_tshark(
 
     if max_workers <= 1 or len(pcap_paths) <= 1:
         for pcap_path in pcap_paths:
-            _, _, messages = _process_tshark_pcap_worker((str(pcap_path), tshark_filter, str(packets_path), str(payloads_path)))
+            _, _, messages = _process_tshark_pcap_worker((str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port))
             for message in messages:
                 message.msg_id = next_msg_id
                 yield message
@@ -792,7 +795,7 @@ def iter_messages_from_pcaps_tshark(
             pcap_path = pcap_paths[next_submit_index]
             future = executor.submit(
                 _process_tshark_pcap_worker,
-                (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path)),
+                (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port),
             )
             pending[future] = next_submit_index
             next_submit_index += 1
@@ -820,7 +823,7 @@ def iter_messages_from_pcaps_tshark(
                     pcap_path = pcap_paths[next_submit_index]
                     future = executor.submit(
                         _process_tshark_pcap_worker,
-                        (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path)),
+                        (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port),
                     )
                     pending[future] = next_submit_index
                     next_submit_index += 1
@@ -852,6 +855,7 @@ def write_messages_from_pcaps_tshark_jsonl(
     tshark_filter: str,
     packets_dir: str,
     payloads_dir: str,
+    service_port: int | None = None,
     max_messages: int | None = None,
     max_workers: int = 4,
 ) -> int:
@@ -862,6 +866,7 @@ def write_messages_from_pcaps_tshark_jsonl(
             tshark_filter=tshark_filter,
             packets_dir=packets_dir,
             payloads_dir=payloads_dir,
+            service_port=service_port,
             max_messages=max_messages,
             max_workers=max_workers,
         ):

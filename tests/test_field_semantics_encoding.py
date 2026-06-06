@@ -9,6 +9,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments
 from protocol_re.inference.framing import FramingFieldRegion, FramingLayoutHypothesis, _dedupe_layouts, _header_boundary_scores
+from protocol_re.corpus.request_response_pairing import pair_request_response_messages
+from protocol_re.inference.request_response_relations import _echo_candidates, _length_correlation_relations
+from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.model.schema import Segment
 from protocol_re.utils.bytes import best_numeric_endian
 
@@ -198,6 +201,80 @@ def test_boundary_support_blends_segment_confidence() -> None:
     assert [(segment.start, segment.end) for segment in split_segments] == [(0, 2), (2, 4)]
     assert split_segments[0].evidence["boundary_support_ratio"] == 0.0
     assert split_segments[0].evidence["consistency_confidence"] < segments[0].confidence
+
+
+def test_pairing_infers_direction_from_stable_server_port() -> None:
+    records = []
+    for index in range(3):
+        records.extend(
+            [
+                MessageRecord(
+                    msg_id=index * 2,
+                    source_file="capture.pcap",
+                    session_id=f"s{index}",
+                    session_key=f"s{index}",
+                    src_ip=f"10.0.0.{index + 1}",
+                    src_port=50000 + index,
+                    dst_ip="10.0.0.10",
+                    dst_port=502,
+                    direction="unknown",
+                    payload_hex="0001",
+                    payload_len=2,
+                    index_in_session=0,
+                ),
+                MessageRecord(
+                    msg_id=index * 2 + 1,
+                    source_file="capture.pcap",
+                    session_id=f"s{index}",
+                    session_key=f"s{index}",
+                    src_ip="10.0.0.10",
+                    src_port=502,
+                    dst_ip=f"10.0.0.{index + 1}",
+                    dst_port=50000 + index,
+                    direction="unknown",
+                    payload_hex="0001",
+                    payload_len=2,
+                    index_in_session=1,
+                ),
+            ]
+        )
+
+    pairs = pair_request_response_messages(
+        records,
+        assignments=[FamilyAssignment(msg_id=item.msg_id, family_id=f"f{item.msg_id % 2}") for item in records],
+    )
+
+    assert len(pairs) == 3
+    assert all(pair.evidence.get("opposite_direction") == 1.0 for pair in pairs)
+    assert all("direction_unknown" not in pair.evidence for pair in pairs)
+    assert {record.direction for record in records} == {"client_to_server", "server_to_client"}
+
+
+def test_transaction_id_echo_not_penalized_as_counter() -> None:
+    requests = [value.to_bytes(2, "big") + b"\x03\x00\x01" for value in range(1, 8)]
+    responses = [value.to_bytes(2, "big") + b"\x03\x02\x00\x2a" for value in range(1, 8)]
+
+    echoes = _echo_candidates(requests, responses, min_support=0.8)
+
+    assert echoes
+    assert echoes[0]["request_offset"] == 0
+    assert echoes[0]["response_offset"] == 0
+    assert echoes[0]["width"] == 2
+    assert echoes[0]["confidence"] >= 0.7
+
+
+def test_request_count_correlates_with_response_length() -> None:
+    requests = [b"\x03\x00\x00" + count.to_bytes(2, "big") for count in (1, 2, 3, 4, 5)]
+    responses = [bytes([3, count * 2]) + (b"\x00" * (count * 2)) for count in (1, 2, 3, 4, 5)]
+
+    relations = _length_correlation_relations(requests, responses, min_support=0.75)
+
+    assert any(
+        relation["request_offset"] == 3
+        and relation["width"] == 2
+        and relation["relation_type"] == "request_field_correlates_response_length"
+        for relation in relations
+    )
 
 
 def test_framing_layout_ranking_uses_raw_score_before_shorter_offset() -> None:
