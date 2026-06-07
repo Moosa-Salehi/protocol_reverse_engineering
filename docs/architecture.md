@@ -329,6 +329,45 @@ Evidence Gating:
 - Confidence scores used to weight decisions
 - Fallback to statistical inference if LLM unavailable
 
+### Centralized Thresholds Configuration
+
+All algorithmic tuning parameters live in a single documented module:
+**`src/protocol_re/config/thresholds.py`**.  Each subsystem is represented by a
+plain namespace class whose attributes are the thresholds that control its
+behaviour.
+
+| Class                     | Domain                      | Examples                                                                 |
+|---------------------------|-----------------------------|--------------------------------------------------------------------------|
+| `FeatureExtraction`       | N-gram / motif extraction   | `NGRAM_SIZES`, `MAX_POSITION_STATS_LENGTH`, `TOP_MOTIFS_LIMIT`          |
+| `BoundaryDetection`       | Field boundary segmentation | `MAX_FIELDS_PER_FAMILY`, `SINGLE_BYTE_PENALTY`, `ENTROPY_WEIGHT_REDUCED` |
+| `RequestResponseRelations`| Echo / length relation      | `MAX_ECHO_WIDTH`, `DEFAULT_MIN_ECHO_SUPPORT`, `MIN_CONFIDENCE_THRESHOLD` |
+| `FramingDetection`        | Header / framing inference  | `MAX_HEADER_BYTES`, `FIELD_WEIGHT_LENGTH`, `CONFIDENCE_SCORE_NORMALISER` |
+| `LayerDetection`          | Transport/application split | `MIN_CONFIDENCE`, `INDICATOR_WEIGHT_LENGTH_TO_BODY`, `MAX_POSSIBLE_RAW_SCORE` |
+| `DiscriminatorDetection`  | Opcode / type-byte finders  | `MAX_OFFSET`, `SCORE_LEARNED_WEIGHT`, `SUPPRESSED_ROLE_TOKENS`          |
+| `KeywordDetection`        | Keyword byte discovery      | `SEARCH_RANGE_START`, `SEARCH_RANGE_END`                                 |
+| `FieldSemantics`          | Semantic role inference     | `DISCRIMINATOR_MAX_CONFIDENCE`, `TRANSACTION_ID_ECHO_BOOST`, `COUNTER_MONOTONIC_MIN` |
+| `LLMEvidence`             | LLM prompt construction     | `MAX_PROMPT_HEX_CHARS`                                                   |
+| `NeuralModel`             | Pre-trained model path      | `DEFAULT_MODEL_PATH`                                                     |
+| `Clustering`              | Family discovery            | `CENTROID_ASSIGNMENT_BATCH_SIZE`, `HIGH_VOLATILITY_FIELD_TYPES`          |
+
+**Design principles:**
+
+1. **Single source of truth** — every threshold value is defined exactly once in
+   `thresholds.py`; individual modules import from the config and re-export the
+   name at module level for backward compatibility.
+2. **Self-documenting** — each threshold has a docstring or inline comment
+   explaining what it controls and why the current value was chosen.
+3. **Grouped by domain** — threshold groups map 1:1 to pipeline stages, so
+   when you are tuning, e.g., boundary over-segmentation, you know to look in
+   `BoundaryDetection`.
+4. **Reproducible tuning** — change a value in one place, and every consumer
+   (algorithm, diagnostic script, test) picks it up without hunting through
+   source files.
+
+**How to tune:** open `src/protocol_re/config/thresholds.py`, find the
+relevant class, adjust the value, and re-run the pipeline.  No other files
+need to be edited.
+
 ### Scalability
 
 - Supports up to 200K messages by default (configurable)

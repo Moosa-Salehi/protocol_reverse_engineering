@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Documented 35-dimensional structural feature vector
+- Centralized algorithmic thresholds in `src/protocol_re/config/thresholds.py` — all magic numbers
+  (boundary anti-fragmentation, framing scoring weights, echo/length detection limits, relation
+  confidence thresholds, field semantic scores, clustering batch sizes, etc.) moved from individual
+  modules to a single documented config module organised by subsystem.  Module-level constants are
+  re-exported for backward compatibility.
 - Documented multi-layer protocol detection implementation
 - Documented hybrid fusion design (concat, adaptive, learned, fixed)
 - Updated README accuracy metrics to reflect actual performance

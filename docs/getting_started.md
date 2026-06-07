@@ -676,6 +676,31 @@ Note: `main.py` sets this automatically; only needed for individual scripts.
 
 ## Configuration Reference
 
+### Algorithmic Thresholds
+
+All pipeline tuning parameters are centralized in **`src/protocol_re/config/thresholds.py`**,
+organized by subsystem as plain namespace classes (`BoundaryDetection`, `FramingDetection`,
+`RequestResponseRelations`, etc.).  Each threshold has a docstring explaining its purpose.
+To tune an algorithm:
+
+1. Open `src/protocol_re/config/thresholds.py`.
+2. Find the relevant class (see table below).
+3. Adjust the threshold value.
+4. Re-run the pipeline — no other file changes are needed.
+
+| Tuning goal                           | Class to edit              | Key thresholds                                    |
+|---------------------------------------|----------------------------|---------------------------------------------------|
+| Reduce field over-segmentation        | `BoundaryDetection`        | `SINGLE_BYTE_PENALTY`, `MAX_FIELDS_PER_FAMILY`, `ENTROPY_WEIGHT_REDUCED` |
+| Adjust framing header detection       | `FramingDetection`         | `MAX_HEADER_BYTES`, `CONFIDENCE_SCORE_NORMALISER`, `FIELD_WEIGHT_*` |
+| Tighten/loosen relation detection     | `RequestResponseRelations` | `MIN_CONFIDENCE_THRESHOLD`, `DEFAULT_MIN_ECHO_SUPPORT`, `DEFAULT_MIN_LENGTH_SUPPORT` |
+| Tune layer-boundary sensitivity       | `LayerDetection`           | `MIN_CONFIDENCE`, `MAX_POSSIBLE_RAW_SCORE`, `INDICATOR_WEIGHT_*` |
+| Adjust discriminator/opcode detection | `DiscriminatorDetection`   | `MAX_OFFSET`, `MIN_COVERAGE`, `SCORE_*_WEIGHT`    |
+| Tune semantic role confidence         | `FieldSemantics`           | `DISCRIMINATOR_*`, `TRANSACTION_ID_*`, `COUNTER_*` |
+| Change feature extraction limits      | `FeatureExtraction`        | `MAX_POSITION_STATS_LENGTH`, `MAX_NGRAM_ANALYSIS_LENGTH` |
+| Adjust clustering batch size          | `Clustering`               | `CENTROID_ASSIGNMENT_BATCH_SIZE`                  |
+| Change pre-trained model path         | `NeuralModel`              | `DEFAULT_MODEL_PATH`                              |
+| Adjust LLM prompt size                | `LLMEvidence`              | `MAX_PROMPT_HEX_CHARS`                            |
+
 ### Main Pipeline Options
 
 ```bash

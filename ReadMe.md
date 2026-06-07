@@ -33,6 +33,7 @@ A protocol-agnostic reverse engineering pipeline that analyzes binary protocol t
 ```
 protocol_re/
 ├── src/protocol_re/          # Core library
+│   └── config/               # Centralized thresholds (thresholds.py)
 ├── scripts/                  # Pipeline stages (01-19)
 │   └── diagnostics/          # Standalone diagnostic/test scripts (20-24)
 ├── docs/                     # Documentation
