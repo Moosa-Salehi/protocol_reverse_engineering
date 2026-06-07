@@ -409,6 +409,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             if step_name in {"04_discover_families", "06_extract_features"}:
                 step_args.extend(["--latent-cache-path", _path(args.family_latent_cache_path)])
 
+    if not args.family_standardize_latent:
+        for step_name, step_args in pipeline:
+            if step_name == "04_discover_families":
+                step_args.append("--no-standardize-latent")
+                break
+
     # Add fusion method for hybrid mode
     if args.family_feature_mode == "hybrid":
         for step_name, step_args in pipeline:
@@ -696,6 +702,13 @@ def parse_args() -> argparse.Namespace:
         default=256,
         help="Batch size for optional neural latent extraction.",
     )
+    family_group.add_argument(
+        "--family-no-standardize-latent",
+        dest="family_standardize_latent",
+        action="store_false",
+        help="Disable per-corpus z-score of neural latent features for family discovery (default: enabled).",
+    )
+    family_group.set_defaults(family_standardize_latent=True)
     family_group.add_argument(
         "--enable-neural-preprocessing",
         action="store_true",

@@ -10,7 +10,7 @@ from protocol_re.clustering.structural_features import (
 )
 from protocol_re.clustering.latent_standardize import LatentStandardizer
 from protocol_re.model.schema import MessageRecord
-from protocol_re.neural.artifacts import load_latent_cache, save_latent_cache
+from protocol_re.neural.artifacts import load_latent_cache, model_fingerprint, save_latent_cache
 from protocol_re.neural.model_loader import DEFAULT_MODEL_PATH, load_optional_encoder_with_reason
 from protocol_re.utils.bytes import hex_to_bytes
 
@@ -199,7 +199,8 @@ def _build_neural_matrix(
     encoder = load_result.encoder
     if encoder is None:
         return None, load_result.reason
-    cache = load_latent_cache(latent_cache_path)
+    fingerprint = model_fingerprint(load_result.model_path)
+    cache = load_latent_cache(latent_cache_path, expected_fingerprint=fingerprint, expected_latent_dim=latent_dim)
     hashes = [payload_hash(record.payload_hex) for record in records]
     missing_indexes = [index for index, item in enumerate(hashes) if item not in cache]
     if missing_indexes:
@@ -210,7 +211,7 @@ def _build_neural_matrix(
             return None, f"neural_encoding_failed:{exc.__class__.__name__}"
         for index, latent in zip(missing_indexes, latents):
             cache[hashes[index]] = [float(value) for value in latent[:latent_dim]]
-        save_latent_cache(latent_cache_path, cache, latent_dim=latent_dim)
+        save_latent_cache(latent_cache_path, cache, latent_dim=latent_dim, fingerprint=fingerprint)
     rows: List[List[float]] = []
     for item in hashes:
         latent = list(cache.get(item, []))[:latent_dim]

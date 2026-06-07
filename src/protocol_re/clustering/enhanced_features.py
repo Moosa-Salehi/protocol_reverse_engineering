@@ -13,7 +13,7 @@ from protocol_re.clustering.structural_features import (
 )
 from protocol_re.clustering.latent_standardize import LatentStandardizer
 from protocol_re.model.schema import MessageRecord
-from protocol_re.neural.artifacts import load_latent_cache, save_latent_cache
+from protocol_re.neural.artifacts import load_latent_cache, model_fingerprint, save_latent_cache
 from protocol_re.neural.model_loader import DEFAULT_MODEL_PATH, load_optional_encoder_with_reason
 from protocol_re.neural.enhanced_encoder import EnhancedTorchPayloadEncoder
 from protocol_re.utils.bytes import hex_to_bytes
@@ -226,8 +226,9 @@ def _build_enhanced_neural_matrix(
             "unavailable_reason": f"enhanced_encoder_init_failed:{exc.__class__.__name__}",
         }
 
-    # Load cache
-    cache = load_latent_cache(latent_cache_path)
+    # Load cache (bound to the active model + latent_dim so a retrain auto-invalidates it)
+    fingerprint = model_fingerprint(load_result.model_path)
+    cache = load_latent_cache(latent_cache_path, expected_fingerprint=fingerprint, expected_latent_dim=latent_dim)
     hashes = [payload_hash(record.payload_hex) for record in records]
 
     # Find missing entries
@@ -253,7 +254,7 @@ def _build_enhanced_neural_matrix(
         for index, latent in zip(missing_indexes, latents):
             cache[hashes[index]] = [float(value) for value in latent[:latent_dim]]
 
-        save_latent_cache(latent_cache_path, cache, latent_dim=latent_dim)
+        save_latent_cache(latent_cache_path, cache, latent_dim=latent_dim, fingerprint=fingerprint)
 
     # Build matrix from cache
     rows: List[List[float]] = []
