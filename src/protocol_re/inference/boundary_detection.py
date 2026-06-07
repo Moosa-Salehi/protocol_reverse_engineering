@@ -18,18 +18,18 @@ from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 from protocol_re.model.schema import FieldHypothesis, Segment
 from protocol_re.utils.bytes import best_numeric_endian, hex_to_bytes, safe_int_from_bytes
 
-# Performance limits
-MAX_BOUNDARY_DETECTION_LENGTH = 512
+from protocol_re.config.thresholds import BoundaryDetection as _BD
 
-# Anti-fragmentation parameters
-MAX_FIELDS_PER_FAMILY = 15  # Maximum reasonable field count
-MIN_FIELD_WIDTH_DEFAULT = 1  # Minimum field width (can be overridden)
-SINGLE_BYTE_PENALTY = 0.5  # Penalty for 1-byte fields (unless strong evidence)
-ENTROPY_WEIGHT_REDUCED = 0.6  # Reduced from 1.2 (was over-weighted)
-MERGE_WIDTH_TARGETS_DEFAULT = (2, 4)
-LENGTH_FIELD_WIDTHS_DEFAULT = (2, 4)
-LENGTH_MATCH_THRESHOLD_DEFAULT = 0.8
-BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT = 0.45
+# Re-export for backward compatibility
+MAX_BOUNDARY_DETECTION_LENGTH = _BD.MAX_BOUNDARY_DETECTION_LENGTH
+MAX_FIELDS_PER_FAMILY = _BD.MAX_FIELDS_PER_FAMILY
+MIN_FIELD_WIDTH_DEFAULT = _BD.MIN_FIELD_WIDTH_DEFAULT
+SINGLE_BYTE_PENALTY = _BD.SINGLE_BYTE_PENALTY
+ENTROPY_WEIGHT_REDUCED = _BD.ENTROPY_WEIGHT_REDUCED
+MERGE_WIDTH_TARGETS_DEFAULT = _BD.MERGE_WIDTH_TARGETS_DEFAULT
+LENGTH_FIELD_WIDTHS_DEFAULT = _BD.LENGTH_FIELD_WIDTHS_DEFAULT
+LENGTH_MATCH_THRESHOLD_DEFAULT = _BD.LENGTH_MATCH_THRESHOLD_DEFAULT
+BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT = _BD.BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT
 
 
 def _entropy(values: Sequence[int]) -> float:

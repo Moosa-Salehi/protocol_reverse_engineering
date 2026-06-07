@@ -9,21 +9,20 @@ from protocol_re.corpus.request_response_pairing import infer_missing_directions
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
 
-MAX_ECHO_WIDTH = 4
-DEFAULT_MIN_EDGE_PAIRS = 2
-DEFAULT_MIN_EDGE_LIFT = 1.0
-DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST = 5
+from protocol_re.config.thresholds import RequestResponseRelations as _RR
 
-# A4: Tightened performance limits for echo/length field detection
-MAX_ECHO_SEARCH_LENGTH = 64  # Reduced from 256 to focus on header regions (first 64 bytes)
-MAX_LENGTH_FIELD_SEARCH_LENGTH = 64  # Reduced from 128 to focus on header regions
-ECHO_SEARCH_STRIDE = 1
-MAX_EVIDENCE_PAIRS_PER_EDGE = 500
-
-# A4: Stricter thresholds for relation detection
-DEFAULT_MIN_ECHO_SUPPORT = 0.8
-DEFAULT_MIN_LENGTH_SUPPORT = 0.75
-MIN_CONFIDENCE_THRESHOLD = 0.7  # Minimum confidence to keep a relation
+# Re-export for backward compatibility
+MAX_ECHO_WIDTH = _RR.MAX_ECHO_WIDTH
+DEFAULT_MIN_EDGE_PAIRS = _RR.DEFAULT_MIN_EDGE_PAIRS
+DEFAULT_MIN_EDGE_LIFT = _RR.DEFAULT_MIN_EDGE_LIFT
+DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST = _RR.DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST
+MAX_ECHO_SEARCH_LENGTH = _RR.MAX_ECHO_SEARCH_LENGTH
+MAX_LENGTH_FIELD_SEARCH_LENGTH = _RR.MAX_LENGTH_FIELD_SEARCH_LENGTH
+ECHO_SEARCH_STRIDE = _RR.ECHO_SEARCH_STRIDE
+MAX_EVIDENCE_PAIRS_PER_EDGE = _RR.MAX_EVIDENCE_PAIRS_PER_EDGE
+DEFAULT_MIN_ECHO_SUPPORT = _RR.DEFAULT_MIN_ECHO_SUPPORT
+DEFAULT_MIN_LENGTH_SUPPORT = _RR.DEFAULT_MIN_LENGTH_SUPPORT
+MIN_CONFIDENCE_THRESHOLD = _RR.MIN_CONFIDENCE_THRESHOLD
 
 
 

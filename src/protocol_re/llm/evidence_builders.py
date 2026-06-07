@@ -4,10 +4,12 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from protocol_re.config.thresholds import LLMEvidence as _LE
 from protocol_re.model.schema import MessageRecord
 
 
-MAX_PROMPT_HEX_CHARS = 100
+# Re-export for backward compatibility
+MAX_PROMPT_HEX_CHARS = _LE.MAX_PROMPT_HEX_CHARS
 
 
 def _field_start(field: Mapping[str, Any]) -> int:

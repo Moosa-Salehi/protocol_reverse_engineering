@@ -5,6 +5,7 @@ from math import log2
 from statistics import mean
 from typing import Dict, List, Sequence
 
+from protocol_re.config.thresholds import Clustering as _CL
 from protocol_re.model.schema import MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
@@ -14,20 +15,8 @@ except Exception:  # pragma: no cover - optional dependency
     np = None
 
 
-HIGH_VOLATILITY_FIELD_TYPES = {
-    "transaction_id",
-    "transaction-id",
-    "sequence",
-    "sequence_number",
-    "seq",
-    "timestamp",
-    "checksum",
-    "crc",
-    "nonce",
-    "random_nonce",
-    "payload_blob",
-    "blob",
-}
+# Re-export for backward compatibility
+HIGH_VOLATILITY_FIELD_TYPES = _CL.HIGH_VOLATILITY_FIELD_TYPES
 
 
 def payload_hash(payload_hex: str) -> str:

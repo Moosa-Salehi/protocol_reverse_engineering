@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
+from protocol_re.config.thresholds import LayerDetection as _LD
 from protocol_re.utils.bytes import hex_to_bytes
 
 
@@ -42,7 +43,7 @@ class LayerInfo:
 
 def detect_layer_boundary_from_framing(
     framing_result: Dict[str, Any],
-    min_confidence: float = 0.6,
+    min_confidence: float = _LD.MIN_CONFIDENCE,
 ) -> Optional[LayerBoundary]:
     """
     Detect layer boundary from framing analysis results.
@@ -97,7 +98,7 @@ def detect_layer_boundary_from_framing(
                     "type": "length_field_to_body",
                     "offset": end,
                     "confidence": region_confidence,
-                    "weight": 1.5,
+                    "weight": _LD.INDICATOR_WEIGHT_LENGTH_TO_BODY,
                 })
 
         elif field_type == "transaction_or_counter":
@@ -106,7 +107,7 @@ def detect_layer_boundary_from_framing(
                 "type": "transaction_counter",
                 "offset": end,
                 "confidence": region_confidence,
-                "weight": 1.0,
+                "weight": _LD.INDICATOR_WEIGHT_TRANSACTION_COUNTER,
             })
 
         elif field_type == "constant":
@@ -116,7 +117,7 @@ def detect_layer_boundary_from_framing(
                     "type": "constant_prefix",
                     "offset": end,
                     "confidence": region_confidence,
-                    "weight": 0.8,
+                    "weight": _LD.INDICATOR_WEIGHT_CONSTANT_PREFIX,
                 })
 
     if not layer_indicators:
@@ -140,14 +141,14 @@ def detect_layer_boundary_from_framing(
     best_score = boundary_scores[best_offset]
 
     # Normalize confidence (max possible score ~3.5 with all indicators)
-    confidence = min(best_score / 3.5, 1.0)
+    confidence = min(best_score / _LD.MAX_POSSIBLE_RAW_SCORE, 1.0)
 
     if confidence < min_confidence:
         return None
 
     # Additional confidence boost if multiple indicators agree
     if len(boundary_evidence[best_offset]) >= 2:
-        confidence = min(confidence * 1.2, 1.0)
+        confidence = min(confidence * _LD.MULTI_INDICATOR_BOOST, 1.0)
 
     return LayerBoundary(
         offset=best_offset,
@@ -166,7 +167,7 @@ def detect_layer_boundary_from_framing(
 def analyze_family_layers(
     family_id: str,
     framing_result: Dict[str, Any],
-    min_confidence: float = 0.6,
+    min_confidence: float = _LD.MIN_CONFIDENCE,
 ) -> LayerInfo:
     """
     Analyze layer structure for a message family.
@@ -236,7 +237,7 @@ def extract_inner_protocol(
 
 def analyze_all_families(
     framing_data: Dict[str, Any],
-    min_confidence: float = 0.6,
+    min_confidence: float = _LD.MIN_CONFIDENCE,
 ) -> Dict[str, LayerInfo]:
     """
     Analyze layer structure for all families in framing data.

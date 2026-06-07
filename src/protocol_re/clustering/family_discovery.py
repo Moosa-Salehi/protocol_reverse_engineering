@@ -5,6 +5,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence
 
+from protocol_re.config.thresholds import Clustering as _CL
 from protocol_re.clustering.diagnostics import build_family_diagnostics
 from protocol_re.clustering.hybrid_features import build_feature_matrix
 from protocol_re.clustering.latent_standardize import LatentStandardizer
@@ -12,7 +13,8 @@ from protocol_re.clustering.structural_features import downweight_raw_byte_matri
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
-CENTROID_ASSIGNMENT_BATCH_SIZE = 10000
+# Re-export for backward compatibility
+CENTROID_ASSIGNMENT_BATCH_SIZE = _CL.CENTROID_ASSIGNMENT_BATCH_SIZE
 
 try:
     import numpy as np
