@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 12, 'family_ratio': 1.0}], 'field_type_counts': {'length': 36, 'transaction_or_counter': 22, 'constant': 10, 'discriminator': 4}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 12}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-07T11:36:37.661764+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-07T12:08:08.684733+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
 
 ## Evaluation
 
@@ -13,10 +13,10 @@ Version: `0.1`
 - Corpus assignment coverage: `1` with `12` families
 - Clustering sample: `100000` messages ratio=`0.5`
 - Parseable families: `12` of `12`
-- Pair hypotheses: `100000` direction_unknown_ratio=`1`
-- Relation edges: `20` echo_edges=`20` length_relation_edges=`1`
+- Pair hypotheses: `99999` direction_unknown_ratio=`1`
+- Relation edges: `18` echo_edges=`18` length_relation_edges=`0`
 - Semantic coverage: `12` of `12` families ratio=`1`
-- Top semantic labels: `echoed_request_field`x31, `discriminator`x29, `constant`x27, `transaction_or_correlation_id`x27, `length`x16, `transaction_id`x8, `payload`x2, `response_size_selector`x1
+- Top semantic labels: `discriminator`x29, `constant`x27, `echoed_request_field`x16, `transaction_or_correlation_id`x16, `length`x16, `transaction_id`x8
 - Framing coverage: `12` of `12` families ratio=`1`
 - Clustering diagnostics: warning_families=`11` split_candidates=`2` merge_candidates=`18`
 
@@ -48,31 +48,31 @@ Version: `0.1`
 
 ### Evaluation Top Relation Edges
 
-- `family_6` -> `family_6` | pairs=`8107` avg_score=`5.1911` support=`0.8514` lift=`8.2942` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_3` -> `family_0` | pairs=`6537` avg_score=`5.4454` support=`0.9994` lift=`1.2965` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_7` -> `family_7` | pairs=`3137` avg_score=`5.1279` support=`0.7307` lift=`10.6582` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_5` -> `family_5` | pairs=`2002` avg_score=`4.9734` support=`0.7606` lift=`13.3095` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_8` -> `family_0` | pairs=`1725` avg_score=`5.4468` support=`1` lift=`1.2973` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_2` -> `family_6` | pairs=`1122` avg_score=`5.4401` support=`0.6829` lift=`6.6527` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `noise` -> `family_0` | pairs=`923` avg_score=`5.4017` support=`1` lift=`1.2973` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_6` -> `family_7` | pairs=`903` avg_score=`5.1415` support=`0.0948` lift=`1.3832` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_1` -> `family_5` | pairs=`695` avg_score=`5.444` support=`0.2666` lift=`4.6647` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_4` -> `family_5` | pairs=`374` avg_score=`5.4468` support=`0.4043` lift=`7.0748` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_6` -> `family_6` | pairs=`8154` avg_score=`6.9457` support=`0.7944` lift=`8.3422` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `family_3` | pairs=`6528` avg_score=`6.9674` support=`0.0847` lift=`1.2947` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_7` -> `family_7` | pairs=`3174` avg_score=`6.9477` support=`0.463` lift=`10.7838` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_5` -> `family_5` | pairs=`2015` avg_score=`6.9508` support=`0.3526` lift=`13.3958` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `family_8` | pairs=`1725` avg_score=`6.9676` support=`0.0224` lift=`1.2973` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_6` -> `family_2` | pairs=`1084` avg_score=`6.9676` support=`0.1056` lift=`6.4273` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `family_9` | pairs=`1066` avg_score=`6.9675` support=`0.0138` lift=`1.0146` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `noise` | pairs=`878` avg_score=`6.9675` support=`0.0114` lift=`1.2353` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_7` -> `family_6` | pairs=`843` avg_score=`6.9674` support=`0.123` lift=`1.2913` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_5` -> `family_1` | pairs=`697` avg_score=`6.9676` support=`0.122` lift=`4.6781` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.594`
+- Overall score: `0.5953`
 - Verdict: `partial`
 - Matched message types: `11` of `11`
 - Message type matching: accuracy=`0.9167` precision=`0.9167` recall=`1` f1=`0.9565`
 - Field boundary: accuracy=`0.5` precision=`0.5909` recall=`0.7647` f1=`0.6667`
-- Field semantics: accuracy=`0.3448` precision=`0.4545` recall=`0.5882` f1=`0.5128`
-- Relations: accuracy=`0.1364` precision=`0.1579` recall=`0.5` f1=`0.24`
+- Field semantics: accuracy=`0.2581` precision=`0.3636` recall=`0.4706` f1=`0.4103`
+- Relations: accuracy=`0.2105` precision=`0.2353` recall=`0.6667` f1=`0.3478`
 
 ## LLM Analysis
 
 - Model: `qwen/qwen3.5-397b-a17b`
-- Prompt size: `36174` bytes, `36174` characters, estimated tokens=`9044`
+- Prompt size: `35901` bytes, `35901` characters, estimated tokens=`8976`
 
 # Protocol Specification Synthesis
 
@@ -99,27 +99,25 @@ This is a binary, request-response protocol operating over a client-server model
 
 ## Family Relations
 
-- Total inferred family edges: `19`
+- Total inferred family edges: `17`
 - Strongest edges:
-- `family_6` -> `family_6` | pairs=`8107` avg_score=`5.1911` support=`0.8514` lift=`8.2942` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_3` -> `family_0` | pairs=`6537` avg_score=`5.4454` support=`0.9994` lift=`1.2965` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_7` -> `family_7` | pairs=`3137` avg_score=`5.1279` support=`0.7307` lift=`10.6582` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_5` -> `family_5` | pairs=`2002` avg_score=`4.9734` support=`0.7606` lift=`13.3095` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_8` -> `family_0` | pairs=`1725` avg_score=`5.4468` support=`1` lift=`1.2973` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_2` -> `family_6` | pairs=`1122` avg_score=`5.4401` support=`0.6829` lift=`6.6527` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `noise` -> `family_0` | pairs=`923` avg_score=`5.4017` support=`1` lift=`1.2973` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_6` -> `family_7` | pairs=`903` avg_score=`5.1415` support=`0.0948` lift=`1.3832` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_1` -> `family_5` | pairs=`695` avg_score=`5.444` support=`0.2666` lift=`4.6647` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_4` -> `family_5` | pairs=`374` avg_score=`5.4468` support=`0.4043` lift=`7.0748` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_10` -> `family_7` | pairs=`314` avg_score=`5.4466` support=`0.2522` lift=`3.6787` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_10` -> `family_6` | pairs=`175` avg_score=`5.447` support=`0.1406` lift=`1.3693` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_9` -> `family_7` | pairs=`169` avg_score=`5.4463` support=`0.124` lift=`1.8085` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_9` -> `family_6` | pairs=`150` avg_score=`5.4401` support=`0.1101` lift=`1.0721` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_2` -> `family_7` | pairs=`125` avg_score=`5.3861` support=`0.0761` lift=`1.1097` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_6` -> `family_2` | pairs=`11` avg_score=`5.4668` support=`0.0012` lift=`5.0227` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_0` -> `family_3` | pairs=`9` avg_score=`5.4664` support=`0.0001` lift=`1.5019` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`1`
-- `family_7` -> `family_2` | pairs=`8` avg_score=`5.4668` support=`0.0019` lift=`8.1022` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`1`
-- `family_5` -> `family_1` | pairs=`2` avg_score=`5.4663` support=`0.0008` lift=`37.9939` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`1` length_rules=`1`
+- `family_6` -> `family_6` | pairs=`8154` avg_score=`6.9457` support=`0.7944` lift=`8.3422` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_7` | pairs=`3174` avg_score=`6.9477` support=`0.463` lift=`10.7838` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_5` -> `family_5` | pairs=`2015` avg_score=`6.9508` support=`0.3526` lift=`13.3958` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_0` -> `family_8` | pairs=`1725` avg_score=`6.9676` support=`0.0224` lift=`1.2973` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_6` -> `family_2` | pairs=`1084` avg_score=`6.9676` support=`0.1056` lift=`6.4273` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_0` -> `family_9` | pairs=`1066` avg_score=`6.9675` support=`0.0138` lift=`1.0146` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_0` -> `noise` | pairs=`878` avg_score=`6.9675` support=`0.0114` lift=`1.2353` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_6` | pairs=`843` avg_score=`6.9674` support=`0.123` lift=`1.2913` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_5` -> `family_1` | pairs=`697` avg_score=`6.9676` support=`0.122` lift=`4.6781` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_5` -> `family_4` | pairs=`376` avg_score=`6.9676` support=`0.0658` lift=`7.1126` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_10` | pairs=`311` avg_score=`6.9673` support=`0.0454` lift=`3.6435` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_6` -> `family_10` | pairs=`175` avg_score=`6.9674` support=`0.017` lift=`1.3693` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_9` | pairs=`157` avg_score=`6.9675` support=`0.0229` lift=`1.6801` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_6` -> `family_9` | pairs=`140` avg_score=`6.9674` support=`0.0136` lift=`1.0006` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_2` | pairs=`137` avg_score=`6.9674` support=`0.02` lift=`1.2162` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `noise` -> `noise` | pairs=`44` avg_score=`6.9969` support=`1` lift=`108.4588` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_2` -> `family_2` | pairs=`23` avg_score=`6.9967` support=`1` lift=`60.8637` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 
 ## Families
 
@@ -128,16 +126,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_0
 
-- Role: `response`
+- Role: `request`
 - Messages: `143667`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
-- Related families: `family_3`, `family_8`, `noise`
-- Role hint: `response`
-- Semantic confidence: `0.9943`
+- Related families: `family_3`, `family_8`, `family_9`, `noise`
+- Role hint: `request`
+- Semantic confidence: `1.0`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314781`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.36067` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.573042`
-- Top discriminator candidates: offset `8` conf=`0.573042` salience=`1.0`, offset `7` conf=`0.505331` salience=`0.76471`, offset `9` conf=`0.47961` salience=`0.596846`
+- Top discriminator candidates: offset `8` conf=`0.573042` salience=`1.0`, offset `7` conf=`0.498845` salience=`0.743093`, offset `9` conf=`0.475707` salience=`0.583835`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -156,7 +154,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `8`..`11` | type=`uint32` confidence=`0.9999`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16` confidence=`0.5`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -166,22 +164,19 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
 - bytes `8`..`11` | label=`discriminator` confidence=`0.9999`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
 
 #### Notes
 
-- Echoes request fields from family_3 with up to 10 strong offset matches.
-- Echoes request fields from family_8 with up to 10 strong offset matches.
-- Echoes request fields from noise with up to 10 strong offset matches.
 - Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
@@ -192,16 +187,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_6
 
-- Role: `response`
+- Role: `request`
 - Messages: `19787`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_10`, `family_2`, `family_6`, `family_7`, `family_9`
-- Role hint: `response`
-- Semantic confidence: `0.5143`
+- Role hint: `request`
+- Semantic confidence: `0.515`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.485475` max=`3.027169` mean=`2.352618`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.465606` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.574055`
-- Top discriminator candidates: offset `8` conf=`0.574055` salience=`1.0`, offset `7` conf=`0.507336` salience=`0.76471`, offset `9` conf=`0.454046` salience=`0.596846`
+- Top discriminator candidates: offset `8` conf=`0.574055` salience=`1.0`, offset `7` conf=`0.500851` salience=`0.743093`, offset `9` conf=`0.450142` salience=`0.583835`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -220,7 +215,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `8`..`11` | type=`uint32` confidence=`0.9994`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16` confidence=`0.5`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -230,23 +225,21 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `7`..`7` | label=`discriminator` confidence=`0.95`
+- bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
-- Echoes request fields from family_10 with up to 10 strong offset matches.
-- Echoes request fields from family_2 with up to 10 strong offset matches.
 - Echoes request fields from family_6 with up to 10 strong offset matches.
-- Echoes request fields from family_9 with up to 10 strong offset matches.
+- Echoes request fields from family_7 with up to 10 strong offset matches.
 - Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
@@ -257,16 +250,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_7
 
-- Role: `response`
+- Role: `request`
 - Messages: `11149`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_10`, `family_2`, `family_6`, `family_7`, `family_9`
-- Role hint: `response`
-- Semantic confidence: `0.5964`
+- Role hint: `request`
+- Semantic confidence: `0.5929`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.896241` max=`3.027169` mean=`2.382713`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.331912` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.56793`
-- Top discriminator candidates: offset `8` conf=`0.56793` salience=`1.0`, offset `7` conf=`0.508132` salience=`0.76471`, offset `9` conf=`0.479002` salience=`0.596846`
+- Top discriminator candidates: offset `8` conf=`0.56793` salience=`1.0`, offset `7` conf=`0.501647` salience=`0.743093`, offset `9` conf=`0.475099` salience=`0.583835`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -308,11 +301,8 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Notes
 
-- Echoes request fields from family_10 with up to 10 strong offset matches.
-- Echoes request fields from family_2 with up to 10 strong offset matches.
-- Echoes request fields from family_6 with up to 10 strong offset matches.
 - Echoes request fields from family_7 with up to 10 strong offset matches.
-- Echoes request fields from family_9 with up to 10 strong offset matches.
+- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -322,16 +312,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_5
 
-- Role: `response`
+- Role: `request`
 - Messages: `8347`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_1`, `family_4`, `family_5`
-- Role hint: `response`
+- Role hint: `request`
 - Semantic confidence: `0.6051`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.846439` max=`3.027169` mean=`2.409017`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.206195` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.564185`
-- Top discriminator candidates: offset `8` conf=`0.564185` salience=`1.0`, offset `7` conf=`0.50935` salience=`0.76471`, offset `9` conf=`0.476787` salience=`0.596846`
+- Top discriminator candidates: offset `8` conf=`0.564185` salience=`1.0`, offset `7` conf=`0.502865` salience=`0.743093`, offset `9` conf=`0.472883` salience=`0.583835`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -350,7 +340,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `7`..`7` | type=`uint8` confidence=`0.9994`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16` confidence=`0.5`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -360,21 +350,19 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`6` | label=`response_size_selector` confidence=`1.0`
+- bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`echoed_request_field` confidence=`0.962`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
+- bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
-- Echoes request fields from family_1 with up to 10 strong offset matches.
-- Echoes request fields from family_4 with up to 10 strong offset matches.
 - Echoes request fields from family_5 with up to 10 strong offset matches.
 - Detected common protocol pattern: length field, discriminator
 
@@ -386,16 +374,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_3
 
-- Role: `request`
+- Role: `response`
 - Messages: `6550`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_0`
-- Role hint: `request`
-- Semantic confidence: `0.9986`
+- Role hint: `response`
+- Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020656`
-- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.046691` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`0.890625` confidence=`0.418709`
-- Top discriminator candidates: offset `9` conf=`0.418709` salience=`0.596846`, offset `10` conf=`0.359525` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.046691` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.890625` confidence=`0.414806`
+- Top discriminator candidates: offset `9` conf=`0.414806` salience=`0.583835`, offset `10` conf=`0.356624` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -428,20 +416,19 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
-- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
 - bytes `7`..`7` | label=`discriminator` confidence=`0.9997`
 - bytes `8`..`9` | label=`discriminator` confidence=`0.9986`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
 #### Notes
 
-- Echoes request fields from family_0 with up to 1 strong offset matches.
+- Echoes request fields from family_0 with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -452,16 +439,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_1
 
-- Role: `request`
+- Role: `response`
 - Messages: `2609`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_5`
-- Role hint: `request`
-- Semantic confidence: `0.9971`
+- Role hint: `response`
+- Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.019931`
-- Candidate discriminator offset: `9` cardinality=`8` entropy=`0.050854` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`0.875` confidence=`0.425911`
-- Top discriminator candidates: offset `9` conf=`0.425911` salience=`0.596846`, offset `10` conf=`0.356482` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`8` entropy=`0.050854` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.875` confidence=`0.422008`
+- Top discriminator candidates: offset `9` conf=`0.422008` salience=`0.583835`, offset `10` conf=`0.353581` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -494,21 +481,19 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
-- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
 - bytes `7`..`7` | label=`discriminator` confidence=`0.9992`
 - bytes `8`..`9` | label=`discriminator` confidence=`0.9969`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
+- bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
 #### Notes
 
-- Echoes request fields from family_5 with up to 1 strong offset matches.
-- Response size is tied to request fields from family_5.
+- Echoes request fields from family_5 with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -519,16 +504,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_8
 
-- Role: `request`
+- Role: `response`
 - Messages: `1725`
 - Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
 - Related families: `family_0`
-- Role hint: `request`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.025483`
-- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.048316` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`0.859375` confidence=`0.433089`
-- Top discriminator candidates: offset `9` conf=`0.433089` salience=`0.596846`, offset `10` conf=`0.354467` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.048316` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.859375` confidence=`0.429186`
+- Top discriminator candidates: offset `9` conf=`0.429186` salience=`0.583835`, offset `10` conf=`0.351566` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -555,18 +540,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
 - bytes `8`..`9` | label=`discriminator` confidence=`0.9959`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
 #### Notes
 
+- Echoes request fields from family_0 with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -577,16 +560,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_2
 
-- Role: `request`
+- Role: `response`
 - Messages: `1666`
 - Template: `?? ?? 00 00 00 05 01 04 02 ?? ?? 00`
-- Related families: `family_6`, `family_7`
-- Role hint: `request`
-- Semantic confidence: `0.985`
+- Related families: `family_2`, `family_6`, `family_7`
+- Role hint: `response`
+- Semantic confidence: `0.9818`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.40401` max=`3.027169` mean=`2.994239`
-- Candidate discriminator offset: `9` cardinality=`12` entropy=`0.599428` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`0.9375` confidence=`0.402346`
-- Top discriminator candidates: offset `9` conf=`0.402346` salience=`0.596846`, offset `10` conf=`0.352741` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`12` entropy=`0.599428` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.9375` confidence=`0.398443`
+- Top discriminator candidates: offset `9` conf=`0.398443` salience=`0.583835`, offset `10` conf=`0.34984` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -619,7 +602,6 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
@@ -628,12 +610,14 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
+- Echoes request fields from family_2 with up to 10 strong offset matches.
 - Echoes request fields from family_6 with up to 10 strong offset matches.
-- Echoes request fields from family_7 with up to 1 strong offset matches.
+- Echoes request fields from family_7 with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -644,16 +628,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_9
 
-- Role: `request`
+- Role: `response`
 - Messages: `1363`
 - Template: `?? ?? 00 00 00 05 01 04 02 ?? ??`
-- Related families: `family_6`, `family_7`
-- Role hint: `request`
+- Related families: `family_0`, `family_6`, `family_7`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.222192` max=`3.027169` mean=`2.993993`
-- Candidate discriminator offset: `9` cardinality=`10` entropy=`0.481044` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`0.90625` confidence=`0.415597`
-- Top discriminator candidates: offset `9` conf=`0.415597` salience=`0.596846`, offset `10` conf=`0.357422` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`10` entropy=`0.481044` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.90625` confidence=`0.411694`
+- Top discriminator candidates: offset `9` conf=`0.411694` salience=`0.583835`, offset `10` conf=`0.354522` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -680,11 +664,8 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`discriminator` confidence=`0.9985`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `7`..`7` | label=`length` confidence=`0.95`
 - bytes `8`..`9` | label=`discriminator` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
@@ -692,6 +673,9 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Notes
 
+- Echoes request fields from family_0 with up to 10 strong offset matches.
+- Echoes request fields from family_6 with up to 10 strong offset matches.
+- Echoes request fields from family_7 with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -702,16 +686,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_10
 
-- Role: `request`
+- Role: `response`
 - Messages: `1245`
 - Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
 - Related families: `family_6`, `family_7`
-- Role hint: `request`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.010959`
-- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.098715` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`0.890625` confidence=`0.419001`
-- Top discriminator candidates: offset `9` conf=`0.419001` salience=`0.596846`, offset `10` conf=`0.35212` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.098715` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.890625` confidence=`0.415098`
+- Top discriminator candidates: offset `9` conf=`0.415098` salience=`0.583835`, offset `10` conf=`0.349219` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -738,18 +722,17 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `8`..`9` | label=`discriminator` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
 #### Notes
 
+- Echoes request fields from family_6 with up to 10 strong offset matches.
+- Echoes request fields from family_7 with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -760,16 +743,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### noise
 
-- Role: `request`
+- Role: `response`
 - Messages: `967`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00`
-- Related families: `family_0`
-- Role hint: `request`
+- Related families: `family_0`, `noise`
+- Role hint: `response`
 - Semantic confidence: `0.9545`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.450826` max=`3.027169` mean=`2.959562`
-- Candidate discriminator offset: `9` cardinality=`17` entropy=`1.214338` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`1.0` confidence=`0.370949`
-- Top discriminator candidates: offset `9` conf=`0.370949` salience=`0.596846`, offset `10` conf=`0.353013` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`17` entropy=`1.214338` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`1.0` confidence=`0.367046`
+- Top discriminator candidates: offset `9` conf=`0.367046` salience=`0.583835`, offset `10` conf=`0.350112` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -816,6 +799,7 @@ This is a binary, request-response protocol operating over a client-server model
 #### Notes
 
 - Echoes request fields from family_0 with up to 10 strong offset matches.
+- Echoes request fields from noise with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
@@ -826,16 +810,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 ### family_4
 
-- Role: `request`
+- Role: `response`
 - Messages: `925`
 - Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
 - Related families: `family_5`
-- Role hint: `request`
+- Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023386`
-- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.058876` salience=`0.596846` mutual_information=`0.225435` contrastive_separation=`0.828125` confidence=`0.447545`
-- Top discriminator candidates: offset `9` conf=`0.447545` salience=`0.596846`, offset `10` conf=`0.423479` salience=`0.411016`
+- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.058876` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.828125` confidence=`0.443642`
+- Top discriminator candidates: offset `9` conf=`0.443642` salience=`0.583835`, offset `10` conf=`0.420578` salience=`0.401347`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -862,18 +846,16 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
 - bytes `8`..`9` | label=`discriminator` confidence=`0.9946`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
 #### Notes
 
+- Echoes request fields from family_5 with up to 10 strong offset matches.
 - Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary

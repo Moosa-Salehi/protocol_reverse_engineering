@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Transaction/correlation-id request-response pairing in
+  `corpus/request_response_pairing.py`: `detect_correlation_field()` finds a header field
+  that varies across messages but matches a nearby message within a small window (rejecting
+  constant fields such as a protocol-id), and pairing is performed on that id. This replaces
+  fragile adjacency pairing, which broke whenever a capture started mid-stream with an orphan
+  response (shifting every pair by one). On the Modbus corpus, pairs went from 0% to 100%
+  transaction-id and function-code agreement; relations recall rose ~0.50→0.67. New
+  `RequestResponsePairing` thresholds in `config/thresholds.py`.
 - Opcode/command isolation in boundary detection: when a confident framing/body boundary is
   known and the leading body byte is constant or near-constant within a family, it is split
   into its own 1-byte field and protected from merging. Recovers the discriminator byte (e.g.

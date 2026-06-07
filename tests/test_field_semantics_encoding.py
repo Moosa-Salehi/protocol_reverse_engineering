@@ -441,6 +441,40 @@ def test_pairing_infers_direction_from_stable_server_port() -> None:
     assert {record.direction for record in records} == {"client_to_server", "server_to_client"}
 
 
+def test_correlation_id_pairing_survives_orphan_response_offset() -> None:
+    # Stream starts mid-conversation with an orphan response, then alternates
+    # request/response sharing a 2-byte transaction id at offset 0. Adjacency
+    # pairing would couple each response with the *next* request (off by one);
+    # correlation-id pairing must recover the true same-transaction pairs.
+    def msg(mid, txn, body, idx):
+        return MessageRecord(
+            msg_id=mid, source_file="c.pcap", session_id="s", session_key="s",
+            src_ip="", src_port=0, dst_ip="", dst_port=0, direction="unknown",
+            payload_hex=f"{txn:04x}" + body, payload_len=2 + len(body) // 2,
+            index_in_session=idx,
+        )
+
+    records = [msg(0, 0x1000, "0302002a", 0)]  # orphan response (txn 0x1000)
+    mid = 1
+    for k, txn in enumerate(range(0x1001, 0x1006)):
+        records.append(msg(mid, txn, "03" + f"{k:04x}" + "01", mid))      # request
+        records.append(msg(mid + 1, txn, "0302002a", mid + 1))            # response
+        mid += 2
+
+    pairs = pair_request_response_messages(
+        records,
+        assignments=[FamilyAssignment(msg_id=r.msg_id, family_id="f") for r in records],
+    )
+
+    assert len(pairs) == 5
+    by_txn = {r.msg_id: r.payload_hex[:4] for r in records}
+    # every pair couples two messages of the SAME transaction id
+    assert all(by_txn[p.request_msg_id] == by_txn[p.response_msg_id] for p in pairs)
+    assert all(p.evidence.get("pairing_mode") == "correlation_id" for p in pairs)
+    # the orphan response (msg 0) must be left unpaired
+    assert all(0 not in (p.request_msg_id, p.response_msg_id) for p in pairs)
+
+
 def test_transaction_id_echo_not_penalized_as_counter() -> None:
     requests = [value.to_bytes(2, "big") + b"\x03\x00\x01" for value in range(1, 8)]
     responses = [value.to_bytes(2, "big") + b"\x03\x02\x00\x2a" for value in range(1, 8)]

@@ -112,6 +112,46 @@ class BoundaryDetection:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Request-Response Pairing
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class RequestResponsePairing:
+    """Thresholds for :mod:`protocol_re.corpus.request_response_pairing`.
+
+    Transaction-id (correlation-id) pairing: many binary protocols carry a
+    per-transaction identifier in the header (e.g. the Modbus MBAP transaction
+    id) that is echoed between a request and its response. Detecting such a
+    field and pairing on it is far more reliable than pairing by message
+    adjacency — adjacency breaks whenever a capture starts mid-stream with an
+    orphan response, which shifts every subsequent pair by one.
+    """
+
+    # Header region (bytes) scanned for a correlation-id field.
+    CORRELATION_MAX_OFFSET: int = 16
+
+    # Field widths (bytes) considered for a correlation id.
+    CORRELATION_WIDTHS: tuple[int, ...] = (2, 4)
+
+    # Forward window (messages) within which a request's response must appear
+    # while detecting / applying correlation-id pairing.
+    CORRELATION_WINDOW: int = 4
+
+    # Messages sampled when detecting the correlation-id field (detection only;
+    # pairing is applied to the full session).
+    CORRELATION_DETECTION_SAMPLE: int = 6000
+
+    # Minimum fraction of (sampled) messages that must find a same-value partner
+    # within the window for an offset/width to qualify as a correlation id.
+    CORRELATION_MIN_COVERAGE: float = 0.6
+
+    # Minimum distinct-value ratio (distinct values / messages) required so that
+    # a constant header field (e.g. a protocol-id of 0x0000) is never mistaken
+    # for a correlation id.
+    CORRELATION_MIN_DISTINCT_RATIO: float = 0.2
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Request-Response Relations
 # ═══════════════════════════════════════════════════════════════════════════════
 

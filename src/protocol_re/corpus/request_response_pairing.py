@@ -4,6 +4,9 @@ from collections import Counter, defaultdict
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord, PairRecord
+from protocol_re.config.thresholds import RequestResponsePairing as _RRP
+
+from protocol_re.utils.bytes import hex_to_bytes
 
 
 REQUEST_DIRECTIONS = {"client_to_server", "initiator_to_responder"}
@@ -122,6 +125,116 @@ def _pair_score(request: MessageRecord, response: MessageRecord) -> Tuple[float,
     return score, evidence
 
 
+def _field_value(payload: bytes, offset: int, width: int) -> Optional[bytes]:
+    if len(payload) < offset + width:
+        return None
+    return payload[offset : offset + width]
+
+
+def detect_correlation_field(
+    session_records: Sequence[MessageRecord],
+    window: int = _RRP.CORRELATION_WINDOW,
+    max_offset: int = _RRP.CORRELATION_MAX_OFFSET,
+    widths: Sequence[int] = _RRP.CORRELATION_WIDTHS,
+    sample: int = _RRP.CORRELATION_DETECTION_SAMPLE,
+    min_coverage: float = _RRP.CORRELATION_MIN_COVERAGE,
+    min_distinct_ratio: float = _RRP.CORRELATION_MIN_DISTINCT_RATIO,
+) -> Optional[Tuple[int, int]]:
+    """Detect a transaction/correlation-id field (offset, width).
+
+    A correlation id is a header field that (a) varies across messages (so a
+    constant protocol-id is rejected) and (b) whose value matches a nearby
+    message within ``window`` positions for most messages (request/response
+    echo). Returns the best ``(offset, width)`` or ``None``.
+    """
+    payloads = [hex_to_bytes(record.payload_hex) for record in session_records[:sample]]
+    n = len(payloads)
+    if n < 4:
+        return None
+
+    best: Optional[Tuple[float, float, int, int]] = None  # (coverage, distinct_ratio, -offset, width)
+    for width in sorted({int(w) for w in widths if int(w) > 0}):
+        for offset in range(0, max_offset):
+            values = [_field_value(payload, offset, width) for payload in payloads]
+            present = [value for value in values if value is not None]
+            if len(present) < 4:
+                continue
+            distinct_ratio = len(set(present)) / len(present)
+            if distinct_ratio < min_distinct_ratio:
+                continue  # constant / low-cardinality field is not a correlation id
+            partnered = 0
+            for i, value in enumerate(values):
+                if value is None:
+                    continue
+                lo = max(0, i - window)
+                hi = min(n, i + window + 1)
+                if any(j != i and values[j] == value for j in range(lo, hi)):
+                    partnered += 1
+            coverage = partnered / len(present)
+            if coverage < min_coverage:
+                continue
+            candidate = (coverage, distinct_ratio, -offset, width)
+            if best is None or candidate > best:
+                best = candidate
+
+    if best is None:
+        return None
+    return (-best[2], best[3])
+
+
+def _pair_session_by_correlation(
+    session_records: Sequence[MessageRecord],
+    field: Tuple[int, int],
+    session_id: str,
+    family_by_msg_id: Dict[int, str],
+    min_score: float,
+    window: int = _RRP.CORRELATION_WINDOW,
+) -> List[PairRecord]:
+    offset, width = field
+    payloads = [hex_to_bytes(record.payload_hex) for record in session_records]
+    values = [_field_value(payload, offset, width) for payload in payloads]
+    used = [False] * len(session_records)
+    pairs: List[PairRecord] = []
+
+    for i, request in enumerate(session_records):
+        if used[i] or values[i] is None:
+            continue
+        partner_index: Optional[int] = None
+        for j in range(i + 1, min(len(session_records), i + 1 + window)):
+            if not used[j] and values[j] == values[i]:
+                partner_index = j
+                break
+        if partner_index is None:
+            continue
+        response = session_records[partner_index]
+        score, evidence = _pair_score(request, response)
+        if score < 0:
+            continue
+        # Matching correlation id is strong evidence on top of ordering/length.
+        score += 1.5
+        evidence["correlation_id_match"] = 1.0
+        evidence["correlation_offset"] = float(offset)
+        evidence["correlation_width"] = float(width)
+        evidence["pairing_mode"] = "correlation_id"
+        if score < min_score:
+            continue
+        used[i] = True
+        used[partner_index] = True
+        pairs.append(
+            PairRecord(
+                request_msg_id=request.msg_id,
+                response_msg_id=response.msg_id,
+                session_id=session_id,
+                score=round(score, 4),
+                latency_ms=evidence.get("latency_ms"),
+                request_family_id=family_by_msg_id.get(request.msg_id),
+                response_family_id=family_by_msg_id.get(response.msg_id),
+                evidence=evidence,
+            )
+        )
+    return pairs
+
+
 def pair_request_response_messages(
     records: Sequence[MessageRecord],
     assignments: Optional[Sequence[FamilyAssignment]] = None,
@@ -138,6 +251,22 @@ def pair_request_response_messages(
         session_records.sort(key=lambda record: record.index_in_session)
         session_records = _with_inferred_directions(session_records)
         known_directions = {record.direction for record in session_records if record.direction != "unknown"}
+
+        # Preferred strategy: pair on a detected transaction/correlation-id field.
+        # This is robust to captures that start mid-stream with an orphan response
+        # (which globally shifts adjacency-based pairing by one).
+        correlation_field = detect_correlation_field(session_records)
+        if correlation_field is not None:
+            correlation_pairs = _pair_session_by_correlation(
+                session_records,
+                correlation_field,
+                session_id,
+                family_by_msg_id,
+                min_score=min_score,
+            )
+            if correlation_pairs:
+                pairs.extend(correlation_pairs)
+                continue
 
         if not known_directions:
             for request, response in zip(session_records[0::2], session_records[1::2]):
