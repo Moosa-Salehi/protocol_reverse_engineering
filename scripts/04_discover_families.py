@@ -31,9 +31,11 @@ def main() -> None:
                         help="Neural feature weight for --fusion-method fixed (0.0-1.0)")
     parser.add_argument("--fusion-structural-weight", type=float, default=None,
                         help="Structural feature weight for --fusion-method fixed (0.0-1.0)")
-    parser.add_argument("--no-standardize-latent", dest="standardize_latent", action="store_false",
-                        help="Disable deterministic per-corpus z-score of neural latent features (default: enabled)")
-    parser.set_defaults(standardize_latent=True)
+    parser.add_argument("--standardize-latent", dest="standardize_latent", action="store_true",
+                        help="Opt in to per-corpus z-score of neural latent features. Default off: it "
+                             "amplifies noise latent dims and hurt message-type F1 in testing. Only useful "
+                             "for strongly cross-distribution corpora.")
+    parser.set_defaults(standardize_latent=False)
     parser.add_argument("--layer-aware", action="store_true", help="Enable layer-aware clustering (A6, experimental)")
     parser.add_argument("--framing-json", help="Framing JSON for layer detection (required with --layer-aware)")
     parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer detection")
