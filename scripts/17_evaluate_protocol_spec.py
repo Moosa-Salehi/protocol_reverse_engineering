@@ -425,7 +425,15 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     boundary_metrics = _prf(len(field_matches), max(0, predicted_field_total - len(field_matches)), max(0, truth_field_total - len(field_matches)))
     semantic_metrics = _prf(semantic_tp, max(0, predicted_field_total - semantic_tp), max(0, truth_field_total - semantic_tp))
     relation_metrics = _prf(len(relation_matches), max(0, len(predicted_relations) - len(relation_matches)), max(0, len(truth_relations) - len(relation_matches)))
-    overall = round((message_metrics["f1_score"] + boundary_metrics["f1_score"] + semantic_metrics["f1_score"] + relation_metrics["f1_score"]) / 4, 6)
+    
+    # Weighted overall score: message_type=0.35, boundary=0.30, semantic=0.25, relation=0.10
+    overall = round(
+        message_metrics["f1_score"] * 0.35 +
+        boundary_metrics["f1_score"] * 0.30 +
+        semantic_metrics["f1_score"] * 0.25 +
+        relation_metrics["f1_score"] * 0.10,
+        6
+    )
 
     matched_predicted_fields = {(item["predicted"]["owner_id"], item["predicted"]["start"], item["predicted"].get("length")) for item in field_matches}
     matched_truth_fields = {(item["ground_truth"]["owner_id"], item["ground_truth"]["start"], item["ground_truth"].get("length")) for item in field_matches}
