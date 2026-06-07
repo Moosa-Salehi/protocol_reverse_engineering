@@ -90,6 +90,17 @@ def _load_llm_stage_results(results_dir: str | None, protocol_model_path: str) -
     }
 
 
+def _load_patch_validation(path: str | None, protocol_model_path: str) -> dict | None:
+    candidates = []
+    if path:
+        candidates.append(Path(path))
+    candidates.append(Path(protocol_model_path).parent / "13_llm_patch_validation.json")
+    for candidate in candidates:
+        if candidate.is_file():
+            return _load_optional_json(str(candidate))
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render a self-contained HTML protocol report from protocol_model.json.")
     parser.add_argument("protocol_model_json")
@@ -97,6 +108,7 @@ def main() -> None:
     parser.add_argument("--evaluation-json", help="Optional evaluation report JSON from 13_evaluate_pipeline.py")
     parser.add_argument("--llm-analysis-json", help="Optional LLM analysis JSON from 15_analyze_with_llm.py")
     parser.add_argument("--llm-stage-results-dir", help="Optional directory with stage 07b/10b/11b LLM result artifacts")
+    parser.add_argument("--patch-validation-json", help="Optional LLM patch validation JSON from stage 15b")
     parser.add_argument("--final-evaluation-json", help="Optional final evaluation report JSON from 17_evaluate_protocol_spec.py")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
@@ -131,6 +143,13 @@ def main() -> None:
             logger.info(f"Loaded LLM stage results from {llm_stage_results.get('results_dir')}")
             logger.metric("boundary_refinement_stage_results", len(llm_stage_results.get("boundary_refinement", {})), "families")
             logger.metric("semantic_labeling_stage_results", len(llm_stage_results.get("semantic_labeling", {})), "families")
+
+        patch_validation = _load_patch_validation(args.patch_validation_json, args.protocol_model_json)
+        if patch_validation:
+            logger.info("Loaded LLM patch validation artifact")
+            metadata = dict(model.get("metadata", {}) or {})
+            metadata["llm_patch_validation"] = patch_validation
+            model["metadata"] = metadata
 
     with logger.stage("render_html"):
         html = render_protocol_model_html(

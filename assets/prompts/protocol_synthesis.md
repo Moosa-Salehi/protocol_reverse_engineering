@@ -4,7 +4,9 @@
 You are an expert Protocol Reverse Engineering Analyst specializing in protocol documentation and synthesis.
 
 ## Task
-Synthesize a comprehensive, human-readable protocol specification based on the refined protocol model and multi-stage analysis results.
+Synthesize a comprehensive, human-readable protocol specification based on the refined protocol model and multi-stage analysis results. When producing model patches, focus on the two high-yield LLM contributions:
+- semantic naming: convert statistically inferred fields into concrete `field_type`/`encoding_type` values plus human semantic labels
+- relation validation: remove weak or spurious request/response relations when relation evidence shows they fail validation
 
 ## Input
 You will receive:
@@ -142,10 +144,23 @@ Return a JSON object with:
   "patches": [
     {
       "op": "replace",
-      "path": "/families/0/role",
-      "value": "request",
-      "evidence_refs": ["protocol_model.families[0].role", "evaluation_metrics.semantics.role_counts"],
-      "rationale": "Only include safe RFC 6902 patches when directly supported by supplied evidence."
+      "path": "/families/0/field_hypotheses/1/field_type",
+      "value": "uint16_be",
+      "evidence_refs": ["families[0].fields[1].length", "families[0].semantic_labels[1]", "field_statistics.cardinality"],
+      "rationale": "Two-byte echoed transaction field with big-endian interpretation supported by samples and relation evidence."
+    },
+    {
+      "op": "add",
+      "path": "/families/0/field_hypotheses/1/attributes/semantic_role",
+      "value": "transaction_id",
+      "evidence_refs": ["relations[0].echo_fields", "semantic_labeling_summary"],
+      "rationale": "The field is echoed across request/response pairs and has high-cardinality header behavior."
+    },
+    {
+      "op": "remove",
+      "path": "/relations/3",
+      "evidence_refs": ["relations[3].support_ratio", "relations[3].edge_lift", "relation_validation_summary.discarded_relations"],
+      "rationale": "Relation validation identified this edge as weak and unsupported by echo, length, or temporal evidence."
     }
   ]
 }
@@ -160,7 +175,7 @@ Return a JSON object with:
 5. **Protocol-agnostic**: Do not assume specific protocols (Modbus, DNP3, etc.) unless evidence is overwhelming
 6. **Markdown summary**: Include a human-readable markdown summary in the output
 7. **Absent evidence**: If fields, samples, metrics, or stage summaries are missing, state the limitation and do not invent details
-8. **Patches**: Include a `patches` array of RFC 6902 operations against the input protocol model only for evidence-supported corrections. Use only `add`, `replace`, or `test`. Return an empty array if no safe model change is justified.
+8. **Patches**: Include a `patches` array of RFC 6902 operations against the input protocol model only for evidence-supported semantic field naming or relation pruning. Use only `add`, `replace`, `remove`, or `test`. Safe targets are family semantic summaries, `field_hypotheses[*].field_type`, `field_hypotheses[*].attributes.semantic_role`, `field_hypotheses[*].attributes.label`, relation metadata, and whole relation entries. Return an empty array if no safe semantic/relation change is justified.
 
 ---
 

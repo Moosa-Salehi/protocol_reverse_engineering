@@ -6,7 +6,9 @@ from math import log2
 from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
+from protocol_re.config.thresholds import FramingDetection as _FD
+from protocol_re.config.thresholds import LayerDetection as _LD
+from protocol_re.utils.bytes import best_numeric_endian, hex_to_bytes, safe_int_from_bytes
 
 
 @dataclass
@@ -54,11 +56,11 @@ class FramingLayoutHypothesis:
 
 def infer_framing_hypotheses(
     family_messages: Dict[str, Sequence[str]],
-    max_header_bytes: int = 32,
-    max_hypotheses_per_family: int = 3,
-    min_messages: int = 3,
+    max_header_bytes: int = _FD.MAX_HEADER_BYTES,
+    max_hypotheses_per_family: int = _FD.MAX_HYPOTHESES_PER_FAMILY,
+    min_messages: int = _FD.MIN_MESSAGES,
     detect_layers: bool = False,
-    layer_min_confidence: float = 0.6,
+    layer_min_confidence: float = _LD.MIN_CONFIDENCE,
 ) -> Dict[str, Any]:
     """Infer protocol-agnostic frame/header layouts per family and globally.
 
@@ -137,7 +139,7 @@ def infer_framing_hypotheses(
             "common_header_ends": common_header_ends,
             "field_type_counts": dict(global_field_votes.most_common()),
             "mean_best_confidence": round(mean(best_confidences), 4) if best_confidences else 0.0,
-            "families_with_header_candidate": sum(1 for value in best_confidences if value >= 0.45),
+            "families_with_header_candidate": sum(1 for value in best_confidences if value >= _FD.GLOBAL_HEADER_MIN_CONFIDENCE),
         },
         "families": family_results,
     }
@@ -146,9 +148,9 @@ def infer_framing_hypotheses(
 def infer_family_framing(
     family_id: str,
     messages: Sequence[bytes],
-    max_header_bytes: int = 32,
-    max_hypotheses: int = 3,
-    min_messages: int = 3,
+    max_header_bytes: int = _FD.MAX_HEADER_BYTES,
+    max_hypotheses: int = _FD.MAX_HYPOTHESES_PER_FAMILY,
+    min_messages: int = _FD.MIN_MESSAGES,
 ) -> Dict[str, Any]:
     messages = [bytes(message) for message in messages if message]
     lengths = [len(message) for message in messages]
@@ -168,7 +170,7 @@ def infer_family_framing(
         if not regions and header_end > 0:
             continue
         score = float(score_info["score"])
-        confidence = max(0.0, min(1.0, score / 6.0))
+        confidence = max(0.0, min(1.0, score / _FD.CONFIDENCE_SCORE_NORMALISER))
         layouts.append(
             FramingLayoutHypothesis(
                 family_id=family_id,
@@ -277,7 +279,7 @@ def _constant_runs(stats: Sequence[Dict[str, Any]]) -> List[FramingFieldRegion]:
     values: List[str] = []
     ratios: List[float] = []
     for item in list(stats) + [{"stable_ratio": 0.0, "offset": len(stats)}]:
-        stable = float(item.get("stable_ratio", 0.0) or 0.0) >= 0.95 and float(item.get("coverage", 0.0) or 0.0) >= 0.9
+        stable = float(item.get("stable_ratio", 0.0) or 0.0) >= _FD.CONSTANT_STABLE_RATIO and float(item.get("coverage", 0.0) or 0.0) >= _FD.CONSTANT_COVERAGE
         if stable and start is None:
             start = int(item["offset"])
             values = []
@@ -322,7 +324,7 @@ def _length_fields(messages: Sequence[bytes], scan_limit: int) -> List[FramingFi
                     continue
                 match_count = max(total_matches, suffix_matches, remaining_matches)
                 score = match_count / usable
-                if score >= 0.65:
+                if score >= _FD.LENGTH_MATCH_RATIO:
                     if match_count == total_matches:
                         relation = "total_length"
                     elif match_count == suffix_matches:
@@ -346,32 +348,36 @@ def _counter_like_fields(messages: Sequence[bytes], scan_limit: int) -> List[Fra
     for width in (1, 2, 4):
         for start in range(0, max(0, scan_limit - width + 1)):
             end = start + width
-            for endian in ("big", "little"):
-                values = [safe_int_from_bytes(message[start:end], endian=endian) for message in messages if len(message) >= end]
-                if len(values) < 3:
-                    continue
-                unique_ratio = len(set(values)) / len(values)
-                monotonic_steps = sum(1 for left, right in zip(values, values[1:]) if right >= left)
-                small_deltas = sum(1 for left, right in zip(values, values[1:]) if 0 <= right - left <= 4)
-                denom = max(len(values) - 1, 1)
-                monotonic_ratio = monotonic_steps / denom
-                small_delta_ratio = small_deltas / denom
-                score = (0.45 * unique_ratio) + (0.35 * monotonic_ratio) + (0.20 * small_delta_ratio)
-                if unique_ratio >= 0.45 and score >= 0.62:
-                    regions.append(
-                        FramingFieldRegion(
-                            start=start,
-                            end=end,
-                            field_type="transaction_or_counter",
-                            confidence=round(min(score, 0.95), 4),
-                            evidence={
-                                "unique_ratio": round(unique_ratio, 4),
-                                "monotonic_ratio": round(monotonic_ratio, 4),
-                                "small_delta_ratio": round(small_delta_ratio, 4),
-                                "endian": endian,
-                            },
-                        )
+            chunks = [message[start:end] for message in messages if len(message) >= end]
+            if len(chunks) < 3:
+                continue
+            endian, endian_stats = best_numeric_endian(chunks)
+            if endian is None:
+                continue
+            stats = endian_stats[endian]
+            unique_ratio = float(stats.get("unique_ratio", 0.0) or 0.0)
+            monotonic_ratio = float(stats.get("monotonic_ratio", 0.0) or 0.0)
+            small_delta_ratio = float(stats.get("small_delta_ratio", 0.0) or 0.0)
+            sequence_score = float(stats.get("sequence_score", 0.0) or 0.0)
+            score = (_FD.COUNTER_UNIQUE_WEIGHT * unique_ratio) + (_FD.COUNTER_SEQUENCE_WEIGHT * sequence_score) + (_FD.COUNTER_MONOTONIC_WEIGHT * monotonic_ratio)
+            if unique_ratio >= _FD.COUNTER_UNIQUE_RATIO_MIN and score >= _FD.COUNTER_SCORE_MIN:
+                regions.append(
+                    FramingFieldRegion(
+                        start=start,
+                        end=end,
+                        field_type="transaction_or_counter",
+                        confidence=round(min(score, 0.95), 4),
+                        evidence={
+                            "unique_ratio": round(unique_ratio, 4),
+                            "monotonic_ratio": round(monotonic_ratio, 4),
+                            "small_delta_ratio": round(small_delta_ratio, 4),
+                            "delta_consistency": round(float(stats.get("delta_consistency", 0.0) or 0.0), 4),
+                            "low_magnitude_score": round(float(stats.get("low_magnitude_score", 0.0) or 0.0), 4),
+                            "sequence_score": round(sequence_score, 4),
+                            "endian": endian,
+                        },
                     )
+                )
     return regions
 
 
@@ -382,14 +388,14 @@ def _low_cardinality_fields(stats: Sequence[Dict[str, Any]]) -> List[FramingFiel
         coverage = float(item.get("coverage", 0.0) or 0.0)
         stable_ratio = float(item.get("stable_ratio", 0.0) or 0.0)
         unique_ratio = float(item.get("unique_ratio", 1.0) or 1.0)
-        if coverage >= 0.9 and 1 < cardinality <= 16 and stable_ratio < 0.95 and unique_ratio <= 0.35:
-            confidence = (0.45 * coverage) + (0.35 * (1.0 - unique_ratio)) + (0.20 * min(cardinality / 16.0, 1.0))
+        if coverage >= _FD.DISCRIMINATOR_COVERAGE_MIN and _FD.DISCRIMINATOR_CARDINALITY_MIN < cardinality <= _FD.DISCRIMINATOR_CARDINALITY_MAX and stable_ratio < _FD.DISCRIMINATOR_STABLE_RATIO_MAX and unique_ratio <= _FD.DISCRIMINATOR_UNIQUE_RATIO_MAX:
+            confidence = (_FD.DISCRIMINATOR_COVERAGE_WEIGHT * coverage) + (_FD.DISCRIMINATOR_UNIQUE_WEIGHT * (1.0 - unique_ratio)) + (_FD.DISCRIMINATOR_CARDINALITY_WEIGHT * min(cardinality / _FD.DISCRIMINATOR_CARDINALITY_MAX, 1.0))
             regions.append(
                 FramingFieldRegion(
                     start=int(item["offset"]),
                     end=int(item["offset"]) + 1,
                     field_type="discriminator",
-                    confidence=round(min(confidence, 0.9), 4),
+                    confidence=round(min(confidence, _FD.DISCRIMINATOR_CONFIDENCE_CAP), 4),
                     evidence={"cardinality": cardinality, "unique_ratio": round(unique_ratio, 4), "coverage": round(coverage, 4)},
                 )
             )
@@ -400,7 +406,7 @@ def _tail_variability_scores(stats: Sequence[Dict[str, Any]], scan_limit: int) -
     scores: Dict[int, Dict[str, float]] = {}
     for boundary in range(0, scan_limit + 1):
         head = stats[:boundary]
-        tail = stats[boundary:min(len(stats), boundary + 8)]
+        tail = stats[boundary:min(len(stats), boundary + _FD.TAIL_VARIABILITY_WINDOW)]
         head_stability = mean([float(item.get("stable_ratio", 0.0) or 0.0) for item in head]) if head else 0.0
         head_entropy = mean([float(item.get("entropy", 0.0) or 0.0) for item in head]) if head else 0.0
         tail_entropy = mean([float(item.get("entropy", 0.0) or 0.0) for item in tail]) if tail else 0.0
@@ -415,6 +421,48 @@ def _tail_variability_scores(stats: Sequence[Dict[str, Any]], scan_limit: int) -
     return scores
 
 
+def _preferred_layer_boundary(
+    stats: Sequence[Dict[str, Any]],
+    fields: Sequence[FramingFieldRegion],
+    scan_limit: int,
+) -> Optional[int]:
+    length_fields = [
+        field
+        for field in fields
+        if field.field_type == "length"
+        and (field.evidence or {}).get("relation") in {"body_after_field", "remaining_from_field"}
+        and float(field.confidence or 0.0) >= _FD.LENGTH_LAYER_MIN_CONFIDENCE
+    ]
+    if not length_fields:
+        return None
+
+    prefix_fields = [field for field in fields if field.field_type in {"transaction_or_counter", "constant"}]
+    supported_lengths = [
+        field
+        for field in length_fields
+        if any(prefix.end <= field.start for prefix in prefix_fields) or field.start <= 2
+    ]
+    if not supported_lengths:
+        supported_lengths = length_fields
+
+    boundary = min(supported_lengths, key=lambda field: (field.end, -float(field.confidence or 0.0))).end
+    if boundary < scan_limit:
+        next_stats = stats[boundary] if boundary < len(stats) else {}
+        coverage = float(next_stats.get("coverage", 0.0) or 0.0)
+        stable_ratio = float(next_stats.get("stable_ratio", 0.0) or 0.0)
+        unique_ratio = float(next_stats.get("unique_ratio", 1.0) or 1.0)
+        cardinality = int(next_stats.get("cardinality", 0) or 0)
+        selector_like = coverage >= _FD.SELECTOR_LIKE_COVERAGE_MIN and (
+            stable_ratio >= _FD.SELECTOR_LIKE_STABLE_RATIO_MIN
+            or unique_ratio <= _FD.SELECTOR_LIKE_UNIQUE_RATIO_MAX
+            or _FD.SELECTOR_LIKE_CARDINALITY_MIN <= cardinality <= _FD.SELECTOR_LIKE_CARDINALITY_MAX
+        )
+        if selector_like:
+            boundary += 1
+
+    return min(boundary, scan_limit)
+
+
 def _header_boundary_scores(
     messages: Sequence[bytes],
     stats: Sequence[Dict[str, Any]],
@@ -423,22 +471,31 @@ def _header_boundary_scores(
     scan_limit: int,
 ) -> Dict[int, Dict[str, Any]]:
     scores: Dict[int, Dict[str, Any]] = {}
+    preferred_boundary = _preferred_layer_boundary(stats, fields, scan_limit)
     for boundary in range(0, scan_limit + 1):
         fields_in_header = [field for field in fields if field.end <= boundary]
         if boundary == 0:
-            score = 0.15
+            score = _FD.ZERO_BOUNDARY_SCORE
         else:
             evidence = tail_scores.get(boundary, {})
             field_score = sum(_field_weight(field) * field.confidence for field in fields_in_header)
             coverage_score = mean([float(item.get("coverage", 0.0) or 0.0) for item in stats[:boundary]]) if stats[:boundary] else 0.0
             stability_score = float(evidence.get("head_stability", 0.0))
-            tail_jump = min(float(evidence.get("tail_variability_jump", 0.0)) / 3.0, 1.0)
-            size_penalty = max(0.0, (boundary - 16) / 32.0)
-            score = field_score + (0.8 * coverage_score) + (0.7 * stability_score) + (0.9 * tail_jump) - size_penalty
+            tail_jump = min(float(evidence.get("tail_variability_jump", 0.0)) / _FD.BOUNDARY_TAIL_JUMP_DIVISOR, 1.0)
+            size_penalty = max(0.0, (boundary - _FD.BOUNDARY_SIZE_PENALTY_THRESHOLD) / _FD.BOUNDARY_SIZE_PENALTY_DIVISOR)
+            score = field_score + (_FD.BOUNDARY_COVERAGE_WEIGHT * coverage_score) + (_FD.BOUNDARY_STABILITY_WEIGHT * stability_score) + (_FD.BOUNDARY_TAIL_JUMP_WEIGHT * tail_jump) - size_penalty
+            if preferred_boundary is not None:
+                if boundary == preferred_boundary:
+                    score += _FD.PREFERRED_BOUNDARY_BOOST
+                elif boundary > preferred_boundary:
+                    score -= _FD.PREFERRED_BOUNDARY_BEYOND_PENALTY * (boundary - preferred_boundary)
+                else:
+                    score -= _FD.PREFERRED_BOUNDARY_BEFORE_PENALTY * (preferred_boundary - boundary)
         scores[boundary] = {
             "score": round(score, 4),
             "field_support_count": len(fields_in_header),
             "field_support_types": sorted({field.field_type for field in fields_in_header}),
+            "preferred_layer_boundary": preferred_boundary,
             **{key: round(value, 4) for key, value in tail_scores.get(boundary, {}).items()},
         }
     return scores
@@ -446,11 +503,11 @@ def _header_boundary_scores(
 
 def _field_weight(field: FramingFieldRegion) -> float:
     return {
-        "length": 1.25,
-        "transaction_or_counter": 0.95,
-        "discriminator": 0.75,
-        "constant": 0.55,
-    }.get(field.field_type, 0.4)
+        "length": _FD.FIELD_WEIGHT_LENGTH,
+        "transaction_or_counter": _FD.FIELD_WEIGHT_TRANSACTION_OR_COUNTER,
+        "discriminator": _FD.FIELD_WEIGHT_DISCRIMINATOR,
+        "constant": _FD.FIELD_WEIGHT_CONSTANT,
+    }.get(field.field_type, _FD.FIELD_WEIGHT_UNKNOWN)
 
 
 def _dedupe_fields(fields: Sequence[FramingFieldRegion]) -> List[FramingFieldRegion]:
@@ -469,10 +526,18 @@ def _dedupe_layouts(layouts: Sequence[FramingLayoutHypothesis]) -> List[FramingL
         previous = best.get(layout.header_end)
         if previous is None or layout.confidence > previous.confidence:
             best[layout.header_end] = layout
-    return sorted(best.values(), key=lambda item: (-item.confidence, item.header_end))
+    return sorted(
+        best.values(),
+        key=lambda item: (
+            abs(item.header_end - int((item.evidence or {}).get("preferred_layer_boundary") or item.header_end)),
+            -float((item.evidence or {}).get("score", 0.0) or 0.0),
+            -item.confidence,
+            item.header_end,
+        ),
+    )
 
 
-def _compact_position_evidence(stats: Sequence[Dict[str, Any]], limit: int = 16) -> List[Dict[str, Any]]:
+def _compact_position_evidence(stats: Sequence[Dict[str, Any]], limit: int = _FD.COMPACT_POSITION_EVIDENCE_LIMIT) -> List[Dict[str, Any]]:
     return [
         {
             "offset": item["offset"],

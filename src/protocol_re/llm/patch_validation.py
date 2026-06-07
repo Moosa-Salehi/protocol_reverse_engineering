@@ -14,13 +14,44 @@ from protocol_re.llm.patches import (
 )
 
 
+ALLOWED_FIELD_SEMANTIC_ROLES = {
+    "address",
+    "bitfield",
+    "byte_count",
+    "checksum",
+    "constant",
+    "correlation_id",
+    "counter",
+    "crc",
+    "data",
+    "device_id",
+    "discriminator",
+    "error_code",
+    "flags",
+    "function_code",
+    "length",
+    "opcode",
+    "padding",
+    "payload",
+    "quantity",
+    "reserved",
+    "sequence_number",
+    "status",
+    "timestamp",
+    "transaction_id",
+    "unit_id",
+    "value",
+}
+
+
 ALLOWED_PATH_PATTERNS = [
     re.compile(r"^/families/\d+/role$"),
     re.compile(r"^/families/\d+/semantic_summary$"),
     re.compile(r"^/families/\d+/semantic_summary/(role|confidence|field_labels|notes)$"),
     re.compile(r"^/families/\d+/semantic_summary/field_labels/(-|\d+)$"),
     re.compile(r"^/families/\d+/field_hypotheses/\d+/(field_type|confidence|endian|attributes)$"),
-    re.compile(r"^/families/\d+/field_hypotheses/\d+/attributes/(encoding|semantic_role|label|llm_refined)$"),
+    re.compile(r"^/families/\d+/field_hypotheses/\d+/attributes/(encoding|encoding_type|semantic_role|label|llm_refined)$"),
+    re.compile(r"^/relations/\d+$"),
     re.compile(r"^/relations/\d+/(relation_type|semantic_label|confidence|attributes)$"),
     re.compile(r"^/relations/\d+/attributes/(relation_label|llm_refined)$"),
     re.compile(r"^/metadata/protocol_hints$"),
@@ -141,11 +172,14 @@ def _basic_patch_rejections(model: Dict[str, Any], patch: JsonPatchOperation) ->
         reasons.append(f"Patch path is not in the initial safe allow-list: {patch.path}")
     if patch.op == "add" and not _path_allows_add(patch.path):
         reasons.append(f"Add operation is not allowed for path: {patch.path}")
+    if patch.op == "remove" and not _path_allows_remove(patch.path):
+        reasons.append(f"Remove operation is only allowed for complete relation entries: {patch.path}")
     if patch.op == "test":
         return reasons
-    reasons.extend(_value_rejections(patch))
-    if not _path_exists_for_replace(model, patch):
-        reasons.append(f"Replace path does not exist: {patch.path}")
+    if patch.op != "remove":
+        reasons.extend(_value_rejections(patch))
+    if not _path_exists_for_mutation(model, patch):
+        reasons.append(f"{patch.op.title()} path does not exist: {patch.path}")
     return reasons
 
 
@@ -153,13 +187,18 @@ def _path_allows_add(path: str) -> bool:
     return (
         "/field_labels/" in path
         or path.startswith("/metadata/protocol_hints")
+        or re.match(r"^/families/\d+/field_hypotheses/\d+/attributes/(encoding|encoding_type|semantic_role|label|llm_refined)$", path) is not None
         or path in {"/metadata/llm_refinement", "/families/0/semantic_summary"}
         or re.match(r"^/families/\d+/semantic_summary$", path) is not None
     )
 
 
-def _path_exists_for_replace(model: Dict[str, Any], patch: JsonPatchOperation) -> bool:
-    if patch.op != "replace":
+def _path_allows_remove(path: str) -> bool:
+    return re.match(r"^/relations/\d+$", path) is not None
+
+
+def _path_exists_for_mutation(model: Dict[str, Any], patch: JsonPatchOperation) -> bool:
+    if patch.op not in {"replace", "remove"}:
         return True
     current: Any = model
     try:
@@ -179,7 +218,11 @@ def _value_rejections(patch: JsonPatchOperation) -> List[str]:
         reasons.append("Confidence values must be numeric probabilities in [0, 1]")
     if path.endswith("/field_type") and str(value) not in ALLOWED_FIELD_TYPES:
         reasons.append(f"Field type is not in the controlled vocabulary: {value}")
-    if path.endswith("/role") and str(value) not in ALLOWED_SEMANTIC_ROLES:
+    if path.endswith("/encoding_type") and str(value) not in ALLOWED_FIELD_TYPES:
+        reasons.append(f"Encoding type is not in the controlled vocabulary: {value}")
+    if path.endswith("/semantic_role") and str(value) not in ALLOWED_FIELD_SEMANTIC_ROLES:
+        reasons.append(f"Field semantic role is not in the controlled vocabulary: {value}")
+    elif path.endswith("/role") and str(value) not in ALLOWED_SEMANTIC_ROLES:
         reasons.append(f"Semantic role is not in the controlled vocabulary: {value}")
     if path.endswith("/field_labels") and not isinstance(value, list):
         reasons.append("field_labels replacement must be an array")
@@ -219,6 +262,7 @@ def _evidence_support(patch: JsonPatchOperation, evidence: Dict[str, Any]) -> Li
     evidence_refs = patch.evidence_refs or []
     if evidence_refs:
         support.extend([f"explicit_ref:{ref}" for ref in evidence_refs[:5]])
+        support.extend(_classify_explicit_evidence_refs(evidence_refs))
     path_context = _context_from_path(patch.path)
     if _has_statistical_support(patch, evidence, path_context):
         support.append("statistical")
@@ -227,6 +271,19 @@ def _evidence_support(patch: JsonPatchOperation, evidence: Dict[str, Any]) -> Li
     if _has_neural_support(patch, evidence, path_context):
         support.append("neural")
     return sorted(set(support))
+
+
+def _classify_explicit_evidence_refs(evidence_refs: Sequence[str]) -> List[str]:
+    categories: List[str] = []
+    for ref in evidence_refs:
+        token = str(ref).lower()
+        if any(marker in token for marker in ("stat", "field_statistics", "features", "entropy", "cardinality", "support", "confidence")):
+            categories.append("statistical")
+        if any(marker in token for marker in ("relation", "semantic", "framing", "echo", "length_relation", "opcode", "discriminator")):
+            categories.append("symbolic")
+        if any(marker in token for marker in ("neural", "latent", "salience", "vae", "embedding", "reconstruction")):
+            categories.append("neural")
+    return categories
 
 
 def _context_from_path(path: str) -> Dict[str, Optional[int]]:

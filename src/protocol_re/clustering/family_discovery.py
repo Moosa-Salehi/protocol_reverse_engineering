@@ -5,13 +5,16 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence
 
+from protocol_re.config.thresholds import Clustering as _CL
 from protocol_re.clustering.diagnostics import build_family_diagnostics
 from protocol_re.clustering.hybrid_features import build_feature_matrix
+from protocol_re.clustering.latent_standardize import LatentStandardizer
 from protocol_re.clustering.structural_features import downweight_raw_byte_matrix
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
-CENTROID_ASSIGNMENT_BATCH_SIZE = 10000
+# Re-export for backward compatibility
+CENTROID_ASSIGNMENT_BATCH_SIZE = _CL.CENTROID_ASSIGNMENT_BATCH_SIZE
 
 try:
     import numpy as np
@@ -207,6 +210,12 @@ def discover_families(
     layer_aware: bool = False,  # A6: Enable layer-aware clustering
     framing_data: Dict[str, Any] | None = None,  # A6: Framing data for layer detection
     layer_min_confidence: float = 0.6,  # A6: Minimum confidence for layer detection
+    standardize_latent: bool = False,  # Opt-in per-corpus z-score of latent features.
+    # Default OFF: empirically, per-dimension z-scoring amplifies low-variance/noise latent
+    # dimensions to the same scale as the few dims carrying the message-type signal, which
+    # drowns that signal for distance-based clustering (measured: Modbus message-type F1
+    # dropped 0.96 -> 0.61 with it on). Kept available for genuinely cross-distribution
+    # corpora where latent scale mismatch dominates, but it must be explicitly requested.
 ) -> ClusteringResult:
     if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
         raise ValueError(f"Unsupported feature mode: {feature_mode}")
@@ -260,6 +269,11 @@ def discover_families(
         symbolic_feature_count = 0
         fallback_reason = None
     else:
+        # One standardizer is fit on the sampled matrix below and reused for every
+        # unsampled batch, keeping sampled centroids and batched assignments in a single
+        # latent coordinate system (a fresh per-batch fit would not).
+        latent_standardizer = LatentStandardizer() if standardize_latent else None
+
         feature_info = build_feature_matrix(
             working_records,
             records,
@@ -270,6 +284,7 @@ def discover_families(
             fusion_method=fusion_method,  # Pass fusion method
             neural_weight=fusion_neural_weight,
             structural_weight=fusion_structural_weight,
+            latent_standardizer=latent_standardizer,
         )
         matrix = feature_info.matrix
         if feature_info.latent_dim > 0:
@@ -286,6 +301,7 @@ def discover_families(
                 fusion_method=fusion_method,  # Pass fusion method
                 neural_weight=fusion_neural_weight,
                 structural_weight=fusion_structural_weight,
+                latent_standardizer=latent_standardizer,
             ).matrix
 
         unsampled_matrix_builder = build_feature_unsampled

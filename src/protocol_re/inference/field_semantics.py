@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+from protocol_re.config.thresholds import FieldSemantics as _FS
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
 
@@ -32,6 +33,7 @@ class SemanticHypothesis:
             "start": self.field_start,
             "length": self.field_length,
             "label": self.semantic_role,
+            "field_type": self.encoding_type,
             "confidence": round(self.confidence, 4),
             "evidence": self.evidence,
             "encoding_type": self.encoding_type,
@@ -91,12 +93,12 @@ def infer_discriminator_fields(
 
             # Boost confidence if we have additional evidence
             if (start, length) in framing_discriminators:
-                confidence = min(0.95, confidence + 0.1)
+                confidence = min(_FS.DISCRIMINATOR_MAX_CONFIDENCE, confidence + _FS.DISCRIMINATOR_FRAMING_BOOST)
                 evidence["framing_discriminator"] = True
 
             if (start, length) in keyword_candidates:
                 kw_info = keyword_candidates[(start, length)]
-                confidence = min(0.95, confidence + 0.05)
+                confidence = min(_FS.DISCRIMINATOR_MAX_CONFIDENCE, confidence + _FS.DISCRIMINATOR_KEYWORD_BOOST)
                 evidence["salience_score"] = kw_info["salience"]
                 evidence["mutual_information"] = kw_info["mutual_information"]
 
@@ -115,7 +117,7 @@ def infer_discriminator_fields(
                 field_start=start,
                 field_length=length,
                 semantic_role="discriminator",
-                confidence=0.7,
+                confidence=_FS.DISCRIMINATOR_FRAMING_BASE_CONFIDENCE,
                 evidence={"source": "framing", "field_type": "discriminator"},
                 encoding_type=_infer_encoding_type(length, field.get("endian")),
             ))
@@ -127,7 +129,7 @@ def infer_discriminator_fields(
                 field_start=start,
                 field_length=length,
                 semantic_role="discriminator",
-                confidence=max(0.6, kw_info["confidence"]),
+                confidence=max(_FS.DISCRIMINATOR_KEYWORD_BASE_CONFIDENCE, kw_info["confidence"]),
                 evidence={
                     "source": "keyword_detection",
                     "salience_score": kw_info["salience"],
@@ -258,7 +260,7 @@ def infer_transaction_id_fields(
                     key = (region["start"], region["end"] - region["start"])
                     evidence = region.get("evidence", {})
                     unique_ratio = evidence.get("unique_ratio", 0.0)
-                    if unique_ratio > 0.5:  # High cardinality suggests transaction ID
+                    if unique_ratio > _FS.TRANSACTION_ID_MEDIUM_UNIQUE_RATIO:  # High cardinality suggests transaction ID
                         framing_counters[key] = {
                             "confidence": region.get("confidence", 0.0),
                             "unique_ratio": unique_ratio,
@@ -278,7 +280,7 @@ def infer_transaction_id_fields(
             # Check if echoed (strong evidence for transaction ID)
             if (start, length) in echo_fields:
                 echo_info = echo_fields[(start, length)]
-                confidence = min(0.95, confidence + 0.2)
+                confidence = min(_FS.TRANSACTION_ID_ECHO_MAX_CONFIDENCE, confidence + _FS.TRANSACTION_ID_ECHO_BOOST)
                 evidence["echoed"] = True
                 evidence["echo_support"] = echo_info["support"]
                 evidence["response_family"] = echo_info["response_family"]
@@ -295,13 +297,13 @@ def infer_transaction_id_fields(
             # Check framing counter evidence
             elif (start, length) in framing_counters:
                 framing_info = framing_counters[(start, length)]
-                if framing_info["unique_ratio"] > 0.7:
+                if framing_info["unique_ratio"] > _FS.TRANSACTION_ID_HIGH_UNIQUE_RATIO:
                     # High unique ratio suggests transaction ID over sequence counter
                     hypotheses.append(SemanticHypothesis(
                         field_start=start,
                         field_length=length,
                         semantic_role="transaction_id",
-                        confidence=min(0.85, confidence + 0.1),
+                        confidence=min(_FS.TRANSACTION_ID_HIGH_UNIQUE_CONFIDENCE, confidence + _FS.TRANSACTION_ID_COUNTER_BOOST),
                         evidence={**evidence, "unique_ratio": framing_info["unique_ratio"]},
                         encoding_type=_infer_encoding_type(length, field.get("endian")),
                     ))
@@ -321,7 +323,7 @@ def infer_transaction_id_fields(
                     field_start=start,
                     field_length=length,
                     semantic_role="transaction_id",
-                    confidence=confidence * 0.8,
+                    confidence=confidence * _FS.TRANSACTION_ID_AMBIGUOUS_FACTOR,
                     evidence={**evidence, "ambiguous": True},
                     encoding_type=_infer_encoding_type(length, field.get("endian")),
                 ))
@@ -333,7 +335,7 @@ def infer_transaction_id_fields(
                 field_start=start,
                 field_length=length,
                 semantic_role="transaction_id",
-                confidence=min(0.9, 0.55 + 0.4 * echo_info["support"]),
+                confidence=min(_FS.TRANSACTION_ID_ECHO_MAX, _FS.TRANSACTION_ID_ECHO_BASE + _FS.TRANSACTION_ID_ECHO_SUPPORT_WEIGHT * echo_info["support"]),
                 evidence={
                     "source": "echo_detection",
                     "echo_support": echo_info["support"],
@@ -374,7 +376,7 @@ def infer_counter_fields(
                     unique_ratio = evidence.get("unique_ratio", 0.0)
 
                     # High monotonic + small deltas suggests counter
-                    if monotonic_ratio > 0.8 and small_delta_ratio > 0.5:
+                    if monotonic_ratio > _FS.COUNTER_MONOTONIC_MIN and small_delta_ratio > _FS.COUNTER_SMALL_DELTA_MIN:
                         framing_counters[key] = {
                             "confidence": region.get("confidence", 0.0),
                             "monotonic_ratio": monotonic_ratio,
@@ -393,7 +395,7 @@ def infer_counter_fields(
             framing_info = framing_counters[(start, length)]
 
             # Distinguish between sequence counter and transaction ID
-            if framing_info["unique_ratio"] < 0.5 and framing_info["small_delta_ratio"] > 0.7:
+            if framing_info["unique_ratio"] < _FS.COUNTER_UNIQUE_RATIO_LOW and framing_info["small_delta_ratio"] > _FS.COUNTER_SMALL_DELTA_HIGH:
                 # Low unique ratio + small deltas = sequence counter
                 hypotheses.append(SemanticHypothesis(
                     field_start=start,
@@ -450,7 +452,7 @@ def infer_address_fields(
                     unique_ratio = stats.get("unique_ratio", 0.0)
 
                     # Moderate cardinality (2-100 unique values, 5-50% unique ratio)
-                    if 2 <= cardinality <= 100 and 0.05 <= unique_ratio <= 0.5:
+                    if _FS.ADDRESS_CARDINALITY_MIN <= cardinality <= _FS.ADDRESS_CARDINALITY_MAX and _FS.ADDRESS_UNIQUE_RATIO_MIN <= unique_ratio <= _FS.ADDRESS_UNIQUE_RATIO_MAX:
                         # Find matching field hypothesis
                         for field in field_hypotheses:
                             start = field.get("start", 0)
@@ -460,7 +462,7 @@ def infer_address_fields(
                                     field_start=start,
                                     field_length=length,
                                     semantic_role="address",
-                                    confidence=0.6,
+                                    confidence=_FS.ADDRESS_BASE_CONFIDENCE,
                                     evidence={
                                         "source": "feature_analysis",
                                         "cardinality": cardinality,
@@ -514,7 +516,7 @@ def infer_status_fields(
                     cardinality = stats.get("cardinality", 0)
 
                     # Low cardinality (2-20 unique values) suggests status/error code
-                    if 2 <= cardinality <= 20:
+                    if _FS.STATUS_CARDINALITY_MIN <= cardinality <= _FS.STATUS_CARDINALITY_MAX:
                         # Find matching field hypothesis
                         for field in field_hypotheses:
                             start = field.get("start", 0)
@@ -524,7 +526,7 @@ def infer_status_fields(
                                     field_start=start,
                                     field_length=length,
                                     semantic_role="status",
-                                    confidence=0.55,
+                                    confidence=_FS.STATUS_BASE_CONFIDENCE,
                                     evidence={
                                         "source": "feature_analysis",
                                         "cardinality": cardinality,
@@ -581,24 +583,24 @@ def infer_payload_fields(
                     entropy_vector = position_stats.get("entropy_vector", [])
                     uniqueness_vector = position_stats.get("uniqueness_ratio_vector", [])
 
-                    for offset in range(start, min(start + length, start + 8)):
+                    for offset in range(start, min(start + length, start + _FS.PAYLOAD_ENTROPY_CHECK_WINDOW)):
                         if offset < len(entropy_vector):
                             entropy = entropy_vector[offset]
                             unique_ratio = uniqueness_vector[offset] if offset < len(uniqueness_vector) else 0.0
-                            if entropy > 3.0 or unique_ratio > 0.7:
+                            if entropy > _FS.PAYLOAD_HIGH_ENTROPY_THRESHOLD or unique_ratio > _FS.PAYLOAD_HIGH_UNIQUENESS_THRESHOLD:
                                 high_entropy = True
                                 break
                 elif isinstance(position_stats, dict):
                     # Per-offset format
-                    for offset in range(start, min(start + length, start + 8)):
+                    for offset in range(start, min(start + length, start + _FS.PAYLOAD_ENTROPY_CHECK_WINDOW)):
                         stats = position_stats.get(str(offset), {})
                         entropy = stats.get("entropy", 0.0)
                         unique_ratio = stats.get("unique_ratio", 0.0)
-                        if entropy > 3.0 or unique_ratio > 0.7:
+                        if entropy > _FS.PAYLOAD_HIGH_ENTROPY_THRESHOLD or unique_ratio > _FS.PAYLOAD_HIGH_UNIQUENESS_THRESHOLD:
                             high_entropy = True
                             break
 
-            confidence = 0.7 if high_entropy else 0.6
+            confidence = _FS.PAYLOAD_CONFIDENCE_HIGH if high_entropy else _FS.PAYLOAD_CONFIDENCE_LOW
             hypotheses.append(SemanticHypothesis(
                 field_start=start,
                 field_length=length,
@@ -646,12 +648,12 @@ def infer_checksum_fields(
         evidence = last_field.get("evidence", {})
         cardinality_ratio = evidence.get("cardinality_ratio", 0.0)
 
-        if cardinality_ratio > 0.5:  # High cardinality
+        if cardinality_ratio > _FS.CHECKSUM_CARDINALITY_MIN:  # High cardinality
             hypotheses.append(SemanticHypothesis(
                 field_start=start,
                 field_length=length,
                 semantic_role="checksum",
-                confidence=0.6,
+                confidence=_FS.CHECKSUM_BASE_CONFIDENCE,
                 evidence={
                     "source": "position_analysis",
                     "position": "last_field",
@@ -710,7 +712,7 @@ def infer_constant_fields(
                 field_start=start,
                 field_length=length,
                 semantic_role=semantic_role,
-                confidence=float(field.get("confidence", 0.9)),
+                confidence=float(field.get("confidence", _FS.CONSTANT_BASE_CONFIDENCE)),
                 evidence=evidence,
                 encoding_type=_infer_encoding_type(length, field.get("endian")),
             ))

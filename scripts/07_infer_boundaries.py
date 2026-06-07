@@ -25,6 +25,29 @@ def main() -> None:
     parser.add_argument("--score-threshold", type=float, default=1.5, help="Boundary score threshold")
     parser.add_argument("--features-json", help="Optional family feature JSON from 06_extract_features.py")
     parser.add_argument("--framing-json", help="Optional framing hypotheses from 05_infer_framing.py")
+    parser.add_argument("--entropy-weight", type=float, default=None, help="Entropy-jump weight for boundary scoring")
+    parser.add_argument(
+        "--merge-width-targets",
+        default="2,4",
+        help="Comma-separated merged widths allowed by standard-width merge rules (default: 2,4)",
+    )
+    parser.add_argument(
+        "--length-match-threshold",
+        type=float,
+        default=0.8,
+        help="Minimum match ratio for statistical length-field boundary protection",
+    )
+    parser.add_argument(
+        "--disable-length-validator",
+        action="store_true",
+        help="Disable statistical length-field detection/protection",
+    )
+    parser.add_argument(
+        "--boundary-confidence-weight",
+        type=float,
+        default=0.45,
+        help="Weight for boundary-support term in segment confidence (0.0-1.0)",
+    )
 
     # Enhanced boundary detection options (A2) - now default
     parser.add_argument("--enhanced", action="store_true", help="(Deprecated: enhanced mode is now default)")
@@ -45,6 +68,11 @@ def main() -> None:
         score_threshold=args.score_threshold,
         max_fields=args.max_fields,
         merging_enabled=args.enable_merging,
+        entropy_weight=args.entropy_weight,
+        merge_width_targets=args.merge_width_targets,
+        length_match_threshold=args.length_match_threshold,
+        length_validator_enabled=not args.disable_length_validator,
+        boundary_confidence_weight=args.boundary_confidence_weight,
     )
 
     with logger.stage("load_corpus"):
@@ -101,6 +129,13 @@ def main() -> None:
     print(f"    - Score threshold: {args.score_threshold}")
     print(f"    - Max fields: {args.max_fields}")
     print(f"    - Merging: {'enabled' if args.enable_merging else 'disabled'}")
+    merge_width_targets = tuple(
+        int(item.strip())
+        for item in args.merge_width_targets.split(",")
+        if item.strip()
+    )
+    print(f"    - Merge width targets: {','.join(str(item) for item in merge_width_targets) or 'none'}")
+    print(f"    - Length validator: {'enabled' if not args.disable_length_validator else 'disabled'}")
 
     result = {}
     total_segments = 0
@@ -119,6 +154,11 @@ def main() -> None:
                     framing_summary=framing_by_family.get(family_id),
                     max_fields=args.max_fields,
                     enable_merging=args.enable_merging,
+                    entropy_weight=args.entropy_weight,
+                    merge_width_targets=merge_width_targets,
+                    length_match_threshold=args.length_match_threshold,
+                    enable_length_validator=not args.disable_length_validator,
+                    boundary_confidence_weight=args.boundary_confidence_weight,
                 )
                 hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
                 template = infer_template(messages_hex)

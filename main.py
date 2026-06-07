@@ -409,6 +409,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             if step_name in {"04_discover_families", "06_extract_features"}:
                 step_args.extend(["--latent-cache-path", _path(args.family_latent_cache_path)])
 
+    if args.family_standardize_latent:
+        for step_name, step_args in pipeline:
+            if step_name == "04_discover_families":
+                step_args.append("--standardize-latent")
+                break
+
     # Add fusion method for hybrid mode
     if args.family_feature_mode == "hybrid":
         for step_name, step_args in pipeline:
@@ -433,6 +439,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     for step_name, step_args in pipeline:
         if step_name == "07_infer_boundaries":
             step_args.extend(["--max-fields", str(args.boundary_max_fields)])
+            step_args.extend(["--merge-width-targets", args.boundary_merge_width_targets])
+            step_args.extend(["--length-match-threshold", str(args.boundary_length_match_threshold)])
+            step_args.extend(["--boundary-confidence-weight", str(args.boundary_confidence_weight)])
+            if args.boundary_entropy_weight is not None:
+                step_args.extend(["--entropy-weight", str(args.boundary_entropy_weight)])
+            if args.disable_boundary_length_validator:
+                step_args.extend(["--disable-length-validator"])
             if args.no_boundary_merging:
                 step_args.extend(["--no-merging"])
             break
@@ -530,6 +543,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     for step_name, step_args in pipeline:
             if step_name in {"18_export_markdown", "19_export_html"}:
                 step_args.extend(["--llm-analysis-json", _path(llm_analysis_json)])
+                if step_name == "19_export_html":
+                    step_args.extend(["--patch-validation-json", _path(llm_patch_validation_json)])
                 if args.ground_truth_json:
                     step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
 
@@ -666,7 +681,7 @@ def parse_args() -> argparse.Namespace:
     family_group.add_argument(
         "--family-feature-mode",
         choices=["raw_bytes", "structural", "neural", "hybrid"],
-        default="raw_bytes",
+        default="hybrid",
         help="Feature encoding for family discovery. Default: raw_bytes.",
     )
     family_group.add_argument(
@@ -687,6 +702,14 @@ def parse_args() -> argparse.Namespace:
         default=256,
         help="Batch size for optional neural latent extraction.",
     )
+    family_group.add_argument(
+        "--family-standardize-latent",
+        dest="family_standardize_latent",
+        action="store_true",
+        help="Opt in to per-corpus z-score of neural latent features for family discovery. "
+             "Default off: it amplifies noise latent dimensions and lowered message-type F1 in testing.",
+    )
+    family_group.set_defaults(family_standardize_latent=False)
     family_group.add_argument(
         "--enable-neural-preprocessing",
         action="store_true",
@@ -731,6 +754,34 @@ def parse_args() -> argparse.Namespace:
         "--no-boundary-merging",
         action="store_true",
         help="Disable multi-pass segment merging (not recommended).",
+    )
+    boundary_group.add_argument(
+        "--boundary-entropy-weight",
+        type=float,
+        default=None,
+        help="Override entropy-jump weight for boundary scoring.",
+    )
+    boundary_group.add_argument(
+        "--boundary-merge-width-targets",
+        default="2,4",
+        help="Comma-separated merged widths allowed by standard-width merge rules (default: 2,4).",
+    )
+    boundary_group.add_argument(
+        "--boundary-length-match-threshold",
+        type=float,
+        default=0.8,
+        help="Minimum corpus match ratio for length-field boundary protection (default: 0.8).",
+    )
+    boundary_group.add_argument(
+        "--disable-boundary-length-validator",
+        action="store_true",
+        help="Disable statistical length-field boundary protection.",
+    )
+    boundary_group.add_argument(
+        "--boundary-confidence-weight",
+        type=float,
+        default=0.45,
+        help="Weight for corpus boundary-support term in segment confidence (default: 0.45).",
     )
 
     layer_group = parser.add_argument_group("Multi-layer protocol detection")

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from protocol_re.config.thresholds import NeuralModel as _NM
 from protocol_re.neural.encoder import TorchPayloadEncoder
 
 try:
@@ -20,7 +21,8 @@ except Exception:  # pragma: no cover - optional dependency
     torch = None
 
 
-DEFAULT_MODEL_PATH = "industrial_VAE.pth"
+# Re-export for backward compatibility
+DEFAULT_MODEL_PATH = _NM.DEFAULT_MODEL_PATH
 
 class ConvVAE(nn.Module):
     def __init__(self, latent_dim=32, max_len=256):

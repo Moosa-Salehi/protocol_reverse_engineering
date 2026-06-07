@@ -10,15 +10,18 @@ from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
 
-NGRAM_SIZES = (2, 3)
-STRUCTURAL_MOTIF_SIZES = (4, 5, 6, 8)
-TOP_VALUES_LIMIT = 8
-TOP_MOTIFS_LIMIT = 10
-TOP_NGRAM_FREQUENCIES_LIMIT = 20
-TOP_STRUCTURAL_MOTIFS_LIMIT = 15
-TRAILING_SUFFIX_SIZES = (1, 2, 4, 8)
-MAX_POSITION_STATS_LENGTH = 512  # Limit position-by-position analysis to first 512 bytes
-MAX_NGRAM_ANALYSIS_LENGTH = 1024  # Limit n-gram analysis to first 1024 bytes
+from protocol_re.config.thresholds import FeatureExtraction as _FE
+
+# Re-export for backward compatibility
+NGRAM_SIZES = _FE.NGRAM_SIZES
+STRUCTURAL_MOTIF_SIZES = _FE.STRUCTURAL_MOTIF_SIZES
+TOP_VALUES_LIMIT = _FE.TOP_VALUES_LIMIT
+TOP_MOTIFS_LIMIT = _FE.TOP_MOTIFS_LIMIT
+TOP_NGRAM_FREQUENCIES_LIMIT = _FE.TOP_NGRAM_FREQUENCIES_LIMIT
+TOP_STRUCTURAL_MOTIFS_LIMIT = _FE.TOP_STRUCTURAL_MOTIFS_LIMIT
+TRAILING_SUFFIX_SIZES = _FE.TRAILING_SUFFIX_SIZES
+MAX_POSITION_STATS_LENGTH = _FE.MAX_POSITION_STATS_LENGTH
+MAX_NGRAM_ANALYSIS_LENGTH = _FE.MAX_NGRAM_ANALYSIS_LENGTH
 
 
 def shannon_entropy_from_counts(counts: Counter[int]) -> float:

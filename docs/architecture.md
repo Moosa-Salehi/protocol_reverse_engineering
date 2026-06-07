@@ -136,9 +136,9 @@ The canonical message representation used throughout the pipeline. Each message 
 Message family discovery using multiple feature extraction modes:
 
 - **raw_bytes**: Padded byte vectors with volatile offset downweighting
-- **structural**: Symbolic protocol features (length buckets, stable prefixes, discriminators)
+- **structural**: 35-dimensional symbolic protocol features (length buckets, stable prefixes, discriminators, entropy, direction)
 - **neural**: 32D VAE latent vectors
-- **hybrid**: Combined neural + structural features with adaptive fusion
+- **hybrid**: Combined neural + structural features with adaptive/learned fusion
 
 Supports HDBSCAN, DBSCAN, and heuristic fallback clustering.
 
@@ -165,8 +165,16 @@ Statistical feature extraction per family:
 
 LLM-assisted refinement with evidence gating:
 - Stage-specific LLM interactions (boundaries, semantics, relations)
-- RFC 6902 JSON patch validation
+- RFC 6902 JSON patch validation for evidence-backed semantic/relation edits
 - Evidence-based patch acceptance/rejection
+
+The fusion model is explicit: statistical features and optional neural signals
+produce candidates and evidence, the LLM names fields or validates relation
+edges using that evidence, and the evaluator measures whether the resulting
+model improves semantic and relation scores. Boundary inference remains driven
+by deterministic/statistical stages; LLM patches are reserved for changes the
+model is good at, such as concrete field types, human semantic labels, and
+pruning weak family-to-family edges.
 
 ### 6. Evaluation (`src/protocol_re/evaluation/`)
 
@@ -230,17 +238,19 @@ Implementation:
 
 ### Structural Mode
 
-Uses symbolic protocol features extracted from message structure:
-- Length buckets and patterns
-- Stable prefix masks
-- Discriminator-like bytes
-- Header/body split hints
+Uses 35-dimensional symbolic protocol features:
+- Length features: log bucket, mod 2/4/8 patterns (4 dims)
+- Direction: client-to-server, server-to-client, unknown (3 dims)
+- Entropy and uniqueness ratio (2 dims)
+- Body start and length field evidence (2 dims)
+- Stable prefix mask: 16-byte stability scores (16 dims)
+- Discriminator bytes: first 8 bytes normalized (8 dims)
 
 Implementation:
 - Extract length distribution features
-- Compute stable byte positions
+- Compute stable byte positions across corpus
 - Identify discriminator candidates
-- Combine into feature vector
+- Combine into 35-dim feature vector
 
 ### Neural Mode
 
@@ -254,17 +264,18 @@ Implementation:
 
 ### Hybrid Mode
 
-Combines neural and structural features with adaptive fusion:
-- **concat**: Simple concatenation
+Combines neural and structural features with flexible fusion:
+- **concat**: Simple concatenation (baseline)
 - **adaptive**: Quality-based automatic weighting (recommended)
 - **learned**: MLP-based feature importance learning
 - **fixed**: Manual weight specification
 
 Implementation:
-- Extract both neural and structural features
+- Extract both neural (32D) and structural (35D) features
 - Detect neural collapse (low variance, poor separation)
-- Automatically adjust fusion weights
+- Automatically adjust fusion weights based on feature quality
 - Cache latent vectors for performance
+- Fallback to concat if learned fusion unavailable
 
 ## Enhanced Features
 
@@ -286,7 +297,7 @@ Merging Rules:
 
 ### Multi-Layer Protocol Detection
 
-Detects layered protocols (transport + application) using:
+Detects layered protocols (transport framing + application payload) using:
 - Length fields pointing past their position
 - Stable prefix + variable suffix patterns
 - Transaction/counter fields in header region
@@ -297,6 +308,13 @@ Detection Criteria:
 - Stable prefix (entropy < 0.5) for first N bytes
 - Variable suffix (entropy > 2.0) for remaining bytes
 - Transaction ID or counter in header region
+
+Implementation:
+- `src/protocol_re/inference/layer_detection.py` - boundary detection logic
+- `scripts/05_infer_framing.py` --detect-layers flag enables detection
+- `scripts/04_discover_families.py` --layer-aware flag for layer-aware clustering
+- Layer boundary stored in framing JSON for downstream stages
+- Clustering can run on inner payload only (post-header bytes)
 
 ### LLM-Assisted Refinement
 
@@ -310,6 +328,45 @@ Evidence Gating:
 - Patches rejected if they contradict strong evidence
 - Confidence scores used to weight decisions
 - Fallback to statistical inference if LLM unavailable
+
+### Centralized Thresholds Configuration
+
+All algorithmic tuning parameters live in a single documented module:
+**`src/protocol_re/config/thresholds.py`**.  Each subsystem is represented by a
+plain namespace class whose attributes are the thresholds that control its
+behaviour.
+
+| Class                     | Domain                      | Examples                                                                 |
+|---------------------------|-----------------------------|--------------------------------------------------------------------------|
+| `FeatureExtraction`       | N-gram / motif extraction   | `NGRAM_SIZES`, `MAX_POSITION_STATS_LENGTH`, `TOP_MOTIFS_LIMIT`          |
+| `BoundaryDetection`       | Field boundary segmentation | `MAX_FIELDS_PER_FAMILY`, `SINGLE_BYTE_PENALTY`, `ENTROPY_WEIGHT_REDUCED` |
+| `RequestResponseRelations`| Echo / length relation      | `MAX_ECHO_WIDTH`, `DEFAULT_MIN_ECHO_SUPPORT`, `MIN_CONFIDENCE_THRESHOLD` |
+| `FramingDetection`        | Header / framing inference  | `MAX_HEADER_BYTES`, `FIELD_WEIGHT_LENGTH`, `CONFIDENCE_SCORE_NORMALISER` |
+| `LayerDetection`          | Transport/application split | `MIN_CONFIDENCE`, `INDICATOR_WEIGHT_LENGTH_TO_BODY`, `MAX_POSSIBLE_RAW_SCORE` |
+| `DiscriminatorDetection`  | Opcode / type-byte finders  | `MAX_OFFSET`, `SCORE_LEARNED_WEIGHT`, `SUPPRESSED_ROLE_TOKENS`          |
+| `KeywordDetection`        | Keyword byte discovery      | `SEARCH_RANGE_START`, `SEARCH_RANGE_END`                                 |
+| `FieldSemantics`          | Semantic role inference     | `DISCRIMINATOR_MAX_CONFIDENCE`, `TRANSACTION_ID_ECHO_BOOST`, `COUNTER_MONOTONIC_MIN` |
+| `LLMEvidence`             | LLM prompt construction     | `MAX_PROMPT_HEX_CHARS`                                                   |
+| `NeuralModel`             | Pre-trained model path      | `DEFAULT_MODEL_PATH`                                                     |
+| `Clustering`              | Family discovery            | `CENTROID_ASSIGNMENT_BATCH_SIZE`, `HIGH_VOLATILITY_FIELD_TYPES`          |
+
+**Design principles:**
+
+1. **Single source of truth** — every threshold value is defined exactly once in
+   `thresholds.py`; individual modules import from the config and re-export the
+   name at module level for backward compatibility.
+2. **Self-documenting** — each threshold has a docstring or inline comment
+   explaining what it controls and why the current value was chosen.
+3. **Grouped by domain** — threshold groups map 1:1 to pipeline stages, so
+   when you are tuning, e.g., boundary over-segmentation, you know to look in
+   `BoundaryDetection`.
+4. **Reproducible tuning** — change a value in one place, and every consumer
+   (algorithm, diagnostic script, test) picks it up without hunting through
+   source files.
+
+**How to tune:** open `src/protocol_re/config/thresholds.py`, find the
+relevant class, adjust the value, and re-run the pipeline.  No other files
+need to be edited.
 
 ### Scalability
 
