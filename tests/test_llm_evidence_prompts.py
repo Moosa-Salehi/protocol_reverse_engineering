@@ -13,8 +13,11 @@ from protocol_re.llm.evidence_builders import (
 from protocol_re.llm import stage_synthesis
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.multi_stage import LLMStage, StageConfig
+from protocol_re.llm.patch_validation import validate_and_filter_patches
 from protocol_re.llm.patches import extract_patches_from_analysis
+from protocol_re.llm.patches import JsonPatchOperation
 from protocol_re.llm.stage_relations import apply_relation_validation
+from protocol_re.llm.stage_semantics import apply_semantic_labels
 from protocol_re.llm.stage_synthesis import prepare_synthesis_evidence
 from protocol_re.model.schema import MessageRecord
 
@@ -213,3 +216,72 @@ def test_relation_validation_does_not_apply_llm_discard_to_strong_edge() -> None
 
     assert len(kept) == 1
     assert kept[0]["llm_discard_overridden"] is True
+
+
+def test_semantic_labeling_applies_concrete_type_and_human_label() -> None:
+    fields = [
+        {
+            "family_id": "family_0",
+            "start": 0,
+            "length": 2,
+            "field_type": "counter_or_transaction_id",
+            "confidence": 0.9,
+        }
+    ]
+    labels = [
+        {
+            "field_index": 0,
+            "semantic_role": "transaction_id",
+            "human_label": "transaction identifier",
+            "field_type": "uint16_be",
+            "encoding_type": "uint16_be",
+            "confidence": 0.92,
+            "evidence": ["relations[0].echo_fields", "field_statistics.field_0.cardinality"],
+        }
+    ]
+
+    updated, log = apply_semantic_labels(fields, labels, min_confidence=0.5)
+
+    assert log[0]["applied"] is True
+    assert updated[0]["field_type"] == "uint16_be"
+    assert updated[0]["encoding_type"] == "uint16_be"
+    assert updated[0]["attributes"]["semantic_role"] == "transaction_id"
+    assert updated[0]["attributes"]["label"] == "transaction identifier"
+    assert updated[0]["attributes"]["inferred_role_label"] == "counter_or_transaction_id"
+
+
+def test_evidence_backed_relation_remove_patch_is_accepted() -> None:
+    model = {
+        "protocol_name": "unknown-industrial-protocol",
+        "version": "0.1",
+        "families": [
+            {
+                "family_id": "family_0",
+                "role": "request",
+                "template": "00",
+                "message_count": 1,
+                "field_hypotheses": [{"family_id": "family_0", "start": 0, "length": 1, "field_type": "uint8", "confidence": 0.9}],
+            }
+        ],
+        "relations": [
+            {"request_family_id": "family_0", "response_family_id": "family_0", "pair_count": 1, "avg_pair_score": 0.2}
+        ],
+        "metadata": {},
+    }
+    patches = [
+        JsonPatchOperation(
+            op="remove",
+            path="/relations/0",
+            evidence_refs=["relations[0].support_ratio", "relation_validation_summary.discarded_relations"],
+            rationale="weak relation validation",
+        )
+    ]
+
+    accepted, validation = validate_and_filter_patches(
+        model,
+        patches,
+        evidence={"relations": [{"support_ratio": 0.01, "edge_lift": 1.0}]},
+    )
+
+    assert len(accepted) == 1
+    assert validation["accepted_patch_count"] == 1

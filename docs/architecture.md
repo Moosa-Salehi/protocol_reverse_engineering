@@ -165,8 +165,16 @@ Statistical feature extraction per family:
 
 LLM-assisted refinement with evidence gating:
 - Stage-specific LLM interactions (boundaries, semantics, relations)
-- RFC 6902 JSON patch validation
+- RFC 6902 JSON patch validation for evidence-backed semantic/relation edits
 - Evidence-based patch acceptance/rejection
+
+The fusion model is explicit: statistical features and optional neural signals
+produce candidates and evidence, the LLM names fields or validates relation
+edges using that evidence, and the evaluator measures whether the resulting
+model improves semantic and relation scores. Boundary inference remains driven
+by deterministic/statistical stages; LLM patches are reserved for changes the
+model is good at, such as concrete field types, human semantic labels, and
+pruning weak family-to-family edges.
 
 ### 6. Evaluation (`src/protocol_re/evaluation/`)
 

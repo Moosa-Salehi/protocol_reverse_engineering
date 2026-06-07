@@ -11,6 +11,8 @@ from protocol_re.inference.boundary_detection import infer_field_hypotheses, inf
 from protocol_re.inference.framing import FramingFieldRegion, FramingLayoutHypothesis, _dedupe_layouts, _header_boundary_scores
 from protocol_re.corpus.request_response_pairing import pair_request_response_messages
 from protocol_re.inference.request_response_relations import _echo_candidates, _length_correlation_relations
+from protocol_re.llm.refinement import refine_protocol_model
+from protocol_re.llm.patches import JsonPatchOperation
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.model.schema import Segment
 from protocol_re.utils.bytes import best_numeric_endian
@@ -130,6 +132,151 @@ def test_semantic_score_uses_generic_width_fallback() -> None:
     truth = {"field_type": "uint8", "start": 0, "length": 1}
 
     assert eval_spec._semantic_score(predicted, truth) == 1.0
+
+
+def test_known_good_llm_semantic_patch_improves_overall_score_delta() -> None:
+    base_protocol = {
+        "protocol_name": "toy",
+        "version": "0.1",
+        "metadata": {},
+        "families": [
+            {
+                "family_id": "family_0",
+                "role": "request",
+                "message_count": 4,
+                "template": "?? ??",
+                "field_hypotheses": [
+                    {
+                        "family_id": "family_0",
+                        "start": 0,
+                        "length": 2,
+                        "field_type": "identifier",
+                        "confidence": 0.8,
+                        "attributes": {},
+                    }
+                ],
+            },
+            {
+                "family_id": "family_1",
+                "role": "response",
+                "message_count": 4,
+                "template": "?? ??",
+                "field_hypotheses": [
+                    {
+                        "family_id": "family_1",
+                        "start": 0,
+                        "length": 2,
+                        "field_type": "identifier",
+                        "confidence": 0.8,
+                        "attributes": {},
+                    }
+                ],
+            },
+        ],
+        "relations": [
+            {
+                "request_family_id": "family_0",
+                "response_family_id": "family_1",
+                "pair_count": 4,
+                "avg_pair_score": 0.95,
+                "support_ratio": 1.0,
+                "edge_lift": 3.0,
+                "temporal_order_consistency": 1.0,
+            },
+            {
+                "request_family_id": "family_1",
+                "response_family_id": "family_0",
+                "pair_count": 1,
+                "avg_pair_score": 0.2,
+                "support_ratio": 0.05,
+                "edge_lift": 0.5,
+                "temporal_order_consistency": 0.1,
+            },
+        ],
+    }
+    patch_bundle = {
+        "patches": [
+            JsonPatchOperation(
+                op="replace",
+                path="/families/0/field_hypotheses/0/field_type",
+                value="uint16_be",
+                evidence_refs=["families[0].fields[0].length", "field_statistics.field_0.cardinality"],
+                rationale="two-byte transaction identifier",
+            ).to_dict(),
+            JsonPatchOperation(
+                op="add",
+                path="/families/0/field_hypotheses/0/attributes/semantic_role",
+                value="transaction_id",
+                evidence_refs=["relations[0].echo_fields", "semantic_labeling_summary"],
+                rationale="echoed transaction identifier",
+            ).to_dict(),
+            JsonPatchOperation(
+                op="remove",
+                path="/relations/1",
+                evidence_refs=["relations[1].support_ratio", "relation_validation_summary.discarded_relations"],
+                rationale="false relation edge with weak statistical support",
+            ).to_dict(),
+        ]
+    }
+
+    refined_protocol, validation = refine_protocol_model(
+        base_protocol,
+        patch_bundle,
+        evidence={
+            "families": [{"fields": [{"length": 2}], "semantic_labels": [{"label": "transaction_id"}]}, {}],
+            "relations": [
+                {"support_ratio": 1.0, "edge_lift": 3.0},
+                {"support_ratio": 0.05, "edge_lift": 0.5},
+            ],
+        },
+    )
+    report = eval_spec.evaluate_protocol_spec_with_refinement(
+        {
+            "predicted_protocol": refined_protocol,
+            "base_predicted_protocol": base_protocol,
+            "refined_predicted_protocol": refined_protocol,
+        },
+        {
+            "ground_truth_protocol": {
+                "protocol_name": "toy",
+                "message_types": [
+                    {
+                        "message_type_id": "toy_request",
+                        "role": "request",
+                        "fields": [
+                            {
+                                "name": "transaction_identifier",
+                                "start": 0,
+                                "length": 2,
+                                "field_type": "uint16",
+                            }
+                        ],
+                    },
+                    {
+                        "message_type_id": "toy_response",
+                        "role": "response",
+                        "fields": [
+                            {
+                                "name": "transaction_identifier",
+                                "start": 0,
+                                "length": 2,
+                                "field_type": "uint16",
+                            }
+                        ],
+                    },
+                ],
+                "relations": [
+                    {
+                        "request_message_type_id": "toy_request",
+                        "response_message_type_id": "toy_response",
+                    }
+                ],
+            }
+        },
+    )
+
+    assert validation["accepted_patch_count"] == 3
+    assert report["refinement_comparison"]["overall_score_delta"] > 0
 
 
 def test_best_numeric_endian_prefers_monotonic_low_variance_interpretation() -> None:

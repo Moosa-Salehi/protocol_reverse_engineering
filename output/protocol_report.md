@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 11, 'family_ratio': 1.0}], 'field_type_counts': {'length': 33, 'transaction_or_counter': 20, 'constant': 10, 'discriminator': 5}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 11}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-06T15:26:53.587998+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-07T03:30:58.319121+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
 
 ## Evaluation
 
@@ -43,63 +43,46 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.5164`
+- Overall score: `0.5224`
 - Verdict: `partial`
 - Matched message types: `10` of `11`
 - Message type matching: accuracy=`0.8333` precision=`0.9091` recall=`0.9091` f1=`0.9091`
 - Field boundary: accuracy=`0.3404` precision=`0.5714` recall=`0.4571` f1=`0.5079`
 - Field semantics: accuracy=`0.0678` precision=`0.1429` recall=`0.1143` f1=`0.127`
-- Relations: accuracy=`0.3529` precision=`0.375` recall=`0.8571` f1=`0.5217`
+- Relations: accuracy=`0.375` precision=`0.4` recall=`0.8571` f1=`0.5455`
 
 ## LLM Analysis
 
-- Model: `gpt-5.5`
-- Prompt size: `31870` bytes, `31870` characters, estimated tokens=`7968`
+- Model: `qwen/qwen3.5-397b-a17b`
+- Prompt size: `33002` bytes, `33002` characters, estimated tokens=`8251`
 
-# Protocol Specification
+# Protocol Specification Synthesis
 
 ## Overview
+This is a binary, transaction-based request/response protocol operating over a client-server model. Analysis of 200,000 messages reveals 11 distinct message families. The protocol utilizes a fixed 7-byte header followed by a variable payload, typically totaling 12 bytes in observed samples.
 
-The analyzed corpus contains 200,000 messages clustered into 11 protocol families. The protocol appears to be a binary, transaction-based request/response protocol with a common framing structure.
+## Message Structure
+- **Header**: 7 bytes
+  - `Transaction ID`: 2 bytes (Endianness varies: LE in requests, mixed in responses)
+  - `Reserved`: 2 bytes (Constant 0x0000)
+  - `Length`: 2 bytes (Big-Endian, usually 0x0005 for requests)
+  - `Marker`: 1 byte (Constant 0x01)
+- **Payload**: Typically 5 bytes
+  - `Address/Data`: 4 bytes
+  - `Status`: 1 byte (in responses)
 
-## Common Structure
+## Key Findings
+- **Correlation**: Messages are paired using the 2-byte Transaction ID at offset 0.
+- **Addressing**: 32-bit addresses are used at offset 7, suggesting a flat memory or register map.
+- **Relations**: Strong request/response pairs identified (e.g., Family 9 → Family 1). Two weak relations were discarded during validation.
+- **Anomalies**: Some families (e.g., Family 6) show self-correlation, implying they may handle both request and response logic or represent a specific polling pattern.
 
-A highly consistent 6-byte header is present across all major families:
-
-- Bytes 0-1: transaction identifier or sequence counter
-- Bytes 2-5: 4-byte big-endian length field
-
-Request messages typically contain:
-
-- Constant byte 0x01 at offset 6
-- A 4-byte operation discriminator at offsets 7-10
-- A 1-byte subtype or parameter field at offset 11
-
-Response messages typically contain:
-
-- A response discriminator at offsets 6-9
-- A status or result byte near the end of the message
-- Frequently a trailing constant byte 0x00
-
-## Message Families
-
-Four major request families (family_1, family_4, family_5, family_6) share nearly identical layouts but differ in discriminator values. Several response families (family_2, family_3, family_8, family_9) likewise share a common response layout.
-
-## Correlation
-
-The strongest transaction-correlation candidate is the 2-byte field at offset 0. Response families show nearly one unique value per message, which is consistent with transaction identifiers.
-
-## Framing and Encoding
-
-The protocol appears to use big-endian integer encoding and length-prefixed framing. All inferred fields are byte-aligned. No checksum or CRC was identified.
-
-## Confidence Assessment
-
-Header structure, length encoding, and family separation are strongly supported. Application semantics, operation meanings, and request/response pairing remain only partially resolved because semantic-labeling and relation-validation stages did not contribute additional validated findings.
+## Limitations
+The exact semantic meaning of status codes and the specific memory map for the 32-bit addresses remain unknown without application-level context. The mixed endianness of transaction IDs requires further verification.
 
 ## Family Relations
 
-- Total inferred family edges: `16`
+- Total inferred family edges: `15`
 - Strongest edges:
 - `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 - `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
@@ -116,7 +99,6 @@ Header structure, length encoding, and family separation are strongly supported.
 - `family_9` -> `family_5` | pairs=`239` avg_score=`5.4468` support=`0.0816` lift=`1.1877` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 - `family_3` -> `family_5` | pairs=`180` avg_score=`5.4467` support=`0.091` lift=`1.3239` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 - `family_6` -> `family_0` | pairs=`20` avg_score=`5.4668` support=`0.0011` lift=`4.8594` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_4` -> `family_3` | pairs=`2` avg_score=`5.4642` support=`0.0003` lift=`4.7893` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`1` length_rules=`1`
 
 ## Families
 
@@ -133,8 +115,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `0.9931`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314913`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.841241` salience=`0.749936` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.494389`
-- Top discriminator candidates: offset `7` conf=`0.494389` salience=`0.749936`, offset `0` conf=`0.48592` salience=`1.0`, offset `9` conf=`0.380225` salience=`0.296533`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.841241` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.494068`
+- Top discriminator candidates: offset `7` conf=`0.494068` salience=`0.748865`, offset `0` conf=`0.48592` salience=`1.0`, offset `9` conf=`0.380006` salience=`0.295805`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -153,7 +135,7 @@ Header structure, length encoding, and family separation are strongly supported.
 - bytes `7`..`10` | type=`uint32` confidence=`0.9998`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`blob` confidence=`0.5`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -193,8 +175,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `0.5199`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.485475` max=`3.027169` mean=`2.389712`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.98095` salience=`0.749936` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.498635`
-- Top discriminator candidates: offset `7` conf=`0.498635` salience=`0.749936`, offset `8` conf=`0.369271` salience=`0.354868`, offset `9` conf=`0.312789` salience=`0.296533`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.98095` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.498314`
+- Top discriminator candidates: offset `7` conf=`0.498314` salience=`0.748865`, offset `8` conf=`0.375128` salience=`0.374394`, offset `9` conf=`0.312571` salience=`0.295805`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -257,8 +239,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `0.5385`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`3.027169` mean=`2.379388`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.941612` salience=`0.749936` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.498371`
-- Top discriminator candidates: offset `7` conf=`0.498371` salience=`0.749936`, offset `8` conf=`0.367933` salience=`0.354868`, offset `9` conf=`0.355181` salience=`0.296533`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.941612` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.49805`
+- Top discriminator candidates: offset `7` conf=`0.49805` salience=`0.748865`, offset `8` conf=`0.373791` salience=`0.374394`, offset `9` conf=`0.354963` salience=`0.295805`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -322,8 +304,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `0.5424`
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.846439` max=`3.027169` mean=`2.402529`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.93922` salience=`0.749936` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.498138`
-- Top discriminator candidates: offset `7` conf=`0.498138` salience=`0.749936`, offset `8` conf=`0.368784` salience=`0.354868`, offset `9` conf=`0.341082` salience=`0.296533`
+- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.93922` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.497816`
+- Top discriminator candidates: offset `7` conf=`0.497816` salience=`0.748865`, offset `8` conf=`0.374642` salience=`0.374394`, offset `9` conf=`0.340863` salience=`0.295805`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -387,8 +369,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020272`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.347193` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.356681`
-- Top discriminator candidates: offset `10` conf=`0.356681` salience=`0.347193`, offset `9` conf=`0.340362` salience=`0.296533`, offset `8` conf=`0.329793` salience=`0.354868`
+- Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.352579` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.358296`
+- Top discriminator candidates: offset `10` conf=`0.358296` salience=`0.352579`, offset `9` conf=`0.340144` salience=`0.295805`, offset `8` conf=`0.335651` salience=`0.374394`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -448,8 +430,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.02023`
-- Candidate discriminator offset: `10` cardinality=`23` entropy=`3.122259` salience=`0.347193` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.329939`
-- Top discriminator candidates: offset `10` conf=`0.329939` salience=`0.347193`, offset `8` conf=`0.329724` salience=`0.354868`, offset `9` conf=`0.318834` salience=`0.296533`
+- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.016887` salience=`0.374394` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.335581`
+- Top discriminator candidates: offset `8` conf=`0.335581` salience=`0.374394`, offset `10` conf=`0.331555` salience=`0.352579`, offset `9` conf=`0.318615` salience=`0.295805`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -509,8 +491,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.550341` max=`3.027169` mean=`3.017568`
-- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.30222` salience=`0.296533` mutual_information=`0.184592` contrastive_separation=`0.859375` confidence=`0.335805`
-- Top discriminator candidates: offset `9` conf=`0.335805` salience=`0.296533`, offset `10` conf=`0.329415` salience=`0.347193`
+- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.30222` salience=`0.295805` mutual_information=`0.184592` contrastive_separation=`0.859375` confidence=`0.335587`
+- Top discriminator candidates: offset `9` conf=`0.335587` salience=`0.295805`, offset `10` conf=`0.331031` salience=`0.352579`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -559,8 +541,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `0.999`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.018191`
-- Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.347193` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.406257`
-- Top discriminator candidates: offset `10` conf=`0.406257` salience=`0.347193`, offset `9` conf=`0.354905` salience=`0.296533`, offset `8` conf=`0.329992` salience=`0.354868`
+- Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.352579` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.407873`
+- Top discriminator candidates: offset `10` conf=`0.407873` salience=`0.352579`, offset `9` conf=`0.354687` salience=`0.295805`, offset `8` conf=`0.33585` salience=`0.374394`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -622,8 +604,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023486`
-- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.02806` salience=`0.296533` mutual_information=`0.184592` contrastive_separation=`0.828125` confidence=`0.347463`
-- Top discriminator candidates: offset `9` conf=`0.347463` salience=`0.296533`, offset `10` conf=`0.335368` salience=`0.347193`
+- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.02806` salience=`0.295805` mutual_information=`0.184592` contrastive_separation=`0.828125` confidence=`0.347244`
+- Top discriminator candidates: offset `9` conf=`0.347244` salience=`0.295805`, offset `10` conf=`0.336984` salience=`0.352579`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -674,8 +656,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `0.9646`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.40401` max=`3.027169` mean=`2.97951`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`2.492763` salience=`0.347193` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.347391`
-- Top discriminator candidates: offset `10` conf=`0.347391` salience=`0.347193`, offset `8` conf=`0.33236` salience=`0.354868`, offset `9` conf=`0.314676` salience=`0.296533`
+- Candidate discriminator offset: `10` cardinality=`17` entropy=`2.492763` salience=`0.352579` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.349007`
+- Top discriminator candidates: offset `10` conf=`0.349007` salience=`0.352579`, offset `8` conf=`0.338217` salience=`0.374394`, offset `9` conf=`0.314457` salience=`0.295805`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -735,8 +717,8 @@ Header structure, length encoding, and family separation are strongly supported.
 - Semantic confidence: `0.9423`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.450826` max=`3.027169` mean=`2.958612`
-- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.515799` salience=`0.354868` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.336549`
-- Top discriminator candidates: offset `8` conf=`0.336549` salience=`0.354868`, offset `10` conf=`0.324443` salience=`0.347193`, offset `9` conf=`0.29309` salience=`0.296533`
+- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.515799` salience=`0.374394` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.342407`
+- Top discriminator candidates: offset `8` conf=`0.342407` salience=`0.374394`, offset `10` conf=`0.326058` salience=`0.352579`, offset `9` conf=`0.292872` salience=`0.295805`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments

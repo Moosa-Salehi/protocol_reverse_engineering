@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
-from protocol_re.llm.stage_semantics import run_semantic_labeling_stage
+from protocol_re.llm.stage_semantics import apply_semantic_label_to_field, run_semantic_labeling_stage
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.utils.logging import setup_stage_logging
@@ -291,9 +291,7 @@ def main() -> None:
                     label = log_entry.get("label", {})
                     field_index = label.get("field_index")
                     if field_index is not None and field_index < len(labeled_fields):
-                        labeled_fields[field_index]["semantic_role"] = label.get("semantic_role")
-                        labeled_fields[field_index]["semantic_confidence"] = label.get("confidence")
-                        labeled_fields[field_index]["semantic_evidence"] = label.get("evidence", [])
+                        apply_semantic_label_to_field(labeled_fields[field_index], label)
 
             labeled_details["field_hypotheses"] = labeled_fields
             labeled_details["llm_semantic_labeling"] = {
