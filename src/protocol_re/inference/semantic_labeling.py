@@ -21,6 +21,7 @@ from protocol_re.inference.field_semantics import (
     infer_payload_fields,
     infer_checksum_fields,
     infer_constant_fields,
+    _infer_encoding_type,
 )
 from protocol_re.inference.semantic_patterns import (
     resolve_conflicting_hypotheses,
@@ -261,6 +262,7 @@ def _legacy_relation_labels(
                     "response_offset": echo["response_offset"],
                     "support": echo.get("support", 0.0),
                 },
+                encoding_type=_infer_encoding_type(length, field.get("endian")),
             ))
 
             # Add transaction_or_correlation_id if 2 or 4 bytes
@@ -274,6 +276,7 @@ def _legacy_relation_labels(
                         "response_family_id": edge["response_family_id"],
                         "echo_support": echo.get("support", 0.0),
                     },
+                    encoding_type=_infer_encoding_type(length, field.get("endian")),
                 ))
 
         # Length relations
@@ -295,6 +298,7 @@ def _legacy_relation_labels(
                     "response_family_id": edge["response_family_id"],
                     "support": rel.get("support", 0.0),
                 },
+                encoding_type=_infer_encoding_type(length, field.get("endian")),
             ))
 
     return hypotheses

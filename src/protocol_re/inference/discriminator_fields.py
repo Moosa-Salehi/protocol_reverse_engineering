@@ -5,12 +5,14 @@ from math import log2
 from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+from protocol_re.config.thresholds import DiscriminatorDetection as _DD
 from protocol_re.inference.boundary_detection import infer_template
 from protocol_re.model.schema import MessageRecord
 from protocol_re.neural.salience import attention_offset_salience, encoder_gradient_salience, merge_salience_scores
 from protocol_re.utils.bytes import hex_to_bytes
 
-SUPPRESSED_ROLE_TOKENS = ("length", "transaction", "counter", "checksum", "timestamp", "blob")
+# Re-export for backward compatibility
+SUPPRESSED_ROLE_TOKENS = _DD.SUPPRESSED_ROLE_TOKENS
 
 
 def entropy(values: Sequence[Any]) -> float:
@@ -62,8 +64,8 @@ def _contrastive_separation(values: Sequence[int], labels: Sequence[str]) -> flo
         label_counts = Counter(label for observed, label in zip(values, labels) if observed == value)
         dominant += label_counts.most_common(1)[0][1] if label_counts else 0
     purity = dominant / max(total, 1)
-    balance = min(len(value_counts), 16) / 16.0
-    return max(0.0, min(1.0, (0.75 * purity) + (0.25 * balance)))
+    balance = min(len(value_counts), int(_DD.CONTRASTIVE_BALANCE_DIVISOR)) / _DD.CONTRASTIVE_BALANCE_DIVISOR
+    return max(0.0, min(1.0, (_DD.CONTRASTIVE_PURITY_WEIGHT * purity) + (_DD.CONTRASTIVE_BALANCE_WEIGHT * balance)))
 
 
 def _excluded_roles(family_id: str, offset: int, family_features: Dict[str, Any], framing: Dict[str, Any]) -> List[str]:
@@ -81,7 +83,7 @@ def _excluded_roles(family_id: str, offset: int, family_features: Dict[str, Any]
     unique_ratios = position_stats.get("uniqueness_ratio_vector", []) or []
     coverage = position_stats.get("coverage_vector", []) or []
     if offset < len(unique_ratios) and offset < len(coverage):
-        if float(unique_ratios[offset]) >= 0.8 and float(coverage[offset]) >= 0.8:
+        if float(unique_ratios[offset]) >= _DD.EXCLUDED_UNIQUE_RATIO_MIN and float(coverage[offset]) >= _DD.EXCLUDED_COVERAGE_MIN:
             roles.append("payload_blob")
     return sorted(set(roles))
 
@@ -93,8 +95,8 @@ def infer_discriminator_candidates(
     framing: Optional[Dict[str, Any]] = None,
     neural_model_path: Optional[str] = None,
     salience_cache_path: Optional[str] = None,
-    max_offset: int = 128,
-    top_k: int = 5,
+    max_offset: int = _DD.MAX_OFFSET,
+    top_k: int = _DD.TOP_K,
 ) -> Dict[str, Any]:
     families: Dict[str, List[MessageRecord]] = defaultdict(list)
     labeled_payloads: List[bytes] = []
@@ -136,10 +138,10 @@ def infer_discriminator_candidates(
             coverage = len(values) / max(len(messages), 1)
             unique_ratio = cardinality / max(len(values), 1)
             stable_ratio = Counter(values).most_common(1)[0][1] / max(len(values), 1)
-            if coverage < 0.5 or cardinality <= 1:
+            if coverage < _DD.MIN_COVERAGE or cardinality <= _DD.MIN_CARDINALITY:
                 continue
             # Evidence-gate learned salience with explainable symbolic constraints.
-            cardinality_score = 1.0 - min(abs(cardinality - 4) / 16.0, 1.0) if cardinality <= 32 else 0.0
+            cardinality_score = 1.0 - min(abs(cardinality - _DD.IDEAL_CARDINALITY) / _DD.CARDINALITY_RANGE_DIVISOR, 1.0) if cardinality <= _DD.MAX_SYMBOLIC_CARDINALITY else 0.0
             stability_score = max(0.0, min(1.0, 1.0 - stable_ratio))
             local_direction_mi = normalized_mi(values, [family_directions[index] for index in indexes])
             contrastive = _contrastive_separation(values, [family_labels[index] for index in indexes])
@@ -150,16 +152,16 @@ def infer_discriminator_candidates(
             if excluded:
                 continue
             score = (
-                (0.30 * learned)
-                + (0.24 * family_mi)
-                + (0.16 * direction_mi)
-                + (0.14 * cardinality_score)
-                + (0.10 * contrastive)
-                + (0.06 * stability_score)
+                (_DD.SCORE_LEARNED_WEIGHT * learned)
+                + (_DD.SCORE_FAMILY_MI_WEIGHT * family_mi)
+                + (_DD.SCORE_DIRECTION_MI_WEIGHT * direction_mi)
+                + (_DD.SCORE_CARDINALITY_WEIGHT * cardinality_score)
+                + (_DD.SCORE_CONTRASTIVE_WEIGHT * contrastive)
+                + (_DD.SCORE_STABILITY_WEIGHT * stability_score)
             )
-            if cardinality > max(32, len(values) * 0.45):
-                score *= 0.35
-            if score < 0.08:
+            if cardinality > max(_DD.MAX_SYMBOLIC_CARDINALITY, len(values) * _DD.HIGH_CARDINALITY_RATIO_THRESHOLD):
+                score *= _DD.HIGH_CARDINALITY_PENALTY
+            if score < _DD.MIN_SCORE:
                 continue
             candidates.append(
                 {

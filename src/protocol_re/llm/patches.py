@@ -6,12 +6,15 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, Iterable, List, Optional
 
 
-ALLOWED_PATCH_OPS = {"add", "replace", "test"}
+ALLOWED_PATCH_OPS = {"add", "replace", "remove", "test"}
 
 ALLOWED_FIELD_TYPES = {
+    "blob",
+    "bytes",
     "checksum",
     "constant",
     "counter",
+    "counter_or_transaction_id",
     "discriminator",
     "flags",
     "identifier",
@@ -22,6 +25,16 @@ ALLOWED_FIELD_TYPES = {
     "selector",
     "status",
     "timestamp",
+    "uint8",
+    "uint16",
+    "uint16_be",
+    "uint16_le",
+    "uint32",
+    "uint32_be",
+    "uint32_le",
+    "uint64",
+    "uint64_be",
+    "uint64_le",
     "unknown",
 }
 
@@ -174,11 +187,18 @@ def _apply_operation(document: Dict[str, Any], patch: JsonPatchOperation) -> Non
         index = int(key)
         if patch.op == "add":
             parent.insert(index, copy.deepcopy(patch.value))
+        elif patch.op == "remove":
+            del parent[index]
         else:
             parent[index] = copy.deepcopy(patch.value)
         return
     if not isinstance(parent, dict):
         raise ValueError(f"Cannot apply patch below scalar at {patch.path}")
+    if patch.op == "remove":
+        if key not in parent:
+            raise ValueError(f"Cannot remove missing key at {patch.path}")
+        del parent[key]
+        return
     if patch.op == "replace" and key not in parent:
         raise ValueError(f"Cannot replace missing key at {patch.path}")
     parent[key] = copy.deepcopy(patch.value)

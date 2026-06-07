@@ -15,6 +15,21 @@ from protocol_re.llm.evidence_builders import build_field_statistics, build_samp
 from protocol_re.model.schema import MessageRecord
 
 
+CONCRETE_FIELD_TYPES = {
+    "uint8",
+    "uint16",
+    "uint16_be",
+    "uint16_le",
+    "uint32",
+    "uint32_be",
+    "uint32_le",
+    "uint64",
+    "uint64_be",
+    "uint64_le",
+    "bytes",
+}
+
+
 def prepare_semantic_evidence(
     family_id: str,
     fields: List[Dict[str, Any]],
@@ -131,6 +146,10 @@ def validate_semantic_label(
     if semantic_role not in valid_roles:
         return False, f"Unknown semantic role: {semantic_role}"
 
+    encoding_type = label.get("encoding_type") or label.get("field_type")
+    if encoding_type and str(encoding_type) not in CONCRETE_FIELD_TYPES:
+        return False, f"Unknown concrete field_type/encoding_type: {encoding_type}"
+
     # Validate against field statistics if available
     if field_statistics:
         field_key = f"field_{field_index}"
@@ -203,11 +222,35 @@ def apply_semantic_labels(
     for label in applied_labels:
         field_index = label["field_index"]
         if field_index < len(updated_fields):
-            updated_fields[field_index]["semantic_role"] = label["semantic_role"]
-            updated_fields[field_index]["semantic_confidence"] = label["confidence"]
-            updated_fields[field_index]["semantic_evidence"] = label.get("evidence", [])
+            apply_semantic_label_to_field(updated_fields[field_index], label)
 
     return updated_fields, validation_log
+
+
+def apply_semantic_label_to_field(field: Dict[str, Any], label: Dict[str, Any]) -> Dict[str, Any]:
+    attributes = field.get("attributes") if isinstance(field.get("attributes"), dict) else {}
+    attributes = dict(attributes)
+    original_field_type = field.get("field_type")
+    semantic_role = label["semantic_role"]
+    encoding_type = label.get("encoding_type") or label.get("field_type")
+    human_label = label.get("human_label") or label.get("label") or semantic_role
+
+    field["semantic_role"] = semantic_role
+    field["semantic_confidence"] = label["confidence"]
+    field["semantic_evidence"] = label.get("evidence", [])
+    attributes.setdefault("semantic_role", semantic_role)
+    attributes.setdefault("semantic_confidence", label["confidence"])
+    attributes.setdefault("semantic_evidence", label.get("evidence", []))
+    attributes.setdefault("label", human_label)
+    if original_field_type and "inferred_role_label" not in attributes:
+        attributes["inferred_role_label"] = original_field_type
+    if encoding_type:
+        field["field_type"] = str(encoding_type)
+        field["encoding_type"] = str(encoding_type)
+        attributes["encoding_type"] = str(encoding_type)
+        attributes.setdefault("encoding", str(encoding_type))
+    field["attributes"] = attributes
+    return field
 
 
 def run_semantic_labeling_stage(

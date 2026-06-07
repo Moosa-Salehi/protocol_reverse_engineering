@@ -5,23 +5,24 @@ from statistics import mean, stdev
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.model.schema import FamilyAssignment, MessageRecord, PairRecord
+from protocol_re.corpus.request_response_pairing import infer_missing_directions
 from protocol_re.utils.bytes import hex_to_bytes, safe_int_from_bytes
 
 
-MAX_ECHO_WIDTH = 4
-DEFAULT_MIN_EDGE_PAIRS = 2
-DEFAULT_MIN_EDGE_LIFT = 1.0
-DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST = 5
+from protocol_re.config.thresholds import RequestResponseRelations as _RR
 
-# A4: Tightened performance limits for echo/length field detection
-MAX_ECHO_SEARCH_LENGTH = 64  # Reduced from 256 to focus on header regions (first 64 bytes)
-MAX_LENGTH_FIELD_SEARCH_LENGTH = 64  # Reduced from 128 to focus on header regions
-ECHO_SEARCH_STRIDE = 1
-
-# A4: Stricter thresholds for relation detection
-DEFAULT_MIN_ECHO_SUPPORT = 0.95  # Increased from 0.9 to reduce false positives
-DEFAULT_MIN_LENGTH_SUPPORT = 0.95  # Increased from 0.9 to reduce false positives
-MIN_CONFIDENCE_THRESHOLD = 0.7  # Minimum confidence to keep a relation
+# Re-export for backward compatibility
+MAX_ECHO_WIDTH = _RR.MAX_ECHO_WIDTH
+DEFAULT_MIN_EDGE_PAIRS = _RR.DEFAULT_MIN_EDGE_PAIRS
+DEFAULT_MIN_EDGE_LIFT = _RR.DEFAULT_MIN_EDGE_LIFT
+DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST = _RR.DEFAULT_MAX_RESPONSE_FAMILIES_PER_REQUEST
+MAX_ECHO_SEARCH_LENGTH = _RR.MAX_ECHO_SEARCH_LENGTH
+MAX_LENGTH_FIELD_SEARCH_LENGTH = _RR.MAX_LENGTH_FIELD_SEARCH_LENGTH
+ECHO_SEARCH_STRIDE = _RR.ECHO_SEARCH_STRIDE
+MAX_EVIDENCE_PAIRS_PER_EDGE = _RR.MAX_EVIDENCE_PAIRS_PER_EDGE
+DEFAULT_MIN_ECHO_SUPPORT = _RR.DEFAULT_MIN_ECHO_SUPPORT
+DEFAULT_MIN_LENGTH_SUPPORT = _RR.DEFAULT_MIN_LENGTH_SUPPORT
+MIN_CONFIDENCE_THRESHOLD = _RR.MIN_CONFIDENCE_THRESHOLD
 
 
 
@@ -44,6 +45,13 @@ def _pair_by_family(pairs: Sequence[PairRecord]) -> Dict[Tuple[str, str], List[P
             continue
         grouped[(req_family, resp_family)].append(pair)
     return grouped
+
+
+def _sample_pairs(items: Sequence[Tuple[bytes, bytes]], max_items: int = MAX_EVIDENCE_PAIRS_PER_EDGE) -> List[Tuple[bytes, bytes]]:
+    if len(items) <= max_items:
+        return list(items)
+    step = len(items) / max_items
+    return [items[min(int(index * step), len(items) - 1)] for index in range(max_items)]
 
 
 def _order_consistent(request: MessageRecord, response: MessageRecord) -> Optional[bool]:
@@ -242,9 +250,15 @@ def _calculate_echo_confidence(
     elif usable_pairs >= 5:
         confidence += 0.05
 
-    # Penalty for counter/timestamp patterns
-    if _is_likely_counter_or_timestamp(request_values) or _is_likely_counter_or_timestamp(response_values):
-        confidence *= 0.3  # Heavy penalty
+    same_series = request_values == response_values
+    # Penalize counter-like echoes only when they are not exact request/response echoes;
+    # exact 2/4-byte echoes are common transaction identifiers.
+    if not same_series and (
+        _is_likely_counter_or_timestamp(request_values) or _is_likely_counter_or_timestamp(response_values)
+    ):
+        confidence *= 0.3
+    if same_series and width in (2, 4):
+        confidence += 0.1
 
     return min(1.0, confidence)
 
@@ -388,9 +402,10 @@ def _calculate_length_confidence(
     elif usable_pairs >= 5:
         confidence += 0.05
 
-    # Penalty for counter patterns
-    if _is_likely_counter_or_timestamp(field_values):
-        confidence *= 0.2  # Heavy penalty
+    # Monotonic request count/quantity fields are valid length predictors; penalize
+    # counter-like fields only for exact length rules where no correlation is shown.
+    if relation_type != "request_field_correlates_response_length" and _is_likely_counter_or_timestamp(field_values):
+        confidence *= 0.2
 
     # Penalty for unreasonable length values (too large or too small)
     if field_values:
@@ -493,6 +508,95 @@ def _length_relations(request_payloads: Sequence[bytes], response_payloads: Sequ
     return filtered_relations[:10]  # Return top 10 instead of 20
 
 
+def _correlation(xs: Sequence[float], ys: Sequence[float]) -> float:
+    if len(xs) < 3 or len(xs) != len(ys):
+        return 0.0
+    mean_x = mean(xs)
+    mean_y = mean(ys)
+    numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+    denom_x = sum((x - mean_x) ** 2 for x in xs)
+    denom_y = sum((y - mean_y) ** 2 for y in ys)
+    if denom_x <= 0.0 or denom_y <= 0.0:
+        return 0.0
+    return numerator / ((denom_x * denom_y) ** 0.5)
+
+
+def _length_correlation_relations(
+    request_payloads: Sequence[bytes],
+    response_payloads: Sequence[bytes],
+    min_support: float = DEFAULT_MIN_LENGTH_SUPPORT,
+) -> List[Dict[str, object]]:
+    relations: List[Dict[str, object]] = []
+    if not request_payloads or not response_payloads:
+        return relations
+    req_max_len = max((len(payload) for payload in request_payloads), default=0)
+    req_search_len = min(req_max_len, MAX_LENGTH_FIELD_SEARCH_LENGTH)
+    response_lengths = [float(len(payload)) for payload in response_payloads]
+
+    for width in (1, 2, 4):
+        for start in range(0, max(0, req_search_len - width + 1)):
+            for endian in ("big", "little"):
+                usable_values = []
+                usable_lengths = []
+                for request, response in zip(request_payloads, response_payloads):
+                    if len(request) < start + width:
+                        continue
+                    value = safe_int_from_bytes(request[start : start + width], endian=endian)
+                    usable_values.append(float(value))
+                    usable_lengths.append(float(len(response)))
+                if len(usable_values) < 3 or len(set(usable_values)) < 2 or len(set(usable_lengths)) < 2:
+                    continue
+                corr = _correlation(usable_values, usable_lengths)
+                support = max(0.0, corr)
+                if support < min_support:
+                    continue
+                slope = 0.0
+                var_x = sum((value - mean(usable_values)) ** 2 for value in usable_values)
+                if var_x > 0:
+                    slope = sum(
+                        (x - mean(usable_values)) * (y - mean(usable_lengths))
+                        for x, y in zip(usable_values, usable_lengths)
+                    ) / var_x
+                if slope <= 0:
+                    continue
+                confidence = _calculate_length_confidence(
+                    width,
+                    support,
+                    len(usable_values),
+                    start,
+                    "request_field_correlates_response_length",
+                    [int(value) for value in usable_values],
+                    mean(response_lengths) if response_lengths else 0.0,
+                )
+                relations.append(
+                    {
+                        "request_offset": start,
+                        "width": width,
+                        "endian": endian,
+                        "relation_type": "request_field_correlates_response_length",
+                        "support": round(support, 4),
+                        "usable_pairs": len(usable_values),
+                        "avg_response_length": round(mean(response_lengths), 2) if response_lengths else 0.0,
+                        "correlation": round(corr, 4),
+                        "slope": round(slope, 4),
+                        "confidence": round(confidence, 4),
+                    }
+                )
+
+    relations.sort(key=lambda item: (-item["confidence"], -item["support"], item["request_offset"], item["width"]))
+    filtered: List[Dict[str, object]] = []
+    seen_positions = set()
+    for relation in relations:
+        if relation["confidence"] < MIN_CONFIDENCE_THRESHOLD:
+            continue
+        position_key = (relation["request_offset"], relation["width"])
+        if position_key in seen_positions:
+            continue
+        filtered.append(relation)
+        seen_positions.add(position_key)
+    return filtered[:10]
+
+
 # A4: Calculate overall relation confidence based on multiple evidence types
 def _calculate_relation_confidence(
     edge_features: Dict[str, object],
@@ -561,6 +665,7 @@ def summarize_family_relations(
     allow_self_relations: bool = False,
     min_relation_confidence: float = MIN_CONFIDENCE_THRESHOLD,
 ) -> Dict[str, object]:
+    records = infer_missing_directions(records)
     messages_by_id = _message_lookup(records)
     family_by_msg_id = _family_lookup(assignments)
 
@@ -583,8 +688,7 @@ def summarize_family_relations(
     )
 
     for request_family, response_family, family_pairs, edge_features in retained_edges:
-        request_payloads = []
-        response_payloads = []
+        payload_pairs = []
         scores = []
         latencies = []
 
@@ -593,17 +697,33 @@ def summarize_family_relations(
             response = messages_by_id.get(pair.response_msg_id)
             if request is None or response is None:
                 continue
-            request_payloads.append(hex_to_bytes(request.payload_hex))
-            response_payloads.append(hex_to_bytes(response.payload_hex))
+            payload_pairs.append((hex_to_bytes(request.payload_hex), hex_to_bytes(response.payload_hex)))
             scores.append(pair.score)
             if pair.latency_ms is not None:
                 latencies.append(pair.latency_ms)
 
-        if not request_payloads or not response_payloads:
+        if not payload_pairs:
             continue
+        evidence_payload_pairs = _sample_pairs(payload_pairs)
+        request_payloads = [request for request, _response in evidence_payload_pairs]
+        response_payloads = [response for _request, response in evidence_payload_pairs]
 
         echo_candidates = _echo_candidates(request_payloads, response_payloads, min_support=min_echo_support)
         length_relations = _length_relations(request_payloads, response_payloads, min_support=min_length_support)
+        existing_length_keys = {
+            (existing["request_offset"], existing["width"], existing["relation_type"])
+            for existing in length_relations
+        }
+        for relation in _length_correlation_relations(
+            request_payloads,
+            response_payloads,
+            min_support=min_length_support,
+        ):
+            key = (relation["request_offset"], relation["width"], relation["relation_type"])
+            if key in existing_length_keys:
+                continue
+            length_relations.append(relation)
+            existing_length_keys.add(key)
 
         # A4: Calculate overall relation confidence
         relation_confidence = _calculate_relation_confidence(edge_features, echo_candidates, length_relations)

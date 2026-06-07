@@ -44,6 +44,65 @@ def _norm(value: Any) -> str:
     return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
 
 
+CONCRETE_BASE_TYPES = {"uint8", "uint16", "uint32", "uint64", "bytes"}
+WIDTH_TO_TYPE = {1: "uint8", 2: "uint16", 4: "uint32", 8: "uint64"}
+ROLE_TYPE_EQUIVALENTS = {
+    "payload": {"bytes"},
+    "data": {"bytes"},
+    "blob": {"bytes"},
+}
+
+
+def _attributes(field: Dict[str, Any]) -> Dict[str, Any]:
+    attributes = field.get("attributes")
+    return attributes if isinstance(attributes, dict) else {}
+
+
+def _canonical_type(value: Any) -> str:
+    token = _norm(value)
+    if token.endswith("_be") or token.endswith("_le"):
+        return token[:-3]
+    return token
+
+
+def _concrete_type(field: Dict[str, Any], truth: bool = False) -> str:
+    attributes = _attributes(field)
+    candidates = [
+        field.get("encoding_type"),
+        attributes.get("encoding_type"),
+        attributes.get("encoding"),
+        field.get("field_type"),
+        field.get("type") if truth else None,
+        field.get("label"),
+    ]
+    for candidate in candidates:
+        token = _norm(candidate)
+        if not token:
+            continue
+        canonical = _canonical_type(token)
+        if canonical in CONCRETE_BASE_TYPES:
+            return token
+
+    length = _field_len(field)
+    if length in WIDTH_TO_TYPE:
+        return WIDTH_TO_TYPE[length]
+    if length is not None and length > 4:
+        return "bytes"
+    return ""
+
+
+def _semantic_role(field: Dict[str, Any], truth: bool = False) -> str:
+    attributes = _attributes(field)
+    return _norm(
+        attributes.get("semantic_role")
+        or field.get("semantic_role")
+        or attributes.get("inferred_role_label")
+        or field.get("label")
+        or field.get("name")
+        or (field.get("field_type") if not _concrete_type(field, truth=truth) else None)
+    )
+
+
 def _field_end(field: Dict[str, Any]) -> int | None:
     start = int(field.get("start", 0) or 0)
     length = field.get("length")
@@ -63,23 +122,56 @@ def _field_len(field: Dict[str, Any]) -> int | None:
     return int(end) - int(field.get("start", 0) or 0) + 1
 
 
+def _truth_uses_absolute_offsets(message_type: Dict[str, Any]) -> bool:
+    tokens = {
+        _norm(message_type.get("message_type_id")),
+        _norm(message_type.get("name")),
+        _norm(message_type.get("role")),
+    }
+    return any(token and ("header" in token or token in {"transport", "framing"}) for token in tokens)
+
+
+def _family_body_offset(family: Dict[str, Any]) -> int:
+    framing = family.get("framing_summary") if isinstance(family.get("framing_summary"), dict) else {}
+    layouts = framing.get("layout_hypotheses", []) if isinstance(framing, dict) else []
+    if layouts:
+        best = layouts[0] if isinstance(layouts[0], dict) else {}
+        body_start = best.get("body_start", best.get("header_end"))
+        if body_start is not None:
+            return max(0, int(body_start))
+    layer = family.get("layer_boundary") if isinstance(family.get("layer_boundary"), dict) else {}
+    if layer.get("detected") and layer.get("boundary_offset") is not None:
+        return max(0, int(layer.get("boundary_offset")))
+    return 0
+
+
+def _comparison_field(field: Dict[str, Any], offset_shift: int) -> Dict[str, Any]:
+    if not offset_shift:
+        return field
+    shifted = dict(field)
+    shifted["start"] = int(shifted.get("start", 0) or 0) - offset_shift
+    return shifted
+
+
 def _field_ref(owner_id: str, field: Dict[str, Any], fallback_name: str) -> Dict[str, Any]:
+    field_type = str(_concrete_type(field, truth=True) or field.get("field_type") or field.get("type") or "unknown")
     return {
         "owner_id": owner_id,
-        "field_name": str(field.get("name") or field.get("field_type") or fallback_name),
+        "field_name": str(field.get("name") or field.get("field_type") or field.get("type") or fallback_name),
         "start": int(field.get("start", 0) or 0),
         "length": _field_len(field),
-        "field_type": str(field.get("field_type") or field.get("type") or "unknown"),
+        "field_type": field_type,
     }
 
 
 def _predicted_field_ref(family_id: str, field: Dict[str, Any], index: int) -> Dict[str, Any]:
+    field_type = str(_concrete_type(field) or field.get("field_type") or field.get("label") or "unknown")
     return {
         "owner_id": family_id,
         "field_name": str(field.get("field_type") or field.get("label") or f"field_{index}"),
         "start": int(field.get("start", 0) or 0),
         "length": _field_len(field),
-        "field_type": str(field.get("field_type") or field.get("label") or "unknown"),
+        "field_type": field_type,
     }
 
 
@@ -96,13 +188,24 @@ def _interval_score(predicted: Dict[str, Any], truth: Dict[str, Any]) -> float:
 
 
 def _semantic_score(predicted: Dict[str, Any], truth: Dict[str, Any]) -> float:
-    p_type = _norm(predicted.get("field_type") or predicted.get("label"))
-    t_type = _norm(truth.get("field_type") or truth.get("type") or truth.get("name"))
+    p_type = _concrete_type(predicted)
+    t_type = _concrete_type(truth, truth=True)
     if not p_type or not t_type:
-        return 0.0
+        p_type = _norm(predicted.get("field_type") or predicted.get("label"))
+        t_type = _norm(truth.get("field_type") or truth.get("type") or truth.get("name"))
+        if not p_type or not t_type:
+            return 0.0
     if p_type == t_type:
         return 1.0
+    p_base = _canonical_type(p_type)
+    t_base = _canonical_type(t_type)
+    if p_base and p_base == t_base:
+        return 1.0
     if p_type in t_type or t_type in p_type:
+        return 0.5
+    p_role = _semantic_role(predicted)
+    t_role = _semantic_role(truth, truth=True)
+    if t_type in ROLE_TYPE_EQUIVALENTS.get(p_role, set()) or p_type in ROLE_TYPE_EQUIVALENTS.get(t_role, set()):
         return 0.5
     return 0.0
 
@@ -179,27 +282,47 @@ def _field_matches(
     for message_match in message_matches:
         family_id = message_match["predicted_family_id"]
         truth_id = message_match["ground_truth_message_type_id"]
-        predicted_fields = list((families_by_id.get(family_id) or {}).get("field_hypotheses", []) or [])
-        truth_fields = list((truth_by_id.get(truth_id) or {}).get("fields", []) or [])
+        family = families_by_id.get(family_id) or {}
+        truth_type = truth_by_id.get(truth_id) or {}
+        predicted_fields = _comparable_predicted_fields(family, truth_type)
+        truth_fields = list(truth_type.get("fields", []) or [])
+        offset_shift = 0 if _truth_uses_absolute_offsets(truth_type) else _family_body_offset(family)
         candidates = []
         for p_index, predicted in enumerate(predicted_fields):
+            predicted_for_match = _comparison_field(predicted, offset_shift)
             for t_index, truth in enumerate(truth_fields):
-                boundary = _interval_score(predicted, truth)
+                boundary = _interval_score(predicted_for_match, truth)
                 semantic = _semantic_score(predicted, truth)
                 score = max(boundary, (0.7 * boundary) + (0.3 * semantic))
                 candidates.append((str(p_index), str(t_index), score))
         for p_index, t_index, _ in _greedy_matches(candidates, 0.5):
             predicted = predicted_fields[int(p_index)]
+            predicted_for_match = _comparison_field(predicted, offset_shift)
             truth = truth_fields[int(t_index)]
             matches.append(
                 {
                     "predicted": _predicted_field_ref(family_id, predicted, int(p_index)),
                     "ground_truth": _field_ref(truth_id, truth, f"field_{t_index}"),
-                    "boundary_score": _interval_score(predicted, truth),
+                    "boundary_score": _interval_score(predicted_for_match, truth),
                     "semantic_score": _semantic_score(predicted, truth),
+                    "offset_shift": offset_shift,
                 }
             )
     return matches
+
+
+def _comparable_predicted_fields(family: Dict[str, Any], truth_type: Dict[str, Any]) -> List[Dict[str, Any]]:
+    predicted_fields = list(family.get("field_hypotheses", []) or [])
+    if _truth_uses_absolute_offsets(truth_type):
+        return predicted_fields
+    body_offset = _family_body_offset(family)
+    if body_offset <= 0:
+        return predicted_fields
+    return [
+        field
+        for field in predicted_fields
+        if int(field.get("start", 0) or 0) >= body_offset
+    ]
 
 
 def _relation_matches(
@@ -282,7 +405,19 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     field_matches = _field_matches(families_by_id, truth_by_id, message_matches)
     relation_matches = _relation_matches(predicted_relations, truth_relations, family_to_truth, families_by_id, truth_by_id)
 
-    predicted_field_total = sum(len((family.get("field_hypotheses", []) or [])) for family in families)
+    matched_truth_by_family = {
+        item["predicted_family_id"]: item["ground_truth_message_type_id"]
+        for item in message_matches
+    }
+    predicted_field_total = 0
+    for family in families:
+        family_id = str(family.get("family_id"))
+        truth_id = matched_truth_by_family.get(family_id)
+        truth_type = truth_by_id.get(truth_id) if truth_id is not None else None
+        if truth_type is None:
+            predicted_field_total += len(family.get("field_hypotheses", []) or [])
+        else:
+            predicted_field_total += len(_comparable_predicted_fields(family, truth_type))
     truth_field_total = sum(len((message_type.get("fields", []) or [])) for message_type in truth_types)
     semantic_tp = sum(1 for item in field_matches if float(item.get("semantic_score", 0.0) or 0.0) >= 0.5)
 
@@ -297,7 +432,14 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     unmatched_predicted_fields = []
     for family in families:
         family_id = str(family.get("family_id"))
-        for index, field in enumerate(family.get("field_hypotheses", []) or []):
+        truth_id = matched_truth_by_family.get(family_id)
+        truth_type = truth_by_id.get(truth_id) if truth_id is not None else None
+        fields = (
+            _comparable_predicted_fields(family, truth_type)
+            if truth_type is not None
+            else list(family.get("field_hypotheses", []) or [])
+        )
+        for index, field in enumerate(fields):
             ref = _predicted_field_ref(family_id, field, index)
             if (ref["owner_id"], ref["start"], ref.get("length")) not in matched_predicted_fields:
                 unmatched_predicted_fields.append(ref)

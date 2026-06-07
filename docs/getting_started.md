@@ -324,10 +324,21 @@ python main.py pcaps/ --tshark-filter mbtcp --llm-render-only
 python main.py pcaps/ --tshark-filter mbtcp \
     --llm-config config/llm_config.json
 
-# Use saved LLM responses when available instaed of calling the api, usefull when some api call's failed in a run, and you want to rerun 
-# the pipeline and only call those api's (dont repeat successfull calls). 
+# Use saved LLM responses when available instead of calling the API
+# Useful when some API calls failed in a previous run and you want to rerun
+# the pipeline calling only the failed endpoints (skip successful calls).
 python main.py --use-existing-messages --reuse-llm-responses
+
+# Use user-provided LLM responses from data/user_provided_LLM_responses/
+# Fill in response files manually before running; pipeline uses these instead of API calls
+python main.py pcaps/ --tshark-filter mbtcp --use-user-provided-response
 ```
+
+**LLM Response Reuse:**
+- `--reuse-llm-responses`: Reads cached responses from `data/llm_stage_results/`
+- `--use-user-provided-response`: Reads from `data/user_provided_LLM_responses/`
+- Both flags prevent redundant API calls on re-runs
+- Use `--llm-render-only` to inspect prompts without any API calls
 
 ### Stage-Specific LLM Refinement
 
@@ -664,6 +675,31 @@ $env:PYTHONPATH="src"
 Note: `main.py` sets this automatically; only needed for individual scripts.
 
 ## Configuration Reference
+
+### Algorithmic Thresholds
+
+All pipeline tuning parameters are centralized in **`src/protocol_re/config/thresholds.py`**,
+organized by subsystem as plain namespace classes (`BoundaryDetection`, `FramingDetection`,
+`RequestResponseRelations`, etc.).  Each threshold has a docstring explaining its purpose.
+To tune an algorithm:
+
+1. Open `src/protocol_re/config/thresholds.py`.
+2. Find the relevant class (see table below).
+3. Adjust the threshold value.
+4. Re-run the pipeline — no other file changes are needed.
+
+| Tuning goal                           | Class to edit              | Key thresholds                                    |
+|---------------------------------------|----------------------------|---------------------------------------------------|
+| Reduce field over-segmentation        | `BoundaryDetection`        | `SINGLE_BYTE_PENALTY`, `MAX_FIELDS_PER_FAMILY`, `ENTROPY_WEIGHT_REDUCED` |
+| Adjust framing header detection       | `FramingDetection`         | `MAX_HEADER_BYTES`, `CONFIDENCE_SCORE_NORMALISER`, `FIELD_WEIGHT_*` |
+| Tighten/loosen relation detection     | `RequestResponseRelations` | `MIN_CONFIDENCE_THRESHOLD`, `DEFAULT_MIN_ECHO_SUPPORT`, `DEFAULT_MIN_LENGTH_SUPPORT` |
+| Tune layer-boundary sensitivity       | `LayerDetection`           | `MIN_CONFIDENCE`, `MAX_POSSIBLE_RAW_SCORE`, `INDICATOR_WEIGHT_*` |
+| Adjust discriminator/opcode detection | `DiscriminatorDetection`   | `MAX_OFFSET`, `MIN_COVERAGE`, `SCORE_*_WEIGHT`    |
+| Tune semantic role confidence         | `FieldSemantics`           | `DISCRIMINATOR_*`, `TRANSACTION_ID_*`, `COUNTER_*` |
+| Change feature extraction limits      | `FeatureExtraction`        | `MAX_POSITION_STATS_LENGTH`, `MAX_NGRAM_ANALYSIS_LENGTH` |
+| Adjust clustering batch size          | `Clustering`               | `CENTROID_ASSIGNMENT_BATCH_SIZE`                  |
+| Change pre-trained model path         | `NeuralModel`              | `DEFAULT_MODEL_PATH`                              |
+| Adjust LLM prompt size                | `LLMEvidence`              | `MAX_PROMPT_HEX_CHARS`                            |
 
 ### Main Pipeline Options
 

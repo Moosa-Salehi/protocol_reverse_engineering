@@ -25,6 +25,7 @@ from protocol_re.llm.user_responses import (
     ensure_user_response_placeholder,
     load_user_provided_response,
     make_user_response_path,
+    save_rendered_prompt,
 )
 
 
@@ -226,10 +227,10 @@ def main() -> None:
 
         stage_results.append((family_id, result))
 
+        save_rendered_prompt(prompt_path, result.prompt)
+        print(f"[+] Saved prompt to {prompt_path}")
+
         if args.render_only:
-            with open(prompt_path, "w", encoding="utf-8") as f:
-                f.write(result.prompt)
-            print(f"[+] Saved prompt to {prompt_path}")
             if result_path.exists():
                 print(f"[*] Preserved cached LLM response at {result_path}")
             refined_families[family_id] = refined_details

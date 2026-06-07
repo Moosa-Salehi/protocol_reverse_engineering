@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
-from protocol_re.llm.stage_semantics import run_semantic_labeling_stage
+from protocol_re.llm.stage_semantics import apply_semantic_label_to_field, run_semantic_labeling_stage
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.utils.logging import setup_stage_logging
@@ -25,6 +25,7 @@ from protocol_re.llm.user_responses import (
     ensure_user_response_placeholder,
     load_user_provided_response,
     make_user_response_path,
+    save_rendered_prompt,
 )
 
 
@@ -251,10 +252,10 @@ def main() -> None:
 
         stage_results.append((family_id, result))
 
+        save_rendered_prompt(prompt_path, result.prompt)
+        print(f"[+] Saved prompt to {prompt_path}")
+
         if args.render_only:
-            with open(prompt_path, "w", encoding="utf-8") as f:
-                f.write(result.prompt)
-            print(f"[+] Saved prompt to {prompt_path}")
             if result_path.exists():
                 print(f"[*] Preserved cached LLM response at {result_path}")
             labeled_families[family_id] = labeled_details
@@ -291,9 +292,7 @@ def main() -> None:
                     label = log_entry.get("label", {})
                     field_index = label.get("field_index")
                     if field_index is not None and field_index < len(labeled_fields):
-                        labeled_fields[field_index]["semantic_role"] = label.get("semantic_role")
-                        labeled_fields[field_index]["semantic_confidence"] = label.get("confidence")
-                        labeled_fields[field_index]["semantic_evidence"] = label.get("evidence", [])
+                        apply_semantic_label_to_field(labeled_fields[field_index], label)
 
             labeled_details["field_hypotheses"] = labeled_fields
             labeled_details["llm_semantic_labeling"] = {

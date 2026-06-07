@@ -23,6 +23,7 @@ from protocol_re.llm.user_responses import (
     ensure_user_response_placeholder,
     load_user_provided_response,
     make_user_response_path,
+    save_rendered_prompt,
 )
 from protocol_re.utils.logging import setup_stage_logging
 
@@ -90,6 +91,7 @@ def main() -> None:
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
 
     args = parser.parse_args()
+    prompt_out = args.prompt_out or str(Path(args.output_json).with_suffix(".prompt.md"))
 
     # Setup logging
     logger = setup_stage_logging("15_analyze_with_llm", Path(args.log_dir))
@@ -198,7 +200,7 @@ def main() -> None:
     ensure_user_response_placeholder(
         user_response_path,
         stage="protocol_synthesis",
-        prompt_path=args.prompt_out,
+        prompt_path=prompt_out,
         model=model or config_dict.get("model", ""),
         request_label="stage 15 protocol synthesis",
         metadata={"result_path": args.output_json, "source_model": args.protocol_model_json},
@@ -226,12 +228,8 @@ def main() -> None:
         evaluation_metrics=evaluation_metrics,
     )
 
-    # Save prompt if requested
-    if args.prompt_out:
-        Path(args.prompt_out).parent.mkdir(parents=True, exist_ok=True)
-        with open(args.prompt_out, "w", encoding="utf-8") as f:
-            f.write(result.prompt)
-        print(f"[+] Saved prompt to {args.prompt_out}")
+    save_rendered_prompt(prompt_out, result.prompt)
+    print(f"[+] Saved prompt to {prompt_out}")
 
     # Prepare output
     output = {
@@ -248,7 +246,7 @@ def main() -> None:
         "success": result.success,
         "error": result.error,
         "error_category": result.error_category,
-        "prompt_path": args.prompt_out,
+        "prompt_path": prompt_out,
         "response": result.response,
         "synthesis": None,
         "markdown_summary": None,

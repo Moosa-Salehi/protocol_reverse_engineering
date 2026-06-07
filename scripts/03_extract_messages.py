@@ -53,7 +53,7 @@ def main() -> None:
         decision=f"Using {args.extraction_method} extraction method",
         reason="User configuration",
         tshark_filter=args.tshark_filter if args.extraction_method == "tshark" else None,
-        service_port=args.service_port if args.extraction_method == "tcp" else None,
+        service_port=args.service_port,
         max_messages=args.max_messages,
     )
 
@@ -70,6 +70,7 @@ def main() -> None:
                 tshark_filter=args.tshark_filter,
                 packets_dir=args.packets_dir,
                 payloads_dir=args.payloads_dir,
+                service_port=args.service_port,
                 max_messages=args.max_messages,
                 max_workers=args.tshark_workers,
             )

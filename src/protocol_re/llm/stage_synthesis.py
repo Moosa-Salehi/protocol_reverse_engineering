@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
 from protocol_re.llm.analyze import LLMAPIError, LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
-from protocol_re.llm.evidence_builders import summarize_stage_artifact
+from protocol_re.llm.evidence_builders import _truncate_hex, summarize_stage_artifact
 from protocol_re.llm.stage_errors import LLM_API_ERROR_CATEGORY
 
 
@@ -85,7 +85,7 @@ def prepare_synthesis_evidence(
                 if selected_evidence:
                     compact_field["evidence"] = selected_evidence
             if attributes.get("value_hex"):
-                compact_field["constant_value_hex"] = attributes["value_hex"]
+                compact_field["constant_value_hex"] = _truncate_hex(attributes["value_hex"])
             compact_fields.append(compact_field)
 
         compact_families.append({

@@ -100,26 +100,130 @@ def _stage_text_details(stage: Optional[Dict[str, Any]], title: str, stage_label
     if not stage:
         return f'<section class="llm-stage-block"><h4>{_text(title)}</h4><p class="muted">No LLM stage artifact found.</p></section>'
     result = stage.get("result") if isinstance(stage.get("result"), dict) else {}
-    response = result.get("response")
-    result_details = {
-        key: value
-        for key, value in result.items()
-        if key not in {"response"}
-    }
+    if stage_label == "boundary_refinement":
+        details = _boundary_stage_table(result)
+    elif stage_label == "semantic_labeling":
+        details = _semantic_stage_table(result)
+    elif stage_label == "relation_validation":
+        details = _relation_stage_table(result)
+    else:
+        details = _generic_stage_summary(result)
     return f"""
     <section class="llm-stage-block">
       <h4>{_text(title)}</h4>
       {_stage_status_metrics(result, stage_label)}
-      <details>
-        <summary>LLM Response</summary>
-        {_text_pre(response)}
-      </details>
-      <details>
-        <summary>Refinement Result</summary>
-        {_json_pre(result_details)}
-      </details>
+      {details}
     </section>
     """
+
+
+def _list_text(items: Any, limit: int = 3) -> str:
+    if not items:
+        return ""
+    if not isinstance(items, list):
+        return str(items)
+    shown = [str(item) for item in items[:limit]]
+    suffix = f" +{len(items) - limit} more" if len(items) > limit else ""
+    return "; ".join(shown) + suffix
+
+
+def _compact_json(value: Any, limit: int = 180) -> str:
+    if value in (None, "", [], {}):
+        return ""
+    try:
+        import json
+
+        text = json.dumps(value, ensure_ascii=False, sort_keys=True)
+    except Exception:
+        text = str(value)
+    return text if len(text) <= limit else text[:limit] + "..."
+
+
+def _generic_stage_summary(result: Dict[str, Any]) -> str:
+    rows = []
+    for key in ("result_path", "error", "error_category"):
+        if result.get(key):
+            rows.append(f"<tr><th>{_text(key)}</th><td>{_text(result.get(key))}</td></tr>")
+    return f'<table class="llm-detail-table"><tbody>{"".join(rows) or "<tr><td>No additional details.</td></tr>"}</tbody></table>'
+
+
+def _boundary_stage_table(result: Dict[str, Any]) -> str:
+    rows = []
+    for entry in result.get("validation_log", []) or []:
+        suggestion = entry.get("suggestion") or {}
+        merged = suggestion.get("merged_field") or {}
+        fields = suggestion.get("fields_to_merge", [])
+        span = ""
+        if merged:
+            span = f"{merged.get('start_offset', merged.get('start', ''))}..{merged.get('end_offset', merged.get('end', ''))}"
+        rows.append(
+            "<tr>"
+            f"<td>{_pill('applied' if entry.get('applied') else 'rejected', 'related' if entry.get('applied') else 'unknown')}</td>"
+            f"<td>{_text(_list_text(fields, limit=8))}</td>"
+            f"<td><code>{_text(span)}</code></td>"
+            f"<td>{_text(suggestion.get('confidence', ''))}</td>"
+            f"<td>{_text(suggestion.get('rationale') or entry.get('reason') or '')}</td>"
+            "</tr>"
+        )
+    if not rows:
+        rows.append('<tr><td colspan="5">No boundary merge suggestions.</td></tr>')
+    return (
+        '<table class="llm-detail-table"><thead><tr>'
+        '<th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th>'
+        f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+    )
+
+
+def _semantic_stage_table(result: Dict[str, Any]) -> str:
+    rows = []
+    for entry in result.get("validation_log", []) or []:
+        label = entry.get("label") or {}
+        width = label.get("width", label.get("length", ""))
+        byte_range = f"{label.get('offset', label.get('start', ''))}+{width}"
+        role = label.get("semantic_role") or label.get("label") or "unknown"
+        field_type = label.get("encoding_type") or label.get("field_type") or ""
+        evidence = _list_text(label.get("evidence", []))
+        rows.append(
+            "<tr>"
+            f"<td>{_pill('applied' if entry.get('applied') else 'rejected', 'related' if entry.get('applied') else 'unknown')}</td>"
+            f"<td>{_text(label.get('field_index', ''))}</td>"
+            f"<td><code>{_text(byte_range)}</code></td>"
+            f"<td>{_text(role)}</td>"
+            f"<td>{_text(field_type)}</td>"
+            f"<td>{_text(label.get('confidence', ''))}</td>"
+            f"<td>{_text(evidence or entry.get('reason') or '')}</td>"
+            "</tr>"
+        )
+    if not rows:
+        rows.append('<tr><td colspan="7">No semantic label suggestions.</td></tr>')
+    return (
+        '<table class="llm-detail-table"><thead><tr>'
+        '<th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th>'
+        f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+    )
+
+
+def _relation_stage_table(result: Dict[str, Any]) -> str:
+    rows = []
+    for entry in result.get("validation_log", []) or []:
+        decision = entry.get("decision") or {}
+        rows.append(
+            "<tr>"
+            f"<td><code>{_text(decision.get('request_family_id', ''))}</code></td>"
+            f"<td><code>{_text(decision.get('response_family_id', ''))}</code></td>"
+            f"<td>{_pill(decision.get('decision', 'unknown'), 'related' if decision.get('decision') == 'keep' else 'unknown')}</td>"
+            f"<td>{_text(decision.get('confidence', ''))}</td>"
+            f"<td>{_text('yes' if entry.get('applied') else 'no')}</td>"
+            f"<td>{_text(decision.get('rationale') or entry.get('reason') or '')}</td>"
+            "</tr>"
+        )
+    if not rows:
+        rows.append('<tr><td colspan="6">No relation validation decisions.</td></tr>')
+    return (
+        '<table class="llm-detail-table"><thead><tr>'
+        '<th>Request</th><th>Response</th><th>Decision</th><th>Conf.</th><th>Applied</th><th>Reason</th>'
+        f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+    )
 
 
 def _flatten_usage(value: Any, prefix: str = "") -> List[tuple[str, Any]]:
@@ -370,13 +474,6 @@ def _relation_rows(model: Dict[str, Any], llm_stage_results: Optional[Dict[str, 
     return "".join(rows) or '<tr><td colspan="12">No relation evidence.</td></tr>'
 
 
-def _relation_llm_block(llm_stage_results: Optional[Dict[str, Any]]) -> str:
-    relation_stage = (llm_stage_results or {}).get("relation_validation")
-    if not relation_stage:
-        return ""
-    return _stage_text_details(relation_stage, "Relation Validation LLM Response", "relation_validation")
-
-
 def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
     if not evaluation:
         return '<section class="panel"><h2>Evaluation</h2><p class="muted">No evaluation report supplied.</p></section>'
@@ -528,13 +625,42 @@ def _llm_refinement_block(summary: Optional[Dict[str, Any]]) -> str:
         part for part in (summary.get("artifact_type"), created) if part
     )
     caption_html = f'<p class="muted">{_text(caption)}</p>' if caption else ""
+    patch_table = _patch_validation_table(summary)
     return f"""
     <section class="panel">
       <h2>LLM Refinement</h2>
       <div class="metric-grid">{metrics}</div>
       {caption_html}
+      {patch_table}
     </section>
     """
+
+
+def _patch_validation_table(summary: Dict[str, Any]) -> str:
+    results = summary.get("results", []) or []
+    if not results:
+        return '<p class="muted">No patch-level validation details supplied.</p>'
+    rows = []
+    for item in results:
+        patch = item.get("patch") or {}
+        accepted = bool(item.get("accepted"))
+        rows.append(
+            "<tr>"
+            f"<td>{_pill('applied' if accepted else 'rejected', 'related' if accepted else 'unknown')}</td>"
+            f"<td>{_text(patch.get('op', ''))}</td>"
+            f"<td><code>{_text(patch.get('path', ''))}</code></td>"
+            f"<td>{_text(_compact_json(patch.get('value'), limit=140))}</td>"
+            f"<td>{_text(patch.get('rationale') or '')}</td>"
+            f"<td>{_text(_list_text(item.get('evidence_support', []) or [], limit=4))}</td>"
+            f"<td>{_text(_list_text(item.get('reasons', []) or [], limit=3))}</td>"
+            "</tr>"
+        )
+    return (
+        '<h4>Patch Decisions</h4>'
+        '<table class="llm-detail-table patch-table"><thead><tr>'
+        '<th>Status</th><th>Op</th><th>Path</th><th>Value</th><th>Rationale</th><th>Evidence</th><th>Rejection Reason</th>'
+        f'</tr></thead><tbody>{"".join(rows)}</tbody></table>'
+    )
 
 
 def render_protocol_model_html(
@@ -550,7 +676,9 @@ def render_protocol_model_html(
     # rendered as their own card-based blocks instead of stringified dicts.
     metadata = dict(model.get("metadata", {}) or {})
     framing_summary_block = _framing_summary_block(metadata.pop("framing_global_summary", None))
-    llm_refinement_block = _llm_refinement_block(metadata.pop("llm_refinement", None))
+    patch_validation_summary = metadata.pop("llm_patch_validation", None)
+    compact_refinement_summary = metadata.pop("llm_refinement", None)
+    llm_refinement_block = _llm_refinement_block(patch_validation_summary or compact_refinement_summary)
     metadata_rows = _kv_rows(metadata)
     metadata_section = (
         f'<section class="panel"><h2>Metadata</h2>'
@@ -558,7 +686,6 @@ def render_protocol_model_html(
         if metadata_rows else ""
     )
     relation_rows = _relation_rows(model, llm_stage_results)
-    relation_llm_block = _relation_llm_block(llm_stage_results)
     llm_block = _llm_analysis_block(llm_analysis)
     final_evaluation_block = _final_evaluation_block(final_evaluation)
     total_messages = sum(int(family.get("message_count", 0) or 0) for family in model.get("families", []) or [])
@@ -625,6 +752,9 @@ th {{ color: var(--accent-2); font-weight: 700; }}
 .llm-stage-block h4 {{ margin-top: 0; }}
 .llm-stage-block pre {{ max-height: 520px; overflow:auto; white-space: pre-wrap; word-break: break-word; padding: 14px; background: #0b0f0e; border: 1px solid var(--line); border-radius: 14px; color: #dbe8d2; line-height: 1.45; }}
 .llm-stage-block .metric strong {{ font-size: 1.1rem; }}
+.llm-detail-table td {{ max-width: 360px; overflow-wrap: anywhere; }}
+.llm-detail-table code {{ white-space: normal; overflow-wrap: anywhere; }}
+.patch-table td:nth-child(3) {{ min-width: 220px; }}
 .segment-map {{ display:flex; height: 18px; width:100%; overflow:hidden; border-radius: 999px; background:#0b0f0e; border:1px solid var(--line); margin: 16px 0; }}
 .seg {{ min-width: 3px; border-right: 1px solid rgba(0,0,0,.35); }}
 .seg.constant {{ background: var(--accent); }}
@@ -660,7 +790,6 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
   {metadata_section}
   <section class="panel">
     <h2>Strongest Relations</h2>
-    {relation_llm_block}
     <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead><tbody>{relation_rows}</tbody></table>
   </section>
   <main>

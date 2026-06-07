@@ -50,6 +50,12 @@ def ensure_user_response_placeholder(
     target.write_text(json.dumps(placeholder, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def save_rendered_prompt(path: str | Path, prompt: str) -> None:
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(prompt, encoding="utf-8")
+
+
 def _message_response_from_text(text: str, model: str = "") -> str:
     return json.dumps(
         {
