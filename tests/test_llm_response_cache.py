@@ -6,6 +6,7 @@ import pytest
 
 from protocol_re.llm.multi_stage import LLMStage, StageConfig, load_cached_response
 from protocol_re.llm.stage_boundaries import run_boundary_refinement_stage
+from protocol_re.llm.user_responses import save_rendered_prompt
 from protocol_re.model.schema import MessageRecord
 
 
@@ -73,3 +74,34 @@ def test_cached_stage_response_skips_api_call(monkeypatch: pytest.MonkeyPatch) -
     assert result.success is True
     assert result.response == raw_response
     assert result.applied_count == 1
+
+
+def test_normal_stage_result_prompt_can_be_saved_with_cached_response(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    raw_response = json.dumps({
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps({"merge_suggestions": []})
+                }
+            }
+        ]
+    })
+
+    def fail_api_call(*_args, **_kwargs):
+        raise AssertionError("API call should not be used when cached_response is provided")
+
+    monkeypatch.setattr("protocol_re.llm.stage_boundaries.call_openai_compatible_chat_with_raw", fail_api_call)
+
+    result = run_boundary_refinement_stage(
+        family_id="family_0",
+        fields=[{"start": 0, "length": 1, "confidence": 0.8}],
+        messages=[_msg(1, "01")],
+        config=StageConfig(stage=LLMStage.BOUNDARY_REFINEMENT, render_only=False),
+        llm_config=None,
+        cached_response=raw_response,
+    )
+    prompt_path = tmp_path / "boundary_refinement_family_0_prompt.md"
+    save_rendered_prompt(prompt_path, result.prompt)
+
+    assert result.success is True
+    assert "Evidence Bundle" in prompt_path.read_text(encoding="utf-8")

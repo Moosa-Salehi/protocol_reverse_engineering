@@ -7,6 +7,7 @@ import pytest
 from protocol_re.llm.evidence_builders import (
     build_family_statistics,
     build_field_statistics,
+    build_sample_messages,
     build_sample_values,
     derive_boundary_scores,
 )
@@ -52,6 +53,20 @@ def test_field_statistics_and_samples_are_derived_from_messages() -> None:
     assert stats["field_1"]["dominant_values"][0]["hex"] == "00"
     assert samples[0]["values"][0]["hex"] == "0102"
     assert samples[1]["values"][1]["hex"] == "00"
+
+
+def test_prompt_hex_evidence_is_capped_at_100_chars() -> None:
+    fields = [{"start": 0, "length": 80, "field_type": "payload", "confidence": 0.7}]
+    messages = [_msg(1, "aa" * 120)]
+
+    stats = build_field_statistics(fields, messages)
+    message_samples = build_sample_messages(messages)
+    samples = build_sample_values(fields, messages)
+
+    assert len(message_samples[0]["payload_hex"]) == 100
+    assert message_samples[0]["payload_hex_truncated"] is True
+    assert len(stats["field_0"]["dominant_values"][0]["hex"]) == 100
+    assert len(samples[0]["values"][0]["hex"]) == 100
 
 
 def test_boundary_scores_and_family_statistics_are_derived_from_segments() -> None:

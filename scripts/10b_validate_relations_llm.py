@@ -24,6 +24,7 @@ from protocol_re.llm.user_responses import (
     ensure_user_response_placeholder,
     load_user_provided_response,
     make_user_response_path,
+    save_rendered_prompt,
 )
 from protocol_re.utils.logging import setup_stage_logging
 
@@ -185,10 +186,10 @@ def main() -> None:
         family_summaries=family_summaries,
     )
 
+    save_rendered_prompt(prompt_path, result.prompt)
+    print(f"[+] Saved prompt to {prompt_path}")
+
     if args.render_only:
-        with open(prompt_path, "w", encoding="utf-8") as f:
-            f.write(result.prompt)
-        print(f"[+] Saved prompt to {prompt_path}")
         if result_path.exists():
             print(f"[*] Preserved cached LLM response at {result_path}")
 

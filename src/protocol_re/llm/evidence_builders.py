@@ -7,6 +7,9 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 from protocol_re.model.schema import MessageRecord
 
 
+MAX_PROMPT_HEX_CHARS = 100
+
+
 def _field_start(field: Mapping[str, Any]) -> int:
     return int(field.get("start", field.get("offset", field.get("start_offset", 0))) or 0)
 
@@ -22,7 +25,14 @@ def _field_length(field: Mapping[str, Any]) -> int:
 
 
 def _slice_hex(payload_hex: str, start: int, length: int) -> str:
-    return payload_hex[start * 2 : (start + length) * 2]
+    return _truncate_hex(payload_hex[start * 2 : (start + length) * 2])
+
+
+def _truncate_hex(value: Any, max_chars: int = MAX_PROMPT_HEX_CHARS) -> str:
+    text = str(value or "")
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars]
 
 
 def build_sample_messages(messages: Sequence[MessageRecord], max_samples: int = 10) -> List[Dict[str, Any]]:
@@ -31,7 +41,8 @@ def build_sample_messages(messages: Sequence[MessageRecord], max_samples: int = 
         samples.append(
             {
                 "msg_id": msg.msg_id,
-                "payload_hex": msg.payload_hex,
+                "payload_hex": _truncate_hex(msg.payload_hex),
+                "payload_hex_truncated": len(msg.payload_hex) > MAX_PROMPT_HEX_CHARS,
                 "length": msg.payload_len,
                 "direction": msg.direction,
                 "session_id": msg.session_id,
