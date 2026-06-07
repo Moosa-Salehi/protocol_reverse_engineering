@@ -11,6 +11,7 @@ from protocol_re.clustering.structural_features import (
     summarize_symbolic_feature_count,
     vectorize_structural_features,
 )
+from protocol_re.clustering.latent_standardize import LatentStandardizer
 from protocol_re.model.schema import MessageRecord
 from protocol_re.neural.artifacts import load_latent_cache, save_latent_cache
 from protocol_re.neural.model_loader import DEFAULT_MODEL_PATH, load_optional_encoder_with_reason
@@ -51,6 +52,7 @@ def build_enhanced_feature_matrix(
     enable_preprocessing: bool = True,
     enable_quality_check: bool = True,
     auto_fallback: bool = True,
+    latent_standardizer: LatentStandardizer | None = None,
 ) -> EnhancedFeatureBuildResult:
     """
     Build feature matrix with enhanced neural encoding and automatic fallback.
@@ -132,10 +134,22 @@ def build_enhanced_feature_matrix(
                 quality_check_reason=quality_reason,
             )
 
+        # Deterministic per-corpus latent standardization (fit once, transform every
+        # batch). Applied only AFTER the raw-latent quality/fallback decision above, so
+        # z-scoring can never mask a collapsed latent from the quality gate.
+        def _standardize(neural_block):
+            if latent_standardizer is None:
+                return neural_block, False
+            if not latent_standardizer.fitted:
+                latent_standardizer.fit(neural_block)
+            return latent_standardizer.transform(neural_block), True
+
         # Neural mode succeeded
         if feature_mode == "neural":
+            neural_std, standardized = _standardize(neural_matrix)
+            neural_metadata = {**neural_metadata, "latent_standardized": standardized}
             return EnhancedFeatureBuildResult(
-                matrix=neural_matrix,
+                matrix=neural_std,
                 feature_mode="neural",
                 requested_feature_mode=feature_mode,
                 neural_model=str(model_path or DEFAULT_MODEL_PATH),
@@ -149,8 +163,10 @@ def build_enhanced_feature_matrix(
             )
 
         # Hybrid mode - concatenate neural + structural
+        neural_std, standardized = _standardize(neural_matrix)
+        neural_metadata = {**neural_metadata, "latent_standardized": standardized}
         structural = vectorize_structural_features(records, corpus_records=corpus_records)
-        matrix = np.concatenate([neural_matrix, structural], axis=1).astype(np.float32)
+        matrix = np.concatenate([neural_std, structural], axis=1).astype(np.float32)
 
         return EnhancedFeatureBuildResult(
             matrix=matrix,

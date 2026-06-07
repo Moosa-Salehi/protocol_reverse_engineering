@@ -8,6 +8,7 @@ from protocol_re.clustering.structural_features import (
     summarize_symbolic_feature_count,
     vectorize_structural_features,
 )
+from protocol_re.clustering.latent_standardize import LatentStandardizer
 from protocol_re.model.schema import MessageRecord
 from protocol_re.neural.artifacts import load_latent_cache, save_latent_cache
 from protocol_re.neural.model_loader import DEFAULT_MODEL_PATH, load_optional_encoder_with_reason
@@ -58,6 +59,7 @@ def build_feature_matrix(
     fusion_method: str = "adaptive",  # New parameter
     neural_weight: float | None = None,
     structural_weight: float | None = None,
+    latent_standardizer: LatentStandardizer | None = None,
 ) -> FeatureBuildResult:
     if np is None:
         raise RuntimeError("NumPy is required for feature matrix construction")
@@ -83,20 +85,33 @@ def build_feature_matrix(
                 symbolic_feature_count=summarize_symbolic_feature_count(),
                 fallback_reason=neural_unavailable_reason or "neural_model_or_dependency_unavailable",
             )
+        # Deterministic per-corpus latent standardization. Fit once (on the clustering
+        # sample) and reuse for every later batch so the latent coordinate system is
+        # stable across sampled centroids and unsampled assignments. Run this AFTER any
+        # collapse detection below, never before, so z-scoring cannot mask a dead dim.
+        def _standardize(neural_matrix):
+            if latent_standardizer is None:
+                return neural_matrix, False
+            if not latent_standardizer.fitted:
+                latent_standardizer.fit(neural_matrix)
+            return latent_standardizer.transform(neural_matrix), True
+
         if feature_mode == "neural":
+            neural_std, standardized = _standardize(neural)
             return FeatureBuildResult(
-                matrix=neural,
+                matrix=neural_std,
                 feature_mode="neural",
                 requested_feature_mode=feature_mode,
                 neural_model=str(model_path or DEFAULT_MODEL_PATH),
                 latent_dim=latent_dim,
                 latent_cache=latent_cache_path,
+                extra_metadata={"latent_standardized": standardized},
             )
 
         # Build structural features
         structural = vectorize_structural_features(records, corpus_records=corpus_records)
 
-        # Check if structural should override neural (collapse detection)
+        # Check if structural should override neural (collapse detection) — on RAW latents.
         if LEARNED_FUSION_AVAILABLE:
             should_override, override_reason = should_override_with_structural(neural, structural)
             if should_override:
@@ -111,12 +126,16 @@ def build_feature_matrix(
                     fallback_reason=f"neural_override:{override_reason}",
                 )
 
+        # Standardize the latent block (pre-fusion) so fusion weighting operates on
+        # comparable, per-dimension unit-scale latents rather than raw VAE outputs.
+        neural_std, standardized = _standardize(neural)
+
         # Hybrid mode: fuse neural and structural features
         if LEARNED_FUSION_AVAILABLE and fusion_method != "concat":
             # Use learned fusion
             try:
                 matrix, fusion_weights = fuse_features_adaptive(
-                    neural_features=neural,
+                    neural_features=neural_std,
                     structural_features=structural,
                     method=fusion_method,
                     neural_weight=neural_weight,
@@ -136,10 +155,11 @@ def build_feature_matrix(
                     structural_weight=fusion_weights.structural_weight,
                     feature_importance=fusion_weights.feature_importance,
                     fusion_quality_score=fusion_weights.quality_score,
+                    extra_metadata={"latent_standardized": standardized},
                 )
             except Exception as exc:
                 # Fallback to simple concatenation if learned fusion fails
-                matrix = np.concatenate([neural, structural], axis=1).astype(np.float32)
+                matrix = np.concatenate([neural_std, structural], axis=1).astype(np.float32)
                 return FeatureBuildResult(
                     matrix=matrix,
                     feature_mode="hybrid",
@@ -149,10 +169,11 @@ def build_feature_matrix(
                     latent_cache=latent_cache_path,
                     symbolic_feature_count=int(structural.shape[1]),
                     fallback_reason=f"learned_fusion_failed:{exc.__class__.__name__}",
+                    extra_metadata={"latent_standardized": standardized},
                 )
         else:
             # Simple concatenation (original behavior)
-            matrix = np.concatenate([neural, structural], axis=1).astype(np.float32)
+            matrix = np.concatenate([neural_std, structural], axis=1).astype(np.float32)
             return FeatureBuildResult(
                 matrix=matrix,
                 feature_mode="hybrid",
@@ -162,6 +183,7 @@ def build_feature_matrix(
                 latent_cache=latent_cache_path,
                 symbolic_feature_count=int(structural.shape[1]),
                 fusion_method="concat",
+                extra_metadata={"latent_standardized": standardized},
             )
     raise ValueError(f"Unsupported feature mode: {feature_mode}")
 
