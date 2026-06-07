@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 12, 'family_ratio': 1.0}], 'field_type_counts': {'length': 36, 'transaction_or_counter': 22, 'constant': 10, 'discriminator': 4}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 12}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-07T12:08:08.684733+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-07T15:49:02.379940+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
 
 ## Evaluation
 
@@ -22,42 +22,42 @@ Version: `0.1`
 
 ### Clustering Diagnostic Warnings
 
-- `family_0` | messages=`143667` split=`0.7` under_split=`0.7` over_split=`0` warnings=high latent dispersion, low latent silhouette, mixed length profile
-- `family_3` | messages=`6550` split=`0.5` under_split=`0.5` over_split=`0.1` warnings=high latent dispersion, low latent silhouette, possible over-split merge candidate
-- `family_6` | messages=`19787` split=`0.4` under_split=`0.4` over_split=`0` warnings=low latent silhouette, mixed length profile
-- `family_1` | messages=`2609` split=`0.3` under_split=`0.3` over_split=`0.1` warnings=high latent dispersion, possible over-split merge candidate
-- `family_10` | messages=`1245` split=`0.2` under_split=`0.2` over_split=`0.4606` warnings=low latent silhouette, possible over-split merge candidate
-- `family_8` | messages=`1725` split=`0.2` under_split=`0.2` over_split=`0.3233` warnings=low latent silhouette, possible over-split merge candidate
-- `family_5` | messages=`8347` split=`0.2` under_split=`0.2` over_split=`0.2606` warnings=low latent silhouette, possible over-split merge candidate
-- `family_7` | messages=`11149` split=`0.2` under_split=`0.2` over_split=`0.2533` warnings=mixed length profile, possible over-split merge candidate
-- `family_9` | messages=`1363` split=`0` under_split=`0` over_split=`0.4606` warnings=possible over-split merge candidate
+- `family_0` | messages=`143751` split=`0.7` under_split=`0.7` over_split=`0` warnings=high latent dispersion, low latent silhouette, mixed length profile
+- `family_3` | messages=`6547` split=`0.5` under_split=`0.5` over_split=`0.1` warnings=high latent dispersion, low latent silhouette, possible over-split merge candidate
+- `family_6` | messages=`19786` split=`0.4` under_split=`0.4` over_split=`0` warnings=low latent silhouette, mixed length profile
+- `family_1` | messages=`2604` split=`0.3` under_split=`0.3` over_split=`0.1` warnings=high latent dispersion, possible over-split merge candidate
+- `family_10` | messages=`1246` split=`0.2` under_split=`0.2` over_split=`0.4606` warnings=low latent silhouette, possible over-split merge candidate
+- `family_8` | messages=`1725` split=`0.2` under_split=`0.2` over_split=`0.3242` warnings=low latent silhouette, possible over-split merge candidate
+- `family_7` | messages=`11094` split=`0.2` under_split=`0.2` over_split=`0.2536` warnings=mixed length profile, possible over-split merge candidate
+- `family_9` | messages=`1371` split=`0` under_split=`0` over_split=`0.4606` warnings=possible over-split merge candidate
+- `family_5` | messages=`8320` split=`0` under_split=`0` over_split=`0.2606` warnings=possible over-split merge candidate
 - `family_4` | messages=`925` split=`0` under_split=`0` over_split=`0.2606` warnings=possible over-split merge candidate
 
 ### Clustering Merge Candidates
 
-- `family_10` -> `family_9` distance=`0.4323` score=`0.4606`
-- `family_9` -> `family_10` distance=`0.4323` score=`0.4606`
-- `family_9` -> `family_8` distance=`0.5423` score=`0.3233`
-- `family_8` -> `family_9` distance=`0.5423` score=`0.3233`
-- `family_5` -> `family_4` distance=`0.5926` score=`0.2606`
-- `family_4` -> `family_5` distance=`0.5926` score=`0.2606`
-- `family_7` -> `family_8` distance=`0.5984` score=`0.2533`
-- `family_8` -> `family_7` distance=`0.5984` score=`0.2533`
-- `family_9` -> `family_7` distance=`0.6121` score=`0.2363`
-- `family_7` -> `family_9` distance=`0.6121` score=`0.2363`
+- `family_10` -> `family_9` distance=`0.4431` score=`0.4606`
+- `family_9` -> `family_10` distance=`0.4431` score=`0.4606`
+- `family_9` -> `family_8` distance=`0.5551` score=`0.3242`
+- `family_8` -> `family_9` distance=`0.5551` score=`0.3242`
+- `family_5` -> `family_4` distance=`0.6075` score=`0.2606`
+- `family_4` -> `family_5` distance=`0.6075` score=`0.2606`
+- `family_8` -> `family_7` distance=`0.6131` score=`0.2536`
+- `family_7` -> `family_8` distance=`0.6131` score=`0.2536`
+- `family_9` -> `family_7` distance=`0.6274` score=`0.2363`
+- `family_7` -> `family_9` distance=`0.6274` score=`0.2363`
 
 ### Evaluation Top Relation Edges
 
-- `family_6` -> `family_6` | pairs=`8154` avg_score=`6.9457` support=`0.7944` lift=`8.3422` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_0` -> `family_3` | pairs=`6528` avg_score=`6.9674` support=`0.0847` lift=`1.2947` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_7` -> `family_7` | pairs=`3174` avg_score=`6.9477` support=`0.463` lift=`10.7838` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_5` -> `family_5` | pairs=`2015` avg_score=`6.9508` support=`0.3526` lift=`13.3958` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_0` -> `family_8` | pairs=`1725` avg_score=`6.9676` support=`0.0224` lift=`1.2973` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_6` -> `family_2` | pairs=`1084` avg_score=`6.9676` support=`0.1056` lift=`6.4273` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_0` -> `family_9` | pairs=`1066` avg_score=`6.9675` support=`0.0138` lift=`1.0146` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_0` -> `noise` | pairs=`878` avg_score=`6.9675` support=`0.0114` lift=`1.2353` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_7` -> `family_6` | pairs=`843` avg_score=`6.9674` support=`0.123` lift=`1.2913` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_5` -> `family_1` | pairs=`697` avg_score=`6.9676` support=`0.122` lift=`4.6781` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_6` -> `family_6` | pairs=`8157` avg_score=`6.9457` support=`0.795` lift=`8.3458` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `family_3` | pairs=`6524` avg_score=`6.9674` support=`0.0847` lift=`1.2953` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_7` -> `family_7` | pairs=`3119` avg_score=`6.9479` support=`0.4531` lift=`10.7609` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_5` -> `family_5` | pairs=`1962` avg_score=`6.951` support=`0.3418` lift=`13.2512` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `family_8` | pairs=`1725` avg_score=`6.9676` support=`0.0224` lift=`1.2981` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_6` -> `family_2` | pairs=`1084` avg_score=`6.9676` support=`0.1057` lift=`6.4343` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `family_9` | pairs=`1074` avg_score=`6.9675` support=`0.0139` lift=`1.0169` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_0` -> `noise` | pairs=`877` avg_score=`6.9675` support=`0.0114` lift=`1.2361` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_7` -> `family_6` | pairs=`843` avg_score=`6.9674` support=`0.1225` lift=`1.2857` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_5` -> `family_1` | pairs=`697` avg_score=`6.9676` support=`0.1214` lift=`4.6659` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
 
 ## Final Ground Truth Evaluation
 
@@ -101,23 +101,23 @@ This is a binary, request-response protocol operating over a client-server model
 
 - Total inferred family edges: `17`
 - Strongest edges:
-- `family_6` -> `family_6` | pairs=`8154` avg_score=`6.9457` support=`0.7944` lift=`8.3422` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_7` -> `family_7` | pairs=`3174` avg_score=`6.9477` support=`0.463` lift=`10.7838` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_5` -> `family_5` | pairs=`2015` avg_score=`6.9508` support=`0.3526` lift=`13.3958` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_0` -> `family_8` | pairs=`1725` avg_score=`6.9676` support=`0.0224` lift=`1.2973` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_6` -> `family_2` | pairs=`1084` avg_score=`6.9676` support=`0.1056` lift=`6.4273` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_0` -> `family_9` | pairs=`1066` avg_score=`6.9675` support=`0.0138` lift=`1.0146` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_0` -> `noise` | pairs=`878` avg_score=`6.9675` support=`0.0114` lift=`1.2353` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_7` -> `family_6` | pairs=`843` avg_score=`6.9674` support=`0.123` lift=`1.2913` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_5` -> `family_1` | pairs=`697` avg_score=`6.9676` support=`0.122` lift=`4.6781` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_5` -> `family_4` | pairs=`376` avg_score=`6.9676` support=`0.0658` lift=`7.1126` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_7` -> `family_10` | pairs=`311` avg_score=`6.9673` support=`0.0454` lift=`3.6435` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_6` -> `family_10` | pairs=`175` avg_score=`6.9674` support=`0.017` lift=`1.3693` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_7` -> `family_9` | pairs=`157` avg_score=`6.9675` support=`0.0229` lift=`1.6801` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_6` -> `family_9` | pairs=`140` avg_score=`6.9674` support=`0.0136` lift=`1.0006` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_7` -> `family_2` | pairs=`137` avg_score=`6.9674` support=`0.02` lift=`1.2162` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `noise` -> `noise` | pairs=`44` avg_score=`6.9969` support=`1` lift=`108.4588` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_2` -> `family_2` | pairs=`23` avg_score=`6.9967` support=`1` lift=`60.8637` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_6` -> `family_6` | pairs=`8157` avg_score=`6.9457` support=`0.795` lift=`8.3458` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_7` | pairs=`3119` avg_score=`6.9479` support=`0.4531` lift=`10.7609` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_5` -> `family_5` | pairs=`1962` avg_score=`6.951` support=`0.3418` lift=`13.2512` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_0` -> `family_8` | pairs=`1725` avg_score=`6.9676` support=`0.0224` lift=`1.2981` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_6` -> `family_2` | pairs=`1084` avg_score=`6.9676` support=`0.1057` lift=`6.4343` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_0` -> `family_9` | pairs=`1074` avg_score=`6.9675` support=`0.0139` lift=`1.0169` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_0` -> `noise` | pairs=`877` avg_score=`6.9675` support=`0.0114` lift=`1.2361` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_6` | pairs=`843` avg_score=`6.9674` support=`0.1225` lift=`1.2857` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_5` -> `family_1` | pairs=`697` avg_score=`6.9676` support=`0.1214` lift=`4.6659` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_5` -> `family_4` | pairs=`378` avg_score=`6.9676` support=`0.0658` lift=`7.118` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_10` | pairs=`311` avg_score=`6.9673` support=`0.0452` lift=`3.6263` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_6` -> `family_10` | pairs=`176` avg_score=`6.9675` support=`0.0172` lift=`1.3767` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_9` | pairs=`156` avg_score=`6.9675` support=`0.0227` lift=`1.6531` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_6` -> `family_9` | pairs=`141` avg_score=`6.9674` support=`0.0137` lift=`1.0024` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_2` | pairs=`137` avg_score=`6.9674` support=`0.0199` lift=`1.2122` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `noise` -> `noise` | pairs=`44` avg_score=`6.9969` support=`1` lift=`108.5765` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_2` -> `family_2` | pairs=`23` avg_score=`6.9967` support=`1` lift=`60.9007` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 
 ## Families
 
@@ -127,15 +127,15 @@ This is a binary, request-response protocol operating over a client-server model
 ### family_0
 
 - Role: `request`
-- Messages: `143667`
+- Messages: `143751`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_3`, `family_8`, `family_9`, `noise`
 - Role hint: `request`
 - Semantic confidence: `1.0`
 - Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314781`
-- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.36067` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.573042`
-- Top discriminator candidates: offset `8` conf=`0.573042` salience=`1.0`, offset `7` conf=`0.498845` salience=`0.743093`, offset `9` conf=`0.475707` salience=`0.583835`
+- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314798`
+- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.361483` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.573172`
+- Top discriminator candidates: offset `8` conf=`0.573172` salience=`1.0`, offset `9` conf=`0.549886` salience=`0.831083`, offset `7` conf=`0.49957` salience=`0.745469`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -145,7 +145,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `4`..`5` | kind=`variable` confidence=`0.6534`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.85`
-- bytes `8`..`11` | kind=`variable` confidence=`0.6859`
+- bytes `8`..`11` | kind=`variable` confidence=`0.68580975`
 
 #### Field Hypotheses
 
@@ -181,22 +181,22 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `143667` (`1.0`)
-- Repeated n-gram instances: `181099`
-- Top motifs: `0000`x288327, `000000`x144283, `0101`x98396, `0100`x81057, `0006`x77846
+- Messages with repetition: `143751` (`1.0`)
+- Repeated n-gram instances: `181239`
+- Top motifs: `0000`x288499, `000000`x144367, `0101`x98475, `0100`x81119, `0006`x77798
 
 ### family_6
 
 - Role: `request`
-- Messages: `19787`
+- Messages: `19786`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_10`, `family_2`, `family_6`, `family_7`, `family_9`
 - Role hint: `request`
 - Semantic confidence: `0.515`
 - Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.485475` max=`3.027169` mean=`2.352618`
-- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.465606` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.574055`
-- Top discriminator candidates: offset `8` conf=`0.574055` salience=`1.0`, offset `7` conf=`0.500851` salience=`0.743093`, offset `9` conf=`0.450142` salience=`0.583835`
+- Entropy summary: min=`1.485475` max=`3.027169` mean=`2.35261`
+- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.465807` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.57416`
+- Top discriminator candidates: offset `8` conf=`0.57416` salience=`1.0`, offset `9` conf=`0.524347` salience=`0.831083`, offset `7` conf=`0.501573` salience=`0.745469`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -206,7 +206,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `4`..`5` | kind=`variable` confidence=`0.6523`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.85`
-- bytes `8`..`11` | kind=`variable` confidence=`0.6824705`
+- bytes `8`..`11` | kind=`variable` confidence=`0.6823802499999999`
 
 #### Field Hypotheses
 
@@ -244,37 +244,37 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `19787` (`1.0`)
-- Repeated n-gram instances: `24147`
-- Top motifs: `0000`x39702, `000000`x19867, `0101`x11995, `0006`x10530, `0601`x10297
+- Messages with repetition: `19786` (`1.0`)
+- Repeated n-gram instances: `24152`
+- Top motifs: `0000`x39700, `000000`x19866, `0101`x12000, `0006`x10525, `0601`x10292
 
 ### family_7
 
 - Role: `request`
-- Messages: `11149`
+- Messages: `11094`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_10`, `family_2`, `family_6`, `family_7`, `family_9`
 - Role hint: `request`
-- Semantic confidence: `0.5929`
+- Semantic confidence: `0.5941`
 - Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.896241` max=`3.027169` mean=`2.382713`
-- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.331912` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.56793`
-- Top discriminator candidates: offset `8` conf=`0.56793` salience=`1.0`, offset `7` conf=`0.501647` salience=`0.743093`, offset `9` conf=`0.475099` salience=`0.583835`
+- Entropy summary: min=`1.896241` max=`3.027169` mean=`2.382777`
+- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.322557` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.56769`
+- Top discriminator candidates: offset `8` conf=`0.56769` salience=`1.0`, offset `9` conf=`0.549201` salience=`0.831083`, offset `7` conf=`0.502308` salience=`0.745469`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.6196849999999999`
+- bytes `0`..`1` | kind=`variable` confidence=`0.619875`
 - bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6538`
+- bytes `4`..`5` | kind=`variable` confidence=`0.6539`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.85`
-- bytes `8`..`11` | kind=`variable` confidence=`0.59755`
+- bytes `8`..`11` | kind=`variable` confidence=`0.5980249999999999`
 
 #### Field Hypotheses
 
 - bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
-- bytes `7`..`7` | type=`uint8` confidence=`0.9996`
+- bytes `7`..`7` | type=`uint8` confidence=`0.9995`
 - bytes `8`..`11` | type=`uint32` confidence=`0.9993`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
@@ -306,29 +306,29 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `11149` (`1.0`)
-- Repeated n-gram instances: `12786`
-- Top motifs: `0000`x22342, `000000`x11154, `000006`x6939, `000601`x6939, `0006`x6939
+- Messages with repetition: `11094` (`1.0`)
+- Repeated n-gram instances: `12693`
+- Top motifs: `0000`x22230, `000000`x11099, `000006`x6966, `000601`x6966, `0006`x6966
 
 ### family_5
 
 - Role: `request`
-- Messages: `8347`
+- Messages: `8320`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
 - Related families: `family_1`, `family_4`, `family_5`
 - Role hint: `request`
-- Semantic confidence: `0.6051`
+- Semantic confidence: `0.6075`
 - Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.846439` max=`3.027169` mean=`2.409017`
-- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.206195` salience=`1.0` mutual_information=`0.143064` contrastive_separation=`0.796875` confidence=`0.564185`
-- Top discriminator candidates: offset `8` conf=`0.564185` salience=`1.0`, offset `7` conf=`0.502865` salience=`0.743093`, offset `9` conf=`0.472883` salience=`0.583835`
+- Entropy summary: min=`1.846439` max=`3.027169` mean=`2.409528`
+- Candidate discriminator offset: `8` cardinality=`3` entropy=`1.193847` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.563956`
+- Top discriminator candidates: offset `8` conf=`0.563956` salience=`1.0`, offset `9` conf=`0.546889` salience=`0.831083`, offset `7` conf=`0.503619` salience=`0.745469`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.623485`
+- bytes `0`..`1` | kind=`variable` confidence=`0.62339`
 - bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6553`
+- bytes `4`..`5` | kind=`variable` confidence=`0.6554`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.85`
 - bytes `8`..`11` | kind=`variable` confidence=`0.6971812499999999`
@@ -368,22 +368,22 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `8347` (`1.0`)
-- Repeated n-gram instances: `9029`
-- Top motifs: `0000`x16698, `000000`x8347, `000006`x5716, `000601`x5716, `0006`x5716
+- Messages with repetition: `8320` (`1.0`)
+- Repeated n-gram instances: `8978`
+- Top motifs: `0000`x16642, `000000`x8320, `000006`x5742, `000601`x5742, `0006`x5742
 
 ### family_3
 
 - Role: `response`
-- Messages: `6550`
+- Messages: `6547`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_0`
 - Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020656`
-- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.046691` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.890625` confidence=`0.414806`
-- Top discriminator candidates: offset `9` conf=`0.414806` salience=`0.583835`, offset `10` conf=`0.356624` salience=`0.401347`
+- Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020608`
+- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.04671` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`0.890625` confidence=`0.489024`
+- Top discriminator candidates: offset `9` conf=`0.489024` salience=`0.831083`, offset `10` conf=`0.394068` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -394,7 +394,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.85`
 - bytes `8`..`9` | kind=`variable` confidence=`0.6682`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7228`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7229`
 - bytes `11`..`11` | kind=`constant` confidence=`0.8654`
 
 #### Field Hypotheses
@@ -433,33 +433,33 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `6550` (`1.0`)
-- Repeated n-gram instances: `6592`
-- Top motifs: `0000`x13121, `000000`x6571, `000005`x6532, `000501`x6532, `010402`x6532
+- Messages with repetition: `6547` (`1.0`)
+- Repeated n-gram instances: `6591`
+- Top motifs: `0000`x13116, `000000`x6569, `000005`x6529, `000501`x6529, `010402`x6529
 
 ### family_1
 
 - Role: `response`
-- Messages: `2609`
+- Messages: `2604`
 - Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
 - Related families: `family_5`
 - Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.617492` max=`3.027169` mean=`3.019931`
-- Candidate discriminator offset: `9` cardinality=`8` entropy=`0.050854` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.875` confidence=`0.422008`
-- Top discriminator candidates: offset `9` conf=`0.422008` salience=`0.583835`, offset `10` conf=`0.353581` salience=`0.401347`
+- Entropy summary: min=`2.617492` max=`3.027169` mean=`3.02003`
+- Candidate discriminator offset: `9` cardinality=`8` entropy=`0.05094` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`0.875` confidence=`0.496226`
+- Top discriminator candidates: offset `9` conf=`0.496226` salience=`0.831083`, offset `10` conf=`0.391039` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.641725`
+- bytes `0`..`1` | kind=`variable` confidence=`0.64182`
 - bytes `2`..`3` | kind=`constant` confidence=`0.8763`
 - bytes `4`..`5` | kind=`variable` confidence=`0.6688`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
 - bytes `7`..`7` | kind=`variable` confidence=`0.85`
 - bytes `8`..`9` | kind=`variable` confidence=`0.6687`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7504`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7506`
 - bytes `11`..`11` | kind=`constant` confidence=`0.8652`
 
 #### Field Hypotheses
@@ -498,9 +498,9 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `2609` (`1.0`)
-- Repeated n-gram instances: `2631`
-- Top motifs: `0000`x5229, `000000`x2620, `000005`x2605, `000501`x2605, `010402`x2605
+- Messages with repetition: `2604` (`1.0`)
+- Repeated n-gram instances: `2624`
+- Top motifs: `0000`x5218, `000000`x2614, `000005`x2600, `000501`x2600, `010402`x2600
 
 ### family_8
 
@@ -512,8 +512,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.025483`
-- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.048316` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.859375` confidence=`0.429186`
-- Top discriminator candidates: offset `9` conf=`0.429186` salience=`0.583835`, offset `10` conf=`0.351566` salience=`0.401347`
+- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.048316` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`0.859375` confidence=`0.503404`
+- Top discriminator candidates: offset `9` conf=`0.503404` salience=`0.831083`, offset `10` conf=`0.38904` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -522,14 +522,14 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `2`..`6` | kind=`constant` confidence=`0.85`
 - bytes `7`..`7` | kind=`constant` confidence=`1.0`
 - bytes `8`..`9` | kind=`variable` confidence=`0.669`
-- bytes `10`..`10` | kind=`variable` confidence=`0.755`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7551`
 
 #### Field Hypotheses
 
 - bytes `8`..`9` | type=`uint16` confidence=`0.9959`
 - bytes `2`..`6` | type=`bytes` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
-- bytes `10`..`10` | type=`uint8` confidence=`0.9884`
+- bytes `10`..`10` | type=`uint8` confidence=`0.9878`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.891` endian=`little`
 
 #### Framing Hypotheses
@@ -561,20 +561,20 @@ This is a binary, request-response protocol operating over a client-server model
 ### family_2
 
 - Role: `response`
-- Messages: `1666`
+- Messages: `1665`
 - Template: `?? ?? 00 00 00 05 01 04 02 ?? ?? 00`
 - Related families: `family_2`, `family_6`, `family_7`
 - Role hint: `response`
 - Semantic confidence: `0.9818`
 - Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.40401` max=`3.027169` mean=`2.994239`
-- Candidate discriminator offset: `9` cardinality=`12` entropy=`0.599428` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.9375` confidence=`0.398443`
-- Top discriminator candidates: offset `9` conf=`0.398443` salience=`0.583835`, offset `10` conf=`0.34984` salience=`0.401347`
+- Entropy summary: min=`2.40401` max=`3.027169` mean=`2.994328`
+- Candidate discriminator offset: `9` cardinality=`12` entropy=`0.597283` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`0.9375` confidence=`0.472628`
+- Top discriminator candidates: offset `9` conf=`0.472628` salience=`0.831083`, offset `10` conf=`0.387307` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.66101`
+- bytes `0`..`1` | kind=`variable` confidence=`0.6611049999999999`
 - bytes `2`..`3` | kind=`constant` confidence=`0.8763`
 - bytes `4`..`5` | kind=`variable` confidence=`0.667`
 - bytes `6`..`6` | kind=`constant` confidence=`1.0`
@@ -622,38 +622,38 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `1666` (`1.0`)
-- Repeated n-gram instances: `1676`
-- Top motifs: `0000`x3336, `000000`x1670, `0005`x1621, `0104`x1621, `000005`x1620
+- Messages with repetition: `1665` (`1.0`)
+- Repeated n-gram instances: `1675`
+- Top motifs: `0000`x3334, `000000`x1669, `0005`x1620, `0104`x1620, `000005`x1619
 
 ### family_9
 
 - Role: `response`
-- Messages: `1363`
+- Messages: `1371`
 - Template: `?? ?? 00 00 00 05 01 04 02 ?? ??`
 - Related families: `family_0`, `family_6`, `family_7`
 - Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.222192` max=`3.027169` mean=`2.993993`
-- Candidate discriminator offset: `9` cardinality=`10` entropy=`0.481044` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.90625` confidence=`0.411694`
-- Top discriminator candidates: offset `9` conf=`0.411694` salience=`0.583835`, offset `10` conf=`0.354522` salience=`0.401347`
+- Entropy summary: min=`2.222192` max=`3.027169` mean=`2.994004`
+- Candidate discriminator offset: `9` cardinality=`10` entropy=`0.504003` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`0.90625` confidence=`0.486237`
+- Top discriminator candidates: offset `9` conf=`0.486237` salience=`0.831083`, offset `10` conf=`0.392037` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.6679449999999999`
+- bytes `0`..`1` | kind=`variable` confidence=`0.6678499999999999`
 - bytes `2`..`6` | kind=`constant` confidence=`0.85`
 - bytes `7`..`7` | kind=`variable` confidence=`0.85`
-- bytes `8`..`9` | kind=`variable` confidence=`0.6648`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7384`
+- bytes `8`..`9` | kind=`variable` confidence=`0.6645`
+- bytes `10`..`10` | kind=`variable` confidence=`0.7379`
 
 #### Field Hypotheses
 
 - bytes `7`..`7` | type=`uint8` confidence=`0.9985`
 - bytes `8`..`9` | type=`uint16` confidence=`0.9927`
 - bytes `2`..`6` | type=`bytes` confidence=`0.99`
-- bytes `10`..`10` | type=`uint8` confidence=`0.9743`
+- bytes `10`..`10` | type=`uint8` confidence=`0.9745`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
 
 #### Framing Hypotheses
@@ -680,27 +680,27 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `1363` (`1.0`)
-- Repeated n-gram instances: `1415`
-- Top motifs: `0000`x2751, `000000`x1388, `000005`x1363, `000501`x1363, `0005`x1363
+- Messages with repetition: `1371` (`1.0`)
+- Repeated n-gram instances: `1423`
+- Top motifs: `0000`x2767, `000000`x1396, `000005`x1371, `000501`x1371, `0005`x1371
 
 ### family_10
 
 - Role: `response`
-- Messages: `1245`
+- Messages: `1246`
 - Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
 - Related families: `family_6`, `family_7`
 - Role hint: `response`
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.010959`
-- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.098715` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.890625` confidence=`0.415098`
-- Top discriminator candidates: offset `9` conf=`0.415098` salience=`0.583835`, offset `10` conf=`0.349219` salience=`0.401347`
+- Entropy summary: min=`2.845351` max=`3.027169` mean=`3.010826`
+- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.098646` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`0.890625` confidence=`0.489315`
+- Top discriminator candidates: offset `9` conf=`0.489315` salience=`0.831083`, offset `10` conf=`0.386703` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.68172`
+- bytes `0`..`1` | kind=`variable` confidence=`0.681625`
 - bytes `2`..`6` | kind=`constant` confidence=`0.85`
 - bytes `7`..`7` | kind=`constant` confidence=`1.0`
 - bytes `8`..`9` | kind=`variable` confidence=`0.6691`
@@ -737,22 +737,22 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `1245` (`1.0`)
-- Repeated n-gram instances: `1245`
-- Top motifs: `0000`x2490, `000000`x1245, `000005`x1245, `000501`x1245, `010402`x1245
+- Messages with repetition: `1246` (`1.0`)
+- Repeated n-gram instances: `1246`
+- Top motifs: `0000`x2492, `000000`x1246, `000005`x1246, `000501`x1246, `010402`x1246
 
 ### noise
 
 - Role: `response`
-- Messages: `967`
+- Messages: `966`
 - Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00`
 - Related families: `family_0`, `noise`
 - Role hint: `response`
-- Semantic confidence: `0.9545`
+- Semantic confidence: `0.9544`
 - Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.450826` max=`3.027169` mean=`2.959562`
-- Candidate discriminator offset: `9` cardinality=`17` entropy=`1.214338` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`1.0` confidence=`0.367046`
-- Top discriminator candidates: offset `9` conf=`0.367046` salience=`0.583835`, offset `10` conf=`0.350112` salience=`0.401347`
+- Entropy summary: min=`2.450826` max=`3.027169` mean=`2.959492`
+- Candidate discriminator offset: `9` cardinality=`17` entropy=`1.215276` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`1.0` confidence=`0.441276`
+- Top discriminator candidates: offset `9` conf=`0.441276` salience=`0.831083`, offset `10` conf=`0.387574` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -775,7 +775,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `11`..`11` | type=`uint8` confidence=`0.99`
 - bytes `8`..`9` | type=`uint16` confidence=`0.9824`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
-- bytes `10`..`10` | type=`uint8` confidence=`0.9359`
+- bytes `10`..`10` | type=`uint8` confidence=`0.9358`
 
 #### Framing Hypotheses
 
@@ -804,9 +804,9 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Feature Summary
 
-- Messages with repetition: `967` (`1.0`)
-- Repeated n-gram instances: `1009`
-- Top motifs: `0000`x1954, `000000`x987, `000005`x879, `000501`x879, `010402`x879
+- Messages with repetition: `966` (`1.0`)
+- Repeated n-gram instances: `1008`
+- Top motifs: `0000`x1952, `000000`x986, `000005`x878, `000501`x878, `010402`x878
 
 ### family_4
 
@@ -818,8 +818,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023386`
-- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.058876` salience=`0.583835` mutual_information=`0.225435` contrastive_separation=`0.828125` confidence=`0.443642`
-- Top discriminator candidates: offset `9` conf=`0.443642` salience=`0.583835`, offset `10` conf=`0.420578` salience=`0.401347`
+- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.058876` salience=`0.831083` mutual_information=`0.225617` contrastive_separation=`0.828125` confidence=`0.51786`
+- Top discriminator candidates: offset `9` conf=`0.51786` salience=`0.831083`, offset `10` conf=`0.458052` salience=`0.526586`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments

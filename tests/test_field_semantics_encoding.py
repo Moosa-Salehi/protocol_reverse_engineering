@@ -8,6 +8,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments
+from protocol_re.inference.discriminator_fields import detect_global_discriminator
+from protocol_re.clustering.family_discovery import refine_families_by_discriminator
+from protocol_re.clustering.structural_features import volatile_offsets
 from protocol_re.inference.framing import FramingFieldRegion, FramingLayoutHypothesis, _dedupe_layouts, _header_boundary_scores
 from protocol_re.corpus.request_response_pairing import pair_request_response_messages
 from protocol_re.inference.request_response_relations import _echo_candidates, _length_correlation_relations
@@ -598,3 +601,203 @@ def test_field_matching_shifts_absolute_prediction_for_body_relative_truth() -> 
     assert matches[0]["boundary_score"] == 1.0
     assert matches[0]["semantic_score"] == 1.0
     assert matches[0]["offset_shift"] == 7
+
+
+# ---------------------------------------------------------------------------
+# Discriminator-aware family refinement (P1.5)
+# ---------------------------------------------------------------------------
+
+
+def _refine_record(msg_id: int, payload: bytes, direction: str = "request") -> MessageRecord:
+    return MessageRecord(
+        msg_id=msg_id,
+        source_file="capture.pcap",
+        session_id="s",
+        session_key="s",
+        src_ip="10.0.0.1",
+        src_port=1234,
+        dst_ip="10.0.0.2",
+        dst_port=502,
+        direction=direction,
+        payload_hex=payload.hex(),
+        payload_len=len(payload),
+    )
+
+
+def _mbap_pdu(txn: int, fc: int, data: bytes = b"\x00\x00", unit: int = 1) -> bytes:
+    """Synthetic Modbus MBAP header + PDU: txn(2) proto(2)=0 length(2) unit(1) fc(1) data."""
+    body = bytes([fc]) + data
+    length = len(body) + 1  # unit + pdu, constant when data length is constant
+    return txn.to_bytes(2, "big") + b"\x00\x00" + length.to_bytes(2, "big") + bytes([unit]) + body
+
+
+def test_detect_global_discriminator_picks_function_code_offset() -> None:
+    # Impure bootstrap labels (each pairs two function codes) over MBAP+PDU; the
+    # function code sits at offset 7. The transaction id (offsets 0-1, high
+    # cardinality / entropy, independent of label) and the constant protocol-id
+    # (offsets 2-3) must lose to it.
+    records = []
+    family_by_msg_id = {}
+    msg_id = 0
+    txn = 0
+    label_of_fc = {1: "family_a", 2: "family_a", 3: "family_b", 4: "family_b"}
+    for fc in (1, 2, 3, 4):
+        for _ in range(20):
+            data = bytes([txn % 256, (txn * 7) % 256])
+            records.append(_refine_record(msg_id, _mbap_pdu(txn, fc, data)))
+            family_by_msg_id[msg_id] = label_of_fc[fc]
+            msg_id += 1
+            txn += 1
+
+    result = detect_global_discriminator(records, family_by_msg_id)
+
+    assert result is not None
+    assert result["offset"] == 7
+    assert result["width"] == 1
+    assert result["cardinality"] == 4
+    assert result["global_mi"] >= 0.25
+
+
+def test_detect_global_discriminator_structural_fallback_ignores_bad_bootstrap() -> None:
+    # Bootstrap labels are assigned independently of the function code (a degraded
+    # clustering that does not track message type), so MI is ~0. The detector must
+    # still find the opcode at offset 7 via the structural fallback: txn id
+    # (offsets 0-1, high cardinality), constant protocol-id/unit, and the MBAP
+    # length field are all rejected, leaving the first body byte.
+    records = []
+    family_by_msg_id = {}
+    data_len_by_fc = {1: 4, 2: 2, 3: 6, 4: 1}
+    msg_id = 0
+    txn = 0
+    for fc in (1, 2, 3, 4):
+        for _ in range(20):
+            records.append(_refine_record(msg_id, _mbap_pdu(txn, fc, b"\x00" * data_len_by_fc[fc])))
+            family_by_msg_id[msg_id] = f"family_{msg_id % 3}"  # independent of fc
+            msg_id += 1
+            txn += 1
+
+    result = detect_global_discriminator(records, family_by_msg_id)
+
+    assert result is not None
+    assert result["offset"] == 7
+    assert result["width"] == 1
+    assert result["global_mi"] < 0.25  # fallback path engaged, not label-guided
+
+
+def _impure_modbus_corpus():
+    """Bootstrap: family_0 mixes fc1+fc2 (must split); family_1 and family_2 are
+    both pure fc3 with identical length+role (must merge). All requests, constant
+    payload length so length-bucket and role match across fragments."""
+    records = []
+    assignments = []
+    fc_by_msg_id = {}
+    msg_id = 0
+    txn = 0
+
+    def add(fc, family_id, confidence):
+        nonlocal msg_id, txn
+        records.append(_refine_record(msg_id, _mbap_pdu(txn, fc)))
+        assignments.append(FamilyAssignment(msg_id=msg_id, family_id=family_id, confidence=confidence))
+        fc_by_msg_id[msg_id] = fc
+        msg_id += 1
+        txn += 1
+
+    for _ in range(20):
+        add(1, "family_0", 0.9)
+    for _ in range(20):
+        add(2, "family_0", 0.8)
+    for _ in range(15):
+        add(3, "family_1", 0.7)
+    for _ in range(15):
+        add(3, "family_2", 0.6)
+    return records, assignments, fc_by_msg_id
+
+
+def test_refine_splits_impure_family_and_merges_fragments() -> None:
+    records, assignments, fc_by_msg_id = _impure_modbus_corpus()
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is True
+    assert meta["offset"] == 7
+    assert meta["width"] == 1
+
+    family_by_msg_id = {item.msg_id: item.family_id for item in refined}
+    families_for = lambda fc: {family_by_msg_id[mid] for mid, value in fc_by_msg_id.items() if value == fc}
+
+    # fc1 and fc2 each collapse to a single family, distinct from one another:
+    # the impure family_0 was split.
+    assert len(families_for(1)) == 1
+    assert len(families_for(2)) == 1
+    assert families_for(1) != families_for(2)
+
+    # fc3 spanned two bootstrap families but is one type → one refined family.
+    assert len(families_for(3)) == 1
+
+    assert meta["family_count_before"] == 3
+    assert meta["family_count_after"] == 3
+    assert meta["split_count"] >= 1
+    assert meta["merge_count"] >= 1
+
+
+def test_refine_is_noop_without_discriminator() -> None:
+    # Constant payloads carry no discriminator; labels are assigned independently
+    # of the bytes. Detection returns None → pass-through.
+    records = []
+    assignments = []
+    for msg_id in range(20):
+        records.append(_refine_record(msg_id, b"\xaa\xbb\xcc\xdd"))
+        assignments.append(FamilyAssignment(msg_id=msg_id, family_id=f"family_{msg_id % 2}", confidence=0.5))
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is False
+    assert [item.family_id for item in refined] == [item.family_id for item in assignments]
+    assert [item.msg_id for item in refined] == [item.msg_id for item in assignments]
+
+
+def test_refine_preserves_assignment_json_shape() -> None:
+    records, assignments, _ = _impure_modbus_corpus()
+    confidence_by_msg_id = {item.msg_id: item.confidence for item in assignments}
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is True
+    assert len(refined) == len(assignments)
+    for item in refined:
+        payload = item.to_dict()
+        assert set(payload) == {"msg_id", "family_id", "confidence"}
+        # Confidence is carried through untouched; only family_id is re-keyed.
+        assert payload["confidence"] == confidence_by_msg_id[item.msg_id]
+
+
+def test_refine_deterministic() -> None:
+    records, assignments, _ = _impure_modbus_corpus()
+
+    first, first_meta = refine_families_by_discriminator(records, assignments)
+    second, second_meta = refine_families_by_discriminator(records, assignments)
+
+    assert [(item.msg_id, item.family_id) for item in first] == [
+        (item.msg_id, item.family_id) for item in second
+    ]
+    assert first_meta == second_meta
+
+
+def test_volatile_offsets_flags_saturated_txn_id() -> None:
+    # Offsets 0-1 saturate across the byte range (a 2-byte transaction id over
+    # many messages); offset 7 is a low-cardinality opcode. The fix must flag the
+    # saturated id bytes without flagging the opcode.
+    records = []
+    for i in range(256):
+        b0 = i
+        b1 = (i * 73 + 17) % 256
+        fc = (i % 4) + 1
+        payload = bytes([b0, b1, 0, 0, 0, 4, 1, fc, 0, 0])
+        records.append(_refine_record(i, payload))
+
+    noisy = volatile_offsets(records, width=10)
+
+    assert 0 in noisy
+    assert 1 in noisy
+    assert 7 not in noisy
+

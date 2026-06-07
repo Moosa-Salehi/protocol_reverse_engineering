@@ -51,7 +51,16 @@ def volatile_offsets(records: Sequence[MessageRecord], width: int = 64) -> set[i
             continue
         unique_ratio = len(set(values)) / len(values)
         stable_ratio = Counter(values).most_common(1)[0][1] / len(values)
-        if unique_ratio >= 0.75 and stable_ratio <= 0.35:
+        # Two volatility regimes (see Clustering.VOLATILE_* docstring):
+        #   (a) high distinct-value churn with no dominant value, or
+        #   (b) no dominant value AND high normalised entropy.
+        # (b) catches a saturated transaction-id byte, whose unique_ratio
+        # collapses toward 1/N (defeating (a)) while its entropy stays near the
+        # 8-bit ceiling. A low-cardinality opcode has low entropy and is spared.
+        no_dominant = stable_ratio <= _CL.VOLATILE_STABLE_RATIO_MAX
+        high_churn = unique_ratio >= _CL.VOLATILE_UNIQUE_RATIO_MIN and no_dominant
+        high_entropy = no_dominant and (_entropy(values) / 8.0) >= _CL.VOLATILE_ENTROPY_NORM_MIN
+        if high_churn or high_entropy:
             offsets.add(offset)
     return offsets
 

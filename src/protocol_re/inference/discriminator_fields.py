@@ -6,6 +6,7 @@ from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.config.thresholds import DiscriminatorDetection as _DD
+from protocol_re.config.thresholds import FamilyRefinement as _FR
 from protocol_re.inference.boundary_detection import infer_template
 from protocol_re.model.schema import MessageRecord
 from protocol_re.neural.salience import attention_offset_salience, encoder_gradient_salience, merge_salience_scores
@@ -52,6 +53,139 @@ def _offset_values(messages: Sequence[bytes], offset: int) -> Tuple[List[int], L
             values.append(message[offset])
             indexes.append(index)
     return values, indexes
+
+
+def _offset_window_values(messages: Sequence[bytes], offset: int, width: int) -> Tuple[List[int], List[int]]:
+    """Big-endian integer value of the ``width`` bytes at ``offset``.
+
+    Only messages long enough to contain the full window contribute, so the
+    returned ``indexes`` align with the contributing messages (mirroring
+    :func:`_offset_values` for ``width == 1``)."""
+    if width <= 1:
+        return _offset_values(messages, offset)
+    values: List[int] = []
+    indexes: List[int] = []
+    for index, message in enumerate(messages):
+        if offset + width <= len(message):
+            values.append(int.from_bytes(message[offset : offset + width], "big"))
+            indexes.append(index)
+    return values, indexes
+
+
+def _length_field_match_ratio(messages: Sequence[bytes], offset: int, width: int) -> float:
+    """Fraction of messages where the value at (offset, width) equals a length
+    expression (payload_len, payload_len-offset, or payload_len-offset-width).
+    A genuine length field matches in ~all messages; a type code only rarely."""
+    values, indexes = _offset_window_values(messages, offset, width)
+    if not values:
+        return 0.0
+    matches = 0
+    for value, index in zip(values, indexes):
+        length = len(messages[index])
+        if value in (length, length - offset, length - offset - width):
+            matches += 1
+    return matches / len(values)
+
+
+def detect_global_discriminator(
+    records: Sequence[MessageRecord],
+    family_by_msg_id: Dict[int, str],
+    *,
+    max_offset: int = _FR.MAX_OFFSET,
+    widths: Sequence[int] = _FR.MULTI_BYTE_WIDTHS,
+    min_global_mi: float = _FR.MIN_GLOBAL_MI,
+    min_cardinality: int = _FR.MIN_CARDINALITY,
+    max_cardinality: int = _FR.MAX_CARDINALITY,
+    min_coverage: float = _FR.MIN_COVERAGE,
+    max_stable_ratio: float = _FR.MAX_STABLE_RATIO,
+    length_field_match_ratio: float = _FR.LENGTH_FIELD_MATCH_RATIO,
+) -> Optional[Dict[str, Any]]:
+    """Detect the corpus-wide type-discriminator (offset + width) label-free.
+
+    A type/command code is a byte window that is present in (almost) every
+    message, takes a small-to-moderate number of values, is neither constant nor
+    a length field, and is not a high-cardinality address/counter/transaction id.
+    Those structural gates alone reject the noise — crucially WITHOUT trusting
+    the bootstrap clustering, which may not track message type at all.
+
+    Selection between the survivors uses two modes:
+
+    * **label-guided** — if some candidate's normalised mutual information with
+      the bootstrap labels reaches ``min_global_mi`` (the bootstrap already
+      separates by type), pick the highest-MI candidate. This matches the
+      original intent and is best when clustering is good.
+    * **structural fallback** — otherwise (a degraded bootstrap), pick the
+      earliest qualifying window, i.e. the first type-like byte after the
+      constant/length header. The opcode is conventionally the first body byte.
+
+    Returns ``{offset, width, global_mi, cardinality}`` or ``None`` when nothing
+    qualifies (text / unstructured corpora) so the caller passes assignments
+    through unchanged.
+    """
+    messages: List[bytes] = []
+    labels: List[str] = []
+    for record in records:
+        family_id = family_by_msg_id.get(record.msg_id)
+        if family_id is None or family_id == "noise":
+            continue
+        messages.append(hex_to_bytes(record.payload_hex))
+        labels.append(family_id)
+    if len(messages) < 2 or len(set(labels)) < 2:
+        return None
+
+    scan_widths = sorted({int(width) for width in widths if int(width) >= 1})
+
+    # Header bytes are the structural frame, never the type code: bytes that are
+    # constant across the corpus (protocol-id, unit-id, ...) or that belong to a
+    # length field. The discriminator must lie entirely outside them — this is
+    # what stops a misaligned multi-byte window from straddling a length/constant
+    # byte and masquerading as a low-cardinality candidate before the true opcode.
+    header_offsets: set[int] = set()
+    for offset in range(max_offset + max(scan_widths)):
+        single, _single_idx = _offset_values(messages, offset)
+        if single and len(set(single)) == 1:
+            header_offsets.add(offset)
+    for offset in range(max_offset + max(scan_widths)):
+        for width in scan_widths:
+            if _length_field_match_ratio(messages, offset, width) >= length_field_match_ratio:
+                header_offsets.update(range(offset, offset + width))
+
+    candidates: List[Dict[str, Any]] = []
+    for offset in range(max_offset):
+        for width in scan_widths:
+            if header_offsets & set(range(offset, offset + width)):
+                continue
+            values, indexes = _offset_window_values(messages, offset, width)
+            if len(values) < 2:
+                continue
+            coverage = len(values) / len(messages)
+            if coverage < min_coverage:
+                continue
+            cardinality = len(set(values))
+            if cardinality < min_cardinality or cardinality > max_cardinality:
+                continue
+            stable_ratio = Counter(values).most_common(1)[0][1] / len(values)
+            if stable_ratio > max_stable_ratio:
+                continue
+            mi = normalized_mi(values, [labels[index] for index in indexes])
+            candidates.append(
+                {"offset": offset, "width": width, "global_mi": round(mi, 6), "cardinality": cardinality, "_mi": mi}
+            )
+    if not candidates:
+        return None
+
+    best_mi = max(candidate["_mi"] for candidate in candidates)
+    if best_mi >= min_global_mi:
+        # Label-guided: highest MI, ties broken toward the narrower, earlier window.
+        chosen = min(
+            candidates,
+            key=lambda candidate: (-candidate["_mi"], candidate["width"], candidate["offset"]),
+        )
+    else:
+        # Structural fallback: the first single-byte type-like field, widening only
+        # when no single-byte window qualifies (genuine 16-bit opcode).
+        chosen = min(candidates, key=lambda candidate: (candidate["width"], candidate["offset"]))
+    return {key: value for key, value in chosen.items() if not key.startswith("_")}
 
 
 def _contrastive_separation(values: Sequence[int], labels: Sequence[str]) -> float:

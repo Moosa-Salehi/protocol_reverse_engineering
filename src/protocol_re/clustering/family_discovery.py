@@ -6,10 +6,12 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence
 
 from protocol_re.config.thresholds import Clustering as _CL
+from protocol_re.config.thresholds import FamilyRefinement as _FR
 from protocol_re.clustering.diagnostics import build_family_diagnostics
 from protocol_re.clustering.hybrid_features import build_feature_matrix
 from protocol_re.clustering.latent_standardize import LatentStandardizer
 from protocol_re.clustering.structural_features import downweight_raw_byte_matrix
+from protocol_re.inference.discriminator_fields import detect_global_discriminator
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
@@ -48,6 +50,7 @@ class ClusteringResult:
     symbolic_feature_count: int = 0
     fallback_reason: str | None = None
     diagnostics: Dict[str, Any] | None = None
+    refinement: Dict[str, Any] | None = None
 
 
 
@@ -192,6 +195,180 @@ def _propagate_assignments(
 
 
 
+def _length_bucket(length: int, edges: Sequence[int]) -> int:
+    for index, edge in enumerate(edges):
+        if length < edge:
+            return index
+    return len(edges)
+
+
+def _signature_role(direction: str | None, use_direction: bool) -> str:
+    if not use_direction:
+        return "any"
+    value = (direction or "unknown").lower()
+    if value in {"c2s", "client_to_server", "request"}:
+        return "request"
+    if value in {"s2c", "server_to_client", "response"}:
+        return "response"
+    return "unknown"
+
+
+def refine_families_by_discriminator(
+    records: Sequence[MessageRecord],
+    assignments: Sequence[FamilyAssignment],
+    *,
+    max_offset: int = _FR.MAX_OFFSET,
+    widths: Sequence[int] = _FR.MULTI_BYTE_WIDTHS,
+    min_global_mi: float = _FR.MIN_GLOBAL_MI,
+    min_cardinality: int = _FR.MIN_CARDINALITY,
+    max_cardinality: int = _FR.MAX_CARDINALITY,
+    min_coverage: float = _FR.MIN_COVERAGE,
+    max_stable_ratio: float = _FR.MAX_STABLE_RATIO,
+    length_bucket_edges: Sequence[int] = _FR.LENGTH_BUCKET_EDGES,
+    use_direction: bool = _FR.USE_DIRECTION_IN_SIGNATURE,
+    min_family_size: int = _FR.MIN_FAMILY_SIZE,
+) -> tuple[List[FamilyAssignment], Dict[str, Any]]:
+    """Re-derive family identity from the data-detected discriminator.
+
+    Pure function: takes the bootstrap ``assignments`` and returns a new list
+    (same ``(msg_id, confidence)`` per message, only ``family_id`` re-keyed) plus
+    a metadata dict. When no discriminator is detected the input is returned
+    unchanged with ``{"applied": False}``. Determinism: signatures are sorted
+    before renumbering and folding uses a stable distance metric, so identical
+    inputs always yield identical family ids.
+    """
+    family_by_msg_id = {assignment.msg_id: assignment.family_id for assignment in assignments}
+
+    discriminator = detect_global_discriminator(
+        records,
+        family_by_msg_id,
+        max_offset=max_offset,
+        widths=widths,
+        min_global_mi=min_global_mi,
+        min_cardinality=min_cardinality,
+        max_cardinality=max_cardinality,
+        min_coverage=min_coverage,
+        max_stable_ratio=max_stable_ratio,
+    )
+    family_count_before = len({assignment.family_id for assignment in assignments})
+    if discriminator is None:
+        return list(assignments), {
+            "applied": False,
+            "reason": "no_discriminator_detected",
+            "family_count_before": family_count_before,
+            "family_count_after": family_count_before,
+        }
+
+    offset = int(discriminator["offset"])
+    width = int(discriminator["width"])
+
+    # Re-key each assigned message to (discriminator value, length bucket, role).
+    # Messages too short to contain the discriminator window stay as "noise".
+    records_by_msg_id = {record.msg_id: record for record in records}
+    signature_by_msg_id: Dict[int, Any] = {}
+    members_by_signature: Dict[Any, List[int]] = defaultdict(list)
+    noise_msg_ids: List[int] = []
+    old_family_by_msg_id: Dict[int, str] = {}
+    for assignment in assignments:
+        record = records_by_msg_id.get(assignment.msg_id)
+        if record is None:
+            noise_msg_ids.append(assignment.msg_id)
+            continue
+        payload = hex_to_bytes(record.payload_hex)
+        if offset + width > len(payload):
+            noise_msg_ids.append(assignment.msg_id)
+            continue
+        value = int.from_bytes(payload[offset : offset + width], "big")
+        signature = (
+            value,
+            _length_bucket(record.payload_len, length_bucket_edges),
+            _signature_role(record.direction, use_direction),
+        )
+        signature_by_msg_id[assignment.msg_id] = signature
+        members_by_signature[signature].append(assignment.msg_id)
+        old_family_by_msg_id[assignment.msg_id] = assignment.family_id
+
+    # Fold sub-threshold families into the nearest large sibling. Distance favours
+    # the same discriminator value, then the same role, then the closest length
+    # bucket; ties break on larger size then smaller signature (deterministic).
+    large_signatures = [sig for sig, members in members_by_signature.items() if len(members) >= min_family_size]
+    merged_into: Dict[Any, Any] = {}
+    if large_signatures:
+        for signature in sorted(members_by_signature):
+            members = members_by_signature[signature]
+            if len(members) >= min_family_size:
+                continue
+            value, bucket, role = signature
+
+            def _distance(target: Any) -> tuple[int, int, int, int, Any]:
+                t_value, t_bucket, t_role = target
+                return (
+                    0 if t_value == value else 1,
+                    0 if t_role == role else 1,
+                    abs(t_bucket - bucket),
+                    -len(members_by_signature[target]),
+                    target,
+                )
+
+            target = min(large_signatures, key=_distance)
+            merged_into[signature] = target
+
+    final_members: Dict[Any, List[int]] = defaultdict(list)
+    for signature, members in members_by_signature.items():
+        target = merged_into.get(signature, signature)
+        final_members[target].extend(members)
+
+    # Stable renumbering: sort surviving signatures so family ids are reproducible.
+    family_id_by_signature = {
+        signature: f"family_{index}" for index, signature in enumerate(sorted(final_members))
+    }
+
+    new_family_by_msg_id: Dict[int, str] = {}
+    for signature, members in final_members.items():
+        family_id = family_id_by_signature[signature]
+        for msg_id in members:
+            new_family_by_msg_id[msg_id] = family_id
+    for msg_id in noise_msg_ids:
+        new_family_by_msg_id[msg_id] = "noise"
+
+    refined = [
+        FamilyAssignment(
+            msg_id=assignment.msg_id,
+            family_id=new_family_by_msg_id.get(assignment.msg_id, assignment.family_id),
+            confidence=assignment.confidence,
+        )
+        for assignment in assignments
+    ]
+
+    # Split = one bootstrap family fanning out to >1 refined family; merge = one
+    # refined family drawing from >1 bootstrap family (both over non-noise).
+    old_to_new: Dict[str, set] = defaultdict(set)
+    new_to_old: Dict[str, set] = defaultdict(set)
+    for msg_id, old_family in old_family_by_msg_id.items():
+        new_family = new_family_by_msg_id.get(msg_id)
+        if new_family is None or new_family == "noise":
+            continue
+        old_to_new[old_family].add(new_family)
+        new_to_old[new_family].add(old_family)
+    split_count = sum(1 for targets in old_to_new.values() if len(targets) > 1)
+    merge_count = sum(1 for sources in new_to_old.values() if len(sources) > 1)
+
+    meta = {
+        "applied": True,
+        "offset": offset,
+        "width": width,
+        "global_mi": discriminator["global_mi"],
+        "cardinality": int(discriminator["cardinality"]),
+        "family_count_before": family_count_before,
+        "family_count_after": len({assignment.family_id for assignment in refined}),
+        "split_count": split_count,
+        "merge_count": merge_count,
+        "folded_family_count": len(merged_into),
+        "noise_message_count": len(noise_msg_ids),
+    }
+    return refined, meta
+
+
 def discover_families(
     records: Sequence[MessageRecord],
     method: str = "hdbscan",
@@ -216,6 +393,7 @@ def discover_families(
     # drowns that signal for distance-based clustering (measured: Modbus message-type F1
     # dropped 0.96 -> 0.61 with it on). Kept available for genuinely cross-distribution
     # corpora where latent scale mismatch dominates, but it must be explicitly requested.
+    refine_discriminator: bool = _FR.ENABLED,  # Post-clustering discriminator-aware family refinement.
 ) -> ClusteringResult:
     if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
         raise ValueError(f"Unsupported feature mode: {feature_mode}")
@@ -345,6 +523,17 @@ def discover_families(
         vector_width=vector_width,
         unsampled_matrix_builder=unsampled_matrix_builder,
     )
+
+    # Discriminator-aware refinement runs over the FULL propagated assignments
+    # (correcting propagation/sample bias) and re-keys only family_id by msg_id,
+    # so the latent matrix — keyed by msg_id — stays valid for diagnostics below.
+    # NOTE: `labels` (positional, from HDBSCAN over working_records) is left as the
+    # raw bootstrap output and is intentionally NOT rewritten here; it is dead
+    # weight downstream (every stage 05–12 re-groups on the opaque family_id).
+    refinement_meta: Dict[str, Any] | None = None
+    if refine_discriminator:
+        assignments, refinement_meta = refine_families_by_discriminator(records, assignments)
+
     diagnostics = build_family_diagnostics(
         records,
         assignments,
@@ -365,4 +554,5 @@ def discover_families(
         symbolic_feature_count=symbolic_feature_count,
         fallback_reason=fallback_reason,
         diagnostics=diagnostics,
+        refinement=refinement_meta,
     )

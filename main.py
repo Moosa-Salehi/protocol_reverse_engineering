@@ -415,6 +415,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_args.append("--standardize-latent")
                 break
 
+    for step_name, step_args in pipeline:
+        if step_name == "04_discover_families":
+            step_args.append(
+                "--refine-discriminator" if args.family_refine_discriminator else "--no-refine-discriminator"
+            )
+            break
+
     # Add fusion method for hybrid mode
     if args.family_feature_mode == "hybrid":
         for step_name, step_args in pipeline:
@@ -710,6 +717,18 @@ def parse_args() -> argparse.Namespace:
              "Default off: it amplifies noise latent dimensions and lowered message-type F1 in testing.",
     )
     family_group.set_defaults(family_standardize_latent=False)
+    family_group.add_argument(
+        "--family-refine-discriminator",
+        dest="family_refine_discriminator",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Discriminator-aware family refinement after clustering: re-derive family identity "
+             "from the data-detected type-discriminator so families become opcode-pure and "
+             "role-consistent. Default OFF: it raises message-type precision but regressed "
+             "relations/recall F1 on the evaluated corpus (the evaluator matches families to "
+             "truth types by fields only, so fc identity is not preserved across req/resp). "
+             "No-op when no discriminator is detected.",
+    )
     family_group.add_argument(
         "--enable-neural-preprocessing",
         action="store_true",

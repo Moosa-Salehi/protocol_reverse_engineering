@@ -512,6 +512,25 @@ class Clustering:
     # Batch size used for centroid-based assignment of messages to clusters.
     CENTROID_ASSIGNMENT_BATCH_SIZE: int = 10000
 
+    # --- Volatile (noise) offset detection (structural_features.volatile_offsets) ---
+    #
+    # A byte offset is treated as volatile noise and excluded from the structural
+    # fingerprint when it carries no stable, fingerprint-worthy value. Two regimes
+    # both qualify:
+    #   (a) high distinct-value churn with no dominant value (the original rule), or
+    #   (b) no dominant value AND high normalised entropy.
+    # Regime (b) is what catches a *saturated* transaction-id byte: over many
+    # messages a 2-byte id cycles through all 256 low-byte values, so its
+    # unique_ratio collapses to ~1/N (failing rule (a)) even though it is pure
+    # noise. Entropy stays near the 8-bit ceiling, so (b) flags it.
+    VOLATILE_UNIQUE_RATIO_MIN: float = 0.75
+    VOLATILE_STABLE_RATIO_MAX: float = 0.35
+    # Normalised entropy (bits / 8) above which a no-dominant-value offset is
+    # treated as volatile. Kept high enough that a low-cardinality discriminator
+    # (e.g. ~12 function codes, norm-entropy ~0.45) is NOT flagged, so the opcode
+    # byte survives.
+    VOLATILE_ENTROPY_NORM_MIN: float = 0.6
+
     # Field types that are intrinsically high-volatility (not useful for
     # structural fingerprinting).  These are excluded from structural feature
     # vectors.
@@ -531,3 +550,93 @@ class Clustering:
             "blob",
         }
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Family Refinement (discriminator-aware post-clustering)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class FamilyRefinement:
+    """Thresholds for discriminator-aware family refinement
+    (:func:`protocol_re.clustering.family_discovery.refine_families_by_discriminator`).
+
+    HDBSCAN bootstraps the families, but the structural fingerprint crushes the
+    low-magnitude type-discriminator (e.g. a Modbus function code at offset 7),
+    so bootstrap families are impure (mix function codes) and fragmented (one
+    function code scattered across many families). Refinement re-derives family
+    identity from the data-detected discriminator, **protocol-agnostically**: if
+    no discriminator is found (text / unstructured corpora) the step is a no-op.
+    """
+
+    # Master gate / default for the refinement step. Default OFF: on the
+    # evaluated Modbus corpus, making families function-code-pure raised
+    # message-type precision to 1.0 but regressed recall and relations F1
+    # (0.348 -> 0.182). The cause is in the evaluator, not the families: truth
+    # message-types carry no discriminator value, so families are matched to
+    # types by field structure alone, which cannot preserve function-code
+    # identity across the finer same-role (request/response) families — so
+    # within-fc relations map to mismatched fc pairs and are not credited, and
+    # the MBAP-header type matches no single fc-pure family. The refinement is
+    # correct and fully tested; enable it per-run with
+    # --family-refine-discriminator when opcode-pure families are wanted.
+    ENABLED: bool = False
+
+    # --- Global discriminator detection (detect_global_discriminator) ---
+
+    # Header region (bytes) scanned for the discriminator. The type/command code
+    # of binary protocols lives in the first few header bytes.
+    MAX_OFFSET: int = 16
+
+    # Byte-window widths scanned. 1 catches single-byte opcodes (Modbus); 2
+    # catches 16-bit message-type fields. Wider opcodes are deferred.
+    MULTI_BYTE_WIDTHS: tuple[int, ...] = (1, 2)
+
+    # Minimum normalised cross-family mutual information for an offset/width to
+    # be selected via the *label-guided* path. A true type-code shares strong MI
+    # with the bootstrap labels WHEN the bootstrap already tracks message type.
+    # When no candidate reaches this (a degraded bootstrap whose families do not
+    # track the type code — e.g. one giant blob mixing function codes), detection
+    # falls back to the label-free structural rule below.
+    MIN_GLOBAL_MI: float = 0.25
+
+    # Cardinality window. Below MIN it is a constant (no discrimination); above
+    # MAX it is an address / data / counter / transaction-id field, not a type
+    # code. Kept tight so high-cardinality fields are rejected outright — this is
+    # the primary gate that lets the structural fallback ignore txn ids/addresses.
+    MIN_CARDINALITY: int = 2
+    MAX_CARDINALITY: int = 64
+
+    # Minimum fraction of messages that must actually contain the byte(s) at the
+    # candidate offset (rejects offsets that only exist in long messages).
+    MIN_COVERAGE: float = 0.9
+
+    # Maximum dominant-value share. A near-constant field (e.g. a protocol-id of
+    # 0x0000 in ~all messages) is rejected as a discriminator.
+    MAX_STABLE_RATIO: float = 0.98
+
+    # A candidate whose value equals a message-length expression (payload_len,
+    # payload_len-offset, or payload_len-offset-width) in at least this fraction
+    # of messages is a length field, not a type code, and is excluded. Set high:
+    # a genuine length field matches in ~all messages, while a type code only
+    # coincidentally matches a length in a minority.
+    LENGTH_FIELD_MATCH_RATIO: float = 0.85
+
+    # --- Re-keyed family signature ---
+
+    # Upper edges (exclusive) of payload-length buckets folded into the family
+    # signature alongside the discriminator value, so messages of the same type
+    # code but different size (e.g. a short request vs a long response, when
+    # direction is unavailable) separate. Unit resolution over the short-message
+    # range where one byte of length is semantically significant, geometric
+    # afterwards; the final open-ended bucket captures everything larger.
+    LENGTH_BUCKET_EDGES: tuple[int, ...] = (
+        8, 9, 10, 11, 12, 13, 14, 16, 20, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 1024,
+    )
+
+    # Whether direction (request/response role) is part of the family signature.
+    USE_DIRECTION_IN_SIGNATURE: bool = True
+
+    # Families smaller than this after re-keying are folded into the nearest
+    # sibling (same discriminator value + role, closest length bucket).
+    MIN_FAMILY_SIZE: int = 5
