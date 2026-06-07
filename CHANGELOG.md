@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   capture), a single shared MBAP header type, documented offset convention, and per-FC
   responses. Removed phantom FC15/FC16/exception types and added the previously missing FC02
   (Read Discrete Inputs).
+
+## [1.0.1] - 2026-06-07
+
+### Added
 - Centralized algorithmic thresholds in `src/protocol_re/config/thresholds.py` — all magic numbers
   (boundary anti-fragmentation, framing scoring weights, echo/length detection limits, relation
   confidence thresholds, field semantic scores, clustering batch sizes, etc.) moved from individual
@@ -33,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Field semantics labeling
 - Coordinate/layering header split logic
 
-## [1.0.0] - 2026-06-6
+## [1.0.0] - 2026-06-06
 
 ### Added
 - Reorganize project structure
