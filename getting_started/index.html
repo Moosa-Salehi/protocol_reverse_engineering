@@ -1015,6 +1015,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#algorithmic-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithmic Thresholds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#main-pipeline-options" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1764,6 +1775,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#algorithmic-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithmic Thresholds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#main-pipeline-options" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2370,6 +2392,78 @@ Set Python path before running individual scripts:
 </code></pre></div></p>
 <p>Note: <code>main.py</code> sets this automatically; only needed for individual scripts.</p>
 <h2 id="configuration-reference">Configuration Reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h2>
+<h3 id="algorithmic-thresholds">Algorithmic Thresholds<a class="headerlink" href="#algorithmic-thresholds" title="Permanent link">&para;</a></h3>
+<p>All pipeline tuning parameters are centralized in <strong><code>src/protocol_re/config/thresholds.py</code></strong>,
+organized by subsystem as plain namespace classes (<code>BoundaryDetection</code>, <code>FramingDetection</code>,
+<code>RequestResponseRelations</code>, etc.).  Each threshold has a docstring explaining its purpose.
+To tune an algorithm:</p>
+<ol>
+<li>Open <code>src/protocol_re/config/thresholds.py</code>.</li>
+<li>Find the relevant class (see table below).</li>
+<li>Adjust the threshold value.</li>
+<li>Re-run the pipeline — no other file changes are needed.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Tuning goal</th>
+<th>Class to edit</th>
+<th>Key thresholds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reduce field over-segmentation</td>
+<td><code>BoundaryDetection</code></td>
+<td><code>SINGLE_BYTE_PENALTY</code>, <code>MAX_FIELDS_PER_FAMILY</code>, <code>ENTROPY_WEIGHT_REDUCED</code></td>
+</tr>
+<tr>
+<td>Adjust framing header detection</td>
+<td><code>FramingDetection</code></td>
+<td><code>MAX_HEADER_BYTES</code>, <code>CONFIDENCE_SCORE_NORMALISER</code>, <code>FIELD_WEIGHT_*</code></td>
+</tr>
+<tr>
+<td>Tighten/loosen relation detection</td>
+<td><code>RequestResponseRelations</code></td>
+<td><code>MIN_CONFIDENCE_THRESHOLD</code>, <code>DEFAULT_MIN_ECHO_SUPPORT</code>, <code>DEFAULT_MIN_LENGTH_SUPPORT</code></td>
+</tr>
+<tr>
+<td>Tune layer-boundary sensitivity</td>
+<td><code>LayerDetection</code></td>
+<td><code>MIN_CONFIDENCE</code>, <code>MAX_POSSIBLE_RAW_SCORE</code>, <code>INDICATOR_WEIGHT_*</code></td>
+</tr>
+<tr>
+<td>Adjust discriminator/opcode detection</td>
+<td><code>DiscriminatorDetection</code></td>
+<td><code>MAX_OFFSET</code>, <code>MIN_COVERAGE</code>, <code>SCORE_*_WEIGHT</code></td>
+</tr>
+<tr>
+<td>Tune semantic role confidence</td>
+<td><code>FieldSemantics</code></td>
+<td><code>DISCRIMINATOR_*</code>, <code>TRANSACTION_ID_*</code>, <code>COUNTER_*</code></td>
+</tr>
+<tr>
+<td>Change feature extraction limits</td>
+<td><code>FeatureExtraction</code></td>
+<td><code>MAX_POSITION_STATS_LENGTH</code>, <code>MAX_NGRAM_ANALYSIS_LENGTH</code></td>
+</tr>
+<tr>
+<td>Adjust clustering batch size</td>
+<td><code>Clustering</code></td>
+<td><code>CENTROID_ASSIGNMENT_BATCH_SIZE</code></td>
+</tr>
+<tr>
+<td>Change pre-trained model path</td>
+<td><code>NeuralModel</code></td>
+<td><code>DEFAULT_MODEL_PATH</code></td>
+</tr>
+<tr>
+<td>Adjust LLM prompt size</td>
+<td><code>LLMEvidence</code></td>
+<td><code>MAX_PROMPT_HEX_CHARS</code></td>
+</tr>
+</tbody>
+</table>
 <h3 id="main-pipeline-options">Main Pipeline Options<a class="headerlink" href="#main-pipeline-options" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>main.py<span class="w"> </span>&lt;pcap-dir&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 

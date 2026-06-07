@@ -731,6 +731,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#centralized-thresholds-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Centralized Thresholds Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scalability" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1142,6 +1153,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#centralized-thresholds-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Centralized Thresholds Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scalability" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1341,8 +1363,15 @@
 <h3 id="5-llm-integration-srcprotocol_rellm">5. LLM Integration (<code>src/protocol_re/llm/</code>)<a class="headerlink" href="#5-llm-integration-srcprotocol_rellm" title="Permanent link">&para;</a></h3>
 <p>LLM-assisted refinement with evidence gating:
 - Stage-specific LLM interactions (boundaries, semantics, relations)
-- RFC 6902 JSON patch validation
+- RFC 6902 JSON patch validation for evidence-backed semantic/relation edits
 - Evidence-based patch acceptance/rejection</p>
+<p>The fusion model is explicit: statistical features and optional neural signals
+produce candidates and evidence, the LLM names fields or validates relation
+edges using that evidence, and the evaluator measures whether the resulting
+model improves semantic and relation scores. Boundary inference remains driven
+by deterministic/statistical stages; LLM patches are reserved for changes the
+model is good at, such as concrete field types, human semantic labels, and
+pruning weak family-to-family edges.</p>
 <h3 id="6-evaluation-srcprotocol_reevaluation">6. Evaluation (<code>src/protocol_re/evaluation/</code>)<a class="headerlink" href="#6-evaluation-srcprotocol_reevaluation" title="Permanent link">&para;</a></h3>
 <p>Quality metrics and ground truth comparison:
 - Clustering quality (silhouette score, coverage)
@@ -1535,6 +1564,94 @@
 - Patches rejected if they contradict strong evidence
 - Confidence scores used to weight decisions
 - Fallback to statistical inference if LLM unavailable</p>
+<h3 id="centralized-thresholds-configuration">Centralized Thresholds Configuration<a class="headerlink" href="#centralized-thresholds-configuration" title="Permanent link">&para;</a></h3>
+<p>All algorithmic tuning parameters live in a single documented module:
+<strong><code>src/protocol_re/config/thresholds.py</code></strong>.  Each subsystem is represented by a
+plain namespace class whose attributes are the thresholds that control its
+behaviour.</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Domain</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FeatureExtraction</code></td>
+<td>N-gram / motif extraction</td>
+<td><code>NGRAM_SIZES</code>, <code>MAX_POSITION_STATS_LENGTH</code>, <code>TOP_MOTIFS_LIMIT</code></td>
+</tr>
+<tr>
+<td><code>BoundaryDetection</code></td>
+<td>Field boundary segmentation</td>
+<td><code>MAX_FIELDS_PER_FAMILY</code>, <code>SINGLE_BYTE_PENALTY</code>, <code>ENTROPY_WEIGHT_REDUCED</code></td>
+</tr>
+<tr>
+<td><code>RequestResponseRelations</code></td>
+<td>Echo / length relation</td>
+<td><code>MAX_ECHO_WIDTH</code>, <code>DEFAULT_MIN_ECHO_SUPPORT</code>, <code>MIN_CONFIDENCE_THRESHOLD</code></td>
+</tr>
+<tr>
+<td><code>FramingDetection</code></td>
+<td>Header / framing inference</td>
+<td><code>MAX_HEADER_BYTES</code>, <code>FIELD_WEIGHT_LENGTH</code>, <code>CONFIDENCE_SCORE_NORMALISER</code></td>
+</tr>
+<tr>
+<td><code>LayerDetection</code></td>
+<td>Transport/application split</td>
+<td><code>MIN_CONFIDENCE</code>, <code>INDICATOR_WEIGHT_LENGTH_TO_BODY</code>, <code>MAX_POSSIBLE_RAW_SCORE</code></td>
+</tr>
+<tr>
+<td><code>DiscriminatorDetection</code></td>
+<td>Opcode / type-byte finders</td>
+<td><code>MAX_OFFSET</code>, <code>SCORE_LEARNED_WEIGHT</code>, <code>SUPPRESSED_ROLE_TOKENS</code></td>
+</tr>
+<tr>
+<td><code>KeywordDetection</code></td>
+<td>Keyword byte discovery</td>
+<td><code>SEARCH_RANGE_START</code>, <code>SEARCH_RANGE_END</code></td>
+</tr>
+<tr>
+<td><code>FieldSemantics</code></td>
+<td>Semantic role inference</td>
+<td><code>DISCRIMINATOR_MAX_CONFIDENCE</code>, <code>TRANSACTION_ID_ECHO_BOOST</code>, <code>COUNTER_MONOTONIC_MIN</code></td>
+</tr>
+<tr>
+<td><code>LLMEvidence</code></td>
+<td>LLM prompt construction</td>
+<td><code>MAX_PROMPT_HEX_CHARS</code></td>
+</tr>
+<tr>
+<td><code>NeuralModel</code></td>
+<td>Pre-trained model path</td>
+<td><code>DEFAULT_MODEL_PATH</code></td>
+</tr>
+<tr>
+<td><code>Clustering</code></td>
+<td>Family discovery</td>
+<td><code>CENTROID_ASSIGNMENT_BATCH_SIZE</code>, <code>HIGH_VOLATILITY_FIELD_TYPES</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Design principles:</strong></p>
+<ol>
+<li><strong>Single source of truth</strong> — every threshold value is defined exactly once in
+   <code>thresholds.py</code>; individual modules import from the config and re-export the
+   name at module level for backward compatibility.</li>
+<li><strong>Self-documenting</strong> — each threshold has a docstring or inline comment
+   explaining what it controls and why the current value was chosen.</li>
+<li><strong>Grouped by domain</strong> — threshold groups map 1:1 to pipeline stages, so
+   when you are tuning, e.g., boundary over-segmentation, you know to look in
+   <code>BoundaryDetection</code>.</li>
+<li><strong>Reproducible tuning</strong> — change a value in one place, and every consumer
+   (algorithm, diagnostic script, test) picks it up without hunting through
+   source files.</li>
+</ol>
+<p><strong>How to tune:</strong> open <code>src/protocol_re/config/thresholds.py</code>, find the
+relevant class, adjust the value, and re-run the pipeline.  No other files
+need to be edited.</p>
 <h3 id="scalability">Scalability<a class="headerlink" href="#scalability" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Supports up to 200K messages by default (configurable)</li>
