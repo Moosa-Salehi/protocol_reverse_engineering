@@ -681,7 +681,7 @@ def parse_args() -> argparse.Namespace:
     family_group.add_argument(
         "--family-feature-mode",
         choices=["raw_bytes", "structural", "neural", "hybrid"],
-        default="raw_bytes",
+        default="hybrid",
         help="Feature encoding for family discovery. Default: raw_bytes.",
     )
     family_group.add_argument(
