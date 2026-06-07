@@ -48,6 +48,13 @@ def main() -> None:
         default=0.45,
         help="Weight for boundary-support term in segment confidence (0.0-1.0)",
     )
+    parser.add_argument(
+        "--no-opcode-isolation",
+        dest="isolate_body_opcode",
+        action="store_false",
+        default=True,
+        help="Disable isolating a constant leading body byte (opcode/function code) as its own field",
+    )
 
     # Enhanced boundary detection options (A2) - now default
     parser.add_argument("--enhanced", action="store_true", help="(Deprecated: enhanced mode is now default)")
@@ -73,6 +80,7 @@ def main() -> None:
         length_match_threshold=args.length_match_threshold,
         length_validator_enabled=not args.disable_length_validator,
         boundary_confidence_weight=args.boundary_confidence_weight,
+        opcode_isolation_enabled=args.isolate_body_opcode,
     )
 
     with logger.stage("load_corpus"):
@@ -159,6 +167,7 @@ def main() -> None:
                     length_match_threshold=args.length_match_threshold,
                     enable_length_validator=not args.disable_length_validator,
                     boundary_confidence_weight=args.boundary_confidence_weight,
+                    isolate_body_opcode=args.isolate_body_opcode,
                 )
                 hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
                 template = infer_template(messages_hex)

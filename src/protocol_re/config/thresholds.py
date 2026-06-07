@@ -95,6 +95,21 @@ class BoundaryDetection:
     # sensitive to detected boundary jumps.
     BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT: float = 0.45
 
+    # Opcode/command isolation: when a confident framing/body boundary is
+    # known, the first byte of the application body is very often a message
+    # type / function / command code. If that leading body byte is constant
+    # or near-constant within the family, force a 1-byte boundary right after
+    # it and protect it from being merged into the following field. This keeps
+    # the discriminator byte (e.g. a Modbus function code) as its own field
+    # instead of being fused into a wider uint16/uint32 chunk.
+    ISOLATE_BODY_OPCODE: bool = True
+
+    # Maximum cardinality ratio (distinct values / observations) for the
+    # leading body byte to be treated as an opcode/command and isolated.
+    # A true opcode is constant within a single-message-type family (ratio
+    # ~0); the small allowance tolerates families that mix a few codes.
+    OPCODE_MAX_CARDINALITY_RATIO: float = 0.05
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Request-Response Relations

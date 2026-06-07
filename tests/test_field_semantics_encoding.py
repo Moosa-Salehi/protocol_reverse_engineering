@@ -311,6 +311,7 @@ def test_length_validator_preserves_adjacent_protocol_id_boundary() -> None:
         enable_merging=True,
         length_match_threshold=0.8,
         framing_summary={"layout_hypotheses": [{"confidence": 1.0, "body_start": 2, "header_end": 2}]},
+        isolate_body_opcode=False,
     )
     spans = [(segment.start, segment.end) for segment in segments]
 
@@ -320,6 +321,48 @@ def test_length_validator_preserves_adjacent_protocol_id_boundary() -> None:
     length_segment = next(segment for segment in segments if (segment.start, segment.end) == (4, 6))
     assert length_segment.evidence["semantic_hint"] == "length"
     assert length_segment.evidence["length_match_ratio"] == 1.0
+
+
+def test_body_opcode_is_isolated_as_standalone_field() -> None:
+    # MBAP(7) + PDU; function code at offset 7 is constant within the family,
+    # address (8-9) and quantity (10-11) vary. Without isolation the constant
+    # opcode is merged rightward into a wider field; with isolation it must
+    # stay a 1-byte field of its own.
+    messages = [
+        f"{txn:04x}00000006" + "01" + "03" + f"{addr:04x}" + "0001"
+        for txn, addr in [(1, 8), (2, 19), (3, 100), (4, 200), (5, 7), (6, 41)]
+    ]
+    framing = {"layout_hypotheses": [{"confidence": 1.0, "body_start": 7, "header_end": 7}]}
+
+    isolated = infer_segments(messages, framing_summary=framing, isolate_body_opcode=True)
+    spans = [(segment.start, segment.end) for segment in isolated]
+    assert (7, 8) in spans  # opcode isolated as its own byte
+    # no segment starts at the opcode offset and extends past it
+    assert not any(start == 7 and end > 8 for start, end in spans)
+    opcode = next(seg for seg in isolated if (seg.start, seg.end) == (7, 8))
+    assert opcode.kind == "constant"
+
+    not_isolated = infer_segments(messages, framing_summary=framing, isolate_body_opcode=False)
+    merged_spans = [(segment.start, segment.end) for segment in not_isolated]
+    # Pre-fix behaviour: the opcode is fused into a wider field starting at 7.
+    assert any(start == 7 and end > 8 for start, end in merged_spans)
+
+
+def test_variable_leading_body_byte_is_not_force_split() -> None:
+    # When the first body byte is high-cardinality it is not an opcode and must
+    # not be force-split: isolation should leave the segmentation unchanged.
+    messages = [
+        f"{txn:04x}00000006" + f"{lead:02x}" + f"{rest:08x}"
+        for txn, lead, rest in [
+            (1, 0x10, 0x11112222), (2, 0x37, 0x33334444), (3, 0x9a, 0x55556666),
+            (4, 0xc1, 0x77778888), (5, 0x2d, 0x9999aaaa), (6, 0xf4, 0xbbbbcccc),
+        ]
+    ]
+    framing = {"layout_hypotheses": [{"confidence": 1.0, "body_start": 7, "header_end": 7}]}
+
+    isolated = infer_segments(messages, framing_summary=framing, isolate_body_opcode=True)
+    baseline = infer_segments(messages, framing_summary=framing, isolate_body_opcode=False)
+    assert [(s.start, s.end) for s in isolated] == [(s.start, s.end) for s in baseline]
 
 
 def test_boundary_support_blends_segment_confidence() -> None:
@@ -343,6 +386,7 @@ def test_boundary_support_blends_segment_confidence() -> None:
         enable_length_validator=False,
         framing_summary={"layout_hypotheses": [{"confidence": 1.0, "body_start": 2, "header_end": 2}]},
         boundary_confidence_weight=0.5,
+        isolate_body_opcode=False,
     )
 
     assert [(segment.start, segment.end) for segment in split_segments] == [(0, 2), (2, 4)]

@@ -30,6 +30,8 @@ MERGE_WIDTH_TARGETS_DEFAULT = _BD.MERGE_WIDTH_TARGETS_DEFAULT
 LENGTH_FIELD_WIDTHS_DEFAULT = _BD.LENGTH_FIELD_WIDTHS_DEFAULT
 LENGTH_MATCH_THRESHOLD_DEFAULT = _BD.LENGTH_MATCH_THRESHOLD_DEFAULT
 BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT = _BD.BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT
+ISOLATE_BODY_OPCODE_DEFAULT = _BD.ISOLATE_BODY_OPCODE
+OPCODE_MAX_CARDINALITY_RATIO = _BD.OPCODE_MAX_CARDINALITY_RATIO
 
 
 def _entropy(values: Sequence[int]) -> float:
@@ -418,6 +420,7 @@ def infer_segments(
     length_match_threshold: float = LENGTH_MATCH_THRESHOLD_DEFAULT,
     enable_length_validator: bool = True,
     boundary_confidence_weight: float = BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT,
+    isolate_body_opcode: bool = ISOLATE_BODY_OPCODE_DEFAULT,
 ) -> List[Segment]:
     """
     Infer field segments with anti-fragmentation.
@@ -455,6 +458,17 @@ def infer_segments(
 
     framing_boundary, framing_evidence = framing_body_boundary_hint(framing_summary, max_len)
 
+    # Opcode/command isolation: the first body byte after a confident framing
+    # boundary is, in most binary protocols, a message-type / function / command
+    # code. When it is constant or near-constant within the family, force a
+    # 1-byte boundary right after it so the discriminator stays its own field
+    # instead of being merged into the following uint16/uint32 chunk.
+    opcode_boundary = (
+        body_opcode_boundary_hint(messages, framing_boundary, max_len)
+        if isolate_body_opcode
+        else None
+    )
+
     # Collect boundaries with scores
     boundary_candidates = [(0, float('inf'))]  # Start boundary always included
 
@@ -467,6 +481,10 @@ def infer_segments(
     # Add framing boundary if present
     if framing_boundary is not None:
         boundary_candidates.append((framing_boundary, float('inf')))
+
+    # Force the cut right after the leading body byte (opcode/command isolation)
+    if opcode_boundary is not None:
+        boundary_candidates.append((opcode_boundary, float('inf')))
 
     for boundary in length_protected_boundaries:
         if 0 < boundary < max_len:
@@ -498,6 +516,8 @@ def infer_segments(
         protected = {0, max_len, *length_protected_boundaries}
         if framing_boundary is not None:
             protected.add(framing_boundary)
+        if opcode_boundary is not None:
+            protected.add(opcode_boundary)
 
         # Score other boundaries
         scored_boundaries = [
@@ -604,6 +624,10 @@ def infer_segments(
         protected_boundaries = set(length_protected_boundaries)
         if framing_boundary is not None:
             protected_boundaries.add(framing_boundary)
+        if opcode_boundary is not None:
+            # Protect the opcode's right edge so the 1-byte discriminator is
+            # never merged into the following field.
+            protected_boundaries.add(opcode_boundary)
         segments = merge_segments(
             segments,
             messages_hex,
@@ -612,6 +636,33 @@ def infer_segments(
         )
 
     return segments
+
+
+def body_opcode_boundary_hint(
+    messages: Sequence[bytes],
+    framing_boundary: Optional[int],
+    max_len: int,
+    max_cardinality_ratio: float = OPCODE_MAX_CARDINALITY_RATIO,
+) -> Optional[int]:
+    """Return the boundary that isolates the leading body byte as an opcode.
+
+    The first byte of the application body (immediately after a confident
+    framing/transport boundary) is, in most binary protocols, a message-type /
+    function / command code. When that byte is constant or near-constant within
+    the family it is treated as a discriminator and split into its own 1-byte
+    field. Returns ``framing_boundary + 1`` in that case, otherwise ``None``.
+    """
+    if framing_boundary is None:
+        return None
+    if framing_boundary <= 0 or framing_boundary >= max_len - 1:
+        return None
+    values = [message[framing_boundary] for message in messages if len(message) > framing_boundary]
+    if not values:
+        return None
+    cardinality_ratio = len(set(values)) / len(values)
+    if len(set(values)) > 1 and cardinality_ratio > max_cardinality_ratio:
+        return None
+    return framing_boundary + 1
 
 
 def framing_body_boundary_hint(
