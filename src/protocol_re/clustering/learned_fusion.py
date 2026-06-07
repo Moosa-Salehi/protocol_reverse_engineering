@@ -191,16 +191,40 @@ class SimpleFusionMLP:
 
         # Correlation-based redundancy penalty
         # Features highly correlated with others are less important
-        correlation = np.corrcoef(features.T)
+        # Handle constant features (zero std) to avoid division by zero in corrcoef
+        stddev = np.std(features, axis=0)
+        non_constant_mask = stddev > 1e-8
+        
+        if non_constant_mask.sum() == 0:
+            # All features are constant
+            return np.ones(features.shape[1]) / features.shape[1]
+        
+        if non_constant_mask.sum() == 1:
+            # Only one non-constant feature
+            importance = np.zeros(features.shape[1])
+            importance[non_constant_mask] = 1.0
+            return importance
+        
+        # Compute correlation only for non-constant features
+        non_constant_features = features[:, non_constant_mask]
+        correlation = np.corrcoef(non_constant_features.T)
         np.fill_diagonal(correlation, 0)  # Ignore self-correlation
         redundancy = np.abs(correlation).mean(axis=1)
         redundancy_penalty = 1.0 - redundancy
-
-        # Combined importance
-        importance = variance_importance * redundancy_penalty
-
+        
+        # Combined importance for non-constant features
+        importance_non_constant = variance_importance[non_constant_mask] * redundancy_penalty
+        
         # Normalize to [0, 1]
-        importance = importance / (importance.max() + 1e-8)
+        if importance_non_constant.max() > 1e-8:
+            importance_non_constant = importance_non_constant / (importance_non_constant.max() + 1e-8)
+        
+        # Build full importance array
+        importance = np.zeros(features.shape[1])
+        importance[non_constant_mask] = importance_non_constant
+        
+        # Constant features get minimal importance
+        importance[~non_constant_mask] = 1e-8
 
         return importance
 
