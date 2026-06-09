@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 12, 'family_ratio': 1.0}], 'field_type_counts': {'length': 36, 'transaction_or_counter': 22, 'constant': 10, 'discriminator': 4}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 12}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-07T17:29:35.691815+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-09T14:59:29.174332+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
 
 ## Evaluation
 
@@ -16,7 +16,7 @@ Version: `0.1`
 - Pair hypotheses: `99999` direction_unknown_ratio=`1`
 - Relation edges: `18` echo_edges=`18` length_relation_edges=`0`
 - Semantic coverage: `12` of `12` families ratio=`1`
-- Top semantic labels: `discriminator`x29, `constant`x27, `echoed_request_field`x16, `transaction_or_correlation_id`x16, `length`x16, `transaction_id`x8
+- Top semantic labels: `constant`x27, `echoed_request_field`x16, `transaction_or_correlation_id`x16, `length`x16, `opcode`x9, `transaction_id`x8, `discriminator`x8, `address_like`x4
 - Framing coverage: `12` of `12` families ratio=`1`
 - Clustering diagnostics: warning_families=`11` split_candidates=`2` merge_candidates=`18`
 
@@ -72,7 +72,7 @@ Version: `0.1`
 ## LLM Analysis
 
 - Model: `qwen/qwen3.5-397b-a17b`
-- Prompt size: `35901` bytes, `35901` characters, estimated tokens=`8976`
+- Prompt size: `35991` bytes, `35991` characters, estimated tokens=`8998`
 
 # Protocol Specification Synthesis
 
@@ -135,7 +135,7 @@ This is a binary, request-response protocol operating over a client-server model
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314798`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.361483` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.573172`
-- Top discriminator candidates: offset `8` conf=`0.573172` salience=`1.0`, offset `9` conf=`0.561289` salience=`0.869092`, offset `7` conf=`0.497819` salience=`0.739632`
+- Top discriminator candidates: offset `8` conf=`0.573172` salience=`1.0`, offset `9` conf=`0.565285` salience=`0.882413`, offset `7` conf=`0.501519` salience=`0.751966`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -168,16 +168,12 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `8`..`11` | label=`discriminator` confidence=`0.9999`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
-
-#### Notes
-
-- Detected common protocol pattern: length field, discriminator
+- bytes `7`..`7` | label=`opcode` confidence=`0.95`
+- bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Feature Summary
 
@@ -196,7 +192,7 @@ This is a binary, request-response protocol operating over a client-server model
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.485475` max=`3.027169` mean=`2.35261`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.465807` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.57416`
-- Top discriminator candidates: offset `8` conf=`0.57416` salience=`1.0`, offset `9` conf=`0.53575` salience=`0.869092`, offset `7` conf=`0.499822` salience=`0.739632`
+- Top discriminator candidates: offset `8` conf=`0.57416` salience=`1.0`, offset `9` conf=`0.539746` salience=`0.882413`, offset `7` conf=`0.503522` salience=`0.751966`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -233,14 +229,13 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`7` | label=`opcode` confidence=`0.95`
 - bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
 - Echoes request fields from family_6 with up to 10 strong offset matches.
 - Echoes request fields from family_7 with up to 10 strong offset matches.
-- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -259,7 +254,7 @@ This is a binary, request-response protocol operating over a client-server model
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.896241` max=`3.027169` mean=`2.382777`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.322557` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.56769`
-- Top discriminator candidates: offset `8` conf=`0.56769` salience=`1.0`, offset `9` conf=`0.560604` salience=`0.869092`, offset `7` conf=`0.500557` salience=`0.739632`
+- Top discriminator candidates: offset `8` conf=`0.56769` salience=`1.0`, offset `9` conf=`0.5646` salience=`0.882413`, offset `7` conf=`0.504258` salience=`0.751966`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -296,13 +291,12 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`7` | label=`opcode` confidence=`0.95`
 - bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
 - Echoes request fields from family_7 with up to 10 strong offset matches.
-- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -321,7 +315,7 @@ This is a binary, request-response protocol operating over a client-server model
 - Length stats: min=`10` max=`12` distinct=`3`
 - Entropy summary: min=`1.846439` max=`3.027169` mean=`2.409528`
 - Candidate discriminator offset: `8` cardinality=`3` entropy=`1.193847` salience=`1.0` mutual_information=`0.143445` contrastive_separation=`0.796875` confidence=`0.563956`
-- Top discriminator candidates: offset `8` conf=`0.563956` salience=`1.0`, offset `9` conf=`0.558292` salience=`0.869092`, offset `7` conf=`0.501868` salience=`0.739632`
+- Top discriminator candidates: offset `8` conf=`0.563956` salience=`1.0`, offset `9` conf=`0.562288` salience=`0.882413`, offset `7` conf=`0.505569` salience=`0.751966`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -358,13 +352,12 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 - bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.95`
+- bytes `7`..`7` | label=`opcode` confidence=`0.95`
 - bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
 - Echoes request fields from family_5 with up to 10 strong offset matches.
-- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 
@@ -382,8 +375,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020608`
-- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.04671` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`0.890625` confidence=`0.500427`
-- Top discriminator candidates: offset `9` conf=`0.500427` salience=`0.869092`, offset `10` conf=`0.399166` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.04671` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`0.890625` confidence=`0.504423`
+- Top discriminator candidates: offset `9` conf=`0.504423` salience=`0.882413`, offset `10` conf=`0.402822` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -401,12 +394,12 @@ This is a binary, request-response protocol operating over a client-server model
 
 - bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
 - bytes `7`..`7` | type=`uint8` confidence=`0.9997`
-- bytes `8`..`9` | type=`uint16` confidence=`0.9986`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9986`
 - bytes `10`..`10` | type=`uint8` confidence=`0.995`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -418,8 +411,7 @@ This is a binary, request-response protocol operating over a client-server model
 
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.9997`
-- bytes `8`..`9` | label=`discriminator` confidence=`0.9986`
+- bytes `7`..`7` | label=`opcode` confidence=`0.9997`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
@@ -447,8 +439,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.617492` max=`3.027169` mean=`3.02003`
-- Candidate discriminator offset: `9` cardinality=`8` entropy=`0.05094` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`0.875` confidence=`0.507629`
-- Top discriminator candidates: offset `9` conf=`0.507629` salience=`0.869092`, offset `10` conf=`0.396137` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`8` entropy=`0.05094` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`0.875` confidence=`0.511625`
+- Top discriminator candidates: offset `9` conf=`0.511625` salience=`0.882413`, offset `10` conf=`0.399794` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -466,12 +458,12 @@ This is a binary, request-response protocol operating over a client-server model
 
 - bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
 - bytes `7`..`7` | type=`uint8` confidence=`0.9992`
-- bytes `8`..`9` | type=`uint16` confidence=`0.9969`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9969`
 - bytes `10`..`10` | type=`uint8` confidence=`0.9916`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -483,8 +475,7 @@ This is a binary, request-response protocol operating over a client-server model
 
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.9992`
-- bytes `8`..`9` | label=`discriminator` confidence=`0.9969`
+- bytes `7`..`7` | label=`opcode` confidence=`0.9992`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
@@ -512,8 +503,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.025483`
-- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.048316` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`0.859375` confidence=`0.514807`
-- Top discriminator candidates: offset `9` conf=`0.514807` salience=`0.869092`, offset `10` conf=`0.394137` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.048316` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`0.859375` confidence=`0.518803`
+- Top discriminator candidates: offset `9` conf=`0.518803` salience=`0.882413`, offset `10` conf=`0.397794` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -526,11 +517,11 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Field Hypotheses
 
-- bytes `8`..`9` | type=`uint16` confidence=`0.9959`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9959`
 - bytes `2`..`6` | type=`bytes` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
 - bytes `10`..`10` | type=`uint8` confidence=`0.9878`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.891` endian=`little`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.891` endian=`big`
 
 #### Framing Hypotheses
 
@@ -541,7 +532,6 @@ This is a binary, request-response protocol operating over a client-server model
 #### Semantic Labels
 
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `8`..`9` | label=`discriminator` confidence=`0.9959`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
@@ -568,8 +558,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `0.9818`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.40401` max=`3.027169` mean=`2.994328`
-- Candidate discriminator offset: `9` cardinality=`12` entropy=`0.597283` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`0.9375` confidence=`0.484031`
-- Top discriminator candidates: offset `9` conf=`0.484031` salience=`0.869092`, offset `10` conf=`0.392405` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`12` entropy=`0.597283` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`0.9375` confidence=`0.488027`
+- Top discriminator candidates: offset `9` conf=`0.488027` salience=`0.882413`, offset `10` conf=`0.396061` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -587,7 +577,7 @@ This is a binary, request-response protocol operating over a client-server model
 
 - bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
 - bytes `7`..`7` | type=`uint8` confidence=`0.9988`
-- bytes `8`..`9` | type=`uint16` confidence=`0.9928`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9928`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `11`..`11` | type=`uint8` confidence=`0.99`
@@ -606,7 +596,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.9988`
+- bytes `7`..`7` | label=`opcode` confidence=`0.9988`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
@@ -636,8 +626,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.222192` max=`3.027169` mean=`2.994004`
-- Candidate discriminator offset: `9` cardinality=`10` entropy=`0.504003` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`0.90625` confidence=`0.49764`
-- Top discriminator candidates: offset `9` conf=`0.49764` salience=`0.869092`, offset `10` conf=`0.397135` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`10` entropy=`0.504003` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`0.90625` confidence=`0.501636`
+- Top discriminator candidates: offset `9` conf=`0.501636` salience=`0.882413`, offset `10` conf=`0.400791` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -651,10 +641,10 @@ This is a binary, request-response protocol operating over a client-server model
 #### Field Hypotheses
 
 - bytes `7`..`7` | type=`uint8` confidence=`0.9985`
-- bytes `8`..`9` | type=`uint16` confidence=`0.9927`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9927`
 - bytes `2`..`6` | type=`bytes` confidence=`0.99`
 - bytes `10`..`10` | type=`uint8` confidence=`0.9745`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -664,10 +654,9 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Semantic Labels
 
-- bytes `7`..`7` | label=`discriminator` confidence=`0.9985`
+- bytes `7`..`7` | label=`opcode` confidence=`0.9985`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`length` confidence=`0.95`
-- bytes `8`..`9` | label=`discriminator` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
@@ -694,8 +683,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.845351` max=`3.027169` mean=`3.010826`
-- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.098646` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`0.890625` confidence=`0.500718`
-- Top discriminator candidates: offset `9` conf=`0.500718` salience=`0.869092`, offset `10` conf=`0.391801` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`9` entropy=`0.098646` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`0.890625` confidence=`0.504714`
+- Top discriminator candidates: offset `9` conf=`0.504714` salience=`0.882413`, offset `10` conf=`0.395457` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -708,7 +697,7 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Field Hypotheses
 
-- bytes `8`..`9` | type=`uint16` confidence=`0.9928`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9928`
 - bytes `2`..`6` | type=`bytes` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
 - bytes `10`..`10` | type=`uint8` confidence=`0.9815`
@@ -725,7 +714,6 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `7`..`7` | label=`length` confidence=`1.0`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`9` | label=`discriminator` confidence=`0.95`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
@@ -751,8 +739,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `0.9544`
 - Length stats: min=`11` max=`12` distinct=`2`
 - Entropy summary: min=`2.450826` max=`3.027169` mean=`2.959492`
-- Candidate discriminator offset: `9` cardinality=`17` entropy=`1.215276` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`1.0` confidence=`0.452679`
-- Top discriminator candidates: offset `9` conf=`0.452679` salience=`0.869092`, offset `10` conf=`0.392672` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`17` entropy=`1.215276` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`1.0` confidence=`0.456675`
+- Top discriminator candidates: offset `9` conf=`0.456675` salience=`0.882413`, offset `10` conf=`0.396328` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -773,8 +761,8 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `8`..`9` | type=`uint16` confidence=`0.9824`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9824`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.95` endian=`big`
 - bytes `10`..`10` | type=`uint8` confidence=`0.9358`
 
 #### Framing Hypotheses
@@ -789,7 +777,7 @@ This is a binary, request-response protocol operating over a client-server model
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `7`..`7` | label=`discriminator` confidence=`0.9979`
+- bytes `7`..`7` | label=`opcode` confidence=`0.9979`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `11`..`11` | label=`constant` confidence=`0.99`
@@ -818,8 +806,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023386`
-- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.058876` salience=`0.869092` mutual_information=`0.225617` contrastive_separation=`0.828125` confidence=`0.529263`
-- Top discriminator candidates: offset `9` conf=`0.529263` salience=`0.869092`, offset `10` conf=`0.463149` salience=`0.543579`
+- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.058876` salience=`0.882413` mutual_information=`0.225617` contrastive_separation=`0.828125` confidence=`0.533259`
+- Top discriminator candidates: offset `9` conf=`0.533259` salience=`0.882413`, offset `10` conf=`0.466806` salience=`0.555768`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -832,11 +820,11 @@ This is a binary, request-response protocol operating over a client-server model
 
 #### Field Hypotheses
 
-- bytes `8`..`9` | type=`uint16` confidence=`0.9946`
+- bytes `8`..`9` | type=`keyword` confidence=`0.9946`
 - bytes `2`..`6` | type=`bytes` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
 - bytes `10`..`10` | type=`uint8` confidence=`0.9892`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.95` endian=`big`
 
 #### Framing Hypotheses
 
@@ -847,7 +835,6 @@ This is a binary, request-response protocol operating over a client-server model
 #### Semantic Labels
 
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `8`..`9` | label=`discriminator` confidence=`0.9946`
 - bytes `2`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
 - bytes `10`..`10` | label=`discriminator` confidence=`0.95`
