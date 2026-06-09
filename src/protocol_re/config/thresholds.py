@@ -443,6 +443,8 @@ class FieldSemantics:
     ADDRESS_UNIQUE_RATIO_MIN: float = 0.05
     ADDRESS_UNIQUE_RATIO_MAX: float = 0.5
     ADDRESS_BASE_CONFIDENCE: float = 0.6
+    BODY_ADDRESS_LIKE_CONFIDENCE: float = 0.91
+    BODY_COUNT_LIKE_CONFIDENCE: float = 0.88
 
     # --- Status ---
 

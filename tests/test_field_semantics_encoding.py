@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments
 from protocol_re.inference.discriminator_fields import detect_global_discriminator
+from protocol_re.inference.semantic_labeling import summarize_semantics
 from protocol_re.clustering.family_discovery import refine_families_by_discriminator
 from protocol_re.clustering.structural_features import volatile_offsets
 from protocol_re.inference.framing import FramingFieldRegion, FramingLayoutHypothesis, _dedupe_layouts, _header_boundary_scores
@@ -291,6 +292,21 @@ def test_best_numeric_endian_prefers_monotonic_low_variance_interpretation() -> 
     assert stats["little"]["sequence_score"] > stats["big"]["sequence_score"]
 
 
+def test_best_numeric_endian_prefers_big_when_big_is_strictly_monotonic() -> None:
+    values = [
+        64023, 64048, 64058, 64068, 64076, 64108, 64153, 64161,
+        64204, 64215, 64253, 64260, 64307, 64332, 64338, 64383,
+    ]
+    chunks = [value.to_bytes(2, "big") for value in values]
+
+    endian, stats = best_numeric_endian(chunks)
+
+    assert stats["big"]["monotonic_ratio"] == 1.0
+    assert stats["little"]["sequence_score"] > stats["big"]["sequence_score"]
+    assert endian == "big"
+    assert stats["big"]["selection_prior"] == "high_monotonic_big_endian"
+
+
 def test_boundary_counter_endian_is_data_driven() -> None:
     messages = [f"{value:04x}" for value in (1, 2, 3, 4, 5, 6)]
     segments = [Segment(start=0, end=2, kind="variable", confidence=0.9)]
@@ -300,6 +316,45 @@ def test_boundary_counter_endian_is_data_driven() -> None:
     assert fields[0].field_type == "counter_or_transaction_id"
     assert fields[0].endian == "big"
     assert fields[0].evidence["selected_endian"] == "big"
+
+
+def test_framed_pdu_fields_get_protocol_agnostic_semantic_roles() -> None:
+    family_data = {
+        "family_0": {
+            "message_count": 6,
+            "template": "?? ?? 00 00 00 06 01 03 ?? ?? ?? ??",
+            "field_hypotheses": [
+                {"start": 0, "length": 2, "field_type": "counter_or_transaction_id", "endian": "big", "confidence": 0.95, "evidence": {"cardinality_ratio": 1.0}},
+                {"start": 2, "length": 2, "field_type": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+                {"start": 4, "length": 2, "field_type": "length", "endian": "big", "confidence": 1.0, "evidence": {"length_match_score": 1.0}},
+                {"start": 6, "length": 1, "field_type": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+                {"start": 7, "length": 1, "field_type": "keyword", "confidence": 0.99, "evidence": {"cardinality_ratio": 0.1}},
+                {"start": 8, "length": 2, "field_type": "blob", "endian": "big", "confidence": 0.7, "evidence": {"cardinality_ratio": 0.4}},
+                {"start": 10, "length": 2, "field_type": "blob", "endian": "big", "confidence": 0.7, "evidence": {"cardinality_ratio": 0.3}},
+            ],
+        }
+    }
+    relations_payload = {
+        "role_hints": {"family_0": {"role_hint": "request", "request_like_pairs": 1, "response_like_pairs": 0}},
+        "family_edges": [],
+    }
+    framing_data = {
+        "families": {
+            "family_0": {
+                "layout_hypotheses": [{"header_end": 7, "body_start": 7, "confidence": 1.0}]
+            }
+        }
+    }
+
+    semantics = summarize_semantics(family_data, relations_payload, framing_data=framing_data)
+    labels = {
+        (label["start"], label["length"], label["label"])
+        for label in semantics["family_0"]["field_labels"]
+    }
+
+    assert (7, 1, "opcode") in labels
+    assert (8, 2, "address_like") in labels
+    assert (10, 2, "count_like") in labels
 
 
 def test_length_validator_preserves_adjacent_protocol_id_boundary() -> None:
