@@ -84,9 +84,9 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <h1>unknown-industrial-protocol</h1>
       <p class="subhead">Auto-generated reverse-engineering report for an unknown industrial protocol. Evidence is inferred from payload families, structural features, request/response links, and semantic hints.</p>
       <div class="metric-grid">
-        <article class="metric"><strong>12</strong><span>Families</span><small>message types</small></article>
+        <article class="metric"><strong>10</strong><span>Families</span><small>message types</small></article>
         <article class="metric"><strong>200000</strong><span>Messages represented</span><small>assigned family messages</small></article>
-        <article class="metric"><strong>17</strong><span>Relations</span><small>family-to-family edges</small></article>
+        <article class="metric"><strong>5</strong><span>Relations</span><small>family-to-family edges</small></article>
         <article class="metric"><strong>0.1</strong><span>Version</span></article>
       </div>
     </div>
@@ -96,36 +96,36 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <h2>Pipeline Evaluation</h2>
       <div class="metric-grid">
         <article class="metric"><strong>200000</strong><span>Messages</span><small>1 sessions</small></article>
-        <article class="metric"><strong>100.0%</strong><span>Corpus assignment coverage</span><small>12 families</small></article>
+        <article class="metric"><strong>100.0%</strong><span>Corpus assignment coverage</span><small>10 families</small></article>
         <article class="metric"><strong>50.0%</strong><span>Clustering sample</span><small>100000 messages</small></article>
-        <article class="metric"><strong>100.0%</strong><span>Parseable families</span><small>12 families</small></article>
+        <article class="metric"><strong>100.0%</strong><span>Parseable families</span><small>10 families</small></article>
         <article class="metric"><strong>99999</strong><span>Pair hypotheses</span><small>0.0% direction-known</small></article>
-        <article class="metric"><strong>18</strong><span>Relation edges</span><small>18 with echoes</small></article>
+        <article class="metric"><strong>6</strong><span>Relation edges</span><small>6 with echoes</small></article>
       </div>
-      <h3>Clustering Diagnostics</h3><div class="metric-grid"><article class="metric"><strong>11</strong><span>Warning families</span></article><article class="metric"><strong>2</strong><span>Split candidates</span></article><article class="metric"><strong>18</strong><span>Merge candidates</span></article></div><table><thead><tr><th>Family</th><th>Messages</th><th>Split</th><th>Over-split</th><th>Warnings</th></tr></thead><tbody><tr><td><code>family_0</code></td><td>143751</td><td>0.7</td><td>0.0</td><td>high latent dispersion, low latent silhouette, mixed length profile</td></tr><tr><td><code>family_3</code></td><td>6547</td><td>0.5</td><td>0.1</td><td>high latent dispersion, low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_6</code></td><td>19786</td><td>0.4</td><td>0.0</td><td>low latent silhouette, mixed length profile</td></tr><tr><td><code>family_1</code></td><td>2604</td><td>0.3</td><td>0.1</td><td>high latent dispersion, possible over-split merge candidate</td></tr><tr><td><code>family_10</code></td><td>1246</td><td>0.2</td><td>0.460601</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_8</code></td><td>1725</td><td>0.2</td><td>0.324228</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_7</code></td><td>11094</td><td>0.2</td><td>0.253617</td><td>mixed length profile, possible over-split merge candidate</td></tr><tr><td><code>family_9</code></td><td>1371</td><td>0.0</td><td>0.460601</td><td>possible over-split merge candidate</td></tr><tr><td><code>family_5</code></td><td>8320</td><td>0.0</td><td>0.260552</td><td>possible over-split merge candidate</td></tr><tr><td><code>family_4</code></td><td>925</td><td>0.0</td><td>0.260552</td><td>possible over-split merge candidate</td></tr></tbody></table>
+      <h3>Clustering Diagnostics</h3><div class="metric-grid"><article class="metric"><strong>9</strong><span>Warning families</span></article><article class="metric"><strong>2</strong><span>Split candidates</span></article><article class="metric"><strong>24</strong><span>Merge candidates</span></article></div><table><thead><tr><th>Family</th><th>Messages</th><th>Split</th><th>Over-split</th><th>Warnings</th></tr></thead><tbody><tr><td><code>family_0</code></td><td>39887</td><td>0.5</td><td>0.748837</td><td>high latent dispersion, low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_6</code></td><td>19944</td><td>0.5</td><td>0.0</td><td>high latent dispersion, low latent silhouette</td></tr><tr><td><code>family_9</code></td><td>406</td><td>0.3</td><td>0.0</td><td>high latent dispersion</td></tr><tr><td><code>family_5</code></td><td>19944</td><td>0.2</td><td>0.834119</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_7</code></td><td>19943</td><td>0.2</td><td>0.834119</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_3</code></td><td>19944</td><td>0.2</td><td>0.823292</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_2</code></td><td>19944</td><td>0.2</td><td>0.748837</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_1</code></td><td>39888</td><td>0.2</td><td>0.316643</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_4</code></td><td>19944</td><td>0.2</td><td>0.0</td><td>low latent silhouette</td></tr></tbody></table>
     </section>
     
   
     <section class="panel eval-panel">
       <h2>Final Ground Truth Evaluation</h2>
       <div class="metric-grid">
-        <article class="metric"><strong>0.672129</strong><span>Overall score</span><small>partial</small></article>
-        <article class="metric"><strong>11</strong><span>Matched message types</span><small>of 11</small></article>
-        <article class="metric"><strong>0.916667</strong><span>Message type accuracy</span></article>
-        <article class="metric"><strong>0.956522</strong><span>Message type F1</span></article>
-        <article class="metric"><strong>0.5</strong><span>Field boundary accuracy</span></article>
-        <article class="metric"><strong>0.666667</strong><span>Field boundary F1</span></article>
-        <article class="metric"><strong>0.258065</strong><span>Field semantics accuracy</span></article>
-        <article class="metric"><strong>0.410256</strong><span>Field semantics F1</span></article>
-        <article class="metric"><strong>0.210526</strong><span>Relation accuracy</span></article>
-        <article class="metric"><strong>0.347826</strong><span>Relation F1</span></article>
+        <article class="metric"><strong>0.722424</strong><span>Overall score</span><small>partial</small></article>
+        <article class="metric"><strong>10</strong><span>Matched message types</span><small>of 11</small></article>
+        <article class="metric"><strong>0.909091</strong><span>Message type accuracy</span></article>
+        <article class="metric"><strong>0.952381</strong><span>Message type F1</span></article>
+        <article class="metric"><strong>0.527778</strong><span>Field boundary accuracy</span></article>
+        <article class="metric"><strong>0.690909</strong><span>Field boundary F1</span></article>
+        <article class="metric"><strong>0.222222</strong><span>Field semantics accuracy</span></article>
+        <article class="metric"><strong>0.363636</strong><span>Field semantics F1</span></article>
+        <article class="metric"><strong>0.833333</strong><span>Relation accuracy</span></article>
+        <article class="metric"><strong>0.909091</strong><span>Relation F1</span></article>
       </div>
     </section>
     
   
     <section class="panel llm-panel">
       <h2>LLM Analysis</h2>
-      <div class="metric-grid"><article class="metric"><strong>qwen/qwen3.5-397b-a17b</strong><span>Model</span></article><article class="metric"><strong>35991</strong><span>Prompt chars</span></article><article class="metric"><strong>8998</strong><span>Prompt est. tokens</span></article></div>
+      <div class="metric-grid"><article class="metric"><strong>qwen/qwen3.5-397b-a17b</strong><span>Model</span></article><article class="metric"><strong>28170</strong><span>Prompt chars</span></article><article class="metric"><strong>7043</strong><span>Prompt est. tokens</span></article></div>
       <pre># Protocol Specification Synthesis
 
 ## Overview
@@ -161,301 +161,51 @@ This is a binary, request-response protocol operating over a client-server model
   
     <section class="panel">
       <h2>Framing Summary</h2>
-      <div class="metric-grid"><article class="metric"><strong>1.0</strong><span>Mean best confidence</span></article><article class="metric"><strong>12</strong><span>Families with header candidate</span></article></div>
+      <div class="metric-grid"><article class="metric"><strong>1.0</strong><span>Mean best confidence</span></article><article class="metric"><strong>10</strong><span>Families with header candidate</span></article></div>
       <h4>Common Header Ends</h4>
-      <div class="metric-grid"><article class="metric"><strong>12 families</strong><span>Header end 7</span><small>100.0% of families</small></article></div>
+      <div class="metric-grid"><article class="metric"><strong>10 families</strong><span>Header end 7</span><small>100.0% of families</small></article></div>
       <h4>Field Type Counts</h4>
-      <div class="motif-row"><span class="pill field">length x36</span><span class="pill field">transaction_or_counter x22</span><span class="pill field">constant x10</span><span class="pill field">discriminator x4</span></div>
+      <div class="motif-row"><span class="pill field">length x30</span><span class="pill field">transaction_or_counter x20</span></div>
     </section>
     
   
   <section class="panel">
     <h2>Strongest Relations</h2>
-    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead><tbody><tr><td><code>family_6</code></td><td><code>family_6</code></td><td>8157</td><td>6.9457</td><td>0.795029</td><td>8.345804</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="pill related">keep</span> 0.93<br><small>Robust self-relation. Massive pair count (8107) and high edge_lift (8.29). Perfect consistency and strong 2-byte echo at offset 2.</small></td></tr><tr><td><code>family_7</code></td><td><code>family_7</code></td><td>3119</td><td>6.9479</td><td>0.453145</td><td>10.760886</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="pill related">keep</span> 0.93<br><small>Strong self-relation. High pair count (3137) and very high edge_lift (10.65). Perfect consistency and strong echo evidence.</small></td></tr><tr><td><code>family_5</code></td><td><code>family_5</code></td><td>1962</td><td>6.951</td><td>0.341752</td><td>13.251217</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="pill related">keep</span> 0.92<br><small>Strong self-relation (likely internal state machine or request/response within same type). Extremely high edge_lift (13.3) and pair count (2002). Multiple echo fields including a secondary 2-byte field at offset 8/7 provide robust confirmation.</small></td></tr><tr><td><code>family_0</code></td><td><code>family_8</code></td><td>1725</td><td>6.9676</td><td>0.022392</td><td>1.298065</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_6</code></td><td><code>family_2</code></td><td>1084</td><td>6.9676</td><td>0.105653</td><td>6.434346</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="pill related">discard</span> 0.6<br><small>Low pair count (11) combined with low support_ratio (0.001). While lift is high, the absolute number of observations is too small to confidently establish a general protocol rule, and the low support suggests it&#x27;s a rare exception.</small></td></tr><tr><td><code>family_0</code></td><td><code>family_9</code></td><td>1074</td><td>6.9675</td><td>0.013941</td><td>1.016865</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_0</code></td><td><code>noise</code></td><td>877</td><td>6.9675</td><td>0.011384</td><td>1.236051</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="pill related">discard</span> 0.55<br><small>Critical structural violation: &#x27;noise&#x27; family is identified as a catch-all/unstructured bucket (indicated by name and field types). A valid protocol relation should not map a structured family to &#x27;noise&#x27;. Additionally, edge_lift is marginal (1.5) and support_ratio is extremely low (0.0006), suggesting the correlation is driven by volume rather than protocol logic.</small></td></tr><tr><td><code>family_7</code></td><td><code>family_6</code></td><td>843</td><td>6.9674</td><td>0.122476</td><td>1.285686</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_5</code></td><td><code>family_1</code></td><td>697</td><td>6.9676</td><td>0.121407</td><td>4.66588</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="pill related">discard</span> 0.45<br><small>Critically low pair count (2). Despite high lift and perfect echo/length support, a sample size of 2 is statistically insufficient to validate a protocol relation and is highly likely to be a coincidence or anomaly.</small></td></tr><tr><td><code>family_5</code></td><td><code>family_4</code></td><td>378</td><td>6.9676</td><td>0.065842</td><td>7.118003</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_7</code></td><td><code>family_10</code></td><td>311</td><td>6.9673</td><td>0.045184</td><td>3.626271</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_6</code></td><td><code>family_10</code></td><td>176</td><td>6.9675</td><td>0.017154</td><td>1.376711</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_7</code></td><td><code>family_9</code></td><td>156</td><td>6.9675</td><td>0.022665</td><td>1.653122</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_6</code></td><td><code>family_9</code></td><td>141</td><td>6.9674</td><td>0.013743</td><td>1.002374</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_7</code></td><td><code>family_2</code></td><td>137</td><td>6.9674</td><td>0.019904</td><td>1.212175</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="pill related">discard</span> 0.58<br><small>Insufficient pair count (8). Similar to the family_5-&gt;family_1 case, the sample size is too small to overcome the risk of false positives, despite high lift.</small></td></tr><tr><td><code>noise</code></td><td><code>noise</code></td><td>44</td><td>6.9969</td><td>1.0</td><td>108.576547</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_2</code></td><td><code>family_2</code></td><td>23</td><td>6.9967</td><td>1.0</td><td>60.900731</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr></tbody></table>
+    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead><tbody><tr><td><code>family_5</code></td><td><code>family_4</code></td><td>19944</td><td>6.9675</td><td>1.0</td><td>5.013989</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_3</code></td><td><code>family_2</code></td><td>19944</td><td>6.935</td><td>1.0</td><td>5.013989</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_7</code></td><td><code>family_6</code></td><td>19943</td><td>6.9675</td><td>1.0</td><td>5.014241</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_9</code></td><td><code>family_9</code></td><td>203</td><td>6.9976</td><td>1.0</td><td>492.605911</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr><tr><td><code>family_8</code></td><td><code>family_8</code></td><td>78</td><td>6.9968</td><td>1.0</td><td>1282.038462</td><td>1.0</td><td>1.0</td><td>unknown-&gt;unknown</td><td>10</td><td>0</td><td><span class="muted">No decision</span></td></tr></tbody></table>
   </section>
   <main>
-    <section class="panel"><h2>Families</h2><p class="muted">Showing 12 largest families.</p></section>
+    <section class="panel"><h2>Families</h2><p class="muted">Showing 10 largest families.</p></section>
     
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_0</h3>
-          <p><span class="pill request">request</span> 143751 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9999</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.95</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.314798</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x288499</span><span class="pill motif">000000 x144367</span><span class="pill motif">0101 x98475</span><span class="pill motif">0100 x81119</span><span class="pill motif">0006 x77798</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x77127</span><span class="pill wide">00000006 x77127</span><span class="pill wide">00000601 x77127</span><span class="pill wide">0000000401 x50903</span><span class="pill wide">00000004 x50903</span></div>
-      <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>8.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>3.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>1.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.143445</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.796875</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">8 conf=0.573172 sal=1.0</span><span class="pill field">9 conf=0.565285 sal=0.882413</span><span class="pill field">7 conf=0.501519 sal=0.751966</span><span class="pill field">10 conf=0.384044 sal=0.555768</span><span class="pill field">11 conf=0.323246 sal=0.564493</span></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span><span class="pill field">5..5 discriminator</span><span class="pill field">6..6 constant</span></div>
-      <h4>LLM Boundary Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
-    </section>
-    <h4>LLM Semantic Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (perfect correlation with message length); sample_values: 0x0006 for length 12 (header 6 + payload 6), 0x0004 for length 10; cardinality: 3 (low, corresponding to few message sizes) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 (only value 0x0000 observed); stability_score: 1.0 (perfectly stable); relations: echoed perfectly in all observed request/response pairs +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (only value 0x01 observed); stability_score: 1.0; sample_values: consistently 0x01 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.88</td><td>cardinality: 54238 (very high, typical for unique transaction IDs); relations: echoed in request/response pairs at offset 0 (support=1.0 in family_8 relation); position: byte 0-1 (common for transaction IDs in some protocols) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>payload</td><td>bytes</td><td>0.85</td><td>position: follows header fields (transaction_id, constants, length, version); width: 4 bytes (variable content area); cardinality: 23 (moderate, suggests structured data or specific commands) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>status</td><td>uint8</td><td>0.75</td><td>family_role: &#x27;response&#x27; (status codes typically appear in responses); position: last byte of the message (typical for status/trailer); cardinality: 14 (low to moderate, typical for status/error codes) +2 more</td></tr></tbody></table>
-    </section>
-    
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_3</span><span class="pill related">family_8</span><span class="pill related">family_9</span><span class="pill related">noise</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_6</h3>
-          <p><span class="pill request">request</span> 19786 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:51.5%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9997</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9994</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.95</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.35261</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>1</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x39700</span><span class="pill motif">000000 x19866</span><span class="pill motif">0101 x12000</span><span class="pill motif">0006 x10525</span><span class="pill motif">0601 x10292</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x10290</span><span class="pill wide">00000006 x10290</span><span class="pill wide">00000601 x10290</span><span class="pill wide">00080001 x5872</span><span class="pill wide">0000000401 x5664</span></div>
-      <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>8.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>3.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>1.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.143445</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.796875</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">8 conf=0.57416 sal=1.0</span><span class="pill field">9 conf=0.539746 sal=0.882413</span><span class="pill field">7 conf=0.503522 sal=0.751966</span><span class="pill field">10 conf=0.413329 sal=0.555768</span><span class="pill field">11 conf=0.359395 sal=0.564493</span></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>LLM Boundary Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
-    </section>
-    <h4>LLM Semantic Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (perfect correlation with message length); sample_values: &#x27;0005&#x27; corresponds to remaining bytes (11 total - 6 header = 5); cardinality: 3 (low, typical for length fields in fixed-size response families) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 (unique value &#x27;0000&#x27; across all samples); stability: 1.0 (perfectly stable); entropy: 0.0 (no variation) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (unique value &#x27;01&#x27;); stability: 1.0; entropy: 0.0 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.92</td><td>cardinality: 11633 (very high, typical for unique transaction IDs); relation: echoed with 100% support and confidence 1.0 in request/response pairs (offset 0 in request matches offset 0 in response); position: byte 0-2 (common location for correlation IDs in some protocols) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.85</td><td>cardinality: 28 (low to moderate, typical for a set of addressed devices or registers); position: follows length and fixed header bytes; stability: 0.76 (moderate, suggests specific addresses used repeatedly) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>status</td><td>uint8</td><td>0.78</td><td>family_role: &#x27;response&#x27; (status codes typically appear in responses); cardinality: 9 (low, typical for a set of status/error codes); position: end of the defined header structure (offset 11, message length 11 implies this is the last byte) +1 more</td></tr></tbody></table>
-    </section>
-    
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_10</span><span class="pill related">family_2</span><span class="pill related">family_6</span><span class="pill related">family_7</span><span class="pill related">family_9</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_7</h3>
-          <p><span class="pill request">request</span> 11094 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:59.4%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9995</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9993</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.95</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.382777</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x22230</span><span class="pill motif">000000 x11099</span><span class="pill motif">000006 x6966</span><span class="pill motif">000601 x6966</span><span class="pill motif">0006 x6966</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x6966</span><span class="pill wide">00000006 x6966</span><span class="pill wide">00000601 x6966</span><span class="pill wide">00080001 x3746</span><span class="pill wide">000000060101 x3056</span></div>
-      <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>8.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>3.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>1.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.143445</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.796875</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">8 conf=0.56769 sal=1.0</span><span class="pill field">9 conf=0.5646 sal=0.882413</span><span class="pill field">7 conf=0.504258 sal=0.751966</span><span class="pill field">10 conf=0.452962 sal=0.555768</span><span class="pill field">11 conf=0.382021 sal=0.564493</span></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>LLM Boundary Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
-    </section>
-    <h4>LLM Semantic Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>7</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (perfect correlation with message length); field_type provided as &#x27;length&#x27; with confidence 1.0; endian: big (explicitly detected) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 (single unique value &#x27;0000&#x27;); stability: 1.0 (perfectly stable across all samples); relations: echoed perfectly between request/response (offset 2) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (single unique value &#x27;01&#x27;); stability: 1.0; sample_values: always &#x27;01&#x27; +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.92</td><td>cardinality: 7952 (very high, typical for unique transaction IDs); relations: echoed in request/response pairs with 100% support (offset 0 width 1 partial echo, likely full 2-byte echo implied by pattern); position: byte 0 (common for transaction IDs in some protocols, or high-entropy header field) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+2</code></td><td>function_code</td><td>uint16_be</td><td>0.88</td><td>cardinality: 9 (low, typical for opcodes/function codes); position: after header metadata (length, version); field_type provided as &#x27;keyword&#x27; (implies enumerated values) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>9+1</code></td><td>status</td><td>uint8</td><td>0.85</td><td>cardinality: 6 (low, typical for status codes); position: near end of header, before final field; field_type provided as &#x27;keyword&#x27; +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>6</td><td><code>10+2</code></td><td>checksum</td><td>uint16_be</td><td>0.78</td><td>position: last 2 bytes of the message (offset 10, total length 12 implied by header+payload); cardinality: 6 (low for checksum in this specific sample set, but variable in general); field_type provided as &#x27;keyword&#x27; (likely misclassified due to limited sample variance) +2 more</td></tr></tbody></table>
-    </section>
-    
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_10</span><span class="pill related">family_2</span><span class="pill related">family_6</span><span class="pill related">family_7</span><span class="pill related">family_9</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_5</h3>
-          <p><span class="pill request">request</span> 8320 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:60.8%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9995</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9994</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.95</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>variable</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.409528</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x16642</span><span class="pill motif">000000 x8320</span><span class="pill motif">000006 x5742</span><span class="pill motif">000601 x5742</span><span class="pill motif">0006 x5742</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601 x5742</span><span class="pill wide">00000006 x5742</span><span class="pill wide">00000601 x5742</span><span class="pill wide">00080001 x3251</span><span class="pill wide">000000060101 x2489</span></div>
-      <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>8.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>3.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>1.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.143445</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.796875</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">8 conf=0.563956 sal=1.0</span><span class="pill field">9 conf=0.562288 sal=0.882413</span><span class="pill field">7 conf=0.505569 sal=0.751966</span><span class="pill field">10 conf=0.445911 sal=0.555768</span></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>LLM Boundary Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
-    </section>
-    <h4>LLM Semantic Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>behavior: length_match_score is 1.0 (value matches message length logic); sample_values: Value 0x0005 corresponds to remaining bytes (11 total - 6 header = 5); cardinality: Low (3 unique values), typical for length fields in fixed-size responses +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 unique value (0x0000) across all samples; stability: 1.0 stability score; relation: Echoed perfectly between request/response at offset 2 (width 2, support 1.0) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 unique value (0x01); stability: 1.0 stability score; position: Immediately follows length field, common for version bytes +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.92</td><td>relation: Echoed in request/response pairs at offset 0 with width 1 (partial) and high support (1.0); cardinality: 6332 unique values (very high, typical for transaction IDs); position: Byte 0-1 (common header position for IDs) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.85</td><td>cardinality: 16 unique values (low-moderate, typical for a set of addressed resources); relation: Echo evidence exists involving offset 8 (overlapping/adjacent) with high confidence (0.88); position: Located after header control fields (ID, Length, Version) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>status</td><td>uint8</td><td>0.75</td><td>context: Family role is &#x27;response&#x27;, and this is the final byte; cardinality: 2 unique values (typical for Success/Failure or OK/Error); position: Last byte of the message (offset 11 in 12-byte message) +1 more</td></tr></tbody></table>
-    </section>
-    
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_1</span><span class="pill related">family_4</span><span class="pill related">family_5</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_3</h3>
-          <p><span class="pill response">response</span> 6547 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:16.67%" title="8..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 2c ?? 00</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9997</td></tr><tr><td><code>8..9</code></td><td>keyword</td><td>0.9986</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.995</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9997</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>3.020608</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x13116</span><span class="pill motif">000000 x6569</span><span class="pill motif">000005 x6529</span><span class="pill motif">000501 x6529</span><span class="pill motif">010402 x6529</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x6529</span><span class="pill wide">000005010402 x6529</span><span class="pill wide">0000000501 x6529</span><span class="pill wide">0000050104 x6529</span><span class="pill wide">0005010402 x6529</span></div>
-      <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>9.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.890625</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.504423 sal=0.882413</span><span class="pill field">10 conf=0.402822 sal=0.555768</span></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>LLM Boundary Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>2</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2; 3</td><td><code>4..7</code></td><td>0.85</td><td>Field 2 is a 2-byte length field (constant &#x27;0005&#x27;) and Field 3 is a 1-byte constant (&#x27;01&#x27;). The boundary between them (after offset 6) has a critically low support score (0.0439), indicating no statistical evidence for a split. In many protocols, fixed headers include version or type bytes immediately following length; merging them creates a unified 3-byte static header segment.</td></tr><tr><td><span class="pill related">applied</span></td><td>4; 5</td><td><code>7..12</code></td><td>0.75</td><td>Field 5 (offset 11) has a coverage mean of only 0.0027, meaning it exists in less than 0.3% of messages (likely only in the 12-byte variants). It acts as a trailing byte for longer messages rather than a distinct field. Merging it with the preceding 4-byte &#x27;keyword&#x27; field creates a variable-width payload region (4-5 bytes) which better reflects the message structure where the last byte varies or is optional.</td></tr></tbody></table>
-    </section>
-    <h4>LLM Semantic Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (value 0x0005 matches remaining message length exactly); cardinality: 2.0 (low, typical for length fields in fixed-size families); position: header region (bytes 4-5) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1.0 (only value 0x0000 observed); stability: 1.0 (perfectly stable across all samples); entropy: 0.0 (no information content) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1.0 (only value 0x01 observed); stability: 1.0 (perfectly stable); entropy: 0.0 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>constant</td><td>uint8</td><td>0.95</td><td>cardinality: 1.0 (inferred from field_type &#x27;constant&#x27; and stability 1.0); position: last byte of the message (offset 11, total length 12 based on prev fields); stability: 1.0 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>sequence_number</td><td>uint16_le</td><td>0.92</td><td>cardinality: 6497 unique values (high, indicates incrementing counter); behavior: monotonic_ratio 0.9785 in little-endian analysis suggests sequential incrementing; position: byte 0-2 (typical for sequence numbers or transaction IDs) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.88</td><td>cardinality: 35 distinct values (moderate, typical for address space); stability: high (0.995), indicating specific targets rather than random data; entropy: low (1.12), structured data rather than random payload +2 more</td></tr></tbody></table>
-    </section>
-    
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span></div>
-    </section>
-    
-
     <section class="family-card">
       <header>
         <div>
           <h3>family_1</h3>
-          <p><span class="pill response">response</span> 2604 messages</p>
+          <p><span class="pill request">request</span> 39888 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:16.67%" title="8..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 2c ?? 00</code>
+        <code class="template">?? ?? 00 00 00 06 01 01 00 ?? 00 01</code>
       </details>
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9992</td></tr><tr><td><code>8..9</code></td><td>keyword</td><td>0.9969</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.9916</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..11</code></td><td>uint32</td><td>0.9999</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.8643</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9992</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.91</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr><tr><td><code>8..11</code></td><td>bytes</td><td>0.6</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>3.02003</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x5218</span><span class="pill motif">000000 x2614</span><span class="pill motif">000005 x2600</span><span class="pill motif">000501 x2600</span><span class="pill motif">010402 x2600</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x2600</span><span class="pill wide">000005010402 x2600</span><span class="pill wide">0000000501 x2600</span><span class="pill wide">0000050104 x2600</span><span class="pill wide">0005010402 x2600</span></div>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.214693</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x79934</span><span class="pill motif">000000 x40046</span><span class="pill motif">0100 x40037</span><span class="pill motif">000006 x39888</span><span class="pill motif">000601 x39888</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000060101 x39888</span><span class="pill wide">000006010100 x39888</span><span class="pill wide">0000000601 x39888</span><span class="pill wide">0000060101 x39888</span><span class="pill wide">0006010100 x39888</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>8.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.875</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.511625 sal=0.882413</span><span class="pill field">10 conf=0.399794 sal=0.555768</span></div>
+      <div class="feature-grid"><article class="metric"><strong>none</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.0</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="muted">No candidates</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>LLM Boundary Refinement</h4>
@@ -472,40 +222,40 @@ This is a binary, request-response protocol operating over a client-server model
     </section>
     
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_5</span></div>
+      <div class="pill-row"><span class="pill related">family_0</span></div>
     </section>
     
 
     <section class="family-card">
       <header>
         <div>
-          <h3>family_8</h3>
-          <p><span class="pill response">response</span> 1725 messages</p>
+          <h3>family_0</h3>
+          <p><span class="pill response">response</span> 39887 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg constant" style="width:9.09%" title="7..7 constant"></span><span class="seg variable" style="width:18.18%" title="8..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:20.00%" title="0..1 variable"></span><span class="seg constant" style="width:50.00%" title="2..6 constant"></span><span class="seg constant" style="width:10.00%" title="7..7 constant"></span><span class="seg constant" style="width:20.00%" title="8..9 constant"></span></div>
       <details open>
         <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 2d ??</code>
+        <code class="template">?? ?? 00 00 00 04 01 01 01 00</code>
       </details>
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..9</code></td><td>keyword</td><td>0.9959</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.9878</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.891</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.8643</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>3.025483</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x3450</span><span class="pill motif">000000 x1725</span><span class="pill motif">000005 x1725</span><span class="pill motif">000501 x1725</span><span class="pill motif">010402 x1725</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x1725</span><span class="pill wide">000005010402 x1725</span><span class="pill wide">0000000501 x1725</span><span class="pill wide">0000050104 x1725</span><span class="pill wide">0005010402 x1725</span></div>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 10</small></article><article class="metric"><strong>2.039969</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x79932</span><span class="pill motif">0101 x79774</span><span class="pill motif">000000 x40045</span><span class="pill motif">0100 x40036</span><span class="pill motif">0004 x39888</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000401010100 x39887</span><span class="pill wide">000000040101 x39887</span><span class="pill wide">000004010101 x39887</span><span class="pill wide">000401010100 x39887</span><span class="pill wide">0000000401 x39887</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>7.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.859375</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.518803 sal=0.882413</span><span class="pill field">10 conf=0.397794 sal=0.555768</span></div>
+      <div class="feature-grid"><article class="metric"><strong>none</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.0</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="muted">No candidates</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>LLM Boundary Refinement</h4>
@@ -517,12 +267,12 @@ This is a binary, request-response protocol operating over a client-server model
     <h4>LLM Semantic Refinement</h4>
     <section class="llm-stage-block">
       <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>3</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+5</code></td><td>constant</td><td>bytes</td><td>0.99</td><td>cardinality: 1.0 (identical value &#x27;0000000501&#x27; across all samples); stability_score: 1.0 (perfectly stable); entropy_mean: 0.0 (no variation) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>sequence_number</td><td>uint16_le</td><td>0.92</td><td>cardinality: 1537 unique values (high, indicates incrementing counter); monotonic_ratio: 0.9704 (little-endian interpretation shows strong sequential behavior); sample_values: hex values 0x175d, 0x1c5d, 0x215d... show consistent increments of 5 (0x05) when interpreted as little-endian uint16 +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>7+4</code></td><td>discriminator</td><td>bytes</td><td>0.88</td><td>cardinality: 20 distinct values (low-to-moderate, typical for function codes or command types); stability_score: 0.998 (highly stable within specific message sub-types); position: located after header constants, typical for opcode/function placement +2 more</td></tr></tbody></table>
+      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (perfect correlation with message length); sample_values: 0x0006 for length 12 (header 6 + payload 6), 0x0004 for length 10; cardinality: 3 (low, corresponding to few message sizes) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 (only value 0x0000 observed); stability_score: 1.0 (perfectly stable); relations: echoed perfectly in all observed request/response pairs +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (only value 0x01 observed); stability_score: 1.0; sample_values: consistently 0x01 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.88</td><td>cardinality: 54238 (very high, typical for unique transaction IDs); relations: echoed in request/response pairs at offset 0 (support=1.0 in family_8 relation); position: byte 0-1 (common for transaction IDs in some protocols) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>payload</td><td>bytes</td><td>0.85</td><td>position: follows header fields (transaction_id, constants, length, version); width: 4 bytes (variable content area); cardinality: 23 (moderate, suggests structured data or specific commands) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>status</td><td>uint8</td><td>0.75</td><td>family_role: &#x27;response&#x27; (status codes typically appear in responses); position: last byte of the message (typical for status/trailer); cardinality: 14 (low to moderate, typical for status/error codes) +2 more</td></tr></tbody></table>
     </section>
     
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span></div>
+      <div class="pill-row"><span class="pill related">family_1</span></div>
     </section>
     
 
@@ -530,32 +280,32 @@ This is a binary, request-response protocol operating over a client-server model
       <header>
         <div>
           <h3>family_2</h3>
-          <p><span class="pill response">response</span> 1665 messages</p>
+          <p><span class="pill response">response</span> 19944 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:98.2%"></span></div>
+          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:16.67%" title="8..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:20.00%" title="0..1 variable"></span><span class="seg constant" style="width:50.00%" title="2..6 constant"></span><span class="seg constant" style="width:10.00%" title="7..7 constant"></span><span class="seg variable" style="width:20.00%" title="8..9 variable"></span></div>
       <details open>
         <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 ?? ?? 00</code>
+        <code class="template">?? ?? 00 00 00 04 01 02 01 00</code>
       </details>
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9988</td></tr><tr><td><code>8..9</code></td><td>keyword</td><td>0.9928</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.985</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9988</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.994328</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>1</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x3334</span><span class="pill motif">000000 x1669</span><span class="pill motif">0005 x1620</span><span class="pill motif">0104 x1620</span><span class="pill motif">000005 x1619</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x1619</span><span class="pill wide">000005010402 x1619</span><span class="pill wide">0000000501 x1619</span><span class="pill wide">0000050104 x1619</span><span class="pill wide">0005010402 x1619</span></div>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 10</small></article><article class="metric"><strong>2.315659</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x39963</span><span class="pill motif">000000 x20019</span><span class="pill motif">000004 x19944</span><span class="pill motif">000401 x19944</span><span class="pill motif">010201 x19944</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000040102 x19944</span><span class="pill wide">000004010201 x19944</span><span class="pill wide">0000000401 x19944</span><span class="pill wide">0000040102 x19944</span><span class="pill wide">0004010201 x19944</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>12.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.9375</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.488027 sal=0.882413</span><span class="pill field">10 conf=0.396061 sal=0.555768</span></div>
+      <div class="feature-grid"><article class="metric"><strong>none</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.0</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="muted">No candidates</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>LLM Boundary Refinement</h4>
@@ -572,157 +322,57 @@ This is a binary, request-response protocol operating over a client-server model
     </section>
     
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_2</span><span class="pill related">family_6</span><span class="pill related">family_7</span></div>
+      <div class="pill-row"><span class="pill related">family_3</span></div>
     </section>
     
 
     <section class="family-card">
       <header>
         <div>
-          <h3>family_9</h3>
-          <p><span class="pill response">response</span> 1371 messages</p>
+          <h3>family_3</h3>
+          <p><span class="pill request">request</span> 19944 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg variable" style="width:9.09%" title="7..7 variable"></span><span class="seg variable" style="width:18.18%" title="8..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg constant" style="width:33.33%" title="8..11 constant"></span></div>
       <details open>
         <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 ?? ??</code>
+        <code class="template">?? ?? 00 00 00 06 01 02 00 08 00 01</code>
       </details>
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>0.9985</td></tr><tr><td><code>8..9</code></td><td>keyword</td><td>0.9927</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.9745</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>0.9985</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.994004</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2767</span><span class="pill motif">000000 x1396</span><span class="pill motif">000005 x1371</span><span class="pill motif">000501 x1371</span><span class="pill motif">0005 x1371</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000501 x1371</span><span class="pill wide">00000005 x1371</span><span class="pill wide">00000501 x1371</span><span class="pill wide">000000050104 x1355</span><span class="pill wide">000005010402 x1355</span></div>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.443359</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x39963</span><span class="pill motif">0800 x20026</span><span class="pill motif">0200 x20025</span><span class="pill motif">000000 x20019</span><span class="pill motif">0601 x19945</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601020008 x19944</span><span class="pill wide">0000060102000800 x19944</span><span class="pill wide">0006010200080001 x19944</span><span class="pill wide">000000060102 x19944</span><span class="pill wide">000006010200 x19944</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>10.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.90625</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.501636 sal=0.882413</span><span class="pill field">10 conf=0.400791 sal=0.555768</span></div>
+      <div class="feature-grid"><article class="metric"><strong>none</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.0</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="muted">No candidates</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>LLM Boundary Refinement</h4>
     <section class="llm-stage-block">
       <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
-    </section>
-    <h4>LLM Semantic Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>3</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+5</code></td><td>constant</td><td>bytes</td><td>0.99</td><td>cardinality: Exactly 1 unique value across all samples (cardinality = 1.0); stability: Stability score 1.0 (unchanging); sample_values: Consistent hex value &#x27;0000000501&#x27; in all observed messages +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_le</td><td>0.92</td><td>relation: Echoed in request/response pairs with 100% support and confidence 1.0 (offset 0 in request matches offset 0 in response); cardinality: 1362 unique values (high cardinality typical for transaction IDs); behavior: Monotonic ratio 0.9148 and sequence score 0.5276 suggest incrementing counter behavior +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.75</td><td>cardinality: 39 distinct values (moderate cardinality, typical for a set of addressed devices); stability: High stability score (0.976) within specific communication sessions; position: Located after header markers (offset 7), typical for address fields in request packets +2 more</td></tr></tbody></table>
-    </section>
-    
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">family_6</span><span class="pill related">family_7</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>family_10</h3>
-          <p><span class="pill response">response</span> 1246 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg constant" style="width:9.09%" title="7..7 constant"></span><span class="seg variable" style="width:18.18%" title="8..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 2d ??</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..9</code></td><td>keyword</td><td>0.9928</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.9815</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>3.010826</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x2492</span><span class="pill motif">000000 x1246</span><span class="pill motif">000005 x1246</span><span class="pill motif">000501 x1246</span><span class="pill motif">010402 x1246</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x1246</span><span class="pill wide">000005010402 x1246</span><span class="pill wide">0000000501 x1246</span><span class="pill wide">0000050104 x1246</span><span class="pill wide">0005010402 x1246</span></div>
-      <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>9.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.890625</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.504714 sal=0.882413</span><span class="pill field">10 conf=0.395457 sal=0.555768</span></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>LLM Boundary Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
-    </section>
-    <h4>LLM Semantic Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Semantic Labeling Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>3</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+5</code></td><td>constant</td><td>bytes</td><td>0.99</td><td>statistics: Cardinality = 1 (unique_values: 1.0), identical across all samples; sample_values: Fixed hex value &#x27;0000000501&#x27; in every message; stability: Stability score 1.0 (perfectly stable) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.96</td><td>relation: Echoed perfectly (support=1.0, confidence=1.0) in response families (family_7, family_6) at offset 2; statistics: High cardinality (1244 unique values) typical for transaction IDs; statistics: Monotonic ratio 0.9992 indicates sequential generation +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.78</td><td>statistics: Low-Moderate cardinality (25 unique values) suggests a set of targets or resources; position: Located after header markers (offset 7), typical for address fields; context: Request family role implies this specifies the target of the operation +1 more</td></tr></tbody></table>
-    </section>
-    
-      <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_6</span><span class="pill related">family_7</span></div>
-    </section>
-    
-
-    <section class="family-card">
-      <header>
-        <div>
-          <h3>noise</h3>
-          <p><span class="pill response">response</span> 966 messages</p>
-        </div>
-        <div class="confidence">
-          <span>Semantic confidence</span>
-          <div class="bar" aria-label="semantic confidence"><span style="width:95.4%"></span></div>
-        </div>
-      </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:16.67%" title="2..3 constant"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg constant" style="width:8.33%" title="6..6 constant"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:16.67%" title="8..9 variable"></span><span class="seg variable" style="width:8.33%" title="10..10 variable"></span><span class="seg constant" style="width:8.33%" title="11..11 constant"></span></div>
-      <details open>
-        <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00</code>
-      </details>
-      <div class="card-grid">
-        <div>
-          <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9979</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>keyword</td><td>0.9824</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.95</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.9358</td></tr></tbody></table>
-        </div>
-        <div>
-          <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16_be</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.9979</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>11..11</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
-        </div>
-      </div>
-      <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>mostly_fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.959492</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x1952</span><span class="pill motif">000000 x986</span><span class="pill motif">000005 x878</span><span class="pill motif">000501 x878</span><span class="pill motif">010402 x878</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x878</span><span class="pill wide">000005010402 x878</span><span class="pill wide">0000000501 x878</span><span class="pill wide">0000050104 x878</span><span class="pill wide">0005010402 x878</span></div>
-      <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>17.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>1.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.456675 sal=0.882413</span><span class="pill field">10 conf=0.396328 sal=0.555768</span></div>
-      <h4>Framing Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..4 constant</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
-      <h4>LLM Boundary Refinement</h4>
-    <section class="llm-stage-block">
-      <h4>Boundary Detection Refinement</h4>
-      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>1</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>4; 5</td><td><code>7..12</code></td><td>0.75</td><td>Field 5 is a low-coverage (9.1%) trailing byte that likely represents optional padding or variable payload extension rather than a distinct constant field. Merging it with the preceding &#x27;keyword&#x27; field (Field 4) creates a variable-width payload region, which is common in protocols with optional trailing data. The boundary support between them is moderate (5.54), but the semantic distinction is weak given Field 5&#x27;s sporadic presence.</td></tr></tbody></table>
+      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>2</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2; 3</td><td><code>4..7</code></td><td>0.85</td><td>Field 2 is a 2-byte length field (constant &#x27;0005&#x27;) and Field 3 is a 1-byte constant (&#x27;01&#x27;). The boundary between them (after offset 6) has a critically low support score (0.0439), indicating no statistical evidence for a split. In many protocols, fixed headers include version or type bytes immediately following length; merging them creates a unified 3-byte static header segment.</td></tr><tr><td><span class="pill related">applied</span></td><td>4; 5</td><td><code>7..12</code></td><td>0.75</td><td>Field 5 (offset 11) has a coverage mean of only 0.0027, meaning it exists in less than 0.3% of messages (likely only in the 12-byte variants). It acts as a trailing byte for longer messages rather than a distinct field. Merging it with the preceding 4-byte &#x27;keyword&#x27; field creates a variable-width payload region (4-5 bytes) which better reflects the message structure where the last byte varies or is optional.</td></tr></tbody></table>
     </section>
     <h4>LLM Semantic Refinement</h4>
     <section class="llm-stage-block">
       <h4>Semantic Labeling Refinement</h4>
       <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
-      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (value perfectly correlates with message length); value: 0x0005 (5 bytes) matches remaining message size after header; cardinality: 2 (low, typical for fixed-size or limited-range length fields) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 (only value 0x0000 observed); stability: 1.0 (perfectly stable across all samples); entropy: 0.0 (no information content) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (only value 0x01 observed); stability: 1.0 (perfectly stable); entropy: 0.0 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (only value 0x00 observed where present); stability: 1.0; position: last byte of the message (offset 11, total length 12) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>sequence_number</td><td>uint16_le</td><td>0.92</td><td>position: byte 0-1 (typical header position for counters); cardinality: 923 unique values (high, indicates incrementing or unique ID); behavior: monotonic_ratio 0.8913 and small_delta_ratio 0.0455 suggest sequential increments +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>payload</td><td>bytes</td><td>0.85</td><td>position: follows all header fields (offset 7); width: 4 bytes, matches the length field value (0x0005) minus 1 byte (possibly including the trailing constant); cardinality: 67 unique values (moderate, suggests data content rather than control) +2 more</td></tr></tbody></table>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (value 0x0005 matches remaining message length exactly); cardinality: 2.0 (low, typical for length fields in fixed-size families); position: header region (bytes 4-5) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1.0 (only value 0x0000 observed); stability: 1.0 (perfectly stable across all samples); entropy: 0.0 (no information content) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1.0 (only value 0x01 observed); stability: 1.0 (perfectly stable); entropy: 0.0 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>constant</td><td>uint8</td><td>0.95</td><td>cardinality: 1.0 (inferred from field_type &#x27;constant&#x27; and stability 1.0); position: last byte of the message (offset 11, total length 12 based on prev fields); stability: 1.0 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>sequence_number</td><td>uint16_le</td><td>0.92</td><td>cardinality: 6497 unique values (high, indicates incrementing counter); behavior: monotonic_ratio 0.9785 in little-endian analysis suggests sequential incrementing; position: byte 0-2 (typical for sequence numbers or transaction IDs) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.88</td><td>cardinality: 35 distinct values (moderate, typical for address space); stability: high (0.995), indicating specific targets rather than random data; entropy: low (1.12), structured data rather than random payload +2 more</td></tr></tbody></table>
     </section>
     
       <h4>Related Families</h4>
-      <div class="pill-row"><span class="pill related">family_0</span><span class="pill related">noise</span></div>
+      <div class="pill-row"><span class="pill related">family_2</span></div>
     </section>
     
 
@@ -730,32 +380,32 @@ This is a binary, request-response protocol operating over a client-server model
       <header>
         <div>
           <h3>family_4</h3>
-          <p><span class="pill response">response</span> 925 messages</p>
+          <p><span class="pill response">response</span> 19944 messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg constant" style="width:9.09%" title="7..7 constant"></span><span class="seg variable" style="width:18.18%" title="8..9 variable"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg constant" style="width:9.09%" title="7..7 constant"></span><span class="seg constant" style="width:18.18%" title="8..9 constant"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
       <details open>
         <summary>Template</summary>
-        <code class="template">?? ?? 00 00 00 05 01 04 02 2d ??</code>
+        <code class="template">?? ?? 00 00 00 05 01 03 02 00 ??</code>
       </details>
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..9</code></td><td>keyword</td><td>0.9946</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.9892</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.95</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..10</code></td><td>uint8</td><td>0.9992</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>3.023386</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x1852</span><span class="pill motif">000000 x927</span><span class="pill motif">000005 x925</span><span class="pill motif">000501 x925</span><span class="pill motif">010402 x925</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x925</span><span class="pill wide">000005010402 x925</span><span class="pill wide">0000000501 x925</span><span class="pill wide">0000050104 x925</span><span class="pill wide">0005010402 x925</span></div>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.704875</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x39963</span><span class="pill motif">0005 x20914</span><span class="pill motif">0200 x20028</span><span class="pill motif">000000 x20019</span><span class="pill motif">0501 x19945</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000501030200 x19944</span><span class="pill wide">000000050103 x19944</span><span class="pill wide">000005010302 x19944</span><span class="pill wide">000501030200 x19944</span><span class="pill wide">0000000501 x19944</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>5.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.882413</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.225617</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.828125</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.533259 sal=0.882413</span><span class="pill field">10 conf=0.466806 sal=0.555768</span></div>
+      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>16.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.667323</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.4089</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>1.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">10 conf=0.484765 sal=0.667323</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       <h4>LLM Boundary Refinement</h4>
@@ -773,6 +423,256 @@ This is a binary, request-response protocol operating over a client-server model
     
       <h4>Related Families</h4>
       <div class="pill-row"><span class="pill related">family_5</span></div>
+    </section>
+    
+
+    <section class="family-card">
+      <header>
+        <div>
+          <h3>family_5</h3>
+          <p><span class="pill request">request</span> 19944 messages</p>
+        </div>
+        <div class="confidence">
+          <span>Semantic confidence</span>
+          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
+        </div>
+      </header>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg constant" style="width:33.33%" title="8..11 constant"></span></div>
+      <details open>
+        <summary>Template</summary>
+        <code class="template">?? ?? 00 00 00 06 01 03 00 08 00 01</code>
+      </details>
+      <div class="card-grid">
+        <div>
+          <h4>Field Hypotheses</h4>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
+        </div>
+        <div>
+          <h4>Semantic Labels</h4>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr><tr><td><code>8..11</code></td><td>bytes</td><td>0.6</td></tr></tbody></table>
+        </div>
+      </div>
+      <h4>Feature Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.443464</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x39963</span><span class="pill motif">000000 x20019</span><span class="pill motif">0300 x20018</span><span class="pill motif">0800 x20016</span><span class="pill motif">0001 x19945</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601030008 x19944</span><span class="pill wide">0000060103000800 x19944</span><span class="pill wide">0006010300080001 x19944</span><span class="pill wide">000000060103 x19944</span><span class="pill wide">000006010300 x19944</span></div>
+      <h4>Discriminator Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>none</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.0</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="muted">No candidates</span></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
+      <h4>LLM Boundary Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Boundary Detection Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
+    </section>
+    <h4>LLM Semantic Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Semantic Labeling Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>behavior: length_match_score is 1.0 (value matches message length logic); sample_values: Value 0x0005 corresponds to remaining bytes (11 total - 6 header = 5); cardinality: Low (3 unique values), typical for length fields in fixed-size responses +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 unique value (0x0000) across all samples; stability: 1.0 stability score; relation: Echoed perfectly between request/response at offset 2 (width 2, support 1.0) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 unique value (0x01); stability: 1.0 stability score; position: Immediately follows length field, common for version bytes +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.92</td><td>relation: Echoed in request/response pairs at offset 0 with width 1 (partial) and high support (1.0); cardinality: 6332 unique values (very high, typical for transaction IDs); position: Byte 0-1 (common header position for IDs) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.85</td><td>cardinality: 16 unique values (low-moderate, typical for a set of addressed resources); relation: Echo evidence exists involving offset 8 (overlapping/adjacent) with high confidence (0.88); position: Located after header control fields (ID, Length, Version) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>status</td><td>uint8</td><td>0.75</td><td>context: Family role is &#x27;response&#x27;, and this is the final byte; cardinality: 2 unique values (typical for Success/Failure or OK/Error); position: Last byte of the message (offset 11 in 12-byte message) +1 more</td></tr></tbody></table>
+    </section>
+    
+      <h4>Related Families</h4>
+      <div class="pill-row"><span class="pill related">family_4</span></div>
+    </section>
+    
+
+    <section class="family-card">
+      <header>
+        <div>
+          <h3>family_6</h3>
+          <p><span class="pill response">response</span> 19944 messages</p>
+        </div>
+        <div class="confidence">
+          <span>Semantic confidence</span>
+          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
+        </div>
+      </header>
+      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg constant" style="width:9.09%" title="7..7 constant"></span><span class="seg variable" style="width:27.27%" title="8..10 variable"></span></div>
+      <details open>
+        <summary>Template</summary>
+        <code class="template">?? ?? 00 00 00 05 01 04 02 ?? ??</code>
+      </details>
+      <div class="card-grid">
+        <div>
+          <h4>Field Hypotheses</h4>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr><tr><td><code>8..10</code></td><td>bytes</td><td>0.5</td></tr></tbody></table>
+        </div>
+        <div>
+          <h4>Semantic Labels</h4>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr><tr><td><code>8..10</code></td><td>bytes</td><td>0.7</td></tr></tbody></table>
+        </div>
+      </div>
+      <h4>Feature Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.99683</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>1</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x40439</span><span class="pill motif">000000 x20027</span><span class="pill motif">0005 x19945</span><span class="pill motif">0104 x19945</span><span class="pill motif">000005 x19944</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x19944</span><span class="pill wide">000005010402 x19944</span><span class="pill wide">0000000501 x19944</span><span class="pill wide">0000050104 x19944</span><span class="pill wide">0005010402 x19944</span></div>
+      <h4>Discriminator Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>18.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>1.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.621806</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>1.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.594348 sal=1.0</span><span class="pill field">10 conf=0.455727 sal=0.667323</span></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
+      <h4>LLM Boundary Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Boundary Detection Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
+    </section>
+    <h4>LLM Semantic Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Semantic Labeling Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>6</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (perfect correlation with message length); sample_values: &#x27;0005&#x27; corresponds to remaining bytes (11 total - 6 header = 5); cardinality: 3 (low, typical for length fields in fixed-size response families) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 (unique value &#x27;0000&#x27; across all samples); stability: 1.0 (perfectly stable); entropy: 0.0 (no variation) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (unique value &#x27;01&#x27;); stability: 1.0; entropy: 0.0 +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.92</td><td>cardinality: 11633 (very high, typical for unique transaction IDs); relation: echoed with 100% support and confidence 1.0 in request/response pairs (offset 0 in request matches offset 0 in response); position: byte 0-2 (common location for correlation IDs in some protocols) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.85</td><td>cardinality: 28 (low to moderate, typical for a set of addressed devices or registers); position: follows length and fixed header bytes; stability: 0.76 (moderate, suggests specific addresses used repeatedly) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>11+1</code></td><td>status</td><td>uint8</td><td>0.78</td><td>family_role: &#x27;response&#x27; (status codes typically appear in responses); cardinality: 9 (low, typical for a set of status/error codes); position: end of the defined header structure (offset 11, message length 11 implies this is the last byte) +1 more</td></tr></tbody></table>
+    </section>
+    
+      <h4>Related Families</h4>
+      <div class="pill-row"><span class="pill related">family_7</span></div>
+    </section>
+    
+
+    <section class="family-card">
+      <header>
+        <div>
+          <h3>family_7</h3>
+          <p><span class="pill request">request</span> 19943 messages</p>
+        </div>
+        <div class="confidence">
+          <span>Semantic confidence</span>
+          <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
+        </div>
+      </header>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg constant" style="width:33.33%" title="8..11 constant"></span></div>
+      <details open>
+        <summary>Template</summary>
+        <code class="template">?? ?? 00 00 00 06 01 04 00 08 00 01</code>
+      </details>
+      <div class="card-grid">
+        <div>
+          <h4>Field Hypotheses</h4>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
+        </div>
+        <div>
+          <h4>Semantic Labels</h4>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
+        </div>
+      </div>
+      <h4>Feature Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.443191</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>1</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x39969</span><span class="pill motif">000000 x20026</span><span class="pill motif">0800 x20021</span><span class="pill motif">0400 x20019</span><span class="pill motif">010400 x19944</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601040008 x19943</span><span class="pill wide">0000060104000800 x19943</span><span class="pill wide">0006010400080001 x19943</span><span class="pill wide">000000060104 x19943</span><span class="pill wide">000006010400 x19943</span></div>
+      <h4>Discriminator Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>none</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.0</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="muted">No candidates</span></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
+      <h4>LLM Boundary Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Boundary Detection Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
+    </section>
+    <h4>LLM Semantic Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Semantic Labeling Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>7</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>4+2</code></td><td>length</td><td>uint16_be</td><td>1.0</td><td>length_match_score: 1.0 (perfect correlation with message length); field_type provided as &#x27;length&#x27; with confidence 1.0; endian: big (explicitly detected) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+2</code></td><td>constant</td><td>uint16_be</td><td>0.99</td><td>cardinality: 1 (single unique value &#x27;0000&#x27;); stability: 1.0 (perfectly stable across all samples); relations: echoed perfectly between request/response (offset 2) +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>3</td><td><code>6+1</code></td><td>constant</td><td>uint8</td><td>0.99</td><td>cardinality: 1 (single unique value &#x27;01&#x27;); stability: 1.0; sample_values: always &#x27;01&#x27; +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_be</td><td>0.92</td><td>cardinality: 7952 (very high, typical for unique transaction IDs); relations: echoed in request/response pairs with 100% support (offset 0 width 1 partial echo, likely full 2-byte echo implied by pattern); position: byte 0 (common for transaction IDs in some protocols, or high-entropy header field) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>4</td><td><code>7+2</code></td><td>function_code</td><td>uint16_be</td><td>0.88</td><td>cardinality: 9 (low, typical for opcodes/function codes); position: after header metadata (length, version); field_type provided as &#x27;keyword&#x27; (implies enumerated values) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>5</td><td><code>9+1</code></td><td>status</td><td>uint8</td><td>0.85</td><td>cardinality: 6 (low, typical for status codes); position: near end of header, before final field; field_type provided as &#x27;keyword&#x27; +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>6</td><td><code>10+2</code></td><td>checksum</td><td>uint16_be</td><td>0.78</td><td>position: last 2 bytes of the message (offset 10, total length 12 implied by header+payload); cardinality: 6 (low for checksum in this specific sample set, but variable in general); field_type provided as &#x27;keyword&#x27; (likely misclassified due to limited sample variance) +2 more</td></tr></tbody></table>
+    </section>
+    
+      <h4>Related Families</h4>
+      <div class="pill-row"><span class="pill related">family_6</span></div>
+    </section>
+    
+
+    <section class="family-card">
+      <header>
+        <div>
+          <h3>family_9</h3>
+          <p><span class="pill unknown">unknown</span> 406 messages</p>
+        </div>
+        <div class="confidence">
+          <span>Semantic confidence</span>
+          <div class="bar" aria-label="semantic confidence"><span style="width:50.0%"></span></div>
+        </div>
+      </header>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
+      <details open>
+        <summary>Template</summary>
+        <code class="template">?? ?? 00 00 00 06 01 06 00 08 00 ??</code>
+      </details>
+      <div class="card-grid">
+        <div>
+          <h4>Field Hypotheses</h4>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9631</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+        </div>
+        <div>
+          <h4>Semantic Labels</h4>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.91</td></tr></tbody></table>
+        </div>
+      </div>
+      <h4>Feature Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.316514</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x814</span><span class="pill motif">0008 x686</span><span class="pill motif">0006 x418</span><span class="pill motif">0800 x410</span><span class="pill motif">000000 x408</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601060008 x406</span><span class="pill wide">0000060106000800 x406</span><span class="pill wide">000000060106 x406</span><span class="pill wide">000006010600 x406</span><span class="pill wide">000601060008 x406</span></div>
+      <h4>Discriminator Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>11.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>15.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.50191</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.027679</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.984375</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">11 conf=0.318024 sal=0.50191</span></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
+      <h4>LLM Boundary Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Boundary Detection Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
+    </section>
+    <h4>LLM Semantic Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Semantic Labeling Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>3</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+5</code></td><td>constant</td><td>bytes</td><td>0.99</td><td>cardinality: Exactly 1 unique value across all samples (cardinality = 1.0); stability: Stability score 1.0 (unchanging); sample_values: Consistent hex value &#x27;0000000501&#x27; in all observed messages +1 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>transaction_id</td><td>uint16_le</td><td>0.92</td><td>relation: Echoed in request/response pairs with 100% support and confidence 1.0 (offset 0 in request matches offset 0 in response); cardinality: 1362 unique values (high cardinality typical for transaction IDs); behavior: Monotonic ratio 0.9148 and sequence score 0.5276 suggest incrementing counter behavior +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>7+4</code></td><td>address</td><td>uint32_be</td><td>0.75</td><td>cardinality: 39 distinct values (moderate cardinality, typical for a set of addressed devices); stability: High stability score (0.976) within specific communication sessions; position: Located after header markers (offset 7), typical for address fields in request packets +2 more</td></tr></tbody></table>
+    </section>
+    
+      <h4>Related Families</h4>
+      <div class="pill-row"><span class="pill related">family_9</span></div>
+    </section>
+    
+
+    <section class="family-card">
+      <header>
+        <div>
+          <h3>family_8</h3>
+          <p><span class="pill unknown">unknown</span> 156 messages</p>
+        </div>
+        <div class="confidence">
+          <span>Semantic confidence</span>
+          <div class="bar" aria-label="semantic confidence"><span style="width:50.0%"></span></div>
+        </div>
+      </header>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
+      <details open>
+        <summary>Template</summary>
+        <code class="template">?? ?? 00 00 00 06 01 05 00 ?? ff 00</code>
+      </details>
+      <div class="card-grid">
+        <div>
+          <h4>Field Hypotheses</h4>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9872</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+        </div>
+        <div>
+          <h4>Semantic Labels</h4>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.91</td></tr></tbody></table>
+        </div>
+      </div>
+      <h4>Feature Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.611082</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x312</span><span class="pill motif">0500 x158</span><span class="pill motif">000000 x156</span><span class="pill motif">000006 x156</span><span class="pill motif">000601 x156</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000060105 x156</span><span class="pill wide">000006010500 x156</span><span class="pill wide">0000000601 x156</span><span class="pill wide">0000060105 x156</span><span class="pill wide">0006010500 x156</span></div>
+      <h4>Discriminator Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>none</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.0</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="muted">No candidates</span></div>
+      <h4>Framing Evidence</h4>
+      <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
+      <h4>LLM Boundary Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Boundary Detection Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>boundary_refinement</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>0</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Fields</th><th>Merged Span</th><th>Conf.</th><th>Reason</th></tr></thead><tbody><tr><td colspan="5">No boundary merge suggestions.</td></tr></tbody></table>
+    </section>
+    <h4>LLM Semantic Refinement</h4>
+    <section class="llm-stage-block">
+      <h4>Semantic Labeling Refinement</h4>
+      <div class="metric-grid"><article class="metric"><strong>semantic_labeling</strong><span>Stage</span></article><article class="metric"><strong>success</strong><span>Status</span></article><article class="metric"><strong>3</strong><span>Applied/kept</span></article><article class="metric"><strong>0</strong><span>Rejected/discarded</span></article></div>
+      <table class="llm-detail-table"><thead><tr><th>Status</th><th>Field</th><th>Bytes</th><th>Role</th><th>Type</th><th>Conf.</th><th>Evidence</th></tr></thead><tbody><tr><td><span class="pill related">applied</span></td><td>1</td><td><code>2+5</code></td><td>constant</td><td>bytes</td><td>0.99</td><td>cardinality: 1.0 (identical value &#x27;0000000501&#x27; across all samples); stability_score: 1.0 (perfectly stable); entropy_mean: 0.0 (no variation) +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>0</td><td><code>0+2</code></td><td>sequence_number</td><td>uint16_le</td><td>0.92</td><td>cardinality: 1537 unique values (high, indicates incrementing counter); monotonic_ratio: 0.9704 (little-endian interpretation shows strong sequential behavior); sample_values: hex values 0x175d, 0x1c5d, 0x215d... show consistent increments of 5 (0x05) when interpreted as little-endian uint16 +2 more</td></tr><tr><td><span class="pill related">applied</span></td><td>2</td><td><code>7+4</code></td><td>discriminator</td><td>bytes</td><td>0.88</td><td>cardinality: 20 distinct values (low-to-moderate, typical for function codes or command types); stability_score: 0.998 (highly stable within specific message sub-types); position: located after header constants, typical for opcode/function placement +2 more</td></tr></tbody></table>
+    </section>
+    
+      <h4>Related Families</h4>
+      <div class="pill-row"><span class="pill related">family_8</span></div>
     </section>
     
   </main>

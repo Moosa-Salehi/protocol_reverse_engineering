@@ -229,6 +229,57 @@ def _truth_tokens(message_type: Dict[str, Any]) -> set[str]:
     return {token for token in tokens if token}
 
 
+_DISCRIMINATOR_ROLES = {"request", "response"}
+
+
+def _family_discriminator_value(family: Dict[str, Any]) -> str | None:
+    """Return the family's constant opcode/discriminator byte as a decimal string.
+
+    A function-code-pure family carries a constant single-byte field at the body
+    (post-header) offset whose ``attributes.value_hex`` is that opcode.  Families
+    that mix function codes leave that byte variable, so this returns ``None`` and
+    matching falls back to structural similarity (the legacy behaviour).
+    """
+    body_offset = _family_body_offset(family)
+    for field in family.get("field_hypotheses", []) or []:
+        start = field.get("start")
+        if start is None or int(start) != body_offset:
+            continue
+        if _field_len(field) != 1:
+            continue
+        value_hex = str(_attributes(field).get("value_hex") or "").strip()
+        if not value_hex:
+            return None
+        try:
+            return str(int(value_hex, 16))
+        except ValueError:
+            return None
+    return None
+
+
+def _truth_discriminator_value(message_type: Dict[str, Any]) -> str | None:
+    """Return a truth type's discriminator value (e.g. Modbus function code).
+
+    The convention is a required single-byte field at PDU offset 0 with an
+    explicit ``constant_value``.  Header types (absolute offsets, no constant
+    opcode at offset 0) and any type lacking such a field return ``None``.
+    """
+    if _truth_uses_absolute_offsets(message_type):
+        return None
+    for field in message_type.get("fields", []) or []:
+        constant_value = field.get("constant_value")
+        if constant_value is None:
+            continue
+        start = field.get("start")
+        if start is None or int(start) != 0 or _field_len(field) != 1:
+            continue
+        try:
+            return str(int(constant_value))
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
 def _family_match_score(family: Dict[str, Any], message_type: Dict[str, Any]) -> float:
     p_tokens = _family_tokens(family)
     t_tokens = _truth_tokens(message_type)
@@ -239,8 +290,25 @@ def _family_match_score(family: Dict[str, Any], message_type: Dict[str, Any]) ->
         field_score = 0.0
     else:
         field_score = min(len(p_fields), len(t_fields)) / max(len(p_fields), len(t_fields), 1)
-    role_score = 1.0 if _norm(family.get("role")) and _norm(family.get("role")) == _norm(message_type.get("role")) else 0.0
-    return round(max(token_score, (0.5 * field_score) + (0.3 * token_score) + (0.2 * role_score)), 6)
+    p_role = _norm(family.get("role"))
+    t_role = _norm(message_type.get("role"))
+    role_score = 1.0 if p_role and p_role == t_role else 0.0
+    base = round(max(token_score, (0.5 * field_score) + (0.3 * token_score) + (0.2 * role_score)), 6)
+
+    # Discriminator gate: when both sides expose an opcode value, they must agree
+    # to be the same message type.  This disambiguates structurally isomorphic
+    # families (e.g. Modbus FC01 vs FC02 read requests share an identical layout)
+    # so the family->truth bijection — and therefore relation credit — is no
+    # longer an arbitrary tie-break.  When either side lacks a discriminator the
+    # legacy structural score is used unchanged.
+    p_disc = _family_discriminator_value(family)
+    t_disc = _truth_discriminator_value(message_type)
+    if p_disc is not None and t_disc is not None:
+        if p_disc != t_disc:
+            return 0.0
+        role_conflict = p_role in _DISCRIMINATOR_ROLES and t_role in _DISCRIMINATOR_ROLES and p_role != t_role
+        return round(max(base, 0.55 if role_conflict else 0.9), 6)
+    return base
 
 
 def _greedy_matches(candidates: Iterable[Tuple[str, str, float]], threshold: float) -> List[Tuple[str, str, float]]:
