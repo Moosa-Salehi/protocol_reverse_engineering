@@ -184,7 +184,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     "--score-threshold",
                     str(args.boundary_score_threshold),
                 ]
-                + (["--hierarchical-boundaries"] if args.hierarchical_boundaries else []),
+                + (["--hierarchical-boundaries"] if not args.no_hierarchical_boundaries else []),
             ),
         ]
     )
@@ -760,14 +760,13 @@ def parse_args() -> argparse.Namespace:
         help="Boundary score threshold (default: 2.0). Higher = fewer boundaries.",
     )
     boundary_group.add_argument(
-        "--hierarchical-boundaries",
+        "--no-hierarchical-boundaries",
         action="store_true",
         default=False,
         help=(
-            "Stage 07: infer transport-header structure on all messages and body "
+            "Stage 07: disable hierarchical boundaries: infer transport-header structure on all messages and body "
             "structure per message length, then impose on each refined family. "
-            "Recommended with --family-refine-discriminator (fixes over-merge on "
-            "FC-pure families)."
+            "Recommended with family refine discriminator (fixes over-merge on FC-pure families)."
         ),
     )
     boundary_group.add_argument(
