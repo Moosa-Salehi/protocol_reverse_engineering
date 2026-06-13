@@ -601,12 +601,12 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     semantic_metrics = _prf(semantic_tp, max(0, predicted_field_total - semantic_tp), max(0, truth_field_total - semantic_tp))
     relation_metrics = _prf(len(relation_matches), max(0, len(predicted_relations) - len(relation_matches)), max(0, len(truth_relations) - len(relation_matches)))
     
-    # Weighted overall score: message_type=0.35, boundary=0.30, semantic=0.25, relation=0.10
+    # Weighted overall score
     overall = round(
-        message_metrics["f1_score"] * 0.35 +
+        message_metrics["f1_score"] * 0.30 +
         boundary_metrics["f1_score"] * 0.30 +
         semantic_metrics["f1_score"] * 0.25 +
-        relation_metrics["f1_score"] * 0.10,
+        relation_metrics["f1_score"] * 0.15,
         6
     )
 
