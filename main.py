@@ -719,9 +719,7 @@ def parse_args() -> argparse.Namespace:
     family_group.set_defaults(family_standardize_latent=False)
     family_group.add_argument(
         "--no-family-refine-discriminator",
-        dest="no_family_refine_discriminator",
-        action=argparse.BooleanOptionalAction,
-        default=False,
+        action="store_true",
         help="disable discriminator-aware family refinement after clustering: re-derive family identity "
              "from the data-detected type-discriminator so families become opcode-pure and "
              "role-consistent. No-op when no discriminator is detected.",

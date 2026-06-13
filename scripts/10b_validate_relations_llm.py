@@ -167,15 +167,17 @@ def main() -> None:
         metadata={"result_path": str(result_path)},
     )
 
+    # Render-only never consults stored/cached/user-provided responses.
     cached_response = None
-    if args.use_user_provided_response:
-        cached_response = load_user_provided_response(user_response_path)
-        if cached_response is not None:
-            print(f"[*] Using user-provided LLM response from {user_response_path}")
-    if cached_response is None and args.reuse_llm_responses:
-        cached_response = load_cached_response(result_path)
-        if cached_response is not None:
-            print(f"[*] Reusing cached LLM response from {result_path}")
+    if not args.render_only:
+        if args.use_user_provided_response:
+            cached_response = load_user_provided_response(user_response_path)
+            if cached_response is not None:
+                print(f"[*] Using user-provided LLM response from {user_response_path}")
+        if cached_response is None and args.reuse_llm_responses:
+            cached_response = load_cached_response(result_path)
+            if cached_response is not None:
+                print(f"[*] Reusing cached LLM response from {result_path}")
 
     # Run relation validation stage
     result = run_relation_validation_stage(

@@ -206,15 +206,19 @@ def main() -> None:
         metadata={"result_path": args.output_json, "source_model": args.protocol_model_json},
     )
 
+    # In render-only mode we never consult stored/cached/user-provided responses:
+    # the prompt is rendered and the API is skipped, so a stale response must not
+    # leak into the artifact.
     cached_response = None
-    if args.use_user_provided_response:
-        cached_response = load_user_provided_response(user_response_path)
-        if cached_response is not None:
-            print(f"[*] Using user-provided LLM response from {user_response_path}")
-    if cached_response is None and args.reuse_llm_responses:
-        cached_response = load_cached_response(args.output_json)
-        if cached_response is not None:
-            print(f"[*] Reusing cached LLM response from {args.output_json}")
+    if not args.render_only:
+        if args.use_user_provided_response:
+            cached_response = load_user_provided_response(user_response_path)
+            if cached_response is not None:
+                print(f"[*] Using user-provided LLM response from {user_response_path}")
+        if cached_response is None and args.reuse_llm_responses:
+            cached_response = load_cached_response(args.output_json)
+            if cached_response is not None:
+                print(f"[*] Reusing cached LLM response from {args.output_json}")
 
     # Run synthesis stage
     result = run_protocol_synthesis_stage(
@@ -262,16 +266,17 @@ def main() -> None:
         elif isinstance(synthesis_data.get("json_patches"), list):
             output["patches"] = synthesis_data["json_patches"]
 
+    # Save output. In render-only mode we still write a pass-through artifact (with
+    # no synthesis/patches, since the LLM was not called) so downstream stages such
+    # as 15b can load 13_llm_analysis.json instead of crashing on a missing file.
+    with open(args.output_json, "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
     if args.render_only:
-        if Path(args.output_json).exists():
-            print(f"[*] Preserved cached LLM response at {args.output_json}")
+        print(f"[+] Wrote render-only output to {args.output_json}")
         warn_or_fail_stage_failures([("protocol_synthesis", result)], render_only=args.render_only, stage_name="15_analyze_with_llm", logger=logger)
         print("\n[+] Protocol prompt rendered")
         return
-
-    # Save output
-    with open(args.output_json, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
 
     if args.render_only:
         status = "prompt rendered"
