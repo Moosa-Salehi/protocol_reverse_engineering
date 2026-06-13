@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 10, 'family_ratio': 1.0}], 'field_type_counts': {'length': 30, 'transaction_or_counter': 20}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 10}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-13T18:22:35.815655+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-13T23:15:23.381129+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
 
 ## Evaluation
 
@@ -16,7 +16,7 @@ Version: `0.1`
 - Pair hypotheses: `99999` direction_unknown_ratio=`1`
 - Relation edges: `6` echo_edges=`6` length_relation_edges=`0`
 - Semantic coverage: `10` of `10` families ratio=`1`
-- Top semantic labels: `constant`x25, `echoed_request_field`x10, `transaction_id`x8, `length`x5, `transaction_or_correlation_id`x4, `payload`x3, `address_like`x3, `discriminator`x1
+- Top semantic labels: `constant`x58, `length`x15, `echoed_request_field`x15, `transaction_id`x8, `transaction_or_correlation_id`x6, `discriminator`x2, `address_like`x1
 - Framing coverage: `10` of `10` families ratio=`1`
 - Clustering diagnostics: warning_families=`9` split_candidates=`2` merge_candidates=`24`
 
@@ -56,17 +56,17 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.757`
-- Verdict: `partial`
+- Overall score: `0.8694`
+- Verdict: `pass`
 - Matched message types: `11` of `11`
 - Message type matching: accuracy=`1` precision=`1` recall=`1` f1=`1`
-- Field boundary: accuracy=`0.5405` precision=`0.8696` recall=`0.5882` f1=`0.7018`
-- Field semantics: accuracy=`0.2391` precision=`0.4783` recall=`0.3235` f1=`0.386`
+- Field boundary: accuracy=`0.8` precision=`0.8421` recall=`0.9412` f1=`0.8889`
+- Field semantics: accuracy=`0.44` precision=`0.5789` recall=`0.6471` f1=`0.6111`
 - Relations: accuracy=`1` precision=`1` recall=`1` f1=`1`
 
 ## LLM Analysis
 
-- Prompt size: `28170` bytes, `28170` characters, estimated tokens=`7043`
+- Prompt size: `35582` bytes, `35582` characters, estimated tokens=`8896`
 
 _LLM analysis was skipped because stage 15 ran in render-only mode._
 
@@ -100,16 +100,24 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.610185`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`0.8763`
-- bytes `8`..`11` | kind=`variable` confidence=`0.6329`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `8`..`11` | type=`uint32` confidence=`0.9999`
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.9999`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_be` confidence=`0.8643` endian=`big`
 
 #### Framing Hypotheses
@@ -120,12 +128,20 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `9`..`9` | label=`discriminator` confidence=`0.9999`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`address_like` confidence=`0.91`
-- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
-- bytes `8`..`11` | label=`payload` confidence=`0.6`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
+
+#### Notes
+
+- Detected common protocol pattern: transaction ID, length field, discriminator
 
 #### Feature Summary
 
@@ -147,14 +163,18 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.610185`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`0.85`
-- bytes `8`..`9` | kind=`constant` confidence=`0.6013`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
 - bytes `8`..`9` | type=`uint16` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_be` confidence=`0.8643` endian=`big`
@@ -167,7 +187,10 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
 - bytes `8`..`9` | label=`constant` confidence=`0.99`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
@@ -175,6 +198,7 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 #### Notes
 
 - Echoes request fields from family_1 with up to 10 strong offset matches.
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
@@ -196,15 +220,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.612465`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`9` | kind=`variable` confidence=`0.6688`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
 - bytes `8`..`9` | type=`keyword` confidence=`0.9999`
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
@@ -216,8 +244,11 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
+- bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
@@ -246,16 +277,24 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.612465`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`11` | kind=`constant` confidence=`0.8185`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
-- bytes `8`..`11` | type=`uint32` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
 #### Framing Hypotheses
@@ -266,13 +305,20 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `8`..`8` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+
+#### Notes
+
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
@@ -290,24 +336,28 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.222192` max=`2.732159` mean=`2.704875`
-- Candidate discriminator offset: `10` cardinality=`16` entropy=`3.755839` salience=`0.95799` mutual_information=`0.4089` contrastive_separation=`1.0` confidence=`0.571965`
-- Top discriminator candidates: offset `10` conf=`0.571965` salience=`0.95799`
+- Candidate discriminator offset: `10` cardinality=`16` entropy=`3.755839` salience=`0.976316` mutual_information=`0.4089` contrastive_separation=`1.0` confidence=`0.577463`
+- Top discriminator candidates: offset `10` conf=`0.577463` salience=`0.976316`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.612465`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`9` | kind=`constant` confidence=`0.8488`
-- bytes `10`..`10` | kind=`variable` confidence=`0.7358`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`10` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `10`..`10` | type=`uint8` confidence=`0.9992`
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `9`..`10` | type=`keyword` confidence=`0.9992`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
-- bytes `8`..`9` | type=`uint16` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
 #### Framing Hypotheses
@@ -318,17 +368,19 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
+- bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`9` | label=`constant` confidence=`0.99`
-- bytes `10`..`10` | label=`discriminator` confidence=`0.95`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
 
 #### Notes
 
 - Echoes request fields from family_5 with up to 10 strong offset matches.
-- Detected common protocol pattern: transaction ID, length field, discriminator
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
@@ -350,16 +402,24 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.612465`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`11` | kind=`constant` confidence=`0.8185`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
-- bytes `8`..`11` | type=`uint32` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
 #### Framing Hypotheses
@@ -370,12 +430,20 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
-- bytes `8`..`11` | label=`payload` confidence=`0.6`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `9`..`9` | label=`constant` confidence=`0.99`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
+
+#### Notes
+
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
@@ -393,23 +461,29 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.049452` max=`3.027169` mean=`2.99683`
-- Candidate discriminator offset: `9` cardinality=`18` entropy=`1.222633` salience=`0.990311` mutual_information=`0.621806` contrastive_separation=`1.0` confidence=`0.591441`
-- Top discriminator candidates: offset `9` conf=`0.591441` salience=`0.990311`, offset `10` conf=`0.542928` salience=`0.95799`
+- Candidate discriminator offset: `9` cardinality=`18` entropy=`1.222633` salience=`1.0` mutual_information=`0.621806` contrastive_separation=`1.0` confidence=`0.594348`
+- Top discriminator candidates: offset `9` conf=`0.594348` salience=`1.0`, offset `10` conf=`0.548425` salience=`0.976316`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.612465`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`10` | kind=`variable` confidence=`0.62244`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`10` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `9`..`10` | type=`keyword` confidence=`0.9906`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
-- bytes `8`..`10` | type=`bytes` confidence=`0.5`
 
 #### Framing Hypotheses
 
@@ -419,11 +493,14 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
+- bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
-- bytes `8`..`10` | label=`payload` confidence=`0.7`
 
 #### Notes
 
@@ -450,16 +527,24 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.612465`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`11` | kind=`constant` confidence=`0.8185`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
-- bytes `8`..`11` | type=`uint32` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
 - bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
 #### Framing Hypotheses
@@ -470,14 +555,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `8`..`8` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
 
 #### Notes
 
@@ -499,22 +586,30 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 - Semantic confidence: `0.5`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.450826` mean=`2.316514`
-- Candidate discriminator offset: `11` cardinality=`15` entropy=`2.017045` salience=`0.738286` mutual_information=`0.027679` contrastive_separation=`0.984375` confidence=`0.388937`
-- Top discriminator candidates: offset `11` conf=`0.388937` salience=`0.738286`
+- Candidate discriminator offset: `11` cardinality=`15` entropy=`2.017045` salience=`0.764119` mutual_information=`0.027679` contrastive_separation=`0.984375` confidence=`0.396687`
+- Top discriminator candidates: offset `11` conf=`0.396687` salience=`0.764119`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.736725`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`11` | kind=`variable` confidence=`0.748505`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
-- bytes `8`..`11` | type=`uint32` confidence=`0.9631`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.9631`
 - bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
@@ -525,12 +620,16 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `8`..`11` | label=`address_like` confidence=`0.91`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `9`..`9` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
@@ -556,16 +655,24 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.7581`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`7` | kind=`constant` confidence=`1.0`
-- bytes `8`..`11` | kind=`variable` confidence=`0.6358`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
 - bytes `7`..`7` | type=`uint8` confidence=`0.99`
-- bytes `8`..`11` | type=`uint32` confidence=`0.9872`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.9872`
 - bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
@@ -576,17 +683,21 @@ _LLM analysis was skipped because stage 15 ran in render-only mode._
 
 #### Semantic Labels
 
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `7`..`7` | label=`length` confidence=`1.0`
-- bytes `8`..`11` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
 - bytes `7`..`7` | label=`constant` confidence=`0.99`
-- bytes `8`..`11` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `8`..`11` | label=`address_like` confidence=`0.91`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
 
 #### Notes
 
 - Echoes request fields from family_8 with up to 10 strong offset matches.
+- Detected common protocol pattern: length field, discriminator
 
 #### Feature Summary
 

@@ -283,6 +283,7 @@ def merge_segments(
     messages_hex: Sequence[str],
     protected_boundaries: Optional[Set[int]] = None,
     merge_width_targets: Sequence[int] = MERGE_WIDTH_TARGETS_DEFAULT,
+    require_single_byte_operand: bool = False,
 ) -> List[Segment]:
     """
     Merge adjacent segments that should be combined.
@@ -321,6 +322,14 @@ def merge_segments(
             should_merge = False
             merge_reason = ""
 
+            # When require_single_byte_operand is set, the width-target rules (4,5)
+            # only fire if at least one operand is a single byte, so two
+            # already-formed multi-byte fields (e.g. uint16 + uint16) are never
+            # fused into a wider field while a uint16/uint32 still reconstructs
+            # from 1-byte runs. Adjacent-constant merging (Rule 1) is unaffected.
+            single_byte_operand = (current.end - current.start) == 1 or (next_seg.end - next_seg.start) == 1
+            width_merge_allowed = single_byte_operand or not require_single_byte_operand
+
             # Rule 1: Merge adjacent constants (always)
             if current.kind == next_seg.kind == "constant":
                 should_merge = True
@@ -344,13 +353,15 @@ def merge_segments(
 
             # Rule 4: Merge if combined width is reasonable (2 or 4 bytes)
             elif (current.kind == next_seg.kind and
+                  width_merge_allowed and
                   (next_seg.end - current.start) in merge_width_targets):
                 if current.confidence < 0.8 or next_seg.confidence < 0.8:
                     should_merge = True
                     merge_reason = "standard_width_alignment"
 
             # Rule 5: Merge multiple 1-byte segments into standard widths (2, 4 bytes)
-            elif (current.end - current.start) <= 2 and (next_seg.end - next_seg.start) <= 2:
+            elif (width_merge_allowed and
+                  (current.end - current.start) <= 2 and (next_seg.end - next_seg.start) <= 2):
                 combined_width = next_seg.end - current.start
                 if combined_width in merge_width_targets and current.kind == next_seg.kind:
                     # Merge if at least one has low confidence
@@ -421,6 +432,7 @@ def infer_segments(
     enable_length_validator: bool = True,
     boundary_confidence_weight: float = BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT,
     isolate_body_opcode: bool = ISOLATE_BODY_OPCODE_DEFAULT,
+    require_single_byte_operand: bool = False,
 ) -> List[Segment]:
     """
     Infer field segments with anti-fragmentation.
@@ -633,6 +645,7 @@ def infer_segments(
             messages_hex,
             protected_boundaries=protected_boundaries,
             merge_width_targets=merge_width_targets,
+            require_single_byte_operand=require_single_byte_operand,
         )
 
     return segments

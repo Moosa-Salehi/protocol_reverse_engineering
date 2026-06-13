@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 # Add src to path for imports
@@ -12,7 +12,47 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments, infer_template
+from protocol_re.model.schema import Segment
 from protocol_re.utils.logging import setup_stage_logging, ProgressTracker
+
+
+def _derive_body_start(framing_payload: dict, framing_by_family: dict) -> int:
+    """Common transport-header end shared by the families (body start offset)."""
+    global_block = (framing_payload or {}).get("global", {}) or {}
+    header_ends = global_block.get("common_header_ends") or []
+    if header_ends:
+        best = max(header_ends, key=lambda item: float(item.get("family_ratio", 0.0) or 0.0))
+        if float(best.get("family_ratio", 0.0) or 0.0) >= 0.5 and int(best.get("header_end", 0) or 0) > 0:
+            return int(best["header_end"])
+    starts = []
+    for summary in (framing_by_family or {}).values():
+        layouts = (summary or {}).get("layout_hypotheses") or []
+        if layouts:
+            value = layouts[0].get("body_start", layouts[0].get("header_end"))
+            if value:
+                starts.append(int(value))
+    if starts:
+        return Counter(starts).most_common(1)[0][0]
+    return 0
+
+
+def _segment_boundaries(segments, lo: int, hi: int) -> set:
+    """Boundary positions (segment edges) falling within [lo, hi]."""
+    positions = set()
+    for segment in segments:
+        for edge in (segment.start, segment.end):
+            if lo <= edge <= hi:
+                positions.add(edge)
+    return positions
+
+
+def _segments_from_boundaries(positions) -> list:
+    ordered = sorted(positions)
+    return [
+        Segment(start=start, end=end, kind="variable", confidence=1.0, evidence={"source": "hierarchical"})
+        for start, end in zip(ordered, ordered[1:])
+        if end > start
+    ]
 
 
 def main() -> None:
@@ -56,6 +96,29 @@ def main() -> None:
         help="Disable isolating a constant leading body byte (opcode/function code) as its own field",
     )
 
+    parser.add_argument(
+        "--hierarchical-boundaries",
+        action="store_true",
+        default=False,
+        help=(
+            "Infer field structure on higher-variance pools (transport header on all "
+            "messages; body per message length) and impose it on each refined family. "
+            "Fixes over-merge on FC-pure/degenerate families. Requires --assignments-json."
+        ),
+    )
+    parser.add_argument(
+        "--body-score-threshold",
+        type=float,
+        default=1.5,
+        help="Boundary score threshold for the per-length body pool (hierarchical mode).",
+    )
+    parser.add_argument(
+        "--pool-sample-cap",
+        type=int,
+        default=20000,
+        help="Max messages sampled per pool for hierarchical boundary inference.",
+    )
+
     # Enhanced boundary detection options (A2) - now default
     parser.add_argument("--enhanced", action="store_true", help="(Deprecated: enhanced mode is now default)")
     parser.add_argument("--max-fields", type=int, default=15, help="Maximum fields per family")
@@ -95,6 +158,7 @@ def main() -> None:
             logger.metric("families_with_features", len(feature_by_family), "families")
 
         framing_by_family = {}
+        framing_payload = {}
         if args.framing_json:
             logger.info(f"Loading framing data from {args.framing_json}")
             with open(args.framing_json, "r", encoding="utf-8") as handle:
@@ -149,17 +213,50 @@ def main() -> None:
     total_segments = 0
     total_fields = 0
 
-    with logger.stage("infer_boundaries"):
-        progress = ProgressTracker(len(grouped), "Inferring boundaries", logger, update_interval=10)
-
-        for family_id, messages_hex in grouped.items():
-            with logger.context(family_id=family_id, message_count=len(messages_hex)):
-                # Use enhanced boundary detection (now the only implementation)
-                segments = infer_segments(
-                    messages_hex,
+    # Hierarchical pools: infer transport-header structure on all messages (where
+    # message length varies) and body structure per message length (where the
+    # opcode and numeric fields vary), then impose them on each refined family.
+    # This avoids over-merge on FC-pure/degenerate families, where per-family
+    # inference sees near-constant header/body bytes.
+    hierarchical = args.hierarchical_boundaries and grouping_mode == "family_assignments"
+    header_boundaries: set = set()
+    body_boundaries_by_len: dict = {}
+    if hierarchical:
+        with logger.stage("hierarchical_pools"):
+            body_start = _derive_body_start(framing_payload, framing_by_family)
+            all_hex = []
+            msgs_by_len = defaultdict(list)
+            for record in records:
+                fid = family_by_msg_id.get(record.msg_id)
+                if fid is None or fid == "noise":
+                    continue
+                all_hex.append(record.payload_hex)
+                msgs_by_len[record.payload_len].append(record.payload_hex)
+            cap = args.pool_sample_cap
+            if body_start > 0 and all_hex:
+                header_segs = infer_segments(
+                    all_hex[:cap],
                     score_threshold=args.score_threshold,
-                    family_features=feature_by_family.get(family_id),
-                    framing_summary=framing_by_family.get(family_id),
+                    max_fields=args.max_fields,
+                    enable_merging=args.enable_merging,
+                    entropy_weight=args.entropy_weight,
+                    merge_width_targets=merge_width_targets,
+                    length_match_threshold=args.length_match_threshold,
+                    enable_length_validator=not args.disable_length_validator,
+                    boundary_confidence_weight=args.boundary_confidence_weight,
+                    isolate_body_opcode=False,
+                )
+                header_boundaries = _segment_boundaries(header_segs, 0, body_start) | {0, body_start}
+            body_framing = (
+                {"layout_hypotheses": [{"confidence": 1.0, "header_start": 0, "header_end": body_start, "body_start": body_start}]}
+                if body_start > 0
+                else None
+            )
+            for payload_len, hexes in msgs_by_len.items():
+                body_segs = infer_segments(
+                    hexes[:cap],
+                    score_threshold=args.body_score_threshold,
+                    framing_summary=body_framing,
                     max_fields=args.max_fields,
                     enable_merging=args.enable_merging,
                     entropy_weight=args.entropy_weight,
@@ -168,7 +265,39 @@ def main() -> None:
                     enable_length_validator=not args.disable_length_validator,
                     boundary_confidence_weight=args.boundary_confidence_weight,
                     isolate_body_opcode=args.isolate_body_opcode,
+                    require_single_byte_operand=True,
                 )
+                body_boundaries_by_len[payload_len] = _segment_boundaries(body_segs, body_start, payload_len) | {body_start, payload_len}
+            logger.metric("hierarchical_body_start", body_start, "offset")
+            logger.metric("hierarchical_length_pools", len(body_boundaries_by_len), "pools")
+            print(f"[+] Hierarchical boundaries: body_start={body_start}, {len(body_boundaries_by_len)} length pools")
+
+    with logger.stage("infer_boundaries"):
+        progress = ProgressTracker(len(grouped), "Inferring boundaries", logger, update_interval=10)
+
+        for family_id, messages_hex in grouped.items():
+            with logger.context(family_id=family_id, message_count=len(messages_hex)):
+                if hierarchical:
+                    fam_len = Counter(len(h) // 2 for h in messages_hex).most_common(1)[0][0]
+                    body_bounds = body_boundaries_by_len.get(fam_len, {0, fam_len})
+                    positions = {p for p in (header_boundaries | body_bounds) if 0 <= p <= fam_len} | {0, fam_len}
+                    segments = _segments_from_boundaries(positions)
+                else:
+                    # Use enhanced boundary detection (now the only implementation)
+                    segments = infer_segments(
+                        messages_hex,
+                        score_threshold=args.score_threshold,
+                        family_features=feature_by_family.get(family_id),
+                        framing_summary=framing_by_family.get(family_id),
+                        max_fields=args.max_fields,
+                        enable_merging=args.enable_merging,
+                        entropy_weight=args.entropy_weight,
+                        merge_width_targets=merge_width_targets,
+                        length_match_threshold=args.length_match_threshold,
+                        enable_length_validator=not args.disable_length_validator,
+                        boundary_confidence_weight=args.boundary_confidence_weight,
+                        isolate_body_opcode=args.isolate_body_opcode,
+                    )
                 hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
                 template = infer_template(messages_hex)
 

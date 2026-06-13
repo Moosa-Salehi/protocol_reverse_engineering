@@ -109,14 +109,14 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
     <section class="panel eval-panel">
       <h2>Final Ground Truth Evaluation</h2>
       <div class="metric-grid">
-        <article class="metric"><strong>0.757017</strong><span>Overall score</span><small>partial</small></article>
+        <article class="metric"><strong>0.869444</strong><span>Overall score</span><small>pass</small></article>
         <article class="metric"><strong>11</strong><span>Matched message types</span><small>of 11</small></article>
         <article class="metric"><strong>1.0</strong><span>Message type accuracy</span></article>
         <article class="metric"><strong>1.0</strong><span>Message type F1</span></article>
-        <article class="metric"><strong>0.540541</strong><span>Field boundary accuracy</span></article>
-        <article class="metric"><strong>0.701754</strong><span>Field boundary F1</span></article>
-        <article class="metric"><strong>0.23913</strong><span>Field semantics accuracy</span></article>
-        <article class="metric"><strong>0.385965</strong><span>Field semantics F1</span></article>
+        <article class="metric"><strong>0.8</strong><span>Field boundary accuracy</span></article>
+        <article class="metric"><strong>0.888889</strong><span>Field boundary F1</span></article>
+        <article class="metric"><strong>0.44</strong><span>Field semantics accuracy</span></article>
+        <article class="metric"><strong>0.611111</strong><span>Field semantics F1</span></article>
         <article class="metric"><strong>1.0</strong><span>Relation accuracy</span></article>
         <article class="metric"><strong>1.0</strong><span>Relation F1</span></article>
       </div>
@@ -125,7 +125,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
   
     <section class="panel llm-panel">
       <h2>LLM Analysis</h2>
-      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>28170</strong><span>Prompt chars</span></article><article class="metric"><strong>7043</strong><span>Prompt est. tokens</span></article></div>
+      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>35582</strong><span>Prompt chars</span></article><article class="metric"><strong>8896</strong><span>Prompt est. tokens</span></article></div>
       <p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>
     </section>
     
@@ -166,7 +166,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:16.67%" title="2..3 variable"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg variable" style="width:8.33%" title="6..6 variable"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:16.67%" title="10..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 01 00 ?? 00 01</code>
@@ -174,11 +174,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..11</code></td><td>uint32</td><td>0.9999</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.8643</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..9</code></td><td>uint8</td><td>0.9999</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.8643</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.91</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr><tr><td><code>8..11</code></td><td>bytes</td><td>0.6</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>9..9</code></td><td>uint8</td><td>0.9999</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -204,7 +204,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:20.00%" title="0..1 variable"></span><span class="seg constant" style="width:50.00%" title="2..6 constant"></span><span class="seg constant" style="width:10.00%" title="7..7 constant"></span><span class="seg constant" style="width:20.00%" title="8..9 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:20.00%" title="0..1 variable"></span><span class="seg variable" style="width:20.00%" title="2..3 variable"></span><span class="seg variable" style="width:20.00%" title="4..5 variable"></span><span class="seg variable" style="width:10.00%" title="6..6 variable"></span><span class="seg variable" style="width:10.00%" title="7..7 variable"></span><span class="seg variable" style="width:20.00%" title="8..9 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 04 01 01 01 00</code>
@@ -212,11 +212,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.8643</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.8643</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_be</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -242,7 +242,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:20.00%" title="0..1 variable"></span><span class="seg constant" style="width:50.00%" title="2..6 constant"></span><span class="seg constant" style="width:10.00%" title="7..7 constant"></span><span class="seg variable" style="width:20.00%" title="8..9 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:20.00%" title="0..1 variable"></span><span class="seg variable" style="width:20.00%" title="2..3 variable"></span><span class="seg variable" style="width:20.00%" title="4..5 variable"></span><span class="seg variable" style="width:10.00%" title="6..6 variable"></span><span class="seg variable" style="width:10.00%" title="7..7 variable"></span><span class="seg variable" style="width:20.00%" title="8..9 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 04 01 02 01 00</code>
@@ -250,11 +250,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>8..9</code></td><td>keyword</td><td>0.9999</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -280,7 +280,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg constant" style="width:33.33%" title="8..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:16.67%" title="2..3 variable"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg variable" style="width:8.33%" title="6..6 variable"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:16.67%" title="10..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 02 00 08 00 01</code>
@@ -288,11 +288,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>9..9</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -318,7 +318,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg constant" style="width:9.09%" title="7..7 constant"></span><span class="seg constant" style="width:18.18%" title="8..9 constant"></span><span class="seg variable" style="width:9.09%" title="10..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg variable" style="width:18.18%" title="2..3 variable"></span><span class="seg variable" style="width:18.18%" title="4..5 variable"></span><span class="seg variable" style="width:9.09%" title="6..6 variable"></span><span class="seg variable" style="width:9.09%" title="7..7 variable"></span><span class="seg variable" style="width:9.09%" title="8..8 variable"></span><span class="seg variable" style="width:18.18%" title="9..10 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 03 02 00 ??</code>
@@ -326,17 +326,17 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>10..10</code></td><td>uint8</td><td>0.9992</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..10</code></td><td>keyword</td><td>0.9992</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..9</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>10..10</code></td><td>uint8</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.704875</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x39963</span><span class="pill motif">0005 x20914</span><span class="pill motif">0200 x20028</span><span class="pill motif">000000 x20019</span><span class="pill motif">0501 x19945</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000501030200 x19944</span><span class="pill wide">000000050103 x19944</span><span class="pill wide">000005010302 x19944</span><span class="pill wide">000501030200 x19944</span><span class="pill wide">0000000501 x19944</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>16.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.95799</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.4089</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>1.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">10 conf=0.571965 sal=0.95799</span></div>
+      <div class="feature-grid"><article class="metric"><strong>10.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>16.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.976316</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.4089</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>1.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">10 conf=0.577463 sal=0.976316</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       
@@ -356,7 +356,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg constant" style="width:33.33%" title="8..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:16.67%" title="2..3 variable"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg variable" style="width:8.33%" title="6..6 variable"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:16.67%" title="10..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 03 00 08 00 01</code>
@@ -364,11 +364,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>9..9</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr><tr><td><code>8..11</code></td><td>bytes</td><td>0.6</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -394,7 +394,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg constant" style="width:45.45%" title="2..6 constant"></span><span class="seg constant" style="width:9.09%" title="7..7 constant"></span><span class="seg variable" style="width:27.27%" title="8..10 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:18.18%" title="0..1 variable"></span><span class="seg variable" style="width:18.18%" title="2..3 variable"></span><span class="seg variable" style="width:18.18%" title="4..5 variable"></span><span class="seg variable" style="width:9.09%" title="6..6 variable"></span><span class="seg variable" style="width:9.09%" title="7..7 variable"></span><span class="seg variable" style="width:9.09%" title="8..8 variable"></span><span class="seg variable" style="width:18.18%" title="9..10 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 05 01 04 02 ?? ??</code>
@@ -402,17 +402,17 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr><tr><td><code>8..10</code></td><td>bytes</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>9..10</code></td><td>keyword</td><td>0.9906</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr><tr><td><code>8..10</code></td><td>bytes</td><td>0.7</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 11</small></article><article class="metric"><strong>2.99683</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>1</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x40439</span><span class="pill motif">000000 x20027</span><span class="pill motif">0005 x19945</span><span class="pill motif">0104 x19945</span><span class="pill motif">000005 x19944</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">000000050104 x19944</span><span class="pill wide">000005010402 x19944</span><span class="pill wide">0000000501 x19944</span><span class="pill wide">0000050104 x19944</span><span class="pill wide">0005010402 x19944</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>18.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.990311</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.621806</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>1.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.591441 sal=0.990311</span><span class="pill field">10 conf=0.542928 sal=0.95799</span></div>
+      <div class="feature-grid"><article class="metric"><strong>9.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>18.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>1.0</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.621806</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>1.0</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">9 conf=0.594348 sal=1.0</span><span class="pill field">10 conf=0.548425 sal=0.976316</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       
@@ -432,7 +432,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:100.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg constant" style="width:33.33%" title="8..11 constant"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:16.67%" title="2..3 variable"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg variable" style="width:8.33%" title="6..6 variable"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:16.67%" title="10..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 04 00 08 00 01</code>
@@ -440,11 +440,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>9..9</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.9327</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>0..1</code></td><td>uint16_le</td><td>0.85</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
@@ -470,7 +470,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:50.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:16.67%" title="2..3 variable"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg variable" style="width:8.33%" title="6..6 variable"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:16.67%" title="10..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 06 00 08 00 ??</code>
@@ -478,17 +478,17 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9631</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>9..9</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>uint16</td><td>0.9631</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.91</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>fixed</strong><span>Length profile</span><small>modal 12</small></article><article class="metric"><strong>2.316514</strong><span>Entropy mean</span></article><article class="metric"><strong>100.0%</strong><span>Repetition ratio</span></article><article class="metric"><strong>0</strong><span>Wide repeats</span></article></div><div class="motif-row"><b>Top motifs</b><span class="pill motif">0000 x814</span><span class="pill motif">0008 x686</span><span class="pill motif">0006 x418</span><span class="pill motif">0800 x410</span><span class="pill motif">000000 x408</span></div><div class="motif-row"><b>Wide motifs</b><span class="pill wide">0000000601060008 x406</span><span class="pill wide">0000060106000800 x406</span><span class="pill wide">000000060106 x406</span><span class="pill wide">000006010600 x406</span><span class="pill wide">000601060008 x406</span></div>
       <h4>Discriminator Evidence</h4>
-      <div class="feature-grid"><article class="metric"><strong>11.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>15.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.738286</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.027679</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.984375</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">11 conf=0.388937 sal=0.738286</span></div>
+      <div class="feature-grid"><article class="metric"><strong>11.0</strong><span>Discriminator offset</span><small>opcode/message-type candidate</small></article><article class="metric"><strong>15.0</strong><span>Cardinality</span><small>observed values</small></article><article class="metric"><strong>0.764119</strong><span>Salience</span><small>learned offset score</small></article><article class="metric"><strong>0.027679</strong><span>Mutual info</span><small>family separation</small></article><article class="metric"><strong>0.984375</strong><span>Contrast</span><small>value/family purity</small></article></div><div class="motif-row"><b>Top discriminator candidates</b><span class="pill field">11 conf=0.396687 sal=0.764119</span></div>
       <h4>Framing Evidence</h4>
       <div class="feature-grid"><article class="metric"><strong>7</strong><span>Header end</span><small>body starts 7</small></article><article class="metric"><strong>1.0</strong><span>Framing confidence</span></article><article class="metric"><strong>3</strong><span>Hypotheses</span></article></div><div class="motif-row"><b>Header fields</b><span class="pill field">0..1 transaction_or_counter</span><span class="pill field">0..3 transaction_or_counter</span><span class="pill field">2..5 length</span><span class="pill field">4..5 length</span><span class="pill field">5..5 length</span></div>
       
@@ -508,7 +508,7 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
           <div class="bar" aria-label="semantic confidence"><span style="width:50.0%"></span></div>
         </div>
       </header>
-      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg constant" style="width:41.67%" title="2..6 constant"></span><span class="seg constant" style="width:8.33%" title="7..7 constant"></span><span class="seg variable" style="width:33.33%" title="8..11 variable"></span></div>
+      <div class="segment-map"><span class="seg variable" style="width:16.67%" title="0..1 variable"></span><span class="seg variable" style="width:16.67%" title="2..3 variable"></span><span class="seg variable" style="width:16.67%" title="4..5 variable"></span><span class="seg variable" style="width:8.33%" title="6..6 variable"></span><span class="seg variable" style="width:8.33%" title="7..7 variable"></span><span class="seg variable" style="width:8.33%" title="8..8 variable"></span><span class="seg variable" style="width:8.33%" title="9..9 variable"></span><span class="seg variable" style="width:16.67%" title="10..11 variable"></span></div>
       <details open>
         <summary>Template</summary>
         <code class="template">?? ?? 00 00 00 06 01 05 00 ?? ff 00</code>
@@ -516,11 +516,11 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
       <div class="card-grid">
         <div>
           <h4>Field Hypotheses</h4>
-          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.9872</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Type</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..8</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>10..11</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>9..9</code></td><td>uint8</td><td>0.9872</td></tr><tr><td><code>0..1</code></td><td>blob</td><td>0.5</td></tr></tbody></table>
         </div>
         <div>
           <h4>Semantic Labels</h4>
-          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..6</code></td><td>bytes</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>1.0</td></tr><tr><td><code>2..6</code></td><td>bytes</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.95</td></tr><tr><td><code>8..11</code></td><td>uint32</td><td>0.91</td></tr></tbody></table>
+          <table><thead><tr><th>Bytes</th><th>Label</th><th>Conf.</th></tr></thead><tbody><tr><td><code>2..3</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>1.0</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>1.0</td></tr><tr><td><code>2..3</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>4..5</code></td><td>uint16</td><td>0.99</td></tr><tr><td><code>6..6</code></td><td>uint8</td><td>0.99</td></tr><tr><td><code>7..7</code></td><td>uint8</td><td>0.99</td></tr></tbody></table>
         </div>
       </div>
       <h4>Feature Evidence</h4>
