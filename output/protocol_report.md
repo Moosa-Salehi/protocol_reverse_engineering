@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 10, 'family_ratio': 1.0}], 'field_type_counts': {'length': 30, 'transaction_or_counter': 20}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 10}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-13T12:03:57.834580+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-13T17:24:16.139626+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
 
 ## Evaluation
 
@@ -56,12 +56,12 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.7224`
+- Overall score: `0.7479`
 - Verdict: `partial`
-- Matched message types: `10` of `11`
-- Message type matching: accuracy=`0.9091` precision=`1` recall=`0.9091` f1=`0.9524`
-- Field boundary: accuracy=`0.5278` precision=`0.9048` recall=`0.5588` f1=`0.6909`
-- Field semantics: accuracy=`0.2222` precision=`0.4762` recall=`0.2941` f1=`0.3636`
+- Matched message types: `11` of `11`
+- Message type matching: accuracy=`1` precision=`1` recall=`1` f1=`1`
+- Field boundary: accuracy=`0.5405` precision=`0.8696` recall=`0.5882` f1=`0.7018`
+- Field semantics: accuracy=`0.2391` precision=`0.4783` recall=`0.3235` f1=`0.386`
 - Relations: accuracy=`0.8333` precision=`1` recall=`0.8333` f1=`0.9091`
 
 ## LLM Analysis
@@ -311,8 +311,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.222192` max=`2.732159` mean=`2.704875`
-- Candidate discriminator offset: `10` cardinality=`16` entropy=`3.755839` salience=`0.667323` mutual_information=`0.4089` contrastive_separation=`1.0` confidence=`0.484765`
-- Top discriminator candidates: offset `10` conf=`0.484765` salience=`0.667323`
+- Candidate discriminator offset: `10` cardinality=`16` entropy=`3.755839` salience=`0.67643` mutual_information=`0.4089` contrastive_separation=`1.0` confidence=`0.487497`
+- Top discriminator candidates: offset `10` conf=`0.487497` salience=`0.67643`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -415,7 +415,7 @@ This is a binary, request-response protocol operating over a client-server model
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.049452` max=`3.027169` mean=`2.99683`
 - Candidate discriminator offset: `9` cardinality=`18` entropy=`1.222633` salience=`1.0` mutual_information=`0.621806` contrastive_separation=`1.0` confidence=`0.594348`
-- Top discriminator candidates: offset `9` conf=`0.594348` salience=`1.0`, offset `10` conf=`0.455727` salience=`0.667323`
+- Top discriminator candidates: offset `9` conf=`0.594348` salience=`1.0`, offset `10` conf=`0.45846` salience=`0.67643`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -520,8 +520,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `0.5`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.450826` mean=`2.316514`
-- Candidate discriminator offset: `11` cardinality=`15` entropy=`2.017045` salience=`0.50191` mutual_information=`0.027679` contrastive_separation=`0.984375` confidence=`0.318024`
-- Top discriminator candidates: offset `11` conf=`0.318024` salience=`0.50191`
+- Candidate discriminator offset: `11` cardinality=`15` entropy=`2.017045` salience=`0.489782` mutual_information=`0.027679` contrastive_separation=`0.984375` confidence=`0.314386`
+- Top discriminator candidates: offset `11` conf=`0.314386` salience=`0.489782`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
