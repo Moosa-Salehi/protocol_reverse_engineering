@@ -5,7 +5,7 @@ Version: `0.1`
 ## Metadata
 
 - **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 10, 'family_ratio': 1.0}], 'field_type_counts': {'length': 30, 'transaction_or_counter': 20}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 10}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-13T17:24:16.139626+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-13T18:22:35.815655+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
 
 ## Evaluation
 
@@ -56,46 +56,25 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.7479`
+- Overall score: `0.757`
 - Verdict: `partial`
 - Matched message types: `11` of `11`
 - Message type matching: accuracy=`1` precision=`1` recall=`1` f1=`1`
 - Field boundary: accuracy=`0.5405` precision=`0.8696` recall=`0.5882` f1=`0.7018`
 - Field semantics: accuracy=`0.2391` precision=`0.4783` recall=`0.3235` f1=`0.386`
-- Relations: accuracy=`0.8333` precision=`1` recall=`0.8333` f1=`0.9091`
+- Relations: accuracy=`1` precision=`1` recall=`1` f1=`1`
 
 ## LLM Analysis
 
-- Model: `qwen/qwen3.5-397b-a17b`
 - Prompt size: `28170` bytes, `28170` characters, estimated tokens=`7043`
 
-# Protocol Specification Synthesis
-
-## Overview
-This is a binary, request-response protocol operating over a client-server model. Analysis of 200,000 messages reveals 12 distinct message families. The protocol utilizes a fixed 7-byte header followed by variable payloads.
-
-## Message Structure
-- **Header**: 7 bytes.
-  - Bytes 0-1: Sequence/Transaction ID (Mixed Endianness observed).
-  - Bytes 2-3: Constant `0x0000`.
-  - Bytes 4-5: Length (Big-Endian).
-  - Byte 6: Constant `0x01`.
-- **Payload**: Starts at offset 7. Commonly contains 32-bit addresses (Big-Endian) or function-specific data.
-
-## Key Interactions
-- **Primary Read Pattern**: `family_3` (Request) pairs strongly with `family_0` (Response). The request contains a 32-bit address and a little-endian sequence number. The response echoes the ID and returns status/data.
-- **Status/Check Pattern**: `family_7` appears to be a self-contained transaction with explicit function codes and a checksum.
-- **Self-Correlated Families**: Several families (6, 5, 7) show high rates of self-correlation, suggesting they may be polling mechanisms or stateless queries where the request and response share the same structural template.
-
-## Conventions
-- **Endianness**: The protocol exhibits mixed endianness. Length fields are consistently Big-Endian, while request sequence numbers often appear Little-Endian.
-- **Reliability**: Transaction IDs are used to correlate requests and responses. 
-- **Integrity**: At least one message type (`family_7`) implements an explicit checksum.
+_LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ## Family Relations
 
-- Total inferred family edges: `5`
+- Total inferred family edges: `6`
 - Strongest edges:
+- `family_1` -> `family_0` | pairs=`39887` avg_score=`6.9362` support=`1` lift=`2.5071` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 - `family_5` -> `family_4` | pairs=`19944` avg_score=`6.9675` support=`1` lift=`5.014` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 - `family_3` -> `family_2` | pairs=`19944` avg_score=`6.935` support=`1` lift=`5.014` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 - `family_7` -> `family_6` | pairs=`19943` avg_score=`6.9675` support=`1` lift=`5.0142` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
@@ -311,8 +290,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.222192` max=`2.732159` mean=`2.704875`
-- Candidate discriminator offset: `10` cardinality=`16` entropy=`3.755839` salience=`0.67643` mutual_information=`0.4089` contrastive_separation=`1.0` confidence=`0.487497`
-- Top discriminator candidates: offset `10` conf=`0.487497` salience=`0.67643`
+- Candidate discriminator offset: `10` cardinality=`16` entropy=`3.755839` salience=`0.95799` mutual_information=`0.4089` contrastive_separation=`1.0` confidence=`0.571965`
+- Top discriminator candidates: offset `10` conf=`0.571965` salience=`0.95799`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -414,8 +393,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `1.0`
 - Length stats: min=`11` max=`11` distinct=`1`
 - Entropy summary: min=`2.049452` max=`3.027169` mean=`2.99683`
-- Candidate discriminator offset: `9` cardinality=`18` entropy=`1.222633` salience=`1.0` mutual_information=`0.621806` contrastive_separation=`1.0` confidence=`0.594348`
-- Top discriminator candidates: offset `9` conf=`0.594348` salience=`1.0`, offset `10` conf=`0.45846` salience=`0.67643`
+- Candidate discriminator offset: `9` cardinality=`18` entropy=`1.222633` salience=`0.990311` mutual_information=`0.621806` contrastive_separation=`1.0` confidence=`0.591441`
+- Top discriminator candidates: offset `9` conf=`0.591441` salience=`0.990311`, offset `10` conf=`0.542928` salience=`0.95799`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
@@ -520,8 +499,8 @@ This is a binary, request-response protocol operating over a client-server model
 - Semantic confidence: `0.5`
 - Length stats: min=`12` max=`12` distinct=`1`
 - Entropy summary: min=`2.054585` max=`2.450826` mean=`2.316514`
-- Candidate discriminator offset: `11` cardinality=`15` entropy=`2.017045` salience=`0.489782` mutual_information=`0.027679` contrastive_separation=`0.984375` confidence=`0.314386`
-- Top discriminator candidates: offset `11` conf=`0.314386` salience=`0.489782`
+- Candidate discriminator offset: `11` cardinality=`15` entropy=`2.017045` salience=`0.738286` mutual_information=`0.027679` contrastive_separation=`0.984375` confidence=`0.388937`
+- Top discriminator candidates: offset `11` conf=`0.388937` salience=`0.738286`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
