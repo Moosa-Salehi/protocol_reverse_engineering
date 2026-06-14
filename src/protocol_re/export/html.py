@@ -1373,13 +1373,13 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 <body>
   <header class="hero">
     <div class="hero-card">
-      <h1>{_text(model.get('protocol_name', 'unknown-industrial-protocol'))}</h1>
+      <h1>{_text(model.get('protocol_name', 'Protocol Report'))}</h1>
       <p class="subhead">Auto-generated reverse-engineering report for an unknown industrial protocol. Evidence is inferred from payload families, structural features, request/response links, and semantic hints.</p>
       <div class="metric-grid">
         {_metric('Families', len(model.get('families', []) or []), 'message types')}
         {_metric('Messages represented', total_messages, 'assigned family messages')}
         {_metric('Relations', len(model.get('relations', []) or []), 'family-to-family edges')}
-        {_metric('Version', model.get('version', '0.1'))}
+        {_metric('Version', model.get('version', '1.0'))}
       </div>
     </div>
   </header>
