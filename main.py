@@ -555,6 +555,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     step_args.extend(["--patch-validation-json", _path(llm_patch_validation_json)])
                 if args.ground_truth_json:
                     step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
+                    if step_name == "19_export_html":
+                        step_args.extend(["--ground-truth-json", _path(args.ground_truth_json)])
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):

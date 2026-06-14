@@ -89,6 +89,56 @@ def _tip(content: str) -> str:
     return f'<i class="tip-dot" data-tip="{escape(str(content))}">i</i>'
 
 
+# Minimal inline SVG icons (currentColor) for the section jump navigation.
+_ICONS = {
+    "chart": '<line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="10"/>',
+    "target": '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/>',
+    "trophy": '<path d="M12 3l2.4 5.6 6 .5-4.6 4 1.5 5.9L12 16l-5.3 3 1.5-5.9-4.6-4 6-.5z"/>',
+    "check": '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+    "spark": '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    "sliders": '<line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.1"/><circle cx="15" cy="16" r="2.1"/>',
+    "frame": '<path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/>',
+    "info": '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.8" r="0.8" fill="currentColor" stroke="none"/>',
+    "graph": '<circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="9" r="2.4"/><circle cx="10" cy="18" r="2.4"/><line x1="8.2" y1="7.6" x2="15.8" y2="8.6"/><line x1="7.4" y1="9" x2="9.2" y2="15.8"/>',
+    "link": '<path d="M9.5 13.5a3 3 0 0 1 0-4l2-2a3 3 0 0 1 4 4l-1 1"/><path d="M14.5 10.5a3 3 0 0 1 0 4l-2 2a3 3 0 0 1-4-4l1-1"/>',
+    "stack": '<path d="M12 3l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/>',
+    "top": '<path d="M6 14l6-6 6 6"/><path d="M6 19l6-6 6 6"/>',
+}
+
+
+def _icon(name: str) -> str:
+    body = _ICONS.get(name, _ICONS["info"])
+    return (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{body}</svg>'
+    )
+
+
+def _jump_nav(entries: List[Tuple[str, str, str]], family_links: List[Tuple[str, str]]) -> str:
+    """Floating right-side section navigator.
+
+    entries = [(anchor_id, icon_name, label), ...]; family_links = [(anchor_id, label), ...].
+    """
+    items = [
+        f'<a class="jump-item" href="#{escape(sid)}" data-tip="{escape(label)}">{_icon(icon)}</a>'
+        for sid, icon, label in entries
+    ]
+    if family_links:
+        sub = "".join(
+            f'<a href="#{escape(fid)}">{_text(label)}</a>' for fid, label in family_links
+        )
+        items.append(
+            '<div class="jump-item jump-families" tabindex="0" aria-label="Jump to a family">'
+            f'{_icon("stack")}'
+            f'<div class="jump-sub"><span class="jump-sub-head">Families</span>{sub}</div>'
+            "</div>"
+        )
+    if not items:
+        return ""
+    top = '<a class="jump-item" href="#top" data-tip="Top of report">' + _icon("top") + "</a>"
+    return f'<nav class="jump-nav" aria-label="Section navigation">{top}{"".join(items)}</nav>'
+
+
 def _num(value: Any, digits: int = 2) -> str:
     try:
         number = float(value)
@@ -234,8 +284,12 @@ def _squarified_treemap(items: List[Tuple[str, float, str, str]], width: float =
     return f'<div class="treemap">{"".join(cells)}</div>'
 
 
-def _gauge(value: Any, label: str, tip: str = "") -> str:
-    """Small radial gauge for a 0..1 score."""
+def _gauge(value: Any, label: str, tip: str = "", align: str = "") -> str:
+    """Small radial gauge for a 0..1 score.
+
+    ``align`` may be "left"/"right" to anchor the tooltip to that edge so it
+    does not overflow the viewport for gauges near a window boundary.
+    """
     try:
         frac = max(0.0, min(1.0, float(value)))
     except Exception:
@@ -246,9 +300,10 @@ def _gauge(value: Any, label: str, tip: str = "") -> str:
     hue = 120 * frac  # red -> green
     color = f"hsl({hue:.0f} 72% 58%)"
     tip_attr = f' data-tip="{escape(str(tip))}"' if tip else ""
+    align_cls = f" tip-{align}" if align in ("left", "right") else ""
     dot = '<i class="tip-dot">i</i>' if tip else ""
     return (
-        f'<div class="gauge"{tip_attr}>'
+        f'<div class="gauge{align_cls}"{tip_attr}>'
         '<svg viewBox="0 0 76 76">'
         f'<circle cx="38" cy="38" r="{radius}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="8"/>'
         f'<circle cx="38" cy="38" r="{radius}" fill="none" stroke="{color}" stroke-width="8" '
@@ -562,6 +617,39 @@ def _gt_fields_for_family(family_id: str, field_matches: Optional[List[Dict[str,
     return sorted(out, key=lambda d: d["start"])
 
 
+def _gt_role_by_family(
+    final_evaluation: Optional[Dict[str, Any]],
+    ground_truth: Optional[Dict[str, Any]],
+) -> Dict[str, str]:
+    """Map each predicted family to its ground-truth role (request/response/...).
+
+    Uses the message-type matches to link family → ground-truth type, then the
+    ground-truth spec to resolve that type's role. A family may match several
+    types (e.g. a response plus the shared header); a concrete request/response
+    role is preferred over a generic 'header'.
+    """
+    if not final_evaluation or not ground_truth:
+        return {}
+    gt_protocol = ground_truth.get("ground_truth_protocol", ground_truth)
+    role_by_type = {
+        str(mt.get("message_type_id")): str(mt.get("role", ""))
+        for mt in (gt_protocol.get("message_types", []) or [])
+    }
+    if not role_by_type:
+        return {}
+    result: Dict[str, str] = {}
+    matches = (final_evaluation.get("matches", {}) or {}).get("message_types", []) or []
+    for m in matches:
+        fam = str(m.get("predicted_family_id"))
+        role = role_by_type.get(str(m.get("ground_truth_message_type_id")), "")
+        if not role:
+            continue
+        # Prefer a non-header role if the family matched more than one type.
+        if fam not in result or (result[fam] == "header" and role != "header"):
+            result[fam] = role
+    return result
+
+
 def _byte_ruler(
     family: Dict[str, Any],
     labels: Optional[List[Dict[str, Any]]] = None,
@@ -753,6 +841,7 @@ def _family_card(
     family: Dict[str, Any],
     llm_stage_results: Optional[Dict[str, Any]] = None,
     field_matches: Optional[List[Dict[str, Any]]] = None,
+    gt_role: Optional[str] = None,
 ) -> str:
     family_id = family.get("family_id", "unknown")
     semantic = family.get("semantic_summary") or {}
@@ -763,14 +852,21 @@ def _family_card(
     gt_fields = _gt_fields_for_family(str(family_id), field_matches)
     role = family.get("role", "unknown")
     role_tone = "request" if role == "request" else "response" if role == "response" else "unknown"
+    gt_role_html = ""
+    if gt_role:
+        gt_tone = "request" if gt_role == "request" else "response" if gt_role == "response" else "unknown"
+        gt_role_html = (
+            f'<span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">'
+            f'GT&nbsp;{_pill(gt_role, gt_tone)}</span>'
+        )
     related = family.get("related_families", []) or []
     related_html = "".join(_pill(item, "related") for item in related[:8]) or '<span class="muted">No direct relation links</span>'
     return f"""
-    <section class="family-card">
+    <section class="family-card" id="family-{_text(family_id)}">
       <header>
         <div>
           <h3>{_text(family_id)}</h3>
-          <p>{_pill(role, role_tone)} {_text(family.get('message_count', 0))} messages</p>
+          <p>{_pill(role, role_tone)} {gt_role_html} {_text(family.get('message_count', 0))} messages</p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -1194,7 +1290,7 @@ def _truth_comparison_block(
       <h2>Discovered vs Ground Truth</h2>
       <div class="truth-head">
         <div class="truth-score">
-          {_gauge(overall, "Overall", "Weighted overall agreement between the discovered protocol model and the ground-truth specification.")}
+          {_gauge(overall, "Overall", "Weighted overall agreement between the discovered protocol model and the ground-truth specification.", align="left")}
           <div>
             <p>{_pill(verdict, verdict_tone)}</p>
             <p class="muted">{_text(summary.get("matched_message_type_count", 0))} of {_text(summary.get("ground_truth_message_type_count", 0))} ground-truth types matched · {_text(summary.get("predicted_family_count", 0))} families discovered</p>
@@ -1227,11 +1323,12 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
                 node_ids.append(nid)
     fam_by_id = {str(f.get("family_id")): f for f in families}
 
-    # Circular layout — deterministic, no physics needed.
+    # Circular layout — deterministic, no physics needed. A larger canvas keeps
+    # the chords (edges) comfortably long.
     n = len(node_ids)
-    W = H = 460.0
+    W = H = 640.0
     cx = cy = W / 2.0
-    ring = W / 2.0 - 80.0
+    ring = W / 2.0 - 70.0
     pos: Dict[str, Tuple[float, float]] = {}
     for i, nid in enumerate(node_ids):
         angle = (2 * math.pi * i) / max(1, n) - math.pi / 2
@@ -1244,6 +1341,20 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
         msg = int(fam_by_id.get(nid, {}).get("message_count", 0) or 0)
         return 14.0 + 20.0 * math.sqrt(msg / max_msg)
 
+    # Small, fixed-size arrowhead (independent of stroke width) so thick edges
+    # do not get oversized arrows.
+    ARROW_LEN, ARROW_W = 13.0, 9.0
+
+    def _arrowhead(tip_x: float, tip_y: float, ux: float, uy: float) -> str:
+        bx, by = tip_x - ux * ARROW_LEN, tip_y - uy * ARROW_LEN
+        px, py = -uy, ux
+        p1 = (bx + px * ARROW_W / 2, by + py * ARROW_W / 2)
+        p2 = (bx - px * ARROW_W / 2, by - py * ARROW_W / 2)
+        return (
+            f'<polygon points="{tip_x:.1f},{tip_y:.1f} {p1[0]:.1f},{p1[1]:.1f} {p2[0]:.1f},{p2[1]:.1f}" '
+            f'class="graph-arrow"/>'
+        )
+
     edge_svg = []
     for r in edges:
         a = str(r.get("request_family_id"))
@@ -1251,7 +1362,8 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
         if a not in pos or b not in pos:
             continue
         pc = int(r.get("pair_count", 0) or 0)
-        width = 1.0 + 5.0 * (pc / max_pairs)
+        # Doubled stroke width relative to the previous 1 + 5x scale.
+        width = 2.0 + 10.0 * (pc / max_pairs)
         tip = (
             f"{a} → {b} · {pc:,} pairs · "
             f"score {_num(r.get('avg_pair_score', 0))} · "
@@ -1260,34 +1372,41 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
         )
         (x1, y1) = pos[a]
         if a == b:
-            # Self-relation: draw a small directed loop pointing outward from centre.
+            # Self-relation: a directed loop pointing outward from the centre.
             rr = _radius(a)
             dx, dy = x1 - cx, y1 - cy
             norm = math.hypot(dx, dy) or 1.0
             ux, uy = dx / norm, dy / norm
-            # Loop control points push the arc outward from the node.
             sx, sy = x1 + ux * rr * 0.2 - uy * rr * 0.7, y1 + uy * rr * 0.2 + ux * rr * 0.7
             ex, ey = x1 + ux * rr * 0.2 + uy * rr * 0.7, y1 + uy * rr * 0.2 - ux * rr * 0.7
-            c1x, c1y = x1 + ux * rr * 2.6 - uy * rr * 1.4, y1 + uy * rr * 2.6 + ux * rr * 1.4
-            c2x, c2y = x1 + ux * rr * 2.6 + uy * rr * 1.4, y1 + uy * rr * 2.6 - ux * rr * 1.4
+            c1x, c1y = x1 + ux * rr * 3.0 - uy * rr * 1.6, y1 + uy * rr * 3.0 + ux * rr * 1.6
+            c2x, c2y = x1 + ux * rr * 3.0 + uy * rr * 1.6, y1 + uy * rr * 3.0 - ux * rr * 1.6
+            tdx, tdy = ex - c2x, ey - c2y
+            tnorm = math.hypot(tdx, tdy) or 1.0
+            arrow = _arrowhead(ex, ey, tdx / tnorm, tdy / tnorm)
             edge_svg.append(
+                f'<g class="graph-edge" data-tip="{escape(tip)}"><title>{escape(tip)}</title>'
                 f'<path d="M{sx:.1f},{sy:.1f} C{c1x:.1f},{c1y:.1f} {c2x:.1f},{c2y:.1f} {ex:.1f},{ey:.1f}" '
-                f'fill="none" stroke="rgba(238,244,223,.32)" stroke-width="{width:.2f}" '
-                f'class="graph-edge" marker-end="url(#arrow)" data-tip="{escape(tip)}">'
-                f'<title>{escape(tip)}</title></path>'
+                f'fill="none" stroke="rgba(238,244,223,.34)" stroke-width="{width:.2f}"/>'
+                f"{arrow}</g>"
             )
         else:
             (x2, y2) = pos[b]
-            # Stop the line at the response node's edge so the arrowhead is visible.
             ddx, ddy = x2 - x1, y2 - y1
             dist = math.hypot(ddx, ddy) or 1.0
+            ux, uy = ddx / dist, ddy / dist
             rb = _radius(b)
-            ex = x2 - (ddx / dist) * (rb + 6)
-            ey = y2 - (ddy / dist) * (rb + 6)
+            ex = x2 - ux * (rb + 2)
+            ey = y2 - uy * (rb + 2)
+            # Stop the line a touch before the arrowhead so they do not overlap.
+            lx = ex - ux * ARROW_LEN
+            ly = ey - uy * ARROW_LEN
+            arrow = _arrowhead(ex, ey, ux, uy)
             edge_svg.append(
-                f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{ex:.1f}" y2="{ey:.1f}" '
-                f'stroke="rgba(238,244,223,.30)" stroke-width="{width:.2f}" class="graph-edge" '
-                f'marker-end="url(#arrow)" data-tip="{escape(tip)}"><title>{escape(tip)}</title></line>'
+                f'<g class="graph-edge" data-tip="{escape(tip)}"><title>{escape(tip)}</title>'
+                f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{lx:.1f}" y2="{ly:.1f}" '
+                f'stroke="rgba(238,244,223,.32)" stroke-width="{width:.2f}"/>'
+                f"{arrow}</g>"
             )
 
     node_svg = []
@@ -1320,11 +1439,6 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
       <h2>Relation Graph {_tip('Request to response family relationships. Each node is a discovered family, coloured by role; a directed arrow points from the request family to the response family. Self-loops mark families that relate to themselves.')}</h2>
       <div class="graph-wrap">
         <svg viewBox="0 0 {W:.0f} {H:.0f}" class="relation-graph" role="img" aria-label="Family relation graph">
-          <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M0,0 L10,5 L0,10 z" fill="rgba(238,244,223,.6)"/>
-            </marker>
-          </defs>
           {"".join(edge_svg)}
           {"".join(node_svg)}
         </svg>
@@ -1340,13 +1454,16 @@ def render_protocol_model_html(
     llm_analysis: Optional[Dict[str, Any]] = None,
     final_evaluation: Optional[Dict[str, Any]] = None,
     llm_stage_results: Optional[Dict[str, Any]] = None,
+    ground_truth: Optional[Dict[str, Any]] = None,
 ) -> str:
     families = _families(model)
     # Ground-truth field matches (if available) let each family card show an
     # aligned ground-truth row beneath its discovered fields.
     field_matches = ((final_evaluation or {}).get("matches", {}) or {}).get("fields", []) or []
+    gt_role_by_family = _gt_role_by_family(final_evaluation, ground_truth)
     family_cards = "\n".join(
-        _family_card(family, llm_stage_results, field_matches) for family in families
+        _family_card(family, llm_stage_results, field_matches, gt_role_by_family.get(str(family.get("family_id"))))
+        for family in families
     )
     # Pull structured summaries out of the flat metadata table so they can be
     # rendered as their own card-based blocks instead of stringified dicts.
@@ -1367,6 +1484,14 @@ def render_protocol_model_html(
     overview_block = _overview_block(model)
     truth_comparison_block = _truth_comparison_block(model, final_evaluation)
     relation_graph_block = _relation_graph_block(model)
+    pipeline_eval_block = _evaluation_block(evaluation)
+    relations_table_block = f"""
+  <section class="panel">
+    <h2>Strongest Relations</h2>
+    <details><summary>Show full relation metrics table</summary>
+    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead><tbody>{relation_rows}</tbody></table>
+    </details>
+  </section>"""
     all_families = model.get("families", []) or []
     total_messages = sum(int(family.get("message_count", 0) or 0) for family in all_families)
     total_fields = sum(len(family.get("field_hypotheses", []) or []) for family in all_families)
@@ -1374,6 +1499,29 @@ def render_protocol_model_html(
         len((family.get("semantic_summary", {}) or {}).get("field_labels", []) or [])
         for family in all_families
     )
+
+    # Anchor + jump-navigation assembly. Each tuple is (anchor_id, icon, label,
+    # html); blocks that produced no html are skipped from both body and nav.
+    section_specs = [
+        ("sec-overview", "chart", "Family Overview", overview_block),
+        ("sec-truth", "target", "Discovered vs Ground Truth", truth_comparison_block),
+        ("sec-final", "trophy", "Final Ground-Truth Scores", final_evaluation_block),
+        ("sec-pipeline", "check", "Pipeline Evaluation", pipeline_eval_block),
+        ("sec-llm", "spark", "LLM Analysis", llm_block),
+        ("sec-refine", "sliders", "LLM Refinement", llm_refinement_block),
+        ("sec-framing", "frame", "Framing Summary", framing_summary_block),
+        ("sec-meta", "info", "Metadata", metadata_section),
+        ("sec-graph", "graph", "Relation Graph", relation_graph_block),
+        ("sec-relations", "link", "Strongest Relations", relations_table_block),
+    ]
+    present = [(sid, icon, label, html) for sid, icon, label, html in section_specs if html and html.strip()]
+    body_sections = "\n".join(
+        f'<div id="{sid}" class="jump-target">{html}</div>' for sid, _, _, html in present
+    )
+    nav_entries = [(sid, icon, label) for sid, icon, label, _ in present]
+    nav_entries.append(("sec-families", "stack", "Families"))
+    family_links = [(f'family-{f.get("family_id")}', str(f.get("family_id"))) for f in families]
+    jump_nav = _jump_nav([(sid, icon, label) for sid, icon, label in nav_entries if sid != "sec-families"], family_links)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -1395,6 +1543,7 @@ def render_protocol_model_html(
   --shadow: 0 24px 80px rgba(0,0,0,.38);
 }}
 * {{ box-sizing: border-box; }}
+html {{ scroll-behavior: smooth; }}
 body {{
   margin: 0;
   background:
@@ -1472,6 +1621,48 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
   margin-left: 6px; border-radius: 50%; background: rgba(68,215,182,.18); color: var(--accent-2);
   font-style: normal; font-size: .68rem; font-weight: 700; cursor: help; vertical-align: middle;
 }}
+/* Edge-anchored tooltip variants (avoid viewport overflow) */
+.tip-left[data-tip]:hover:after {{ left: 0; transform: none; }}
+.tip-left[data-tip]:hover:before {{ left: 16px; transform: none; }}
+.tip-right[data-tip]:hover:after {{ left: auto; right: 0; transform: none; }}
+.tip-right[data-tip]:hover:before {{ left: auto; right: 16px; transform: none; }}
+
+/* --- Section jump navigation (fixed, right side) --- */
+.jump-nav {{
+  position: fixed; right: 14px; top: 50%; transform: translateY(-50%); z-index: 500;
+  display:flex; flex-direction: column; gap: 5px; padding: 8px 6px;
+  background: rgba(13,17,16,.72); border: 1px solid var(--line); border-radius: 16px;
+  backdrop-filter: blur(8px); box-shadow: 0 12px 40px rgba(0,0,0,.4);
+}}
+.jump-item {{
+  width: 34px; height: 34px; display:flex; align-items:center; justify-content:center;
+  border-radius: 10px; color: var(--muted); cursor: pointer; position: relative; text-decoration: none;
+  transition: background .15s, color .15s;
+}}
+.jump-item:hover {{ color: #0b0f0e; background: var(--accent); }}
+.jump-item svg {{ width: 19px; height: 19px; }}
+/* Nav tooltips open to the LEFT so they stay on-screen */
+.jump-item[data-tip]:hover:after {{
+  left: auto; right: calc(100% + 12px); top: 50%; bottom: auto; transform: translateY(-50%);
+}}
+.jump-item[data-tip]:hover:before {{
+  left: auto; right: calc(100% + 6px); top: 50%; bottom: auto; transform: translateY(-50%);
+  border: 6px solid transparent; border-left-color: var(--accent-2); border-top-color: transparent;
+}}
+.jump-families .jump-sub {{
+  position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+  display: none; flex-direction: column; gap: 2px; min-width: 140px; padding: 8px;
+  background: #05201b; border: 1px solid var(--accent-2); border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.55); max-height: 70vh; overflow-y: auto;
+}}
+.jump-families:hover .jump-sub, .jump-families:focus-within .jump-sub {{ display: flex; }}
+.jump-sub-head {{ font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 2px 8px 4px; }}
+.jump-sub a {{ color: var(--ink); text-decoration: none; font-size: .82rem; padding: 5px 9px; border-radius: 7px; white-space: nowrap; font-family: "Cascadia Code", monospace; }}
+.jump-sub a:hover {{ background: var(--accent); color: #0b0f0e; }}
+.jump-target {{ scroll-margin-top: 18px; }}
+.family-card {{ scroll-margin-top: 18px; }}
+.gt-role {{ display:inline-flex; align-items:center; gap: 2px; margin: 0 4px; cursor: help; }}
+@media (max-width: 980px) {{ .jump-nav {{ display: none; }} }}
 
 /* --- Visualization grids --- */
 .viz-grid {{ display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-bottom: 8px; }}
@@ -1563,7 +1754,8 @@ details.evidence[open] > summary:before {{ content: "▾ "; }}
 </style>
 </head>
 <body>
-  <header class="hero">
+  {jump_nav}
+  <header class="hero" id="top">
     <div class="hero-card">
       <h1>Protocol Report</h1>
       <p class="subhead">Auto-generated reverse-engineering report for an unknown industrial protocol. Evidence is inferred from payload families, structural features, request/response links, and semantic hints.</p>
@@ -1576,23 +1768,9 @@ details.evidence[open] > summary:before {{ content: "▾ "; }}
       </div>
     </div>
   </header>
-  {overview_block}
-  {truth_comparison_block}
-  {final_evaluation_block}
-  {_evaluation_block(evaluation)}
-  {llm_block}
-  {llm_refinement_block}
-  {framing_summary_block}
-  {metadata_section}
-  {relation_graph_block}
-  <section class="panel">
-    <h2>Strongest Relations</h2>
-    <details><summary>Show full relation metrics table</summary>
-    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead><tbody>{relation_rows}</tbody></table>
-    </details>
-  </section>
-  <main>
-    <section class="panel"><h2>Families</h2><p class="muted">Showing {len(families)} largest families.</p></section>
+  {body_sections}
+  <main id="sec-families">
+    <section class="panel"><h2>Families {_tip('Each discovered message family with its byte layout, discovered fields, aligned ground-truth fields, and supporting evidence.')}</h2><p class="muted">Showing {len(families)} largest families.</p></section>
     {family_cards}
   </main>
   <footer class="footer">Generated by Protocol RE. Raw payloads are omitted from this report.</footer>
