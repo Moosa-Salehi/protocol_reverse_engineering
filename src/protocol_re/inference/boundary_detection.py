@@ -254,6 +254,24 @@ def _normalise_score(score: float, score_threshold: float) -> float:
     return min(1.0, max(0.0, score / score_threshold))
 
 
+def _one_byte_count_ratio(messages: Sequence[bytes], pos: int, min_samples: int = 8) -> float:
+    """Fraction of messages where the single byte at ``pos`` equals the number of
+    bytes that follow it — i.e. it is a 1-byte length/count field (e.g. a Modbus
+    ``byte_count``). Holds even when the value is constant within a fixed-length
+    family, so such a field can be protected from being merged into the data."""
+    usable = 0
+    matches = 0
+    for message in messages:
+        if pos >= len(message):
+            continue
+        usable += 1
+        if message[pos] == len(message) - (pos + 1):
+            matches += 1
+    if usable < min_samples:
+        return 0.0
+    return matches / usable
+
+
 def should_merge_segments(
     seg1: Segment,
     seg2: Segment,
@@ -300,6 +318,7 @@ def merge_segments(
     protected_boundaries = protected_boundaries or set()
     merge_width_targets = tuple(sorted({int(width) for width in merge_width_targets if int(width) > 0}))
     max_merge_width = max(merge_width_targets, default=0)
+    parsed_messages = [hex_to_bytes(msg) for msg in messages_hex] if require_single_byte_operand else []
 
     # Multi-pass merging: keep merging until no more merges happen
     max_passes = 3
@@ -344,6 +363,16 @@ def merge_segments(
                 elif current.confidence < 0.7 and next_seg.confidence < 0.7:
                     should_merge = True
                     merge_reason = "adjacent_single_byte_low_confidence"
+                # In the hierarchical body path, pair any two adjacent single bytes
+                # into a uint16 regardless of kind. This reconstructs a multi-byte
+                # numeric field whose high byte is near-constant (e.g. a Modbus
+                # register address with a small range: const high + variable low),
+                # which the kind-matched rules above miss. A 1-byte length/count
+                # field (value == bytes-remaining, e.g. byte_count) is left alone so
+                # it is not absorbed into the following data.
+                elif require_single_byte_operand and _one_byte_count_ratio(parsed_messages, current.start) < 0.8:
+                    should_merge = True
+                    merge_reason = "single_byte_pair_to_uint16"
 
             # Rule 3: Merge low-confidence adjacent fields of same kind
             elif (current.kind == next_seg.kind and
@@ -481,6 +510,15 @@ def infer_segments(
         else None
     )
 
+    # Count/length-byte isolation (hierarchical body path): a 1-byte field right
+    # after the opcode whose value equals the number of bytes that follow it is a
+    # byte_count/length. Force a boundary after it so it is split from the data
+    # even when the data is a single byte (where no entropy boundary appears).
+    count_boundary = None
+    if require_single_byte_operand and opcode_boundary is not None and opcode_boundary < max_len:
+        if _one_byte_count_ratio(messages, opcode_boundary) >= 0.8:
+            count_boundary = opcode_boundary + 1
+
     # Collect boundaries with scores
     boundary_candidates = [(0, float('inf'))]  # Start boundary always included
 
@@ -497,6 +535,10 @@ def infer_segments(
     # Force the cut right after the leading body byte (opcode/command isolation)
     if opcode_boundary is not None:
         boundary_candidates.append((opcode_boundary, float('inf')))
+
+    # Force the cut right after a leading body count/length byte (byte_count).
+    if count_boundary is not None and 0 < count_boundary < max_len:
+        boundary_candidates.append((count_boundary, float('inf')))
 
     for boundary in length_protected_boundaries:
         if 0 < boundary < max_len:
@@ -530,6 +572,8 @@ def infer_segments(
             protected.add(framing_boundary)
         if opcode_boundary is not None:
             protected.add(opcode_boundary)
+        if count_boundary is not None:
+            protected.add(count_boundary)
 
         # Score other boundaries
         scored_boundaries = [
@@ -640,6 +684,10 @@ def infer_segments(
             # Protect the opcode's right edge so the 1-byte discriminator is
             # never merged into the following field.
             protected_boundaries.add(opcode_boundary)
+        if count_boundary is not None:
+            # Protect the count/length byte's right edge so byte_count is not
+            # merged into the data that follows it.
+            protected_boundaries.add(count_boundary)
         segments = merge_segments(
             segments,
             messages_hex,
