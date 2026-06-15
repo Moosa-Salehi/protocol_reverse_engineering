@@ -1371,10 +1371,18 @@ def _truth_comparison_block(
             )
         if not trows:
             return ""
+        try:
+            overall_exact = f"{float(overall):.6f}"
+        except Exception:
+            overall_exact = _text(overall)
         return (
             '<details class="evidence" open><summary>Detailed accuracy metrics '
             + _tip("Per-dimension accuracy, precision, recall and F1 against the ground-truth spec, with true/false positive and false-negative counts.")
             + "</summary>"
+            '<p class="muted overall-exact">Overall score: '
+            f'<b>{_text(overall_exact)}</b>'
+            + _tip("Exact weighted overall agreement score (the gauge above is rounded).")
+            + "</p>"
             '<table class="metrics-table"><thead><tr>'
             "<th>Dimension</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th>"
             "<th>TP</th><th>FP</th><th>FN</th>"
@@ -1820,6 +1828,8 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 .map-table td {{ vertical-align: middle; }}
 .map-table .map-arrow {{ color: var(--accent); font-size: 1.2rem; text-align:center; padding: 0 4px; }}
 .map-table small {{ display:block; margin-top: 4px; }}
+.overall-exact {{ margin: 4px 0 10px; font-size: .92rem; }}
+.overall-exact b {{ color: var(--accent); font-variant-numeric: tabular-nums; }}
 .metrics-table {{ margin-top: 10px; }}
 .metrics-table th, .metrics-table td {{ text-align: center; font-variant-numeric: tabular-nums; }}
 .metrics-table th:first-child, .metrics-table td:first-child {{ text-align: left; }}
