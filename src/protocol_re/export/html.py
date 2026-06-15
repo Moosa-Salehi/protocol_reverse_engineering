@@ -1372,7 +1372,7 @@ def _truth_comparison_block(
         if not trows:
             return ""
         return (
-            '<details class="evidence"><summary>Detailed accuracy metrics '
+            '<details class="evidence" open><summary>Detailed accuracy metrics '
             + _tip("Per-dimension accuracy, precision, recall and F1 against the ground-truth spec, with true/false positive and false-negative counts.")
             + "</summary>"
             '<table class="metrics-table"><thead><tr>'
@@ -1750,14 +1750,18 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
   border: 6px solid transparent; border-left-color: var(--accent-2); border-top-color: transparent;
 }}
 .jump-families .jump-sub {{
-  position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%);
-  display: none; flex-direction: column; gap: 2px; min-width: 140px; padding: 8px;
+  position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
+  display: none; flex-direction: column; gap: 2px; min-width: 140px;
+  padding: 8px; margin-right: 8px;
   background: #05201b; border: 1px solid var(--accent-2); border-radius: 12px;
-  box-shadow: 0 14px 40px rgba(0,0,0,.55); max-height: 70vh; overflow-y: auto;
+  box-shadow: 0 14px 40px rgba(0,0,0,.55); max-height: 70vh;
+  overflow-y: auto; overflow-x: hidden;
 }}
-/* Invisible bridge so the cursor can cross the gap to the submenu */
-.jump-families .jump-sub:before {{
-  content: ""; position: absolute; left: 100%; top: 0; width: 16px; height: 100%;
+/* Transparent bridge fills the visual gap so the cursor can reach the submenu
+   without it closing. Lives on the icon (not the scrollable list) so it is not
+   clipped, and only spans the gap while the submenu is open. */
+.jump-families:hover:after, .jump-families:focus-within:after {{
+  content: ""; position: absolute; right: 100%; top: 0; width: 12px; height: 100%;
 }}
 .jump-families:hover .jump-sub, .jump-families:focus-within .jump-sub {{ display: flex; }}
 .jump-sub-head {{ font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 2px 8px 4px; }}

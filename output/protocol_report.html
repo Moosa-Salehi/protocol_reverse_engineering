@@ -126,14 +126,18 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
   border: 6px solid transparent; border-left-color: var(--accent-2); border-top-color: transparent;
 }
 .jump-families .jump-sub {
-  position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%);
-  display: none; flex-direction: column; gap: 2px; min-width: 140px; padding: 8px;
+  position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
+  display: none; flex-direction: column; gap: 2px; min-width: 140px;
+  padding: 8px; margin-right: 8px;
   background: #05201b; border: 1px solid var(--accent-2); border-radius: 12px;
-  box-shadow: 0 14px 40px rgba(0,0,0,.55); max-height: 70vh; overflow-y: auto;
+  box-shadow: 0 14px 40px rgba(0,0,0,.55); max-height: 70vh;
+  overflow-y: auto; overflow-x: hidden;
 }
-/* Invisible bridge so the cursor can cross the gap to the submenu */
-.jump-families .jump-sub:before {
-  content: ""; position: absolute; left: 100%; top: 0; width: 16px; height: 100%;
+/* Transparent bridge fills the visual gap so the cursor can reach the submenu
+   without it closing. Lives on the icon (not the scrollable list) so it is not
+   clipped, and only spans the gap while the submenu is open. */
+.jump-families:hover:after, .jump-families:focus-within:after {
+  content: ""; position: absolute; right: 100%; top: 0; width: 12px; height: 100%;
 }
 .jump-families:hover .jump-sub, .jump-families:focus-within .jump-sub { display: flex; }
 .jump-sub-head { font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 2px 8px 4px; }
@@ -244,7 +248,7 @@ details.evidence[open] > summary:before { content: "▾ "; }
 </style>
 </head>
 <body>
-  <nav class="jump-nav" aria-label="Section navigation"><a class="jump-item" href="#top" data-tip="Top of report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-6 6 6"/><path d="M6 19l6-6 6 6"/></svg></a><a class="jump-item" href="#sec-overview" data-tip="Family Overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="10"/></svg></a><a class="jump-item" href="#sec-truth" data-tip="Discovered vs Ground Truth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></a><a class="jump-item" href="#sec-pipeline" data-tip="Pipeline Evaluation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></a><a class="jump-item" href="#sec-llm" data-tip="LLM Analysis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></a><a class="jump-item" href="#sec-refine" data-tip="LLM Refinement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.1"/><circle cx="15" cy="16" r="2.1"/></svg></a><a class="jump-item" href="#sec-framing" data-tip="Framing Summary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/></svg></a><a class="jump-item" href="#sec-graph" data-tip="Relation Graph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="9" r="2.4"/><circle cx="10" cy="18" r="2.4"/><line x1="8.2" y1="7.6" x2="15.8" y2="8.6"/><line x1="7.4" y1="9" x2="9.2" y2="15.8"/></svg></a><div class="jump-item jump-families" tabindex="0" aria-label="Jump to a family"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/></svg><div class="jump-sub"><span class="jump-sub-head">Families</span><a href="#family-family_1">family_1</a><a href="#family-family_0">family_0</a><a href="#family-family_2">family_2</a><a href="#family-family_3">family_3</a><a href="#family-family_4">family_4</a><a href="#family-family_5">family_5</a><a href="#family-family_6">family_6</a><a href="#family-family_7">family_7</a><a href="#family-family_9">family_9</a><a href="#family-family_8">family_8</a></div></div></nav>
+  <nav class="jump-nav" aria-label="Section navigation"><a class="jump-item" href="#top" data-tip="Top of report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-6 6 6"/><path d="M6 19l6-6 6 6"/></svg></a><a class="jump-item" href="#sec-overview" data-tip="Family Overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="10"/></svg></a><a class="jump-item" href="#sec-truth" data-tip="Discovered vs Ground Truth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></a><a class="jump-item" href="#sec-pipeline" data-tip="Pipeline Evaluation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></a><a class="jump-item" href="#sec-refine" data-tip="LLM Refinement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.1"/><circle cx="15" cy="16" r="2.1"/></svg></a><a class="jump-item" href="#sec-framing" data-tip="Framing Summary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/></svg></a><a class="jump-item" href="#sec-graph" data-tip="Relation Graph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="9" r="2.4"/><circle cx="10" cy="18" r="2.4"/><line x1="8.2" y1="7.6" x2="15.8" y2="8.6"/><line x1="7.4" y1="9" x2="9.2" y2="15.8"/></svg></a><div class="jump-item jump-families" tabindex="0" aria-label="Jump to a family"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/></svg><div class="jump-sub"><span class="jump-sub-head">Families</span><a href="#family-family_1">family_1</a><a href="#family-family_0">family_0</a><a href="#family-family_2">family_2</a><a href="#family-family_3">family_3</a><a href="#family-family_4">family_4</a><a href="#family-family_5">family_5</a><a href="#family-family_6">family_6</a><a href="#family-family_7">family_7</a><a href="#family-family_9">family_9</a><a href="#family-family_8">family_8</a></div></div></nav>
   <header class="hero" id="top">
     <div class="hero-card">
       <h1>Protocol Report</h1>
@@ -290,7 +294,7 @@ details.evidence[open] > summary:before { content: "▾ "; }
       </div>
       <h4>Family → Ground-truth mapping</h4>
       <table class="map-table"><thead><tr><th>Discovered family</th><th></th><th>Ground-truth type</th><th>Match score <i class="tip-dot" data-tip="Similarity between the discovered family and the ground-truth message type it was aligned to (token/field/role similarity).">i</i></th><th>Field quality <i class="tip-dot" data-tip="Average boundary (b) and semantic (s) score across matched fields. 1.0 = perfect byte-offset and meaning match.">i</i></th></tr></thead><tbody><tr><td><code>family_0</code><br><small class="muted">39,887 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc01_read_coils_response</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=0.67</td></tr><tr><td><code>family_0</code><br><small class="muted">39,887 msgs</small></td><td class="map-arrow">→</td><td>modbus_tcp_mbap</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:100.0%"></span></div><small class="muted">1.00 · header_region_overlap</small></td><td>4 fields · b=1.00 s=1.00</td></tr><tr><td><code>family_1</code><br><small class="muted">39,888 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc01_read_coils_request</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=1.00</td></tr><tr><td><code>family_2</code><br><small class="muted">19,944 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc02_read_discrete_inputs_response</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=0.67</td></tr><tr><td><code>family_3</code><br><small class="muted">19,944 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc02_read_discrete_inputs_request</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=1.00</td></tr><tr><td><code>family_4</code><br><small class="muted">19,944 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc03_read_holding_registers_response</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=0.67</td></tr><tr><td><code>family_5</code><br><small class="muted">19,944 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc03_read_holding_registers_request</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=1.00</td></tr><tr><td><code>family_6</code><br><small class="muted">19,944 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc04_read_input_registers_response</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=0.67</td></tr><tr><td><code>family_7</code><br><small class="muted">19,943 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc04_read_input_registers_request</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=1.00</td></tr><tr><td><code>family_8</code><br><small class="muted">156 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc05_write_single_coil</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=1.00</td></tr><tr><td><code>family_9</code><br><small class="muted">406 msgs</small></td><td class="map-arrow">→</td><td>modbus_fc06_write_single_register</td><td style="min-width:120px"><div class="bar" aria-label="match score"><span style="width:90.0%"></span></div><small class="muted">0.90 · token_field_role_similarity</small></td><td>3 fields · b=1.00 s=1.00</td></tr></tbody></table>
-      <details class="evidence"><summary>Detailed accuracy metrics <i class="tip-dot" data-tip="Per-dimension accuracy, precision, recall and F1 against the ground-truth spec, with true/false positive and false-negative counts.">i</i></summary><table class="metrics-table"><thead><tr><th>Dimension</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th></tr></thead><tbody><tr><td>Message types</td><td>1</td><td>1</td><td>1</td><td>1</td><td>11</td><td>0</td><td>0</td></tr><tr><td>Field boundaries</td><td>1</td><td>1</td><td>1</td><td>1</td><td>34</td><td>0</td><td>0</td></tr><tr><td>Field semantics</td><td>0.79</td><td>0.88</td><td>0.88</td><td>0.88</td><td>30</td><td>4</td><td>4</td></tr><tr><td>Relations</td><td>1</td><td>1</td><td>1</td><td>1</td><td>6</td><td>0</td><td>0</td></tr></tbody></table></details>
+      <details class="evidence" open><summary>Detailed accuracy metrics <i class="tip-dot" data-tip="Per-dimension accuracy, precision, recall and F1 against the ground-truth spec, with true/false positive and false-negative counts.">i</i></summary><table class="metrics-table"><thead><tr><th>Dimension</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>TP</th><th>FP</th><th>FN</th></tr></thead><tbody><tr><td>Message types</td><td>1</td><td>1</td><td>1</td><td>1</td><td>11</td><td>0</td><td>0</td></tr><tr><td>Field boundaries</td><td>1</td><td>1</td><td>1</td><td>1</td><td>34</td><td>0</td><td>0</td></tr><tr><td>Field semantics</td><td>0.79</td><td>0.88</td><td>0.88</td><td>0.88</td><td>30</td><td>4</td><td>4</td></tr><tr><td>Relations</td><td>1</td><td>1</td><td>1</td><td>1</td><td>6</td><td>0</td><td>0</td></tr></tbody></table></details>
     </section>
     </div>
 <div id="sec-pipeline" class="jump-target">
@@ -305,13 +309,6 @@ details.evidence[open] > summary:before { content: "▾ "; }
         <article class="metric"><strong>6</strong><span>Relation edges</span><small>6 with echoes</small></article>
       </div>
       <h3>Clustering Diagnostics</h3><div class="metric-grid"><article class="metric"><strong>9</strong><span>Warning families</span></article><article class="metric"><strong>2</strong><span>Split candidates</span></article><article class="metric"><strong>24</strong><span>Merge candidates</span></article></div><table><thead><tr><th>Family</th><th>Messages</th><th>Split</th><th>Over-split</th><th>Warnings</th></tr></thead><tbody><tr><td><code>family_0</code></td><td>39887</td><td>0.5</td><td>0.748837</td><td>high latent dispersion, low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_6</code></td><td>19944</td><td>0.5</td><td>0.0</td><td>high latent dispersion, low latent silhouette</td></tr><tr><td><code>family_9</code></td><td>406</td><td>0.3</td><td>0.0</td><td>high latent dispersion</td></tr><tr><td><code>family_5</code></td><td>19944</td><td>0.2</td><td>0.834119</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_7</code></td><td>19943</td><td>0.2</td><td>0.834119</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_3</code></td><td>19944</td><td>0.2</td><td>0.823292</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_2</code></td><td>19944</td><td>0.2</td><td>0.748837</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_1</code></td><td>39888</td><td>0.2</td><td>0.316643</td><td>low latent silhouette, possible over-split merge candidate</td></tr><tr><td><code>family_4</code></td><td>19944</td><td>0.2</td><td>0.0</td><td>low latent silhouette</td></tr></tbody></table>
-    </section>
-    </div>
-<div id="sec-llm" class="jump-target">
-    <section class="panel llm-panel">
-      <h2>LLM Analysis</h2>
-      <div class="metric-grid"><article class="metric"><strong></strong><span>Model</span></article><article class="metric"><strong>34945</strong><span>Prompt chars</span></article><article class="metric"><strong>8737</strong><span>Prompt est. tokens</span></article></div>
-      <p class="muted">LLM analysis was skipped because stage 15 ran in render-only mode.</p>
     </section>
     </div>
 <div id="sec-refine" class="jump-target">
@@ -352,8 +349,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_1</h3>
-          <p><span class="pill request">request</span>  39888 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc01_read_coils_request</b><code class="gt-type-id">modbus_fc01_read_coils_request</code></p>
+          <p><span class="pill request">request</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill request">request</span></span> 39888 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Coils Request</b><code class="gt-type-id">modbus_fc01_read_coils_request</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -383,8 +380,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_0</h3>
-          <p><span class="pill response">response</span>  39887 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 1.">matched to <b>modbus_tcp_mbap</b><code class="gt-type-id">modbus_tcp_mbap</code></p>
+          <p><span class="pill response">response</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill response">response</span></span> 39887 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Coils Response</b><code class="gt-type-id">modbus_fc01_read_coils_response</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -414,8 +411,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_2</h3>
-          <p><span class="pill response">response</span>  19944 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc02_read_discrete_inputs_response</b><code class="gt-type-id">modbus_fc02_read_discrete_inputs_response</code></p>
+          <p><span class="pill response">response</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill response">response</span></span> 19944 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Discrete Inputs Response</b><code class="gt-type-id">modbus_fc02_read_discrete_inputs_response</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -445,8 +442,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_3</h3>
-          <p><span class="pill request">request</span>  19944 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc02_read_discrete_inputs_request</b><code class="gt-type-id">modbus_fc02_read_discrete_inputs_request</code></p>
+          <p><span class="pill request">request</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill request">request</span></span> 19944 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Discrete Inputs Request</b><code class="gt-type-id">modbus_fc02_read_discrete_inputs_request</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -476,8 +473,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_4</h3>
-          <p><span class="pill response">response</span>  19944 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc03_read_holding_registers_response</b><code class="gt-type-id">modbus_fc03_read_holding_registers_response</code></p>
+          <p><span class="pill response">response</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill response">response</span></span> 19944 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Holding Registers Response</b><code class="gt-type-id">modbus_fc03_read_holding_registers_response</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -507,8 +504,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_5</h3>
-          <p><span class="pill request">request</span>  19944 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc03_read_holding_registers_request</b><code class="gt-type-id">modbus_fc03_read_holding_registers_request</code></p>
+          <p><span class="pill request">request</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill request">request</span></span> 19944 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Holding Registers Request</b><code class="gt-type-id">modbus_fc03_read_holding_registers_request</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -538,8 +535,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_6</h3>
-          <p><span class="pill response">response</span>  19944 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc04_read_input_registers_response</b><code class="gt-type-id">modbus_fc04_read_input_registers_response</code></p>
+          <p><span class="pill response">response</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill response">response</span></span> 19944 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Input Registers Response</b><code class="gt-type-id">modbus_fc04_read_input_registers_response</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -569,8 +566,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_7</h3>
-          <p><span class="pill request">request</span>  19943 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc04_read_input_registers_request</b><code class="gt-type-id">modbus_fc04_read_input_registers_request</code></p>
+          <p><span class="pill request">request</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill request">request</span></span> 19943 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Read Input Registers Request</b><code class="gt-type-id">modbus_fc04_read_input_registers_request</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -600,8 +597,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_9</h3>
-          <p><span class="pill unknown">unknown</span>  406 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc06_write_single_register</b><code class="gt-type-id">modbus_fc06_write_single_register</code></p>
+          <p><span class="pill unknown">unknown</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill request">request</span></span> 406 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Write Single Register</b><code class="gt-type-id">modbus_fc06_write_single_register</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -631,8 +628,8 @@ details.evidence[open] > summary:before { content: "▾ "; }
       <header>
         <div>
           <h3>family_8</h3>
-          <p><span class="pill unknown">unknown</span>  156 messages</p>
-          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>modbus_fc05_write_single_coil</b><code class="gt-type-id">modbus_fc05_write_single_coil</code></p>
+          <p><span class="pill unknown">unknown</span> <span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">GT&nbsp;<span class="pill request">request</span></span> 156 messages</p>
+          <p class="gt-matched" data-tip="The ground-truth message type this discovered family was matched to. Match score 0.90.">matched to <b>Write Single Coil</b><code class="gt-type-id">modbus_fc05_write_single_coil</code></p>
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
