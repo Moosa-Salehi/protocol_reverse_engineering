@@ -617,36 +617,51 @@ def _gt_fields_for_family(family_id: str, field_matches: Optional[List[Dict[str,
     return sorted(out, key=lambda d: d["start"])
 
 
-def _gt_role_by_family(
+def _gt_match_by_family(
     final_evaluation: Optional[Dict[str, Any]],
     ground_truth: Optional[Dict[str, Any]],
-) -> Dict[str, str]:
-    """Map each predicted family to its ground-truth role (request/response/...).
+) -> Dict[str, Dict[str, Any]]:
+    """Map each predicted family to its matched ground-truth type.
 
-    Uses the message-type matches to link family → ground-truth type, then the
-    ground-truth spec to resolve that type's role. A family may match several
-    types (e.g. a response plus the shared header); a concrete request/response
-    role is preferred over a generic 'header'.
+    Returns ``{family_id: {"role", "type_id", "name", "score"}}``. Uses the
+    message-type matches to link family → ground-truth type, then the
+    ground-truth spec to resolve that type's role and human-readable name. A
+    family may match several types (e.g. a response plus the shared header); the
+    highest-scoring concrete (non-header) match is preferred.
     """
-    if not final_evaluation or not ground_truth:
+    if not final_evaluation:
         return {}
-    gt_protocol = ground_truth.get("ground_truth_protocol", ground_truth)
+    gt_protocol = (ground_truth or {}).get("ground_truth_protocol", ground_truth or {})
     role_by_type = {
         str(mt.get("message_type_id")): str(mt.get("role", ""))
         for mt in (gt_protocol.get("message_types", []) or [])
     }
-    if not role_by_type:
-        return {}
-    result: Dict[str, str] = {}
+    name_by_type = {
+        str(mt.get("message_type_id")): str(mt.get("name", ""))
+        for mt in (gt_protocol.get("message_types", []) or [])
+    }
+    result: Dict[str, Dict[str, Any]] = {}
     matches = (final_evaluation.get("matches", {}) or {}).get("message_types", []) or []
     for m in matches:
         fam = str(m.get("predicted_family_id"))
-        role = role_by_type.get(str(m.get("ground_truth_message_type_id")), "")
-        if not role:
+        type_id = str(m.get("ground_truth_message_type_id"))
+        role = role_by_type.get(type_id, "")
+        score = float(m.get("score", 0.0) or 0.0)
+        entry = {
+            "role": role,
+            "type_id": type_id,
+            "name": name_by_type.get(type_id, "") or type_id,
+            "score": score,
+        }
+        current = result.get(fam)
+        if current is None:
+            result[fam] = entry
             continue
-        # Prefer a non-header role if the family matched more than one type.
-        if fam not in result or (result[fam] == "header" and role != "header"):
-            result[fam] = role
+        # Prefer a concrete (non-header) role, then the higher score.
+        cur_header = current["role"] == "header"
+        new_header = role == "header"
+        if (cur_header and not new_header) or (cur_header == new_header and score > current["score"]):
+            result[fam] = entry
     return result
 
 
@@ -692,33 +707,46 @@ def _byte_ruler(
             length = max(1, int(e["length"]))
             spans.append(
                 f'<span class="rfield" style="grid-column:{start + 1} / span {length}" '
-                f'data-tip="{escape(e["tip"])}">{_text(e["label"])}</span>'
+                f'data-tip="{escape(e["tip"])}"><span class="rfield-label">{_text(e["label"])}</span></span>'
             )
         return (
             f'<div class="ruler-row bands {row_class}" style="{cols}">{"".join(spans)}</div>'
             if spans
-            else f'<div class="ruler-row bands {row_class}" style="{cols}"><span class="rfield empty">none</span></div>'
+            else f'<div class="ruler-row bands {row_class}" style="{cols}"><span class="rfield empty"><span class="rfield-label">none</span></span></div>'
         )
 
     disc_entries = []
+    disc_type_entries = []
     for lab in fields:
         start = int(lab.get("start", 0) or 0)
         length = max(1, int(lab.get("length", 1) or 1))
         name = str(lab.get("label") or lab.get("field_type") or "field")
-        ftype = lab.get("field_type", "")
+        ftype = str(lab.get("field_type", "") or "")
         conf = lab.get("confidence")
-        tip = f"{name} · bytes {start}..{start + length - 1} · {ftype}"
+        tip = f"{name} · bytes {start}..{start + length - 1} · {ftype or 'unknown type'}"
         if conf is not None:
             tip += f" · conf {_num(conf)}"
         disc_entries.append({"start": start, "length": length, "label": name, "tip": tip})
+        if ftype:
+            disc_type_entries.append(
+                {"start": start, "length": length, "label": ftype,
+                 "tip": f"{name}: encoded as {ftype} · bytes {start}..{start + length - 1}"}
+            )
 
     gt_entries = []
+    gt_type_entries = []
     for f in gt_fields:
         start, length = f["start"], f["length"]
-        tip = f"{f['name']} · bytes {start}..{start + length - 1} · {f.get('field_type', '')}"
+        ftype = str(f.get("field_type", "") or "")
+        tip = f"{f['name']} · bytes {start}..{start + length - 1} · {ftype or 'unknown type'}"
         if f.get("boundary") is not None or f.get("semantic") is not None:
             tip += f" · boundary {_num(f.get('boundary'))} · semantic {_num(f.get('semantic'))}"
         gt_entries.append({"start": start, "length": length, "label": f["name"], "tip": tip})
+        if ftype:
+            gt_type_entries.append(
+                {"start": start, "length": length, "label": ftype,
+                 "tip": f"{f['name']}: encoded as {ftype} · bytes {start}..{start + length - 1}"}
+            )
 
     def _line(tag: str, content: str, tag_tip: str = "") -> str:
         return (
@@ -726,13 +754,28 @@ def _byte_ruler(
             f"{content}</div>"
         )
 
+    disc_type_line = ""
+    if disc_type_entries:
+        disc_type_line = _line(
+            "disc. type",
+            _bands(disc_type_entries, "disc type"),
+            "Inferred encoding of each discovered field (e.g. uint8, uint16_be), placed at its byte offset.",
+        )
+
     gt_line = ""
+    gt_type_line = ""
     if gt_entries:
         gt_line = _line(
-            "Ground truth",
+            "ground truth",
             _bands(gt_entries, "gt"),
             "Reference fields from the known protocol specification, aligned to the same byte offsets for direct comparison with the discovered fields above.",
         )
+        if gt_type_entries:
+            gt_type_line = _line(
+                "GT type",
+                _bands(gt_type_entries, "gt type"),
+                "Encoding of each ground-truth field (e.g. uint8, uint16), aligned to the same byte offsets.",
+            )
 
     legend = (
         '<div class="seg-legend">'
@@ -748,7 +791,9 @@ def _byte_ruler(
         + _line("offset", f'<div class="ruler-row scale" style="{cols}">{scale}</div>', "Byte position within the message, starting at 0.")
         + _line("bytes", f'<div class="ruler-row bytecells" style="{cols}">{"".join(byte_cells)}</div>', "Per-byte template: a fixed hex value where the byte is constant across all messages, or ·· where it varies.")
         + _line("discovered", _bands(disc_entries, "disc"), "Fields inferred by the pipeline (boundaries + semantic labels), placed at their detected byte offsets.")
+        + disc_type_line
         + gt_line
+        + gt_type_line
         + legend
         + "</div>"
     )
@@ -841,7 +886,7 @@ def _family_card(
     family: Dict[str, Any],
     llm_stage_results: Optional[Dict[str, Any]] = None,
     field_matches: Optional[List[Dict[str, Any]]] = None,
-    gt_role: Optional[str] = None,
+    gt_match: Optional[Dict[str, Any]] = None,
 ) -> str:
     family_id = family.get("family_id", "unknown")
     semantic = family.get("semantic_summary") or {}
@@ -853,12 +898,26 @@ def _family_card(
     role = family.get("role", "unknown")
     role_tone = "request" if role == "request" else "response" if role == "response" else "unknown"
     gt_role_html = ""
-    if gt_role:
-        gt_tone = "request" if gt_role == "request" else "response" if gt_role == "response" else "unknown"
-        gt_role_html = (
-            f'<span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">'
-            f'GT&nbsp;{_pill(gt_role, gt_tone)}</span>'
-        )
+    gt_name_html = ""
+    if gt_match:
+        gt_role = gt_match.get("role") or ""
+        if gt_role:
+            gt_tone = "request" if gt_role == "request" else "response" if gt_role == "response" else "unknown"
+            gt_role_html = (
+                f'<span class="gt-role" data-tip="Role of the ground-truth message type this family was matched to.">'
+                f'GT&nbsp;{_pill(gt_role, gt_tone)}</span>'
+            )
+        gt_name = gt_match.get("name") or gt_match.get("type_id") or ""
+        if gt_name:
+            score = gt_match.get("score")
+            tip = "The ground-truth message type this discovered family was matched to."
+            if score is not None:
+                tip += f" Match score {_num(score)}."
+            gt_name_html = (
+                f'<p class="gt-matched" data-tip="{escape(tip)}">'
+                f'matched to <b>{_text(gt_name)}</b>'
+                f'<code class="gt-type-id">{_text(gt_match.get("type_id", ""))}</code></p>'
+            )
     related = family.get("related_families", []) or []
     related_html = "".join(_pill(item, "related") for item in related[:8]) or '<span class="muted">No direct relation links</span>'
     return f"""
@@ -867,6 +926,7 @@ def _family_card(
         <div>
           <h3>{_text(family_id)}</h3>
           <p>{_pill(role, role_tone)} {gt_role_html} {_text(family.get('message_count', 0))} messages</p>
+          {gt_name_html}
         </div>
         <div class="confidence">
           <span>Semantic confidence</span>
@@ -1061,8 +1121,8 @@ def _framing_summary_block(summary: Optional[Dict[str, Any]]) -> str:
     header_ends = summary.get("common_header_ends", []) or []
     field_type_counts = summary.get("field_type_counts", {}) or {}
     top_metrics = (
-        f'{_metric("Mean best confidence", summary.get("mean_best_confidence", 0.0))}'
-        f'{_metric("Families with header candidate", summary.get("families_with_header_candidate", 0))}'
+        f'{_metric("Mean best confidence", summary.get("mean_best_confidence", 0.0), "", "Average confidence of the best framing hypothesis (header/body split) across all families. Higher means the header boundary was easier to locate.")}'
+        f'{_metric("Families with header candidate", summary.get("families_with_header_candidate", 0), "", "How many families had at least one plausible header-end hypothesis.")}'
     )
     header_cards = "".join(
         _metric(
@@ -1077,11 +1137,11 @@ def _framing_summary_block(summary: Optional[Dict[str, Any]]) -> str:
     ) or '<span class="muted">None</span>'
     return f"""
     <section class="panel">
-      <h2>Framing Summary</h2>
+      <h2>Framing Summary {_tip('How messages are framed: where headers end and bodies begin, and what field types appear in headers. Aggregated across all families.')}</h2>
       <div class="metric-grid">{top_metrics}</div>
-      <h4>Common Header Ends</h4>
+      <h4>Common Header Ends {_tip('The most frequently inferred header-end byte offsets, and how many families share each one. A dominant value suggests a fixed-size header common to the protocol.')}</h4>
       <div class="metric-grid">{header_cards}</div>
-      <h4>Field Type Counts</h4>
+      <h4>Field Type Counts {_tip('Tally of inferred header field types (e.g. uint8, uint16) across all framing hypotheses.')}</h4>
       <div class="motif-row">{field_pills}</div>
     </section>
     """
@@ -1285,6 +1345,42 @@ def _truth_comparison_block(
     verdict_tone = "request" if verdict == "pass" else "unknown"
     overall = summary.get("overall_score", 0.0)
 
+    def _metrics_detail_table() -> str:
+        rows_def = [
+            ("message_type_matching", "Message types"),
+            ("field_boundary", "Field boundaries"),
+            ("field_semantics", "Field semantics"),
+            ("relations", "Relations"),
+        ]
+        trows = []
+        for key, label in rows_def:
+            b = metrics.get(key, {}) or {}
+            if not b:
+                continue
+            trows.append(
+                "<tr>"
+                f"<td>{_text(label)}</td>"
+                f"<td>{_num(b.get('accuracy', 0))}</td>"
+                f"<td>{_num(b.get('precision', 0))}</td>"
+                f"<td>{_num(b.get('recall', 0))}</td>"
+                f"<td>{_num(b.get('f1_score', 0))}</td>"
+                f"<td>{b.get('true_positives', 0)}</td>"
+                f"<td>{b.get('false_positives', 0)}</td>"
+                f"<td>{b.get('false_negatives', 0)}</td>"
+                "</tr>"
+            )
+        if not trows:
+            return ""
+        return (
+            '<details class="evidence"><summary>Detailed accuracy metrics '
+            + _tip("Per-dimension accuracy, precision, recall and F1 against the ground-truth spec, with true/false positive and false-negative counts.")
+            + "</summary>"
+            '<table class="metrics-table"><thead><tr>'
+            "<th>Dimension</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th>"
+            "<th>TP</th><th>FP</th><th>FN</th>"
+            f"</tr></thead><tbody>{''.join(trows)}</tbody></table></details>"
+        )
+
     return f"""
     <section class="panel eval-panel">
       <h2>Discovered vs Ground Truth</h2>
@@ -1300,11 +1396,12 @@ def _truth_comparison_block(
       </div>
       <h4>Family → Ground-truth mapping</h4>
       {mapping_table}
+      {_metrics_detail_table()}
     </section>
     """
 
 
-def _relation_graph_block(model: Dict[str, Any]) -> str:
+def _relation_graph_block(model: Dict[str, Any], relation_rows: str = "") -> str:
     families = model.get("families", []) or []
     relations = model.get("relations", []) or []
     # Keep every edge with two known endpoints (including self-relations).
@@ -1341,15 +1438,18 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
         msg = int(fam_by_id.get(nid, {}).get("message_count", 0) or 0)
         return 14.0 + 20.0 * math.sqrt(msg / max_msg)
 
-    # Small, fixed-size arrowhead (independent of stroke width) so thick edges
-    # do not get oversized arrows.
-    ARROW_LEN, ARROW_W = 13.0, 9.0
+    # Arrowhead overlap offset; arrowhead size scales with width at draw time.
+    ARROW_LEN = 14.0
 
-    def _arrowhead(tip_x: float, tip_y: float, ux: float, uy: float) -> str:
-        bx, by = tip_x - ux * ARROW_LEN, tip_y - uy * ARROW_LEN
+    def _arrowhead(tip_x: float, tip_y: float, ux: float, uy: float, width: float) -> str:
+        # Arrowhead scales with the edge stroke width so thick edges keep a
+        # proportional head; colour is inherited from the edge group via CSS.
+        a_len = 7.0 + width * 1.4
+        a_w = 5.0 + width * 1.3
+        bx, by = tip_x - ux * a_len, tip_y - uy * a_len
         px, py = -uy, ux
-        p1 = (bx + px * ARROW_W / 2, by + py * ARROW_W / 2)
-        p2 = (bx - px * ARROW_W / 2, by - py * ARROW_W / 2)
+        p1 = (bx + px * a_w / 2, by + py * a_w / 2)
+        p2 = (bx - px * a_w / 2, by - py * a_w / 2)
         return (
             f'<polygon points="{tip_x:.1f},{tip_y:.1f} {p1[0]:.1f},{p1[1]:.1f} {p2[0]:.1f},{p2[1]:.1f}" '
             f'class="graph-arrow"/>'
@@ -1383,11 +1483,11 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
             c2x, c2y = x1 + ux * rr * 3.0 + uy * rr * 1.6, y1 + uy * rr * 3.0 - ux * rr * 1.6
             tdx, tdy = ex - c2x, ey - c2y
             tnorm = math.hypot(tdx, tdy) or 1.0
-            arrow = _arrowhead(ex, ey, tdx / tnorm, tdy / tnorm)
+            arrow = _arrowhead(ex, ey, tdx / tnorm, tdy / tnorm, width)
             edge_svg.append(
                 f'<g class="graph-edge" data-tip="{escape(tip)}"><title>{escape(tip)}</title>'
                 f'<path d="M{sx:.1f},{sy:.1f} C{c1x:.1f},{c1y:.1f} {c2x:.1f},{c2y:.1f} {ex:.1f},{ey:.1f}" '
-                f'fill="none" stroke="rgba(238,244,223,.34)" stroke-width="{width:.2f}"/>'
+                f'fill="none" stroke-width="{width:.2f}"/>'
                 f"{arrow}</g>"
             )
         else:
@@ -1401,11 +1501,11 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
             # Stop the line a touch before the arrowhead so they do not overlap.
             lx = ex - ux * ARROW_LEN
             ly = ey - uy * ARROW_LEN
-            arrow = _arrowhead(ex, ey, ux, uy)
+            arrow = _arrowhead(ex, ey, ux, uy, width)
             edge_svg.append(
                 f'<g class="graph-edge" data-tip="{escape(tip)}"><title>{escape(tip)}</title>'
                 f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{lx:.1f}" y2="{ly:.1f}" '
-                f'stroke="rgba(238,244,223,.32)" stroke-width="{width:.2f}"/>'
+                f'stroke-width="{width:.2f}"/>'
                 f"{arrow}</g>"
             )
 
@@ -1434,6 +1534,15 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
         '<span class="muted">node size = message volume · arrow = request → response · edge width = pair count</span>'
         "</div>"
     )
+    table_html = ""
+    if relation_rows:
+        table_html = (
+            '<details class="evidence"><summary>Strongest relations — full metrics table '
+            + _tip("Every inferred relation with its pair count, scores, direction/order consistency, echo fields, length rules and any LLM validation.")
+            + "</summary>"
+            '<table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead>'
+            f"<tbody>{relation_rows}</tbody></table></details>"
+        )
     return f"""
     <section class="panel">
       <h2>Relation Graph {_tip('Request to response family relationships. Each node is a discovered family, coloured by role; a directed arrow points from the request family to the response family. Self-loops mark families that relate to themselves.')}</h2>
@@ -1444,6 +1553,7 @@ def _relation_graph_block(model: Dict[str, Any]) -> str:
         </svg>
       </div>
       {legend}
+      {table_html}
     </section>
     """
 
@@ -1460,9 +1570,9 @@ def render_protocol_model_html(
     # Ground-truth field matches (if available) let each family card show an
     # aligned ground-truth row beneath its discovered fields.
     field_matches = ((final_evaluation or {}).get("matches", {}) or {}).get("fields", []) or []
-    gt_role_by_family = _gt_role_by_family(final_evaluation, ground_truth)
+    gt_match_by_family = _gt_match_by_family(final_evaluation, ground_truth)
     family_cards = "\n".join(
-        _family_card(family, llm_stage_results, field_matches, gt_role_by_family.get(str(family.get("family_id"))))
+        _family_card(family, llm_stage_results, field_matches, gt_match_by_family.get(str(family.get("family_id"))))
         for family in families
     )
     # Pull structured summaries out of the flat metadata table so they can be
@@ -1480,18 +1590,10 @@ def render_protocol_model_html(
     )
     relation_rows = _relation_rows(model, llm_stage_results)
     llm_block = _llm_analysis_block(llm_analysis)
-    final_evaluation_block = _final_evaluation_block(final_evaluation)
     overview_block = _overview_block(model)
     truth_comparison_block = _truth_comparison_block(model, final_evaluation)
-    relation_graph_block = _relation_graph_block(model)
+    relation_graph_block = _relation_graph_block(model, relation_rows)
     pipeline_eval_block = _evaluation_block(evaluation)
-    relations_table_block = f"""
-  <section class="panel">
-    <h2>Strongest Relations</h2>
-    <details><summary>Show full relation metrics table</summary>
-    <table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead><tbody>{relation_rows}</tbody></table>
-    </details>
-  </section>"""
     all_families = model.get("families", []) or []
     total_messages = sum(int(family.get("message_count", 0) or 0) for family in all_families)
     total_fields = sum(len(family.get("field_hypotheses", []) or []) for family in all_families)
@@ -1505,14 +1607,12 @@ def render_protocol_model_html(
     section_specs = [
         ("sec-overview", "chart", "Family Overview", overview_block),
         ("sec-truth", "target", "Discovered vs Ground Truth", truth_comparison_block),
-        ("sec-final", "trophy", "Final Ground-Truth Scores", final_evaluation_block),
         ("sec-pipeline", "check", "Pipeline Evaluation", pipeline_eval_block),
         ("sec-llm", "spark", "LLM Analysis", llm_block),
         ("sec-refine", "sliders", "LLM Refinement", llm_refinement_block),
         ("sec-framing", "frame", "Framing Summary", framing_summary_block),
         ("sec-meta", "info", "Metadata", metadata_section),
         ("sec-graph", "graph", "Relation Graph", relation_graph_block),
-        ("sec-relations", "link", "Strongest Relations", relations_table_block),
     ]
     present = [(sid, icon, label, html) for sid, icon, label, html in section_specs if html and html.strip()]
     body_sections = "\n".join(
@@ -1655,6 +1755,10 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
   background: #05201b; border: 1px solid var(--accent-2); border-radius: 12px;
   box-shadow: 0 14px 40px rgba(0,0,0,.55); max-height: 70vh; overflow-y: auto;
 }}
+/* Invisible bridge so the cursor can cross the gap to the submenu */
+.jump-families .jump-sub:before {{
+  content: ""; position: absolute; left: 100%; top: 0; width: 16px; height: 100%;
+}}
 .jump-families:hover .jump-sub, .jump-families:focus-within .jump-sub {{ display: flex; }}
 .jump-sub-head {{ font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 2px 8px 4px; }}
 .jump-sub a {{ color: var(--ink); text-decoration: none; font-size: .82rem; padding: 5px 9px; border-radius: 7px; white-space: nowrap; font-family: "Cascadia Code", monospace; }}
@@ -1662,6 +1766,9 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 .jump-target {{ scroll-margin-top: 18px; }}
 .family-card {{ scroll-margin-top: 18px; }}
 .gt-role {{ display:inline-flex; align-items:center; gap: 2px; margin: 0 4px; cursor: help; }}
+.gt-matched {{ margin: 6px 0 0; font-size: .9rem; color: var(--muted); cursor: help; }}
+.gt-matched b {{ color: var(--ink); }}
+.gt-type-id {{ margin-left: 8px; font-size: .76rem; color: var(--accent-2); }}
 @media (max-width: 980px) {{ .jump-nav {{ display: none; }} }}
 
 /* --- Visualization grids --- */
@@ -1709,12 +1816,17 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 .map-table td {{ vertical-align: middle; }}
 .map-table .map-arrow {{ color: var(--accent); font-size: 1.2rem; text-align:center; padding: 0 4px; }}
 .map-table small {{ display:block; margin-top: 4px; }}
+.metrics-table {{ margin-top: 10px; }}
+.metrics-table th, .metrics-table td {{ text-align: center; font-variant-numeric: tabular-nums; }}
+.metrics-table th:first-child, .metrics-table td:first-child {{ text-align: left; }}
 
 /* Relation graph */
 .graph-wrap {{ display:flex; justify-content:center; }}
 .relation-graph {{ width: 100%; max-width: 520px; height: auto; }}
-.graph-edge {{ transition: stroke .2s, stroke-width .2s; }}
-.graph-edge:hover {{ stroke: var(--accent) !important; }}
+.graph-edge {{ color: rgba(238,244,223,.32); transition: color .2s; }}
+.graph-edge line, .graph-edge path {{ stroke: currentColor; }}
+.graph-arrow {{ fill: currentColor; }}
+.graph-edge:hover {{ color: var(--accent); }}
 .graph-node {{ cursor: pointer; }}
 .graph-node:hover circle {{ fill-opacity: 1; stroke: var(--accent); }}
 .graph-label {{ fill: #0b0f0e; font-size: 11px; font-weight: 700; font-family: "Cascadia Code", monospace; pointer-events: none; }}
@@ -1731,9 +1843,11 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 .rb.constant {{ background: linear-gradient(180deg, var(--accent), #9bbb3f); color: #0b0f0e; font-weight: 700; }}
 .rb.variable {{ background: linear-gradient(180deg, var(--accent-2), #2f9d86); color: #04211c; }}
 .rfield {{ position: relative; font-size: .7rem; text-align: center; padding: 5px 4px; border-radius: 6px; cursor: help;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; border: 1px solid rgba(0,0,0,.3); }}
+  min-width: 0; border: 1px solid rgba(0,0,0,.3); }}
+.rfield-label {{ display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
 .bands.disc .rfield {{ background: rgba(122,162,255,.22); color: #cfe0ff; border-color: rgba(122,162,255,.4); }}
 .bands.gt .rfield {{ background: rgba(215,255,100,.16); color: #e8ff99; border-color: rgba(215,255,100,.38); border-style: dashed; }}
+.bands.type .rfield {{ font-family: "Cascadia Code", monospace; font-size: .64rem; padding: 3px 4px; opacity: .9; }}
 .rfield.empty {{ grid-column: 1 / -1; background: none; border: none; color: var(--muted); text-align: left; font-style: italic; cursor: default; }}
 .seg-legend {{ display:flex; gap: 14px; margin: 8px 0 0 108px; flex-wrap: wrap; font-size: .76rem; color: var(--muted); }}
 .seg-legend .sw {{ display:inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }}
@@ -1760,11 +1874,11 @@ details.evidence[open] > summary:before {{ content: "▾ "; }}
       <h1>Protocol Report</h1>
       <p class="subhead">Auto-generated reverse-engineering report for an unknown industrial protocol. Evidence is inferred from payload families, structural features, request/response links, and semantic hints.</p>
       <div class="metric-grid">
-        {_metric('Families', len(model.get('families', []) or []), 'message types')}
-        {_metric('Messages represented', total_messages, 'assigned family messages')}
+        {_metric('Families', len(model.get('families', []) or []), 'message types', 'Distinct message families (clusters) discovered in the capture. Each family corresponds to a candidate message type of the protocol.')}
+        {_metric('Messages represented', total_messages, 'assigned family messages', 'Total number of captured messages assigned to a discovered family.')}
         {_metric('Discovered fields', total_fields, 'field hypotheses', 'Total number of byte-field boundaries inferred across all families.')}
         {_metric('Semantic labels', total_labels, 'labelled fields', 'Total number of fields assigned a semantic role/meaning (e.g. transaction_id, length, function_code) across all families.')}
-        {_metric('Relations', len(model.get('relations', []) or []), 'family-to-family edges')}
+        {_metric('Relations', len(model.get('relations', []) or []), 'family-to-family edges', 'Inferred request to response relationships between families (e.g. a request family paired with its response family).')}
       </div>
     </div>
   </header>
