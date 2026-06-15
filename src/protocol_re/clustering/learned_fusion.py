@@ -148,6 +148,7 @@ class SimpleFusionMLP:
         """
         if features.shape[0] < 2:
             return 0.0
+        features = np.nan_to_num(features, nan=0.0, posinf=0.0, neginf=0.0)
 
         # Variance: how much information is preserved
         variance = np.var(features, axis=0).mean()
@@ -184,6 +185,7 @@ class SimpleFusionMLP:
         """
         if features.shape[0] < 2:
             return np.ones(features.shape[1])
+        features = np.nan_to_num(features, nan=0.0, posinf=0.0, neginf=0.0)
 
         # Variance-based importance
         variances = np.var(features, axis=0)
@@ -207,13 +209,28 @@ class SimpleFusionMLP:
         
         # Compute correlation only for non-constant features
         non_constant_features = features[:, non_constant_mask]
-        correlation = np.corrcoef(non_constant_features.T)
+        centered = non_constant_features - non_constant_features.mean(axis=0)
+        norms = np.linalg.norm(centered, axis=0)
+        valid_mask = norms > 1e-8
+        if valid_mask.sum() == 0:
+            return np.ones(features.shape[1]) / features.shape[1]
+
+        if valid_mask.sum() == 1:
+            importance = np.zeros(features.shape[1])
+            non_constant_indexes = np.flatnonzero(non_constant_mask)
+            importance[non_constant_indexes[valid_mask][0]] = 1.0
+            return importance
+
+        centered = centered[:, valid_mask]
+        norms = norms[valid_mask]
+        correlation = (centered.T @ centered) / np.outer(norms, norms)
+        correlation = np.nan_to_num(correlation, nan=0.0, posinf=0.0, neginf=0.0)
         np.fill_diagonal(correlation, 0)  # Ignore self-correlation
         redundancy = np.abs(correlation).mean(axis=1)
         redundancy_penalty = 1.0 - redundancy
         
         # Combined importance for non-constant features
-        importance_non_constant = variance_importance[non_constant_mask] * redundancy_penalty
+        importance_non_constant = variance_importance[non_constant_mask][valid_mask] * redundancy_penalty
         
         # Normalize to [0, 1]
         if importance_non_constant.max() > 1e-8:
@@ -221,10 +238,11 @@ class SimpleFusionMLP:
         
         # Build full importance array
         importance = np.zeros(features.shape[1])
-        importance[non_constant_mask] = importance_non_constant
+        non_constant_indexes = np.flatnonzero(non_constant_mask)
+        importance[non_constant_indexes[valid_mask]] = importance_non_constant
         
         # Constant features get minimal importance
-        importance[~non_constant_mask] = 1e-8
+        importance[importance == 0] = 1e-8
 
         return importance
 
