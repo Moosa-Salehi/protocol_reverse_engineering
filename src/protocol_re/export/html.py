@@ -766,7 +766,7 @@ def _byte_ruler(
     gt_type_line = ""
     if gt_entries:
         gt_line = _line(
-            "ground truth",
+            "GT",
             _bands(gt_entries, "gt"),
             "Reference fields from the known protocol specification, aligned to the same byte offsets for direct comparison with the discovered fields above.",
         )
@@ -1823,7 +1823,7 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 /* Relation graph */
 .graph-wrap {{ display:flex; justify-content:center; }}
 .relation-graph {{ width: 100%; max-width: 520px; height: auto; }}
-.graph-edge {{ color: rgba(238,244,223,.32); transition: color .2s; }}
+.graph-edge {{ color: #FF94DB; transition: color .2s; }}
 .graph-edge line, .graph-edge path {{ stroke: currentColor; }}
 .graph-arrow {{ fill: currentColor; }}
 .graph-edge:hover {{ color: var(--accent); }}
