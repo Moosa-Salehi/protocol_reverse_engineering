@@ -61,13 +61,13 @@ Version: `0.1`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.2286`
-- Verdict: `fail`
-- Matched message types: `11` of `11`
-- Message type matching: accuracy=`0.2619` precision=`0.2619` recall=`1` f1=`0.4151`
-- Field boundary: accuracy=`0.0986` precision=`0.105` recall=`0.6176` f1=`0.1795`
-- Field semantics: accuracy=`0.0308` precision=`0.035` recall=`0.2059` f1=`0.0598`
-- Relations: accuracy=`0.1333` precision=`0.1429` recall=`0.6667` f1=`0.2353`
+- Overall score: `0.5249`
+- Verdict: `partial`
+- Matched message types: `26` of `26`
+- Message type matching: accuracy=`0.619` precision=`0.619` recall=`1` f1=`0.7647`
+- Field boundary: accuracy=`0.2623` precision=`0.3137` recall=`0.6154` f1=`0.4156`
+- Field semantics: accuracy=`0.1846` precision=`0.2353` recall=`0.4615` f1=`0.3117`
+- Relations: accuracy=`0.4483` precision=`0.4643` recall=`0.9286` f1=`0.619`
 
 ## LLM Analysis
 

@@ -547,6 +547,31 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     predicted_relations = predicted_protocol.get("relations", []) or []
     truth_relations = ground_truth_protocol.get("relations", []) or []
 
+    # Corpus-conditioned truth scope. A PDU truth type is only in scope when its
+    # discriminator (e.g. a Modbus function code) actually occurs in the captured
+    # traffic — i.e. some predicted family carries that opcode. This lets one truth
+    # file describe a whole protocol family (every Modbus function code, including
+    # exception responses) without penalising recall on a capture that exercises
+    # only a subset: types for absent opcodes are neither matched nor counted as
+    # false negatives, and their relations are dropped too. Header types (no
+    # discriminator) and PDU types without a constant opcode are always in scope, so
+    # a single-device capture containing only FC 01-06 evaluates exactly as before.
+    present_discriminators = {_family_discriminator_value(family) for family in families}
+    present_discriminators.discard(None)
+
+    def _truth_type_in_scope(message_type: Dict[str, Any]) -> bool:
+        discriminator = _truth_discriminator_value(message_type)
+        return discriminator is None or discriminator in present_discriminators
+
+    truth_types = [mt for mt in truth_types if _truth_type_in_scope(mt)]
+    in_scope_truth_ids = {str(mt.get("message_type_id")) for mt in truth_types}
+    truth_relations = [
+        relation
+        for relation in truth_relations
+        if str(relation.get("request_message_type_id")) in in_scope_truth_ids
+        and str(relation.get("response_message_type_id")) in in_scope_truth_ids
+    ]
+
     families_by_id = {str(item.get("family_id")): item for item in families}
     truth_by_id = {str(item.get("message_type_id")): item for item in truth_types}
 
