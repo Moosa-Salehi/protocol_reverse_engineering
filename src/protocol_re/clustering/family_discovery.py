@@ -225,6 +225,7 @@ def refine_families_by_discriminator(
     min_coverage: float = _FR.MIN_COVERAGE,
     max_stable_ratio: float = _FR.MAX_STABLE_RATIO,
     length_bucket_edges: Sequence[int] = _FR.LENGTH_BUCKET_EDGES,
+    include_length_bucket: bool = _FR.INCLUDE_LENGTH_BUCKET,
     use_direction: bool = _FR.USE_DIRECTION_IN_SIGNATURE,
     min_family_size: int = _FR.MIN_FAMILY_SIZE,
 ) -> tuple[List[FamilyAssignment], Dict[str, Any]]:
@@ -279,10 +280,21 @@ def refine_families_by_discriminator(
             noise_msg_ids.append(assignment.msg_id)
             continue
         value = int.from_bytes(payload[offset : offset + width], "big")
+        role = _signature_role(record.direction, use_direction)
+        # Direction (request/response) is the correct way to split one opcode's short
+        # request from its variable-length response. Length is only a *proxy* for that
+        # role when direction is unavailable (e.g. a capture without ports): folding it
+        # in unconditionally instead fragments a single variable-length response (a
+        # register array spanning many sizes) into one family per length. So use the
+        # length bucket only when the role is unknown, and never when it is known.
+        if include_length_bucket and role == "unknown":
+            length_component = _length_bucket(record.payload_len, length_bucket_edges)
+        else:
+            length_component = 0
         signature = (
             value,
-            _length_bucket(record.payload_len, length_bucket_edges),
-            _signature_role(record.direction, use_direction),
+            length_component,
+            role,
         )
         signature_by_msg_id[assignment.msg_id] = signature
         members_by_signature[signature].append(assignment.msg_id)

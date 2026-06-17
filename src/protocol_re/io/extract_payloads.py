@@ -9,7 +9,7 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Sequence, Tuple
 
 from protocol_re.model.schema import MessageRecord
 
@@ -118,6 +118,56 @@ def _canonical_session_key(src_ip: str, src_port: int, dst_ip: str, dst_port: in
 
 def _matches_service_port(src_port: int, dst_port: int, service_port: int | None) -> bool:
     return service_port is None or src_port == service_port or dst_port == service_port
+
+
+def infer_service_port(records: Sequence["MessageRecord"]) -> int | None:
+    """Infer the server/service port label-free from observed traffic.
+
+    The service port is the one endpoint port shared across many flows: a server
+    listens on a fixed port while clients use ephemeral ports, so the service port
+    appears (as src or dst) in far more distinct connections than any client port.
+    We score each port by the number of distinct peer-endpoints it talks to and
+    prefer the lower-numbered port to break the request/response symmetry (a
+    service port is conventionally below the ephemeral range). Returns ``None`` when
+    no port dominates (e.g. peer-to-peer traffic), leaving direction unknown rather
+    than guessing.
+    """
+    peers_by_port: Dict[int, set] = defaultdict(set)
+    for record in records:
+        src_port = int(record.src_port or 0)
+        dst_port = int(record.dst_port or 0)
+        if src_port:
+            peers_by_port[src_port].add((record.dst_ip, dst_port))
+        if dst_port:
+            peers_by_port[dst_port].add((record.src_ip, src_port))
+    if not peers_by_port:
+        return None
+    best_breadth = max(len(peers) for peers in peers_by_port.values())
+    if best_breadth < 2:
+        return None
+    # Among the most-connected ports, the service port is the lowest-numbered.
+    return min(port for port, peers in peers_by_port.items() if len(peers) == best_breadth)
+
+
+def backfill_directions(records: Sequence["MessageRecord"], service_port: int | None = None) -> int:
+    """Populate ``direction`` from ports when extraction left it ``unknown``.
+
+    Mutates records in place. When ``service_port`` is not given it is inferred via
+    :func:`infer_service_port`. Returns the number of records whose direction was
+    set, so callers can report (or skip) when no service port could be determined."""
+    if service_port is None:
+        service_port = infer_service_port(records)
+    if service_port is None:
+        return 0
+    updated = 0
+    for record in records:
+        if record.direction and record.direction != "unknown":
+            continue
+        new_direction = _direction(int(record.src_port or 0), int(record.dst_port or 0), service_port)
+        if new_direction != "unknown":
+            record.direction = new_direction
+            updated += 1
+    return updated
 
 
 def _direction(src_port: int, dst_port: int, service_port: int | None) -> str:

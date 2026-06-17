@@ -602,12 +602,61 @@ class FamilyRefinement:
     # falls back to the label-free structural rule below.
     MIN_GLOBAL_MI: float = 0.25
 
+    # Structure-aware selection. A true type/command code is the byte whose value
+    # determines the message *structure* (length / field layout); an address,
+    # node-id or transaction-id is structurally inert. We measure this label-free
+    # as the normalised MI between a candidate's value and the message length
+    # bucket. When any candidate clears MIN_STRUCTURE_MI we select the earliest,
+    # narrowest such candidate (the opcode is conventionally the first
+    # structure-determining body byte), which rejects variable address fields
+    # (e.g. a Modbus Unit-Id at offset 6) that would otherwise outrank the real
+    # function code at offset 7 once the corpus spans multiple devices. Falls
+    # back to the label-guided / structural rules when nothing clears the bar
+    # (e.g. a fixed-length protocol where the opcode does not imply length).
+    STRUCTURE_AWARE_SELECTION: bool = True
+    # Floor on I(byte; label | exact_length) for a candidate to count as carrying
+    # real type information (so the earliest such byte — the opcode — is selected).
+    # It must sit above a structurally inert leading address and below the opcode:
+    # on the multi-device capture the Unit-Id at offset 6 scores ~0.09 while the
+    # function code at offset 7 scores ~0.19, and on the single-device capture the
+    # function code scores ~0.12 — so a floor of 0.1 admits the opcode on both while
+    # rejecting the address. A length echo / byte-count scores ~0 and is excluded
+    # regardless. When NO candidate clears the floor the selector falls back to the
+    # label-guided / structural rules below.
+    MIN_STRUCTURE_MI: float = 0.1
+
+    # Minimum effective cardinality for the type-aware path to treat a byte as an
+    # opcode. A type/command code takes at least a few distinct values (Modbus uses
+    # ~12 function codes); a near-binary field that merely correlates with length is
+    # a flag or a coarse address, not a type code. This is what separates the
+    # multi-device Unit-Id at offset 6 (effective cardinality 3 on the non-noise
+    # subset: two masters 0x01/0xff plus a gateway 0xfe, incidentally clearing the
+    # type-MI floor) from the function code at offset 7 (effective cardinality 12 on
+    # the multi-device corpus, 4 on the single-device one). Set to 4: it admits the
+    # opcode on both corpora and excludes the leading address. A protocol with fewer
+    # than 4 opcodes is still reachable through the downstream label-guided path.
+    MIN_TYPE_CARDINALITY: int = 4
+
     # Cardinality window. Below MIN it is a constant (no discrimination); above
     # MAX it is an address / data / counter / transaction-id field, not a type
     # code. Kept tight so high-cardinality fields are rejected outright — this is
     # the primary gate that lets the structural fallback ignore txn ids/addresses.
     MIN_CARDINALITY: int = 2
     MAX_CARDINALITY: int = 64
+
+    # The cardinality gate counts the *effective* number of values — how many of
+    # the most-frequent values are needed to cover (1 - EFFECTIVE_CARDINALITY_TAIL_MASS)
+    # of the messages — not the raw distinct count. A genuine type code concentrates
+    # its mass in a few values (the Modbus function code covers 99% of messages in 12
+    # values) with, on real captures, a long tail of rare junk (misaligned /
+    # fragmented / non-conforming payloads) that inflates the raw count to 252 and
+    # got it rejected, leaving the detector to latch onto the structurally inert
+    # Unit-Id at offset 6. An address / counter / transaction-id instead spreads its
+    # mass over many values, so its effective count stays high and it is still
+    # rejected (a 16-bit txn-id needs ~20000 values to cover 99%). This is robust to
+    # a peaked-but-high-cardinality field, which a simple per-value frequency cutoff
+    # is not.
+    EFFECTIVE_CARDINALITY_TAIL_MASS: float = 0.01
 
     # Minimum fraction of messages that must actually contain the byte(s) at the
     # candidate offset (rejects offsets that only exist in long messages).
@@ -635,6 +684,16 @@ class FamilyRefinement:
     LENGTH_BUCKET_EDGES: tuple[int, ...] = (
         8, 9, 10, 11, 12, 13, 14, 16, 20, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 1024,
     )
+
+    # Whether the payload-length bucket may enter the family signature — and when.
+    # The length bucket is folded in ONLY for messages whose request/response role
+    # is unknown (no direction could be derived, e.g. a capture without ports),
+    # where it serves as a proxy for that role. When direction IS known the opcode +
+    # role already separate the short request from its variable-length response, so
+    # length is omitted to avoid fragmenting one variable-length response (a register
+    # array spanning many sizes) into one family per size. See the role gate in
+    # refine_families_by_discriminator. Default ON because the gating makes it safe.
+    INCLUDE_LENGTH_BUCKET: bool = True
 
     # Whether direction (request/response role) is part of the family signature.
     USE_DIRECTION_IN_SIGNATURE: bool = True

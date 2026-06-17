@@ -45,6 +45,62 @@ def normalized_mi(left: Sequence[Any], right: Sequence[Any]) -> float:
     return max(0.0, min(1.0, mutual_information(left, right) / denom))
 
 
+def conditional_normalized_mi(
+    values: Sequence[Any], labels: Sequence[Any], strata: Sequence[Any]
+) -> float:
+    """Normalised I(values; labels | strata) — type information a byte adds about
+    the bootstrap label *beyond* what the message length already explains.
+
+    This is the signal that isolates a type code from a length echo. Conditioning
+    on the exact message length makes a byte-count / length field redundant (its
+    value is ``length - const``, so it contributes ~0 once length is known), while a
+    genuine opcode still separates message types *within* a fixed length and keeps a
+    high score. A structurally inert address / node-id contributes little to begin
+    with. Normalised by the conditional label entropy so the result is comparable
+    across corpora with different family granularity."""
+    if not values or len(values) != len(labels) or len(values) != len(strata):
+        return 0.0
+    groups: Dict[Any, List[Tuple[Any, Any]]] = defaultdict(list)
+    for value, label, stratum in zip(values, labels, strata):
+        groups[stratum].append((value, label))
+    total = float(len(values))
+    conditional_mi = 0.0
+    conditional_label_entropy = 0.0
+    for members in groups.values():
+        weight = len(members) / total
+        member_values = [value for value, _ in members]
+        member_labels = [label for _, label in members]
+        conditional_mi += weight * mutual_information(member_values, member_labels)
+        conditional_label_entropy += weight * entropy(member_labels)
+    return max(0.0, min(1.0, conditional_mi / max(conditional_label_entropy, 1e-9)))
+
+
+def _effective_cardinality(value_counts: Counter, total: int, tail_mass: float) -> int:
+    """Number of most-frequent values needed to cover ``1 - tail_mass`` of ``total``.
+
+    A type code concentrates its mass in a few values (low effective cardinality
+    even when a rare junk tail inflates the raw distinct count); an address /
+    counter / txn-id spreads its mass and stays high."""
+    if total <= 0:
+        return 0
+    target = (1.0 - tail_mass) * total
+    cumulative = 0
+    count = 0
+    for value_count in sorted(value_counts.values(), reverse=True):
+        if cumulative >= target:
+            break
+        cumulative += value_count
+        count += 1
+    return count
+
+
+def _length_bucket(length: int, edges: Sequence[int]) -> int:
+    for index, edge in enumerate(edges):
+        if length < edge:
+            return index
+    return len(edges)
+
+
 def _offset_values(messages: Sequence[bytes], offset: int) -> Tuple[List[int], List[int]]:
     values: List[int] = []
     indexes: List[int] = []
@@ -99,6 +155,10 @@ def detect_global_discriminator(
     min_coverage: float = _FR.MIN_COVERAGE,
     max_stable_ratio: float = _FR.MAX_STABLE_RATIO,
     length_field_match_ratio: float = _FR.LENGTH_FIELD_MATCH_RATIO,
+    structure_aware: bool = _FR.STRUCTURE_AWARE_SELECTION,
+    min_structure_mi: float = _FR.MIN_STRUCTURE_MI,
+    min_type_cardinality: int = _FR.MIN_TYPE_CARDINALITY,
+    effective_cardinality_tail_mass: float = _FR.EFFECTIVE_CARDINALITY_TAIL_MASS,
 ) -> Optional[Dict[str, Any]]:
     """Detect the corpus-wide type-discriminator (offset + width) label-free.
 
@@ -135,6 +195,12 @@ def detect_global_discriminator(
 
     scan_widths = sorted({int(width) for width in widths if int(width) >= 1})
 
+    # Exact message length per message: the stratum we condition on to separate a
+    # type code from a length echo (see conditional_normalized_mi). Conditioning on
+    # the EXACT length (not a coarse bucket) is what zeroes out a byte-count field,
+    # whose value is fully determined by length.
+    message_lengths = [len(message) for message in messages]
+
     # Header bytes are the structural frame, never the type code: bytes that are
     # constant across the corpus (protocol-id, unit-id, ...) or that belong to a
     # length field. The discriminator must lie entirely outside them — this is
@@ -161,18 +227,73 @@ def detect_global_discriminator(
             coverage = len(values) / len(messages)
             if coverage < min_coverage:
                 continue
-            cardinality = len(set(values))
-            if cardinality < min_cardinality or cardinality > max_cardinality:
+            value_counts = Counter(values)
+            cardinality = len(value_counts)
+            # Effective cardinality: how many of the most-frequent values are needed
+            # to cover (1 - tail_mass) of the messages. This ignores a rare junk tail
+            # (so a genuine opcode is not rejected) yet stays high for a field whose
+            # mass is spread across many values (an address / counter / txn-id).
+            effective_cardinality = _effective_cardinality(value_counts, len(values), effective_cardinality_tail_mass)
+            if effective_cardinality < min_cardinality or effective_cardinality > max_cardinality:
                 continue
-            stable_ratio = Counter(values).most_common(1)[0][1] / len(values)
+            stable_ratio = value_counts.most_common(1)[0][1] / len(values)
             if stable_ratio > max_stable_ratio:
                 continue
             mi = normalized_mi(values, [labels[index] for index in indexes])
+            type_mi = conditional_normalized_mi(
+                values,
+                [labels[index] for index in indexes],
+                [message_lengths[index] for index in indexes],
+            )
             candidates.append(
-                {"offset": offset, "width": width, "global_mi": round(mi, 6), "cardinality": cardinality, "_mi": mi}
+                {
+                    "offset": offset,
+                    "width": width,
+                    "global_mi": round(mi, 6),
+                    "type_mi": round(type_mi, 6),
+                    "cardinality": cardinality,
+                    "_mi": mi,
+                    "_type_mi": type_mi,
+                    "_effective_cardinality": effective_cardinality,
+                }
             )
     if not candidates:
         return None
+
+    # Prefer the narrowest window. A single-byte opcode must not be passed over for
+    # a wider window that merely absorbs an adjacent data/length byte and so
+    # correlates more strongly with a byte-pattern bootstrap (which would re-key on
+    # opcode+data and over-split). Only widen when no narrower window qualifies at
+    # all — a genuine multi-byte type field.
+    narrowest = min(candidate["width"] for candidate in candidates)
+    candidates = [candidate for candidate in candidates if candidate["width"] == narrowest]
+
+    # Type-aware selection (primary): the opcode is the EARLIEST byte that carries
+    # real type information *beyond message length* — i.e. the earliest survivor
+    # whose I(byte; label | exact_length) clears a floor. Conditioning on exact
+    # length is what makes this robust across corpora:
+    #   * a length echo / byte-count scores ~0 (its value is fixed by length), so it
+    #     is excluded even when it dominates raw label MI on a length-clustered
+    #     bootstrap (the offset-8 trap on both Modbus captures);
+    #   * a structurally inert address / node-id scores below the floor (little type
+    #     signal at all), so it is skipped even though it sits at an earlier offset
+    #     (the offset-6 Unit-Id trap on the multi-device capture);
+    #   * the real opcode and its trailing data bytes both clear the floor, and the
+    #     opcode is the earliest of them — so taking the earliest survivor lands on
+    #     the opcode rather than a deeper data byte that may individually score
+    #     higher (the offset-9 trap on the single-device capture).
+    # Earliest-above-floor is what the original structural fallback did right; the
+    # type_mi floor is what additionally rejects the leading address it could not.
+    if structure_aware:
+        meaningful = [
+            candidate
+            for candidate in candidates
+            if candidate["_type_mi"] >= min_structure_mi
+            and candidate["_effective_cardinality"] >= min_type_cardinality
+        ]
+        if meaningful:
+            chosen = min(meaningful, key=lambda candidate: (candidate["offset"], candidate["width"]))
+            return {key: value for key, value in chosen.items() if not key.startswith("_")}
 
     best_mi = max(candidate["_mi"] for candidate in candidates)
     if best_mi >= min_global_mi:
