@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence
 
 from protocol_re.config.thresholds import Clustering as _CL
+from protocol_re.config.thresholds import ConformanceFilter as _CF
 from protocol_re.config.thresholds import FamilyRefinement as _FR
+from protocol_re.clustering.conformance import detect_framing_constants, partition_by_conformance
 from protocol_re.clustering.diagnostics import build_family_diagnostics
 from protocol_re.clustering.hybrid_features import build_feature_matrix
 from protocol_re.clustering.latent_standardize import LatentStandardizer
@@ -51,6 +53,7 @@ class ClusteringResult:
     fallback_reason: str | None = None
     diagnostics: Dict[str, Any] | None = None
     refinement: Dict[str, Any] | None = None
+    conformance: Dict[str, Any] | None = None
 
 
 
@@ -406,9 +409,29 @@ def discover_families(
     # dropped 0.96 -> 0.61 with it on). Kept available for genuinely cross-distribution
     # corpora where latent scale mismatch dominates, but it must be explicitly requested.
     refine_discriminator: bool = _FR.ENABLED,  # Post-clustering discriminator-aware family refinement.
+    conformance_filter: bool = _CF.ENABLED,  # Drop messages that violate a constant framing invariant.
 ) -> ClusteringResult:
     if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
         raise ValueError(f"Unsupported feature mode: {feature_mode}")
+
+    # Quarantine non-conforming messages (e.g. non-protocol payloads that slipped
+    # past a coarse capture filter) before clustering, so they neither seed nor get
+    # propagated into spurious families. No-op when the corpus exposes no constant
+    # framing invariant, so a single clean protocol is unaffected.
+    conformance_meta: Dict[str, Any] | None = None
+    if conformance_filter:
+        constants = detect_framing_constants(records)
+        if constants:
+            conforming, nonconforming = partition_by_conformance(records, constants)
+            conformance_meta = {
+                "applied": True,
+                "constant_offsets": {str(offset): value for offset, value in sorted(constants.items())},
+                "conforming_message_count": len(conforming),
+                "nonconforming_message_count": len(nonconforming),
+            }
+            records = conforming
+        else:
+            conformance_meta = {"applied": False, "reason": "no_constant_invariant_detected"}
 
     working_records = unique_messages(records)
     if sample_size is not None and len(working_records) > sample_size:
@@ -435,6 +458,7 @@ def discover_families(
             latent_cache=latent_cache_path,
             fallback_reason="dependency_unavailable:" + ",".join(unavailable_dependencies),
             diagnostics=build_family_diagnostics(records, result.assignments),
+            conformance=conformance_meta,
         )
 
     feature_info = None
@@ -567,4 +591,5 @@ def discover_families(
         fallback_reason=fallback_reason,
         diagnostics=diagnostics,
         refinement=refinement_meta,
+        conformance=conformance_meta,
     )

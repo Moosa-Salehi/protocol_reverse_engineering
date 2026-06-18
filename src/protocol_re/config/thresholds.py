@@ -559,6 +559,44 @@ class Clustering:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+class ConformanceFilter:
+    """Thresholds for the framing-conformance message filter
+    (:mod:`protocol_re.clustering.conformance`).
+
+    Drops messages that violate a high-confidence constant framing field detected
+    across the corpus (e.g. the Modbus protocol-identifier 0x0000), quarantining
+    non-protocol payloads that slipped past a coarse capture filter without
+    discarding rare-but-real message types.
+    """
+
+    # Master gate. Default ON: the filter is a no-op when no constant invariant is
+    # found (it only ever removes messages that contradict a near-universal value),
+    # so it is safe to leave enabled; a clean single-protocol capture is unaffected.
+    ENABLED: bool = True
+
+    # Header region scanned for constant invariants.
+    MAX_OFFSET: int = 16
+
+    # An offset must be present in at least this fraction of messages to be judged.
+    MIN_COVERAGE: float = 0.9
+
+    # Dominant-value share for an offset to count as a constant framing field. Set
+    # very high: a true framing constant holds in ~every conforming message, and the
+    # only messages below it are the non-conforming ones we want to drop. Kept above
+    # the share a length high-byte can reach when long messages are merely sparse, as
+    # a second line of defence behind the explicit length-field exclusion below.
+    CONSTANT_RATIO: float = 0.998
+
+    # A candidate constant offset that falls inside a detected length field is
+    # excluded: its value is constant only because the capture lacks messages long
+    # enough to exercise it, not because the wire format fixes it. Only width-2 is
+    # scanned: a wider window starting on a constant-zero prefix (e.g. the Modbus
+    # protocol-id 0x0000 immediately before the 2-byte length) spuriously matches a
+    # length expression and would wrongly exclude that genuine constant field.
+    LENGTH_FIELD_MATCH_RATIO: float = 0.85
+    LENGTH_FIELD_WIDTHS: tuple[int, ...] = (2,)
+
+
 class FamilyRefinement:
     """Thresholds for discriminator-aware family refinement
     (:func:`protocol_re.clustering.family_discovery.refine_families_by_discriminator`).

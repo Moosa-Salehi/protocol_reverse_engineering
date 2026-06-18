@@ -47,6 +47,16 @@ def main() -> None:
              "relations/recall on the evaluated corpus due to field-only type matching in the "
              "evaluator). No-op when no discriminator is detected.",
     )
+    parser.add_argument(
+        "--conformance-filter",
+        dest="conformance_filter",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Drop messages that violate a high-confidence constant framing field (e.g. the "
+             "Modbus protocol-identifier 0x0000) before clustering, removing non-protocol payloads "
+             "that slipped past a coarse capture filter without discarding rare-but-real message "
+             "types. No-op when the corpus exposes no constant invariant. Default ON.",
+    )
     parser.add_argument("--layer-aware", action="store_true", help="Enable layer-aware clustering (A6, experimental)")
     parser.add_argument("--framing-json", help="Framing JSON for layer detection (required with --layer-aware)")
     parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer detection")
@@ -119,6 +129,7 @@ def main() -> None:
             framing_data=framing_data,
             layer_min_confidence=args.layer_min_confidence,
             refine_discriminator=args.refine_discriminator,
+            conformance_filter=args.conformance_filter,
         )
     family_count = len({assignment.family_id for assignment in result.assignments})
 
@@ -148,6 +159,21 @@ def main() -> None:
             )
         else:
             print(f"[+] Discriminator refinement skipped: {result.refinement.get('reason', 'unspecified')}")
+
+    if result.conformance is not None and result.conformance.get("applied"):
+        dropped = result.conformance.get("nonconforming_message_count", 0)
+        offsets = result.conformance.get("constant_offsets", {})
+        logger.decision(
+            decision="Applied framing-conformance filter",
+            reason=f"constant framing offsets {offsets}",
+            nonconforming_message_count=dropped,
+            conforming_message_count=result.conformance.get("conforming_message_count"),
+        )
+        print(f"[+] Conformance filter: dropped {dropped} non-conforming messages "
+              f"(constant offsets {offsets})")
+    elif result.conformance is not None:
+        print(f"[+] Conformance filter: no constant invariant detected "
+              f"({result.conformance.get('reason', 'unspecified')})")
 
     if result.feature_mode != result.requested_feature_mode or result.fallback_reason:
         logger.warning(
@@ -187,6 +213,7 @@ def main() -> None:
             "symbolic_feature_count": result.symbolic_feature_count,
             "fallback_reason": result.fallback_reason,
             "discriminator_refinement": result.refinement,
+            "conformance_filter": result.conformance,
         },
     }
 
