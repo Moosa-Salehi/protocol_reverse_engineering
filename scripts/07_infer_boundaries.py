@@ -168,11 +168,21 @@ def main() -> None:
 
     with logger.stage("group_messages"):
         grouped = defaultdict(list)
+        discriminator_offset = None
+        discriminator_width = 1
         if args.assignments_json:
             logger.info(f"Loading family assignments from {args.assignments_json}")
             with open(args.assignments_json, "r", encoding="utf-8") as handle:
                 assignment_payload = json.load(handle)
             family_by_msg_id = {item["msg_id"]: item["family_id"] for item in assignment_payload["assignments"]}
+            # The type-discriminator offset (e.g. the Modbus function code) detected in
+            # stage 04. Hierarchical body pools group by length, which mixes opcodes, so
+            # per-pool opcode isolation cannot see a constant byte there; forcing a cut at
+            # this known offset keeps the opcode its own field in every family.
+            _refine = (assignment_payload.get("metadata") or {}).get("discriminator_refinement") or {}
+            if _refine.get("applied"):
+                discriminator_offset = int(_refine.get("offset"))
+                discriminator_width = int(_refine.get("width", 1) or 1)
             for record in records:
                 family_id = family_by_msg_id.get(record.msg_id)
                 if family_id is None and not args.include_unassigned:
@@ -281,6 +291,13 @@ def main() -> None:
                     fam_len = Counter(len(h) // 2 for h in messages_hex).most_common(1)[0][0]
                     body_bounds = body_boundaries_by_len.get(fam_len, {0, fam_len})
                     positions = {p for p in (header_boundaries | body_bounds) if 0 <= p <= fam_len} | {0, fam_len}
+                    # Force the type-discriminator (opcode) to be its own field. Length
+                    # pools mix opcodes, so per-pool isolation misses it; this known
+                    # offset is opcode-pure per family and exposes its constant value.
+                    if discriminator_offset is not None:
+                        for cut in (discriminator_offset, discriminator_offset + discriminator_width):
+                            if 0 < cut < fam_len:
+                                positions.add(cut)
                     segments = _segments_from_boundaries(positions)
                 else:
                     # Use enhanced boundary detection (now the only implementation)
