@@ -216,10 +216,10 @@ summary { cursor:pointer; color: var(--accent-2); font-weight: 700; }
 .graph-legend span { display:flex; align-items:center; gap: 6px; }
 
 /* Byte ruler */
-.ruler { margin: 18px 0 8px; display:flex; flex-direction: column; gap: 5px; }
-.ruler-line { display:grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; }
-.ruler-tag { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; text-align: right; }
-.ruler-row { display:grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 2px; }
+.ruler { --cell: 18px; margin: 18px 0 8px; display:flex; flex-direction: column; gap: 5px; overflow-x: auto; overflow-y: hidden; }
+.ruler-line { display:grid; grid-template-columns: 96px minmax(min-content, 1fr); gap: 12px; align-items: center; }
+.ruler-tag { position: sticky; left: 0; z-index: 2; background: var(--panel); padding-right: 8px; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; text-align: right; }
+.ruler-row { display:grid; grid-template-columns: repeat(var(--cols), minmax(var(--cell), 1fr)); gap: 2px; }
 .ruler-row.scale .rk { font-size: .6rem; color: var(--muted); text-align: center; border-left: 1px solid var(--line); padding-bottom: 1px; min-width: 0; }
 .rb { position: relative; text-align: center; font-family: "Cascadia Code", monospace; font-size: .72rem; padding: 6px 0; border-radius: 5px; cursor: help; min-width: 0; }
 .rb.constant { background: linear-gradient(180deg, var(--accent), #9bbb3f); color: #0b0f0e; font-weight: 700; }
