@@ -433,6 +433,84 @@
         ]
       },
       {
+        "message_type_id": "modbus_fc05_write_single_coil_response",
+        "name": "Write Single Coil Response",
+        "role": "response",
+        "scope_requires_response_role": true,
+        "description": "Byte-identical echo of the Write Single Coil request. Only in scope when the capture exposes a distinct response-direction family for FC 0x05 (i.e. request/response were separated by direction); a direction-blind capture keeps FC 0x05 as the single request-role echo type. PDU-relative offsets.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 5,
+            "description": "Function code 0x05."
+          },
+          {
+            "name": "output_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big",
+            "required": true,
+            "description": "Target coil address (echoed)."
+          },
+          {
+            "name": "output_value",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big",
+            "required": true,
+            "description": "0xFF00 = ON, 0x0000 = OFF (echoed)."
+          }
+        ],
+        "examples": [
+          "05 00 0D FF 00"
+        ]
+      },
+      {
+        "message_type_id": "modbus_fc06_write_single_register_response",
+        "name": "Write Single Register Response",
+        "role": "response",
+        "scope_requires_response_role": true,
+        "description": "Byte-identical echo of the Write Single Register request. Only in scope when the capture exposes a distinct response-direction family for FC 0x06; a direction-blind capture keeps FC 0x06 as the single request-role echo type. PDU-relative offsets.",
+        "fields": [
+          {
+            "name": "function_code",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "required": true,
+            "constant_value": 6,
+            "description": "Function code 0x06."
+          },
+          {
+            "name": "register_address",
+            "start": 1,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big",
+            "required": true,
+            "description": "Target register address (echoed)."
+          },
+          {
+            "name": "register_value",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big",
+            "required": true,
+            "description": "Value written (echoed)."
+          }
+        ],
+        "examples": [
+          "06 00 08 00 08"
+        ]
+      },
+      {
         "message_type_id": "modbus_fc08_diagnostics_request",
         "name": "Diagnostics Request",
         "role": "request",

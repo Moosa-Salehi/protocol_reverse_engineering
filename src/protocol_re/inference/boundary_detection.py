@@ -272,6 +272,64 @@ def _one_byte_count_ratio(messages: Sequence[bytes], pos: int, min_samples: int 
     return matches / usable
 
 
+def detect_payload_length_field(
+    messages: Sequence[bytes],
+    body_start: int = 0,
+    match_ratio: float = 0.90,
+    min_distinct_lengths: int = 3,
+    min_samples: int = 8,
+    max_scan_offset: int = 48,
+) -> Optional[int]:
+    """Locate a length/count field that delimits a trailing variable-length payload.
+
+    Scans body offsets for a 1- or 2-byte big-endian field whose value equals the
+    number of bytes that follow it (``value == len(msg) - (pos + width)``). To reject
+    a *constant* byte that only coincidentally equals the remaining count at one
+    message length (e.g. a function code 0x04 in a fixed 12-byte request), the field
+    must genuinely TRACK length: the matching messages must span at least
+    ``min_distinct_lengths`` distinct lengths and the field must take that many
+    distinct values. Returns the offset where the variable payload begins
+    (``pos + width``), or ``None`` if no such field exists.
+
+    The latest (largest-offset) qualifying field wins, so structural fields before
+    the count (address/quantity) are preserved and only the true trailing array is
+    collapsed.
+    """
+    if len(messages) < min_samples:
+        return None
+    distinct_lengths = {len(message) for message in messages}
+    if len(distinct_lengths) < min_distinct_lengths:
+        # A fixed-length family has no variable-length payload to delimit.
+        return None
+    max_len = max(distinct_lengths)
+    best_array_start: Optional[int] = None
+    for width in (1, 2):
+        for pos in range(max(0, body_start), min(max_len - width, max_scan_offset)):
+            usable = matches = 0
+            matched_lengths: Set[int] = set()
+            matched_values: Set[int] = set()
+            for message in messages:
+                if len(message) < pos + width:
+                    continue
+                usable += 1
+                value = int.from_bytes(message[pos:pos + width], "big")
+                if value == len(message) - (pos + width):
+                    matches += 1
+                    matched_lengths.add(len(message))
+                    matched_values.add(value)
+            if usable < min_samples:
+                continue
+            if (
+                matches / usable >= match_ratio
+                and len(matched_lengths) >= min_distinct_lengths
+                and len(matched_values) >= min_distinct_lengths
+            ):
+                array_start = pos + width
+                if best_array_start is None or array_start > best_array_start:
+                    best_array_start = array_start
+    return best_array_start
+
+
 def should_merge_segments(
     seg1: Segment,
     seg2: Segment,

@@ -7,7 +7,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments
+from protocol_re.inference.boundary_detection import (
+    detect_payload_length_field,
+    infer_field_hypotheses,
+    infer_segments,
+)
 from protocol_re.inference.discriminator_fields import detect_global_discriminator
 from protocol_re.inference.semantic_labeling import summarize_semantics
 from protocol_re.clustering.family_discovery import refine_families_by_discriminator
@@ -404,6 +408,44 @@ def test_body_opcode_is_isolated_as_standalone_field() -> None:
     merged_spans = [(segment.start, segment.end) for segment in not_isolated]
     # Pre-fix behaviour: the opcode is fused into a wider field starting at 7.
     assert any(start == 7 and end > 8 for start, end in merged_spans)
+
+
+def test_payload_length_field_delimits_variable_array() -> None:
+    # Modbus read-registers response: MBAP(7) + fc(1) + byte_count(1) + N data
+    # bytes. byte_count at offset 8 equals the number of trailing data bytes, so
+    # the variable register array begins at offset 9 regardless of message length.
+    messages = []
+    for txn, regs in [(1, 1), (2, 2), (3, 5), (4, 8), (5, 16), (6, 3), (7, 10), (8, 4), (9, 7), (10, 12)]:
+        data = bytes((i * 7) % 256 for i in range(regs * 2))
+        body = bytes([0x04, regs * 2]) + data
+        frame = txn.to_bytes(2, "big") + b"\x00\x00" + (1 + len(body)).to_bytes(2, "big") + b"\x01" + body
+        messages.append(frame)
+    array_start = detect_payload_length_field(messages, body_start=7)
+    assert array_start == 9  # right after fc(7) + byte_count(8)
+
+
+def test_payload_length_field_rejects_constant_opcode_coincidence() -> None:
+    # A constant function code (0x04) that happens to equal len - (pos + 1) at the
+    # dominant length must NOT be mistaken for a length field: a real length field
+    # tracks message length, a constant opcode does not. Most messages are 12 bytes
+    # (where 0x04 == 12 - 8) plus a few other lengths to exercise the tracking guard.
+    messages = [
+        bytes.fromhex(f"{txn:04x}00000006" + "04" + f"{addr:04x}" + "0001")
+        for txn, addr in [(1, 8), (2, 19), (3, 100), (4, 200), (5, 7), (6, 41), (7, 9), (8, 55)]
+    ]
+    # add a couple of longer messages where the constant 0x04 no longer matches
+    messages.append(bytes.fromhex("000900000009" + "04" + "0001" + "0002" + "abcd"))
+    messages.append(bytes.fromhex("000a0000000b" + "04" + "0001" + "0002" + "abcdef99"))
+    assert detect_payload_length_field(messages, body_start=7) is None
+
+
+def test_payload_length_field_no_op_on_fixed_length_family() -> None:
+    # Single-length family has no variable-length payload to delimit.
+    messages = [
+        bytes.fromhex(f"{txn:04x}00000006" + "03" + f"{addr:04x}" + "0001")
+        for txn, addr in [(1, 8), (2, 19), (3, 100), (4, 200), (5, 7), (6, 41), (7, 9), (8, 55)]
+    ]
+    assert detect_payload_length_field(messages, body_start=7) is None
 
 
 def test_variable_leading_body_byte_is_not_force_split() -> None:

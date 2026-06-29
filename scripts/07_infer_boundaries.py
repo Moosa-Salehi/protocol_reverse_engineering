@@ -11,7 +11,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
-from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments, infer_template
+from protocol_re.inference.boundary_detection import (
+    detect_payload_length_field,
+    infer_field_hypotheses,
+    infer_segments,
+    infer_template,
+)
 from protocol_re.model.schema import Segment
 from protocol_re.utils.logging import setup_stage_logging, ProgressTracker
 
@@ -298,6 +303,16 @@ def main() -> None:
                         for cut in (discriminator_offset, discriminator_offset + discriminator_width):
                             if 0 < cut < fam_len:
                                 positions.add(cut)
+                    # Variable-length payload modeling: when the family carries a
+                    # length/count field that delimits a trailing variable-length
+                    # array (Modbus register/coil data after byte_count), the
+                    # per-length body pools fragment that array on its changing data
+                    # bytes. Collapse everything after the count field into a single
+                    # field by dropping interior boundaries past the array start.
+                    family_bytes = [bytes.fromhex(h) for h in messages_hex]
+                    array_start = detect_payload_length_field(family_bytes, body_start=body_start)
+                    if array_start is not None and 0 < array_start < fam_len:
+                        positions = {p for p in positions if p <= array_start} | {array_start, fam_len}
                     segments = _segments_from_boundaries(positions)
                 else:
                     # Use enhanced boundary detection (now the only implementation)

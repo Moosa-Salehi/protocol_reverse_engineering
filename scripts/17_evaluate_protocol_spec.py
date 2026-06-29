@@ -558,10 +558,28 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     # a single-device capture containing only FC 01-06 evaluates exactly as before.
     present_discriminators = {_family_discriminator_value(family) for family in families}
     present_discriminators.discard(None)
+    # Discriminators carried by a response-direction family. Used to scope echo
+    # types (request/response byte-identical, e.g. Modbus write-single FC 05/06)
+    # whose request and response share a function code: the response type only
+    # makes sense when the capture actually separated the two directions. A
+    # direction-blind capture has no response-role family, so the response echo
+    # type stays out of scope and is not counted as a false negative.
+    response_discriminators = {
+        _family_discriminator_value(family)
+        for family in families
+        if _norm(family.get("role")) == "response"
+    }
+    response_discriminators.discard(None)
 
     def _truth_type_in_scope(message_type: Dict[str, Any]) -> bool:
         discriminator = _truth_discriminator_value(message_type)
-        return discriminator is None or discriminator in present_discriminators
+        if discriminator is None:
+            return True
+        if discriminator not in present_discriminators:
+            return False
+        if message_type.get("scope_requires_response_role"):
+            return discriminator in response_discriminators
+        return True
 
     truth_types = [mt for mt in truth_types if _truth_type_in_scope(mt)]
     in_scope_truth_ids = {str(mt.get("message_type_id")) for mt in truth_types}
