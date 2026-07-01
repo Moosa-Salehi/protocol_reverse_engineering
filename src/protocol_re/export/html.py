@@ -1650,6 +1650,24 @@ def render_protocol_model_html(
   --bad: #ff6b6b;
   --shadow: 0 24px 80px rgba(0,0,0,.38);
 }}
+* {{
+  scrollbar-width: thin;
+  scrollbar-color: rgba(215,255,100,.7) rgba(13,17,16,.72);
+}}
+*::-webkit-scrollbar {{ width: 12px; height: 12px; }}
+*::-webkit-scrollbar-track {{
+  background: rgba(13,17,16,.72);
+  border: 1px solid rgba(238,244,223,.08);
+  border-radius: 999px;
+}}
+*::-webkit-scrollbar-thumb {{
+  background: linear-gradient(180deg, var(--accent-2), var(--accent));
+  border: 3px solid rgba(13,17,16,.92);
+  border-radius: 999px;
+}}
+*::-webkit-scrollbar-thumb:hover {{ background: linear-gradient(180deg, #65f2d0, #e2ff82); }}
+*::-webkit-scrollbar-thumb:active {{ background: var(--accent); }}
+*::-webkit-scrollbar-corner {{ background: rgba(13,17,16,.72); }}
 * {{ box-sizing: border-box; }}
 html {{ scroll-behavior: smooth; }}
 body {{
