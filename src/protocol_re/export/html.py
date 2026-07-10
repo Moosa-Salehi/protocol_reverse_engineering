@@ -552,6 +552,16 @@ def _parse_template(template: str) -> List[Optional[str]]:
     return out
 
 
+def _family_modal_length(family: Dict[str, Any]) -> Optional[int]:
+    feature_summary = family.get("feature_summary") or {}
+    length_profile = ((feature_summary.get("structure_stats") or {}).get("length_profile") or {})
+    try:
+        modal_length = int(length_profile.get("modal_length", 0) or 0)
+    except Exception:
+        return None
+    return modal_length if modal_length > 0 else None
+
+
 def _select_fields(labels: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
     """Pick one best label per offset, then a non-overlapping left-to-right set.
 
@@ -677,13 +687,16 @@ def _byte_ruler(
     fields = _select_fields(labels)
     gt_fields = gt_fields or []
 
-    n = len(template)
-    n = max(n, max((int(s.get("end", 0) or 0) for s in segments), default=0))
-    n = max(n, max((int(f.get("start", 0) or 0) + max(1, int(f.get("length", 1) or 1)) for f in fields), default=0))
-    n = max(n, max((f["start"] + f["length"] for f in gt_fields), default=0))
-    if n <= 0:
+    recovered_n = len(template)
+    recovered_n = max(recovered_n, max((int(s.get("end", 0) or 0) for s in segments), default=0))
+    recovered_n = max(recovered_n, max((int(f.get("start", 0) or 0) + max(1, int(f.get("length", 1) or 1)) for f in fields), default=0))
+    recovered_n = max(recovered_n, max((f["start"] + f["length"] for f in gt_fields), default=0))
+    if recovered_n <= 0:
         return '<div class="segment-map empty">No structure recovered.</div>'
 
+    modal_length = _family_modal_length(family)
+    n = min(recovered_n, modal_length) if modal_length else recovered_n
+    overflow_bytes = max(0, recovered_n - n)
     cols = f"--cols:{n}"
 
     scale = "".join(f'<span class="rk">{i}</span>' for i in range(n))
@@ -700,20 +713,39 @@ def _byte_ruler(
                 f'<span class="rb constant" data-tip="byte {i} · constant 0x{val}">{escape(val)}</span>'
             )
 
+    def _overflow_marker() -> str:
+        if overflow_bytes <= 0:
+            return ""
+        tip = (
+            f"Ruler capped at modal family length {n} bytes; "
+            f"{overflow_bytes} trailing recovered byte positions were hidden so long outliers do not stretch the view."
+        )
+        return f'<span class="ruler-overflow" data-tip="{escape(tip)}">+{overflow_bytes}</span>'
+
+    def _track(row_html: str) -> str:
+        return f'<div class="ruler-track">{row_html}{_overflow_marker()}</div>' if overflow_bytes else row_html
+
     def _bands(entries: List[Dict[str, Any]], row_class: str) -> str:
         spans = []
         for e in entries:
             start = int(e["start"])
-            length = max(1, int(e["length"]))
+            if start >= n:
+                continue
+            original_length = max(1, int(e["length"]))
+            length = min(original_length, n - start)
+            tip = str(e["tip"])
+            if length < original_length:
+                tip += f" · clipped at modal length {n}"
             spans.append(
                 f'<span class="rfield" style="grid-column:{start + 1} / span {length}" '
-                f'data-tip="{escape(e["tip"])}"><span class="rfield-label">{_text(e["label"])}</span></span>'
+                f'data-tip="{escape(tip)}"><span class="rfield-label">{_text(e["label"])}</span></span>'
             )
-        return (
+        row_html = (
             f'<div class="ruler-row bands {row_class}" style="{cols}">{"".join(spans)}</div>'
             if spans
             else f'<div class="ruler-row bands {row_class}" style="{cols}"><span class="rfield empty"><span class="rfield-label">none</span></span></div>'
         )
+        return _track(row_html)
 
     disc_entries = []
     disc_type_entries = []
@@ -788,8 +820,8 @@ def _byte_ruler(
 
     return (
         '<div class="ruler">'
-        + _line("offset", f'<div class="ruler-row scale" style="{cols}">{scale}</div>', "Byte position within the message, starting at 0.")
-        + _line("bytes", f'<div class="ruler-row bytecells" style="{cols}">{"".join(byte_cells)}</div>', "Per-byte template: a fixed hex value where the byte is constant across all messages, or ·· where it varies.")
+        + _line("offset", _track(f'<div class="ruler-row scale" style="{cols}">{scale}</div>'), "Byte position within the message, starting at 0.")
+        + _line("bytes", _track(f'<div class="ruler-row bytecells" style="{cols}">{"".join(byte_cells)}</div>'), "Per-byte template: a fixed hex value where the byte is constant across all messages, or ·· where it varies.")
         + _line("discovered", _bands(disc_entries, "disc"), "Fields inferred by the pipeline (boundaries + semantic labels), placed at their detected byte offsets.")
         + disc_type_line
         + gt_line
@@ -1869,11 +1901,13 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 .ruler {{ --cell: 18px; margin: 18px 0 8px; display:flex; flex-direction: column; gap: 5px; overflow-x: auto; overflow-y: hidden; }}
 .ruler-line {{ display:grid; grid-template-columns: 96px minmax(min-content, 1fr); gap: 12px; align-items: center; }}
 .ruler-tag {{ position: sticky; left: 0; z-index: 2; background: var(--panel); padding-right: 8px; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; text-align: right; }}
+.ruler-track {{ display:grid; grid-template-columns: minmax(min-content, 1fr) auto; gap: 6px; align-items: stretch; min-width: 0; }}
 .ruler-row {{ display:grid; grid-template-columns: repeat(var(--cols), minmax(var(--cell), 1fr)); gap: 2px; }}
 .ruler-row.scale .rk {{ font-size: .6rem; color: var(--muted); text-align: center; border-left: 1px solid var(--line); padding-bottom: 1px; min-width: 0; }}
 .rb {{ position: relative; text-align: center; font-family: "Cascadia Code", monospace; font-size: .72rem; padding: 6px 0; border-radius: 5px; cursor: help; min-width: 0; }}
 .rb.constant {{ background: linear-gradient(180deg, var(--accent), #9bbb3f); color: #0b0f0e; font-weight: 700; }}
 .rb.variable {{ background: linear-gradient(180deg, var(--accent-2), #2f9d86); color: #04211c; }}
+.ruler-overflow {{ display:flex; align-items:center; justify-content:center; min-width: 34px; padding: 0 7px; border-radius: 5px; border: 1px dashed rgba(255,184,107,.55); color: var(--warn); background: rgba(255,184,107,.09); font-family: "Cascadia Code", monospace; font-size: .68rem; font-weight: 700; cursor: help; }}
 .rfield {{ position: relative; font-size: .7rem; text-align: center; padding: 5px 4px; border-radius: 6px; cursor: help;
   min-width: 0; border: 1px solid rgba(0,0,0,.3); }}
 .rfield-label {{ display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}

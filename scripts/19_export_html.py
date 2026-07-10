@@ -31,7 +31,7 @@ def _load_prompt_stats(llm_analysis: dict | None, llm_analysis_path: str | None 
         if not llm_analysis_path:
             return None
         prompt_path = Path(llm_analysis_path).with_name("13_llm_prompt.md")
-    path = Path(str(prompt_path))
+    path = _resolve_artifact_path(str(prompt_path), llm_analysis_path)
     if not path.is_file():
         return {"path": str(path), "exists": False}
     text = path.read_text(encoding="utf-8")
@@ -42,6 +42,27 @@ def _load_prompt_stats(llm_analysis: dict | None, llm_analysis_path: str | None 
         "characters": len(text),
         "estimated_tokens": _estimate_tokens(text),
     }
+
+
+def _resolve_artifact_path(path_text: str, anchor_path: str | None = None) -> Path:
+    normalized = path_text.replace("\\", "/")
+    parts = normalized.split("/")
+    if len(parts) > 1 and parts[0].endswith(":"):
+        suffix = Path(*parts[1:])
+        for root in (Path.cwd(), Path("/mnt") / parts[0][0].lower()):
+            candidate = root / suffix
+            if candidate.is_file():
+                return candidate
+    path = Path(path_text)
+    if path.is_file() or path.is_absolute():
+        if path.is_file():
+            return path
+        return path
+    if anchor_path:
+        candidate = Path(anchor_path).parent / path
+        if candidate.is_file():
+            return candidate
+    return path
 
 
 def _load_stage_result(result_path: Path) -> dict:
