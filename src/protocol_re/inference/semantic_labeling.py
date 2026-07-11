@@ -17,6 +17,7 @@ from protocol_re.inference.field_semantics import (
     infer_transaction_id_fields,
     infer_counter_fields,
     infer_address_fields,
+    infer_body_value_fields,
     infer_status_fields,
     infer_payload_fields,
     infer_checksum_fields,
@@ -134,6 +135,10 @@ def summarize_semantics(
         # 5. Address fields
         hypotheses.extend(infer_address_fields(
             fields, feature_summary
+        ))
+
+        hypotheses.extend(infer_body_value_fields(
+            fields, framing_summary, role
         ))
 
         # 6. Status fields (response only)

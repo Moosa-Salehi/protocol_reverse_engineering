@@ -95,6 +95,61 @@ class BoundaryDetection:
     # sensitive to detected boundary jumps.
     BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT: float = 0.45
 
+    # Opcode/command isolation: when a confident framing/body boundary is
+    # known, the first byte of the application body is very often a message
+    # type / function / command code. If that leading body byte is constant
+    # or near-constant within the family, force a 1-byte boundary right after
+    # it and protect it from being merged into the following field. This keeps
+    # the discriminator byte (e.g. a Modbus function code) as its own field
+    # instead of being fused into a wider uint16/uint32 chunk.
+    ISOLATE_BODY_OPCODE: bool = True
+
+    # Maximum cardinality ratio (distinct values / observations) for the
+    # leading body byte to be treated as an opcode/command and isolated.
+    # A true opcode is constant within a single-message-type family (ratio
+    # ~0); the small allowance tolerates families that mix a few codes.
+    OPCODE_MAX_CARDINALITY_RATIO: float = 0.05
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Request-Response Pairing
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class RequestResponsePairing:
+    """Thresholds for :mod:`protocol_re.corpus.request_response_pairing`.
+
+    Transaction-id (correlation-id) pairing: many binary protocols carry a
+    per-transaction identifier in the header (e.g. the Modbus MBAP transaction
+    id) that is echoed between a request and its response. Detecting such a
+    field and pairing on it is far more reliable than pairing by message
+    adjacency — adjacency breaks whenever a capture starts mid-stream with an
+    orphan response, which shifts every subsequent pair by one.
+    """
+
+    # Header region (bytes) scanned for a correlation-id field.
+    CORRELATION_MAX_OFFSET: int = 16
+
+    # Field widths (bytes) considered for a correlation id.
+    CORRELATION_WIDTHS: tuple[int, ...] = (2, 4)
+
+    # Forward window (messages) within which a request's response must appear
+    # while detecting / applying correlation-id pairing.
+    CORRELATION_WINDOW: int = 4
+
+    # Messages sampled when detecting the correlation-id field (detection only;
+    # pairing is applied to the full session).
+    CORRELATION_DETECTION_SAMPLE: int = 6000
+
+    # Minimum fraction of (sampled) messages that must find a same-value partner
+    # within the window for an offset/width to qualify as a correlation id.
+    CORRELATION_MIN_COVERAGE: float = 0.6
+
+    # Minimum distinct-value ratio (distinct values / messages) required so that
+    # a constant header field (e.g. a protocol-id of 0x0000) is never mistaken
+    # for a correlation id.
+    CORRELATION_MIN_DISTINCT_RATIO: float = 0.2
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Request-Response Relations
@@ -388,6 +443,8 @@ class FieldSemantics:
     ADDRESS_UNIQUE_RATIO_MIN: float = 0.05
     ADDRESS_UNIQUE_RATIO_MAX: float = 0.5
     ADDRESS_BASE_CONFIDENCE: float = 0.6
+    BODY_ADDRESS_LIKE_CONFIDENCE: float = 0.91
+    BODY_COUNT_LIKE_CONFIDENCE: float = 0.88
 
     # --- Status ---
 
@@ -457,6 +514,25 @@ class Clustering:
     # Batch size used for centroid-based assignment of messages to clusters.
     CENTROID_ASSIGNMENT_BATCH_SIZE: int = 10000
 
+    # --- Volatile (noise) offset detection (structural_features.volatile_offsets) ---
+    #
+    # A byte offset is treated as volatile noise and excluded from the structural
+    # fingerprint when it carries no stable, fingerprint-worthy value. Two regimes
+    # both qualify:
+    #   (a) high distinct-value churn with no dominant value (the original rule), or
+    #   (b) no dominant value AND high normalised entropy.
+    # Regime (b) is what catches a *saturated* transaction-id byte: over many
+    # messages a 2-byte id cycles through all 256 low-byte values, so its
+    # unique_ratio collapses to ~1/N (failing rule (a)) even though it is pure
+    # noise. Entropy stays near the 8-bit ceiling, so (b) flags it.
+    VOLATILE_UNIQUE_RATIO_MIN: float = 0.75
+    VOLATILE_STABLE_RATIO_MAX: float = 0.35
+    # Normalised entropy (bits / 8) above which a no-dominant-value offset is
+    # treated as volatile. Kept high enough that a low-cardinality discriminator
+    # (e.g. ~12 function codes, norm-entropy ~0.45) is NOT flagged, so the opcode
+    # byte survives.
+    VOLATILE_ENTROPY_NORM_MIN: float = 0.6
+
     # Field types that are intrinsically high-volatility (not useful for
     # structural fingerprinting).  These are excluded from structural feature
     # vectors.
@@ -476,3 +552,190 @@ class Clustering:
             "blob",
         }
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Family Refinement (discriminator-aware post-clustering)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class ConformanceFilter:
+    """Thresholds for the framing-conformance message filter
+    (:mod:`protocol_re.clustering.conformance`).
+
+    Drops messages that violate a high-confidence constant framing field detected
+    across the corpus (e.g. the Modbus protocol-identifier 0x0000), quarantining
+    non-protocol payloads that slipped past a coarse capture filter without
+    discarding rare-but-real message types.
+    """
+
+    # Master gate. Default ON: the filter is a no-op when no constant invariant is
+    # found (it only ever removes messages that contradict a near-universal value),
+    # so it is safe to leave enabled; a clean single-protocol capture is unaffected.
+    ENABLED: bool = True
+
+    # Header region scanned for constant invariants.
+    MAX_OFFSET: int = 16
+
+    # An offset must be present in at least this fraction of messages to be judged.
+    MIN_COVERAGE: float = 0.9
+
+    # Dominant-value share for an offset to count as a constant framing field. Set
+    # very high: a true framing constant holds in ~every conforming message, and the
+    # only messages below it are the non-conforming ones we want to drop. Kept above
+    # the share a length high-byte can reach when long messages are merely sparse, as
+    # a second line of defence behind the explicit length-field exclusion below.
+    CONSTANT_RATIO: float = 0.998
+
+    # A candidate constant offset that falls inside a detected length field is
+    # excluded: its value is constant only because the capture lacks messages long
+    # enough to exercise it, not because the wire format fixes it. Only width-2 is
+    # scanned: a wider window starting on a constant-zero prefix (e.g. the Modbus
+    # protocol-id 0x0000 immediately before the 2-byte length) spuriously matches a
+    # length expression and would wrongly exclude that genuine constant field.
+    LENGTH_FIELD_MATCH_RATIO: float = 0.85
+    LENGTH_FIELD_WIDTHS: tuple[int, ...] = (2,)
+
+
+class FamilyRefinement:
+    """Thresholds for discriminator-aware family refinement
+    (:func:`protocol_re.clustering.family_discovery.refine_families_by_discriminator`).
+
+    HDBSCAN bootstraps the families, but the structural fingerprint crushes the
+    low-magnitude type-discriminator (e.g. a Modbus function code at offset 7),
+    so bootstrap families are impure (mix function codes) and fragmented (one
+    function code scattered across many families). Refinement re-derives family
+    identity from the data-detected discriminator, **protocol-agnostically**: if
+    no discriminator is found (text / unstructured corpora) the step is a no-op.
+    """
+
+    # Master gate / default for the refinement step. Default OFF: on the
+    # evaluated Modbus corpus, making families function-code-pure raised
+    # message-type precision to 1.0 but regressed recall and relations F1
+    # (0.348 -> 0.182). The cause is in the evaluator, not the families: truth
+    # message-types carry no discriminator value, so families are matched to
+    # types by field structure alone, which cannot preserve function-code
+    # identity across the finer same-role (request/response) families — so
+    # within-fc relations map to mismatched fc pairs and are not credited, and
+    # the MBAP-header type matches no single fc-pure family. The refinement is
+    # correct and fully tested; enable it per-run with
+    # --family-refine-discriminator when opcode-pure families are wanted.
+    ENABLED: bool = False
+
+    # --- Global discriminator detection (detect_global_discriminator) ---
+
+    # Header region (bytes) scanned for the discriminator. The type/command code
+    # of binary protocols lives in the first few header bytes.
+    MAX_OFFSET: int = 16
+
+    # Byte-window widths scanned. 1 catches single-byte opcodes (Modbus); 2
+    # catches 16-bit message-type fields. Wider opcodes are deferred.
+    MULTI_BYTE_WIDTHS: tuple[int, ...] = (1, 2)
+
+    # Minimum normalised cross-family mutual information for an offset/width to
+    # be selected via the *label-guided* path. A true type-code shares strong MI
+    # with the bootstrap labels WHEN the bootstrap already tracks message type.
+    # When no candidate reaches this (a degraded bootstrap whose families do not
+    # track the type code — e.g. one giant blob mixing function codes), detection
+    # falls back to the label-free structural rule below.
+    MIN_GLOBAL_MI: float = 0.25
+
+    # Structure-aware selection. A true type/command code is the byte whose value
+    # determines the message *structure* (length / field layout); an address,
+    # node-id or transaction-id is structurally inert. We measure this label-free
+    # as the normalised MI between a candidate's value and the message length
+    # bucket. When any candidate clears MIN_STRUCTURE_MI we select the earliest,
+    # narrowest such candidate (the opcode is conventionally the first
+    # structure-determining body byte), which rejects variable address fields
+    # (e.g. a Modbus Unit-Id at offset 6) that would otherwise outrank the real
+    # function code at offset 7 once the corpus spans multiple devices. Falls
+    # back to the label-guided / structural rules when nothing clears the bar
+    # (e.g. a fixed-length protocol where the opcode does not imply length).
+    STRUCTURE_AWARE_SELECTION: bool = True
+    # Floor on I(byte; label | exact_length) for a candidate to count as carrying
+    # real type information (so the earliest such byte — the opcode — is selected).
+    # It must sit above a structurally inert leading address and below the opcode:
+    # on the multi-device capture the Unit-Id at offset 6 scores ~0.09 while the
+    # function code at offset 7 scores ~0.19, and on the single-device capture the
+    # function code scores ~0.12 — so a floor of 0.1 admits the opcode on both while
+    # rejecting the address. A length echo / byte-count scores ~0 and is excluded
+    # regardless. When NO candidate clears the floor the selector falls back to the
+    # label-guided / structural rules below.
+    MIN_STRUCTURE_MI: float = 0.1
+
+    # Minimum effective cardinality for the type-aware path to treat a byte as an
+    # opcode. A type/command code takes at least a few distinct values (Modbus uses
+    # ~12 function codes); a near-binary field that merely correlates with length is
+    # a flag or a coarse address, not a type code. This is what separates the
+    # multi-device Unit-Id at offset 6 (effective cardinality 3 on the non-noise
+    # subset: two masters 0x01/0xff plus a gateway 0xfe, incidentally clearing the
+    # type-MI floor) from the function code at offset 7 (effective cardinality 12 on
+    # the multi-device corpus, 4 on the single-device one). Set to 4: it admits the
+    # opcode on both corpora and excludes the leading address. A protocol with fewer
+    # than 4 opcodes is still reachable through the downstream label-guided path.
+    MIN_TYPE_CARDINALITY: int = 4
+
+    # Cardinality window. Below MIN it is a constant (no discrimination); above
+    # MAX it is an address / data / counter / transaction-id field, not a type
+    # code. Kept tight so high-cardinality fields are rejected outright — this is
+    # the primary gate that lets the structural fallback ignore txn ids/addresses.
+    MIN_CARDINALITY: int = 2
+    MAX_CARDINALITY: int = 64
+
+    # The cardinality gate counts the *effective* number of values — how many of
+    # the most-frequent values are needed to cover (1 - EFFECTIVE_CARDINALITY_TAIL_MASS)
+    # of the messages — not the raw distinct count. A genuine type code concentrates
+    # its mass in a few values (the Modbus function code covers 99% of messages in 12
+    # values) with, on real captures, a long tail of rare junk (misaligned /
+    # fragmented / non-conforming payloads) that inflates the raw count to 252 and
+    # got it rejected, leaving the detector to latch onto the structurally inert
+    # Unit-Id at offset 6. An address / counter / transaction-id instead spreads its
+    # mass over many values, so its effective count stays high and it is still
+    # rejected (a 16-bit txn-id needs ~20000 values to cover 99%). This is robust to
+    # a peaked-but-high-cardinality field, which a simple per-value frequency cutoff
+    # is not.
+    EFFECTIVE_CARDINALITY_TAIL_MASS: float = 0.01
+
+    # Minimum fraction of messages that must actually contain the byte(s) at the
+    # candidate offset (rejects offsets that only exist in long messages).
+    MIN_COVERAGE: float = 0.9
+
+    # Maximum dominant-value share. A near-constant field (e.g. a protocol-id of
+    # 0x0000 in ~all messages) is rejected as a discriminator.
+    MAX_STABLE_RATIO: float = 0.98
+
+    # A candidate whose value equals a message-length expression (payload_len,
+    # payload_len-offset, or payload_len-offset-width) in at least this fraction
+    # of messages is a length field, not a type code, and is excluded. Set high:
+    # a genuine length field matches in ~all messages, while a type code only
+    # coincidentally matches a length in a minority.
+    LENGTH_FIELD_MATCH_RATIO: float = 0.85
+
+    # --- Re-keyed family signature ---
+
+    # Upper edges (exclusive) of payload-length buckets folded into the family
+    # signature alongside the discriminator value, so messages of the same type
+    # code but different size (e.g. a short request vs a long response, when
+    # direction is unavailable) separate. Unit resolution over the short-message
+    # range where one byte of length is semantically significant, geometric
+    # afterwards; the final open-ended bucket captures everything larger.
+    LENGTH_BUCKET_EDGES: tuple[int, ...] = (
+        8, 9, 10, 11, 12, 13, 14, 16, 20, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 1024,
+    )
+
+    # Whether the payload-length bucket may enter the family signature — and when.
+    # The length bucket is folded in ONLY for messages whose request/response role
+    # is unknown (no direction could be derived, e.g. a capture without ports),
+    # where it serves as a proxy for that role. When direction IS known the opcode +
+    # role already separate the short request from its variable-length response, so
+    # length is omitted to avoid fragmenting one variable-length response (a register
+    # array spanning many sizes) into one family per size. See the role gate in
+    # refine_families_by_discriminator. Default ON because the gating makes it safe.
+    INCLUDE_LENGTH_BUCKET: bool = True
+
+    # Whether direction (request/response role) is part of the family signature.
+    USE_DIRECTION_IN_SIGNATURE: bool = True
+
+    # Families smaller than this after re-keying are folded into the nearest
+    # sibling (same discriminator value + role, closest length bucket).
+    MIN_FAMILY_SIZE: int = 5

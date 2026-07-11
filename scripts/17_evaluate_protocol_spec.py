@@ -229,6 +229,57 @@ def _truth_tokens(message_type: Dict[str, Any]) -> set[str]:
     return {token for token in tokens if token}
 
 
+_DISCRIMINATOR_ROLES = {"request", "response"}
+
+
+def _family_discriminator_value(family: Dict[str, Any]) -> str | None:
+    """Return the family's constant opcode/discriminator byte as a decimal string.
+
+    A function-code-pure family carries a constant single-byte field at the body
+    (post-header) offset whose ``attributes.value_hex`` is that opcode.  Families
+    that mix function codes leave that byte variable, so this returns ``None`` and
+    matching falls back to structural similarity (the legacy behaviour).
+    """
+    body_offset = _family_body_offset(family)
+    for field in family.get("field_hypotheses", []) or []:
+        start = field.get("start")
+        if start is None or int(start) != body_offset:
+            continue
+        if _field_len(field) != 1:
+            continue
+        value_hex = str(_attributes(field).get("value_hex") or "").strip()
+        if not value_hex:
+            return None
+        try:
+            return str(int(value_hex, 16))
+        except ValueError:
+            return None
+    return None
+
+
+def _truth_discriminator_value(message_type: Dict[str, Any]) -> str | None:
+    """Return a truth type's discriminator value (e.g. Modbus function code).
+
+    The convention is a required single-byte field at PDU offset 0 with an
+    explicit ``constant_value``.  Header types (absolute offsets, no constant
+    opcode at offset 0) and any type lacking such a field return ``None``.
+    """
+    if _truth_uses_absolute_offsets(message_type):
+        return None
+    for field in message_type.get("fields", []) or []:
+        constant_value = field.get("constant_value")
+        if constant_value is None:
+            continue
+        start = field.get("start")
+        if start is None or int(start) != 0 or _field_len(field) != 1:
+            continue
+        try:
+            return str(int(constant_value))
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
 def _family_match_score(family: Dict[str, Any], message_type: Dict[str, Any]) -> float:
     p_tokens = _family_tokens(family)
     t_tokens = _truth_tokens(message_type)
@@ -239,8 +290,25 @@ def _family_match_score(family: Dict[str, Any], message_type: Dict[str, Any]) ->
         field_score = 0.0
     else:
         field_score = min(len(p_fields), len(t_fields)) / max(len(p_fields), len(t_fields), 1)
-    role_score = 1.0 if _norm(family.get("role")) and _norm(family.get("role")) == _norm(message_type.get("role")) else 0.0
-    return round(max(token_score, (0.5 * field_score) + (0.3 * token_score) + (0.2 * role_score)), 6)
+    p_role = _norm(family.get("role"))
+    t_role = _norm(message_type.get("role"))
+    role_score = 1.0 if p_role and p_role == t_role else 0.0
+    base = round(max(token_score, (0.5 * field_score) + (0.3 * token_score) + (0.2 * role_score)), 6)
+
+    # Discriminator gate: when both sides expose an opcode value, they must agree
+    # to be the same message type.  This disambiguates structurally isomorphic
+    # families (e.g. Modbus FC01 vs FC02 read requests share an identical layout)
+    # so the family->truth bijection — and therefore relation credit — is no
+    # longer an arbitrary tie-break.  When either side lacks a discriminator the
+    # legacy structural score is used unchanged.
+    p_disc = _family_discriminator_value(family)
+    t_disc = _truth_discriminator_value(message_type)
+    if p_disc is not None and t_disc is not None:
+        if p_disc != t_disc:
+            return 0.0
+        role_conflict = p_role in _DISCRIMINATOR_ROLES and t_role in _DISCRIMINATOR_ROLES and p_role != t_role
+        return round(max(base, 0.55 if role_conflict else 0.9), 6)
+    return base
 
 
 def _greedy_matches(candidates: Iterable[Tuple[str, str, float]], threshold: float) -> List[Tuple[str, str, float]]:
@@ -390,6 +458,87 @@ def _relation_matches(
     ]
 
 
+def _header_region_fields(family: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Predicted fields that fall in the framing/header region (before the body)."""
+    body_offset = _family_body_offset(family)
+    if body_offset <= 0:
+        return []
+    return [
+        field
+        for field in family.get("field_hypotheses", []) or []
+        if int(field.get("start", 0) or 0) < body_offset
+    ]
+
+
+def _header_match_score(family: Dict[str, Any], header_type: Dict[str, Any]) -> float:
+    """Mean best-overlap of a header type's (absolute-offset) fields against a family's header region."""
+    p_fields = _header_region_fields(family)
+    t_fields = header_type.get("fields", []) or []
+    if not p_fields or not t_fields:
+        return 0.0
+    total = sum(max((_interval_score(p, t) for p in p_fields), default=0.0) for t in t_fields)
+    return round(total / len(t_fields), 6)
+
+
+def _header_type_matches(
+    families: Sequence[Dict[str, Any]], header_types: Sequence[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Match shared header-role truth types to the header region of the best-fitting family.
+
+    Every family carries the same framing header (e.g. the Modbus MBAP), so this
+    match is *additive*: it does not consume the family from the discriminator-gated
+    PDU matching or from relation scoring — it only recovers credit for header
+    fields that are physically present but no longer broken out as a standalone
+    family after discriminator refinement.
+    """
+    candidates = [
+        (str(family.get("family_id")), str(header_type.get("message_type_id")), _header_match_score(family, header_type))
+        for family in families
+        for header_type in header_types
+    ]
+    return [
+        {
+            "predicted_family_id": family_id,
+            "ground_truth_message_type_id": header_type_id,
+            "score": score,
+            "reason": "header_region_overlap",
+        }
+        for family_id, header_type_id, score in _greedy_matches(candidates, 0.5)
+    ]
+
+
+def _header_field_matches(
+    families_by_id: Dict[str, Dict[str, Any]],
+    truth_by_id: Dict[str, Dict[str, Any]],
+    header_matches: Sequence[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    matches: List[Dict[str, Any]] = []
+    for header_match in header_matches:
+        family = families_by_id.get(header_match["predicted_family_id"]) or {}
+        header_type = truth_by_id.get(header_match["ground_truth_message_type_id"]) or {}
+        predicted_fields = _header_region_fields(family)
+        truth_fields = list(header_type.get("fields", []) or [])
+        candidates = []
+        for p_index, predicted in enumerate(predicted_fields):
+            for t_index, truth in enumerate(truth_fields):
+                boundary = _interval_score(predicted, truth)
+                semantic = _semantic_score(predicted, truth)
+                candidates.append((str(p_index), str(t_index), max(boundary, (0.7 * boundary) + (0.3 * semantic))))
+        for p_index, t_index, _ in _greedy_matches(candidates, 0.5):
+            predicted = predicted_fields[int(p_index)]
+            truth = truth_fields[int(t_index)]
+            matches.append(
+                {
+                    "predicted": _predicted_field_ref(header_match["predicted_family_id"], predicted, int(p_index)),
+                    "ground_truth": _field_ref(header_match["ground_truth_message_type_id"], truth, f"field_{t_index}"),
+                    "boundary_score": _interval_score(predicted, truth),
+                    "semantic_score": _semantic_score(predicted, truth),
+                    "offset_shift": 0,
+                }
+            )
+    return matches
+
+
 def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict[str, Any]) -> Dict[str, Any]:
     predicted_protocol = model_data.get("predicted_protocol", {}) or {}
     ground_truth_protocol = (ground_truth_bundle.get("ground_truth_protocol") or ground_truth_bundle.get("predicted_protocol") or {})
@@ -398,16 +547,75 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     predicted_relations = predicted_protocol.get("relations", []) or []
     truth_relations = ground_truth_protocol.get("relations", []) or []
 
-    message_matches = _message_type_matches(families, truth_types)
+    # Corpus-conditioned truth scope. A PDU truth type is only in scope when its
+    # discriminator (e.g. a Modbus function code) actually occurs in the captured
+    # traffic — i.e. some predicted family carries that opcode. This lets one truth
+    # file describe a whole protocol family (every Modbus function code, including
+    # exception responses) without penalising recall on a capture that exercises
+    # only a subset: types for absent opcodes are neither matched nor counted as
+    # false negatives, and their relations are dropped too. Header types (no
+    # discriminator) and PDU types without a constant opcode are always in scope, so
+    # a single-device capture containing only FC 01-06 evaluates exactly as before.
+    present_discriminators = {_family_discriminator_value(family) for family in families}
+    present_discriminators.discard(None)
+    # Discriminators carried by a response-direction family. Used to scope echo
+    # types (request/response byte-identical, e.g. Modbus write-single FC 05/06)
+    # whose request and response share a function code: the response type only
+    # makes sense when the capture actually separated the two directions. A
+    # direction-blind capture has no response-role family, so the response echo
+    # type stays out of scope and is not counted as a false negative.
+    response_discriminators = {
+        _family_discriminator_value(family)
+        for family in families
+        if _norm(family.get("role")) == "response"
+    }
+    response_discriminators.discard(None)
+
+    def _truth_type_in_scope(message_type: Dict[str, Any]) -> bool:
+        discriminator = _truth_discriminator_value(message_type)
+        if discriminator is None:
+            return True
+        if discriminator not in present_discriminators:
+            return False
+        if message_type.get("scope_requires_response_role"):
+            return discriminator in response_discriminators
+        return True
+
+    truth_types = [mt for mt in truth_types if _truth_type_in_scope(mt)]
+    in_scope_truth_ids = {str(mt.get("message_type_id")) for mt in truth_types}
+    truth_relations = [
+        relation
+        for relation in truth_relations
+        if str(relation.get("request_message_type_id")) in in_scope_truth_ids
+        and str(relation.get("response_message_type_id")) in in_scope_truth_ids
+    ]
+
     families_by_id = {str(item.get("family_id")): item for item in families}
     truth_by_id = {str(item.get("message_type_id")): item for item in truth_types}
-    family_to_truth = {item["predicted_family_id"]: item["ground_truth_message_type_id"] for item in message_matches}
-    field_matches = _field_matches(families_by_id, truth_by_id, message_matches)
+
+    # Header-role truth types (shared framing, absolute offsets) are matched in a
+    # separate additive pass against each family's header region; the remaining
+    # (PDU) truth types drive the discriminator-gated 1:1 family matching and all
+    # relation scoring.  This recovers credit for a shared header (e.g. the Modbus
+    # MBAP) that is present in every family but is no longer broken out as a
+    # standalone family once discriminator refinement collapses families by opcode.
+    header_types = [mt for mt in truth_types if _truth_uses_absolute_offsets(mt)]
+    pdu_types = [mt for mt in truth_types if not _truth_uses_absolute_offsets(mt)]
+
+    pdu_message_matches = _message_type_matches(families, pdu_types)
+    header_message_matches = _header_type_matches(families, header_types)
+    message_matches = pdu_message_matches + header_message_matches
+
+    family_to_truth = {item["predicted_family_id"]: item["ground_truth_message_type_id"] for item in pdu_message_matches}
+    field_matches = _field_matches(families_by_id, truth_by_id, pdu_message_matches)
+    field_matches = field_matches + _header_field_matches(families_by_id, truth_by_id, header_message_matches)
     relation_matches = _relation_matches(predicted_relations, truth_relations, family_to_truth, families_by_id, truth_by_id)
 
+    # Body-field scope is keyed by the PDU (FC) match; header carriers additionally
+    # contribute their header-region fields to the predicted total.
     matched_truth_by_family = {
         item["predicted_family_id"]: item["ground_truth_message_type_id"]
-        for item in message_matches
+        for item in pdu_message_matches
     }
     predicted_field_total = 0
     for family in families:
@@ -418,14 +626,32 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
             predicted_field_total += len(family.get("field_hypotheses", []) or [])
         else:
             predicted_field_total += len(_comparable_predicted_fields(family, truth_type))
+    for header_match in header_message_matches:
+        carrier_id = header_match["predicted_family_id"]
+        if carrier_id in matched_truth_by_family:
+            predicted_field_total += len(_header_region_fields(families_by_id.get(carrier_id) or {}))
     truth_field_total = sum(len((message_type.get("fields", []) or [])) for message_type in truth_types)
     semantic_tp = sum(1 for item in field_matches if float(item.get("semantic_score", 0.0) or 0.0) >= 0.5)
 
-    message_metrics = _prf(len(message_matches), max(0, len(families) - len(message_matches)), max(0, len(truth_types) - len(message_matches)))
+    matched_family_ids = {item["predicted_family_id"] for item in message_matches}
+    matched_truth_ids = {item["ground_truth_message_type_id"] for item in message_matches}
+    message_metrics = _prf(
+        len(matched_truth_ids),
+        sum(1 for family in families if str(family.get("family_id")) not in matched_family_ids),
+        sum(1 for mt in truth_types if str(mt.get("message_type_id")) not in matched_truth_ids),
+    )
     boundary_metrics = _prf(len(field_matches), max(0, predicted_field_total - len(field_matches)), max(0, truth_field_total - len(field_matches)))
     semantic_metrics = _prf(semantic_tp, max(0, predicted_field_total - semantic_tp), max(0, truth_field_total - semantic_tp))
     relation_metrics = _prf(len(relation_matches), max(0, len(predicted_relations) - len(relation_matches)), max(0, len(truth_relations) - len(relation_matches)))
-    overall = round((message_metrics["f1_score"] + boundary_metrics["f1_score"] + semantic_metrics["f1_score"] + relation_metrics["f1_score"]) / 4, 6)
+    
+    # Weighted overall score
+    overall = round(
+        message_metrics["f1_score"] * 0.30 +
+        boundary_metrics["f1_score"] * 0.30 +
+        semantic_metrics["f1_score"] * 0.25 +
+        relation_metrics["f1_score"] * 0.15,
+        6
+    )
 
     matched_predicted_fields = {(item["predicted"]["owner_id"], item["predicted"]["start"], item["predicted"].get("length")) for item in field_matches}
     matched_truth_fields = {(item["ground_truth"]["owner_id"], item["ground_truth"]["start"], item["ground_truth"].get("length")) for item in field_matches}
@@ -474,8 +700,8 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
             "relations": relation_matches,
         },
         "unmatched": {
-            "predicted_families": sorted(set(families_by_id) - set(family_to_truth)),
-            "ground_truth_message_types": sorted(set(truth_by_id) - set(family_to_truth.values())),
+            "predicted_families": sorted(set(families_by_id) - matched_family_ids),
+            "ground_truth_message_types": sorted(set(truth_by_id) - matched_truth_ids),
             "predicted_fields": unmatched_predicted_fields,
             "ground_truth_fields": unmatched_truth_fields,
         },

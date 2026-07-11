@@ -57,6 +57,7 @@ def infer_discriminator_fields(
     - Evidence: discriminator field from framing
     """
     hypotheses: List[SemanticHypothesis] = []
+    body_start = _framing_body_start(framing_summary)
 
     # Check framing discriminator fields
     framing_discriminators = set()
@@ -85,6 +86,9 @@ def infer_discriminator_fields(
         start = field.get("start", 0)
         length = field.get("length", 1)
         field_type = field.get("field_type", "")
+        role = "opcode" if body_start is not None and start == body_start and length == 1 else "discriminator"
+        if _is_framed_body_operand(body_start, start, length):
+            continue
 
         # Skip if already labeled as keyword (legacy name for discriminator)
         if field_type == "keyword":
@@ -101,11 +105,13 @@ def infer_discriminator_fields(
                 confidence = min(_FS.DISCRIMINATOR_MAX_CONFIDENCE, confidence + _FS.DISCRIMINATOR_KEYWORD_BOOST)
                 evidence["salience_score"] = kw_info["salience"]
                 evidence["mutual_information"] = kw_info["mutual_information"]
+            if role == "opcode":
+                evidence["body_start_opcode"] = True
 
             hypotheses.append(SemanticHypothesis(
                 field_start=start,
                 field_length=length,
-                semantic_role="discriminator",
+                semantic_role=role,
                 confidence=confidence,
                 evidence=evidence,
                 encoding_type=_infer_encoding_type(length, field.get("endian")),
@@ -116,9 +122,13 @@ def infer_discriminator_fields(
             hypotheses.append(SemanticHypothesis(
                 field_start=start,
                 field_length=length,
-                semantic_role="discriminator",
+                semantic_role=role,
                 confidence=_FS.DISCRIMINATOR_FRAMING_BASE_CONFIDENCE,
-                evidence={"source": "framing", "field_type": "discriminator"},
+                evidence={
+                    "source": "framing",
+                    "field_type": "discriminator",
+                    **({"body_start_opcode": True} if role == "opcode" else {}),
+                },
                 encoding_type=_infer_encoding_type(length, field.get("endian")),
             ))
 
@@ -128,15 +138,75 @@ def infer_discriminator_fields(
             hypotheses.append(SemanticHypothesis(
                 field_start=start,
                 field_length=length,
-                semantic_role="discriminator",
+                semantic_role=role,
                 confidence=max(_FS.DISCRIMINATOR_KEYWORD_BASE_CONFIDENCE, kw_info["confidence"]),
                 evidence={
                     "source": "keyword_detection",
                     "salience_score": kw_info["salience"],
                     "mutual_information": kw_info["mutual_information"],
+                    **({"body_start_opcode": True} if role == "opcode" else {}),
                 },
                 encoding_type=_infer_encoding_type(length, field.get("endian")),
             ))
+
+    return hypotheses
+
+
+def infer_body_value_fields(
+    field_hypotheses: List[Dict[str, Any]],
+    framing_summary: Optional[Dict[str, Any]],
+    role_hint: str = "unknown",
+) -> List[SemanticHypothesis]:
+    """
+    Label short numeric operands after a framed body opcode.
+
+    The first body byte is handled by discriminator/opcode inference. In many
+    binary protocols, the next fixed-width request fields are an address-like
+    operand followed by a count/quantity-like operand. This is intentionally
+    generic: it relies on position and width, not protocol-specific names.
+    """
+    body_start = _framing_body_start(framing_summary)
+    if body_start is None or role_hint == "response":
+        return []
+
+    body_fields = sorted(
+        (
+            field
+            for field in field_hypotheses
+            if int(field.get("start", 0) or 0) > body_start
+            and int(field.get("length", 0) or 0) in (1, 2, 4)
+            and field.get("field_type") not in {"constant", "length", "counter_or_transaction_id"}
+        ),
+        key=lambda field: (int(field.get("start", 0) or 0), int(field.get("length", 0) or 0)),
+    )
+    if not body_fields:
+        return []
+
+    hypotheses: List[SemanticHypothesis] = []
+    first = body_fields[0]
+    first_start = int(first.get("start", 0) or 0)
+    first_length = int(first.get("length", 0) or 0)
+    if first_length in (2, 4):
+        hypotheses.append(SemanticHypothesis(
+            field_start=first_start,
+            field_length=first_length,
+            semantic_role="address_like",
+            confidence=_FS.BODY_ADDRESS_LIKE_CONFIDENCE,
+            evidence={"source": "framed_body_position", "body_start": body_start},
+            encoding_type=_infer_encoding_type(first_length, first.get("endian")),
+        ))
+
+    for field in body_fields[1:2]:
+        start = int(field.get("start", 0) or 0)
+        length = int(field.get("length", 0) or 0)
+        hypotheses.append(SemanticHypothesis(
+            field_start=start,
+            field_length=length,
+            semantic_role="count_like",
+            confidence=_FS.BODY_COUNT_LIKE_CONFIDENCE,
+            evidence={"source": "framed_body_position", "body_start": body_start},
+            encoding_type=_infer_encoding_type(length, field.get("endian")),
+        ))
 
     return hypotheses
 
@@ -739,3 +809,20 @@ def _infer_encoding_type(length: int, endian: Optional[str]) -> Optional[str]:
     elif length > 4:
         return "bytes"
     return None
+
+
+def _framing_body_start(framing_summary: Optional[Dict[str, Any]]) -> Optional[int]:
+    if not framing_summary:
+        return None
+    layouts = framing_summary.get("layout_hypotheses", []) or []
+    for layout in layouts:
+        if not isinstance(layout, dict):
+            continue
+        body_start = layout.get("body_start", layout.get("header_end"))
+        if body_start is not None:
+            return int(body_start)
+    return None
+
+
+def _is_framed_body_operand(body_start: Optional[int], start: int, length: int) -> bool:
+    return body_start is not None and start > body_start and length in (2, 4)

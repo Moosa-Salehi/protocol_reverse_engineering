@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Transaction/correlation-id request-response pairing in
+  `corpus/request_response_pairing.py`: `detect_correlation_field()` finds a header field
+  that varies across messages but matches a nearby message within a small window (rejecting
+  constant fields such as a protocol-id), and pairing is performed on that id. This replaces
+  fragile adjacency pairing, which broke whenever a capture started mid-stream with an orphan
+  response (shifting every pair by one). On the Modbus corpus, pairs went from 0% to 100%
+  transaction-id and function-code agreement; relations recall rose ~0.50→0.67. New
+  `RequestResponsePairing` thresholds in `config/thresholds.py`.
+- Opcode/command isolation in boundary detection: when a confident framing/body boundary is
+  known and the leading body byte is constant or near-constant within a family, it is split
+  into its own 1-byte field and protected from merging. Recovers the discriminator byte (e.g.
+  the Modbus function code) instead of fusing it into a wider uint16/uint32. New thresholds
+  `BoundaryDetection.ISOLATE_BODY_OPCODE` / `OPCODE_MAX_CARDINALITY_RATIO` and CLI flag
+  `--no-opcode-isolation` on stage 07. On Modbus this lifts field-semantics F1 ~0.11→0.50 and
+  field-boundary F1 ~0.66→0.70 (overall ~0.50→0.58).
+- Rewrote `truth_files/modbus.json` into a capture-derived, tshark-validated evaluation oracle:
+  concrete per-FC request/response types (FC01/02/03/04/05/06 only — matching the actual
+  capture), a single shared MBAP header type, documented offset convention, and per-FC
+  responses. Removed phantom FC15/FC16/exception types and added the previously missing FC02
+  (Read Discrete Inputs).
+
+## [1.0.1] - 2026-06-07
+
+### Added
 - Centralized algorithmic thresholds in `src/protocol_re/config/thresholds.py` — all magic numbers
   (boundary anti-fragmentation, framing scoring weights, echo/length detection limits, relation
   confidence thresholds, field semantic scores, clustering batch sizes, etc.) moved from individual
@@ -21,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Field semantics labeling
 - Coordinate/layering header split logic
 
-## [1.0.0] - 2026-06-6
+## [1.0.0] - 2026-06-06
 
 ### Added
 - Reorganize project structure

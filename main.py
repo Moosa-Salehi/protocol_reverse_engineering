@@ -183,7 +183,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(framing_json),
                     "--score-threshold",
                     str(args.boundary_score_threshold),
-                ],
+                ]
+                + (["--hierarchical-boundaries"] if not args.no_hierarchical_boundaries else []),
             ),
         ]
     )
@@ -415,6 +416,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_args.append("--standardize-latent")
                 break
 
+    for step_name, step_args in pipeline:
+        if step_name == "04_discover_families":
+            step_args.append(
+                "--refine-discriminator" if not args.no_family_refine_discriminator else "--no-refine-discriminator"
+            )
+            break
+
     # Add fusion method for hybrid mode
     if args.family_feature_mode == "hybrid":
         for step_name, step_args in pipeline:
@@ -547,6 +555,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     step_args.extend(["--patch-validation-json", _path(llm_patch_validation_json)])
                 if args.ground_truth_json:
                     step_args.extend(["--final-evaluation-json", _path(final_evaluation_json)])
+                    if step_name == "19_export_html":
+                        step_args.extend(["--ground-truth-json", _path(args.ground_truth_json)])
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
@@ -711,6 +721,13 @@ def parse_args() -> argparse.Namespace:
     )
     family_group.set_defaults(family_standardize_latent=False)
     family_group.add_argument(
+        "--no-family-refine-discriminator",
+        action="store_true",
+        help="disable discriminator-aware family refinement after clustering: re-derive family identity "
+             "from the data-detected type-discriminator so families become opcode-pure and "
+             "role-consistent. No-op when no discriminator is detected.",
+    )
+    family_group.add_argument(
         "--enable-neural-preprocessing",
         action="store_true",
         help="Enable enhanced neural preprocessing (masks variable fields like transaction IDs). Experimental.",
@@ -743,6 +760,16 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=2.0,
         help="Boundary score threshold (default: 2.0). Higher = fewer boundaries.",
+    )
+    boundary_group.add_argument(
+        "--no-hierarchical-boundaries",
+        action="store_true",
+        default=False,
+        help=(
+            "Stage 07: disable hierarchical boundaries: infer transport-header structure on all messages and body "
+            "structure per message length, then impose on each refined family. "
+            "Recommended with family refine discriminator (fixes over-merge on FC-pure families)."
+        ),
     )
     boundary_group.add_argument(
         "--boundary-max-fields",

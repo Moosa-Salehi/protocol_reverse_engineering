@@ -8,8 +8,32 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from protocol_re.io.extract_payloads import write_messages_from_pcaps_jsonl, write_messages_from_pcaps_tshark_jsonl
+from protocol_re.io.extract_payloads import (
+    backfill_directions,
+    infer_service_port,
+    write_messages_from_pcaps_jsonl,
+    write_messages_from_pcaps_tshark_jsonl,
+)
+from protocol_re.corpus.message_corpus import load_corpus_jsonl
 from protocol_re.utils.logging import setup_stage_logging
+
+
+def _backfill_direction_file(jsonl_path: str, service_port: int | None) -> tuple[int, int | None]:
+    """Load the written corpus, fill in missing directions from ports, rewrite.
+
+    Returns (number_updated, service_port_used). Rewrites the file only when at
+    least one direction changed, preserving field order via the record schema."""
+    import json
+
+    records = load_corpus_jsonl(jsonl_path)
+    if service_port is None:
+        service_port = infer_service_port(records)
+    updated = backfill_directions(records, service_port)
+    if updated:
+        with open(jsonl_path, "w", encoding="utf-8") as handle:
+            for record in records:
+                handle.write(json.dumps(record.to_dict(), sort_keys=True) + "\n")
+    return updated, service_port
 
 
 def main() -> None:
@@ -85,6 +109,23 @@ def main() -> None:
 
         logger.metric("messages_extracted", count, "messages")
         logger.info(f"Extracted {count} messages")
+
+    # Backfill request/response direction from ports when extraction left it
+    # unknown (the common case: no --service-port was supplied). Direction is a
+    # core family-signature component — without it a single opcode's short request
+    # and variable-length response collapse into one family, fragmenting boundaries.
+    with logger.stage("backfill_directions"):
+        updated, inferred_port = _backfill_direction_file(args.output_jsonl, args.service_port)
+        logger.metric("directions_backfilled", updated, "messages")
+        if inferred_port is not None:
+            logger.decision(
+                decision=f"Inferred service port {inferred_port}",
+                reason="Most-connected endpoint port; used to derive request/response direction",
+                directions_backfilled=updated,
+            )
+            print(f"[+] Backfilled direction for {updated} messages (service port {inferred_port})")
+        else:
+            print("[i] No dominant service port found; direction left unknown")
 
     print(f"[+] Wrote {count} extracted messages to {args.output_jsonl}")
 

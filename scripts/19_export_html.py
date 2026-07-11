@@ -31,7 +31,7 @@ def _load_prompt_stats(llm_analysis: dict | None, llm_analysis_path: str | None 
         if not llm_analysis_path:
             return None
         prompt_path = Path(llm_analysis_path).with_name("13_llm_prompt.md")
-    path = Path(str(prompt_path))
+    path = _resolve_artifact_path(str(prompt_path), llm_analysis_path)
     if not path.is_file():
         return {"path": str(path), "exists": False}
     text = path.read_text(encoding="utf-8")
@@ -42,6 +42,27 @@ def _load_prompt_stats(llm_analysis: dict | None, llm_analysis_path: str | None 
         "characters": len(text),
         "estimated_tokens": _estimate_tokens(text),
     }
+
+
+def _resolve_artifact_path(path_text: str, anchor_path: str | None = None) -> Path:
+    normalized = path_text.replace("\\", "/")
+    parts = normalized.split("/")
+    if len(parts) > 1 and parts[0].endswith(":"):
+        suffix = Path(*parts[1:])
+        for root in (Path.cwd(), Path("/mnt") / parts[0][0].lower()):
+            candidate = root / suffix
+            if candidate.is_file():
+                return candidate
+    path = Path(path_text)
+    if path.is_file() or path.is_absolute():
+        if path.is_file():
+            return path
+        return path
+    if anchor_path:
+        candidate = Path(anchor_path).parent / path
+        if candidate.is_file():
+            return candidate
+    return path
 
 
 def _load_stage_result(result_path: Path) -> dict:
@@ -110,6 +131,7 @@ def main() -> None:
     parser.add_argument("--llm-stage-results-dir", help="Optional directory with stage 07b/10b/11b LLM result artifacts")
     parser.add_argument("--patch-validation-json", help="Optional LLM patch validation JSON from stage 15b")
     parser.add_argument("--final-evaluation-json", help="Optional final evaluation report JSON from 17_evaluate_protocol_spec.py")
+    parser.add_argument("--ground-truth-json", help="Optional ground-truth protocol JSON (adds ground-truth roles to family cards)")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -138,6 +160,10 @@ def main() -> None:
         if final_evaluation:
             logger.info(f"Loaded final evaluation from {args.final_evaluation_json}")
 
+        ground_truth = _load_optional_json(args.ground_truth_json)
+        if ground_truth:
+            logger.info(f"Loaded ground truth from {args.ground_truth_json}")
+
         llm_stage_results = _load_llm_stage_results(args.llm_stage_results_dir, args.protocol_model_json)
         if llm_stage_results:
             logger.info(f"Loaded LLM stage results from {llm_stage_results.get('results_dir')}")
@@ -158,6 +184,7 @@ def main() -> None:
             llm_analysis=llm_analysis,
             final_evaluation=final_evaluation,
             llm_stage_results=llm_stage_results,
+            ground_truth=ground_truth,
         )
         logger.metric("html_size", len(html), "characters")
         logger.metric("html_size_kb", len(html.encode('utf-8')) / 1024, "KB")

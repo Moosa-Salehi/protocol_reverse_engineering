@@ -6,6 +6,7 @@ from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.config.thresholds import DiscriminatorDetection as _DD
+from protocol_re.config.thresholds import FamilyRefinement as _FR
 from protocol_re.inference.boundary_detection import infer_template
 from protocol_re.model.schema import MessageRecord
 from protocol_re.neural.salience import attention_offset_salience, encoder_gradient_salience, merge_salience_scores
@@ -44,6 +45,62 @@ def normalized_mi(left: Sequence[Any], right: Sequence[Any]) -> float:
     return max(0.0, min(1.0, mutual_information(left, right) / denom))
 
 
+def conditional_normalized_mi(
+    values: Sequence[Any], labels: Sequence[Any], strata: Sequence[Any]
+) -> float:
+    """Normalised I(values; labels | strata) — type information a byte adds about
+    the bootstrap label *beyond* what the message length already explains.
+
+    This is the signal that isolates a type code from a length echo. Conditioning
+    on the exact message length makes a byte-count / length field redundant (its
+    value is ``length - const``, so it contributes ~0 once length is known), while a
+    genuine opcode still separates message types *within* a fixed length and keeps a
+    high score. A structurally inert address / node-id contributes little to begin
+    with. Normalised by the conditional label entropy so the result is comparable
+    across corpora with different family granularity."""
+    if not values or len(values) != len(labels) or len(values) != len(strata):
+        return 0.0
+    groups: Dict[Any, List[Tuple[Any, Any]]] = defaultdict(list)
+    for value, label, stratum in zip(values, labels, strata):
+        groups[stratum].append((value, label))
+    total = float(len(values))
+    conditional_mi = 0.0
+    conditional_label_entropy = 0.0
+    for members in groups.values():
+        weight = len(members) / total
+        member_values = [value for value, _ in members]
+        member_labels = [label for _, label in members]
+        conditional_mi += weight * mutual_information(member_values, member_labels)
+        conditional_label_entropy += weight * entropy(member_labels)
+    return max(0.0, min(1.0, conditional_mi / max(conditional_label_entropy, 1e-9)))
+
+
+def _effective_cardinality(value_counts: Counter, total: int, tail_mass: float) -> int:
+    """Number of most-frequent values needed to cover ``1 - tail_mass`` of ``total``.
+
+    A type code concentrates its mass in a few values (low effective cardinality
+    even when a rare junk tail inflates the raw distinct count); an address /
+    counter / txn-id spreads its mass and stays high."""
+    if total <= 0:
+        return 0
+    target = (1.0 - tail_mass) * total
+    cumulative = 0
+    count = 0
+    for value_count in sorted(value_counts.values(), reverse=True):
+        if cumulative >= target:
+            break
+        cumulative += value_count
+        count += 1
+    return count
+
+
+def _length_bucket(length: int, edges: Sequence[int]) -> int:
+    for index, edge in enumerate(edges):
+        if length < edge:
+            return index
+    return len(edges)
+
+
 def _offset_values(messages: Sequence[bytes], offset: int) -> Tuple[List[int], List[int]]:
     values: List[int] = []
     indexes: List[int] = []
@@ -52,6 +109,204 @@ def _offset_values(messages: Sequence[bytes], offset: int) -> Tuple[List[int], L
             values.append(message[offset])
             indexes.append(index)
     return values, indexes
+
+
+def _offset_window_values(messages: Sequence[bytes], offset: int, width: int) -> Tuple[List[int], List[int]]:
+    """Big-endian integer value of the ``width`` bytes at ``offset``.
+
+    Only messages long enough to contain the full window contribute, so the
+    returned ``indexes`` align with the contributing messages (mirroring
+    :func:`_offset_values` for ``width == 1``)."""
+    if width <= 1:
+        return _offset_values(messages, offset)
+    values: List[int] = []
+    indexes: List[int] = []
+    for index, message in enumerate(messages):
+        if offset + width <= len(message):
+            values.append(int.from_bytes(message[offset : offset + width], "big"))
+            indexes.append(index)
+    return values, indexes
+
+
+def _length_field_match_ratio(messages: Sequence[bytes], offset: int, width: int) -> float:
+    """Fraction of messages where the value at (offset, width) equals a length
+    expression (payload_len, payload_len-offset, or payload_len-offset-width).
+    A genuine length field matches in ~all messages; a type code only rarely."""
+    values, indexes = _offset_window_values(messages, offset, width)
+    if not values:
+        return 0.0
+    matches = 0
+    for value, index in zip(values, indexes):
+        length = len(messages[index])
+        if value in (length, length - offset, length - offset - width):
+            matches += 1
+    return matches / len(values)
+
+
+def detect_global_discriminator(
+    records: Sequence[MessageRecord],
+    family_by_msg_id: Dict[int, str],
+    *,
+    max_offset: int = _FR.MAX_OFFSET,
+    widths: Sequence[int] = _FR.MULTI_BYTE_WIDTHS,
+    min_global_mi: float = _FR.MIN_GLOBAL_MI,
+    min_cardinality: int = _FR.MIN_CARDINALITY,
+    max_cardinality: int = _FR.MAX_CARDINALITY,
+    min_coverage: float = _FR.MIN_COVERAGE,
+    max_stable_ratio: float = _FR.MAX_STABLE_RATIO,
+    length_field_match_ratio: float = _FR.LENGTH_FIELD_MATCH_RATIO,
+    structure_aware: bool = _FR.STRUCTURE_AWARE_SELECTION,
+    min_structure_mi: float = _FR.MIN_STRUCTURE_MI,
+    min_type_cardinality: int = _FR.MIN_TYPE_CARDINALITY,
+    effective_cardinality_tail_mass: float = _FR.EFFECTIVE_CARDINALITY_TAIL_MASS,
+) -> Optional[Dict[str, Any]]:
+    """Detect the corpus-wide type-discriminator (offset + width) label-free.
+
+    A type/command code is a byte window that is present in (almost) every
+    message, takes a small-to-moderate number of values, is neither constant nor
+    a length field, and is not a high-cardinality address/counter/transaction id.
+    Those structural gates alone reject the noise — crucially WITHOUT trusting
+    the bootstrap clustering, which may not track message type at all.
+
+    Selection between the survivors uses two modes:
+
+    * **label-guided** — if some candidate's normalised mutual information with
+      the bootstrap labels reaches ``min_global_mi`` (the bootstrap already
+      separates by type), pick the highest-MI candidate. This matches the
+      original intent and is best when clustering is good.
+    * **structural fallback** — otherwise (a degraded bootstrap), pick the
+      earliest qualifying window, i.e. the first type-like byte after the
+      constant/length header. The opcode is conventionally the first body byte.
+
+    Returns ``{offset, width, global_mi, cardinality}`` or ``None`` when nothing
+    qualifies (text / unstructured corpora) so the caller passes assignments
+    through unchanged.
+    """
+    messages: List[bytes] = []
+    labels: List[str] = []
+    for record in records:
+        family_id = family_by_msg_id.get(record.msg_id)
+        if family_id is None or family_id == "noise":
+            continue
+        messages.append(hex_to_bytes(record.payload_hex))
+        labels.append(family_id)
+    if len(messages) < 2 or len(set(labels)) < 2:
+        return None
+
+    scan_widths = sorted({int(width) for width in widths if int(width) >= 1})
+
+    # Exact message length per message: the stratum we condition on to separate a
+    # type code from a length echo (see conditional_normalized_mi). Conditioning on
+    # the EXACT length (not a coarse bucket) is what zeroes out a byte-count field,
+    # whose value is fully determined by length.
+    message_lengths = [len(message) for message in messages]
+
+    # Header bytes are the structural frame, never the type code: bytes that are
+    # constant across the corpus (protocol-id, unit-id, ...) or that belong to a
+    # length field. The discriminator must lie entirely outside them — this is
+    # what stops a misaligned multi-byte window from straddling a length/constant
+    # byte and masquerading as a low-cardinality candidate before the true opcode.
+    header_offsets: set[int] = set()
+    for offset in range(max_offset + max(scan_widths)):
+        single, _single_idx = _offset_values(messages, offset)
+        if single and len(set(single)) == 1:
+            header_offsets.add(offset)
+    for offset in range(max_offset + max(scan_widths)):
+        for width in scan_widths:
+            if _length_field_match_ratio(messages, offset, width) >= length_field_match_ratio:
+                header_offsets.update(range(offset, offset + width))
+
+    candidates: List[Dict[str, Any]] = []
+    for offset in range(max_offset):
+        for width in scan_widths:
+            if header_offsets & set(range(offset, offset + width)):
+                continue
+            values, indexes = _offset_window_values(messages, offset, width)
+            if len(values) < 2:
+                continue
+            coverage = len(values) / len(messages)
+            if coverage < min_coverage:
+                continue
+            value_counts = Counter(values)
+            cardinality = len(value_counts)
+            # Effective cardinality: how many of the most-frequent values are needed
+            # to cover (1 - tail_mass) of the messages. This ignores a rare junk tail
+            # (so a genuine opcode is not rejected) yet stays high for a field whose
+            # mass is spread across many values (an address / counter / txn-id).
+            effective_cardinality = _effective_cardinality(value_counts, len(values), effective_cardinality_tail_mass)
+            if effective_cardinality < min_cardinality or effective_cardinality > max_cardinality:
+                continue
+            stable_ratio = value_counts.most_common(1)[0][1] / len(values)
+            if stable_ratio > max_stable_ratio:
+                continue
+            mi = normalized_mi(values, [labels[index] for index in indexes])
+            type_mi = conditional_normalized_mi(
+                values,
+                [labels[index] for index in indexes],
+                [message_lengths[index] for index in indexes],
+            )
+            candidates.append(
+                {
+                    "offset": offset,
+                    "width": width,
+                    "global_mi": round(mi, 6),
+                    "type_mi": round(type_mi, 6),
+                    "cardinality": cardinality,
+                    "_mi": mi,
+                    "_type_mi": type_mi,
+                    "_effective_cardinality": effective_cardinality,
+                }
+            )
+    if not candidates:
+        return None
+
+    # Prefer the narrowest window. A single-byte opcode must not be passed over for
+    # a wider window that merely absorbs an adjacent data/length byte and so
+    # correlates more strongly with a byte-pattern bootstrap (which would re-key on
+    # opcode+data and over-split). Only widen when no narrower window qualifies at
+    # all — a genuine multi-byte type field.
+    narrowest = min(candidate["width"] for candidate in candidates)
+    candidates = [candidate for candidate in candidates if candidate["width"] == narrowest]
+
+    # Type-aware selection (primary): the opcode is the EARLIEST byte that carries
+    # real type information *beyond message length* — i.e. the earliest survivor
+    # whose I(byte; label | exact_length) clears a floor. Conditioning on exact
+    # length is what makes this robust across corpora:
+    #   * a length echo / byte-count scores ~0 (its value is fixed by length), so it
+    #     is excluded even when it dominates raw label MI on a length-clustered
+    #     bootstrap (the offset-8 trap on both Modbus captures);
+    #   * a structurally inert address / node-id scores below the floor (little type
+    #     signal at all), so it is skipped even though it sits at an earlier offset
+    #     (the offset-6 Unit-Id trap on the multi-device capture);
+    #   * the real opcode and its trailing data bytes both clear the floor, and the
+    #     opcode is the earliest of them — so taking the earliest survivor lands on
+    #     the opcode rather than a deeper data byte that may individually score
+    #     higher (the offset-9 trap on the single-device capture).
+    # Earliest-above-floor is what the original structural fallback did right; the
+    # type_mi floor is what additionally rejects the leading address it could not.
+    if structure_aware:
+        meaningful = [
+            candidate
+            for candidate in candidates
+            if candidate["_type_mi"] >= min_structure_mi
+            and candidate["_effective_cardinality"] >= min_type_cardinality
+        ]
+        if meaningful:
+            chosen = min(meaningful, key=lambda candidate: (candidate["offset"], candidate["width"]))
+            return {key: value for key, value in chosen.items() if not key.startswith("_")}
+
+    best_mi = max(candidate["_mi"] for candidate in candidates)
+    if best_mi >= min_global_mi:
+        # Label-guided: highest MI, ties broken toward the narrower, earlier window.
+        chosen = min(
+            candidates,
+            key=lambda candidate: (-candidate["_mi"], candidate["width"], candidate["offset"]),
+        )
+    else:
+        # Structural fallback: the first single-byte type-like field, widening only
+        # when no single-byte window qualifies (genuine 16-bit opcode).
+        chosen = min(candidates, key=lambda candidate: (candidate["width"], candidate["offset"]))
+    return {key: value for key, value in chosen.items() if not key.startswith("_")}
 
 
 def _contrastive_separation(values: Sequence[int], labels: Sequence[str]) -> float:

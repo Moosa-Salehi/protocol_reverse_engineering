@@ -30,6 +30,8 @@ MERGE_WIDTH_TARGETS_DEFAULT = _BD.MERGE_WIDTH_TARGETS_DEFAULT
 LENGTH_FIELD_WIDTHS_DEFAULT = _BD.LENGTH_FIELD_WIDTHS_DEFAULT
 LENGTH_MATCH_THRESHOLD_DEFAULT = _BD.LENGTH_MATCH_THRESHOLD_DEFAULT
 BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT = _BD.BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT
+ISOLATE_BODY_OPCODE_DEFAULT = _BD.ISOLATE_BODY_OPCODE
+OPCODE_MAX_CARDINALITY_RATIO = _BD.OPCODE_MAX_CARDINALITY_RATIO
 
 
 def _entropy(values: Sequence[int]) -> float:
@@ -252,6 +254,82 @@ def _normalise_score(score: float, score_threshold: float) -> float:
     return min(1.0, max(0.0, score / score_threshold))
 
 
+def _one_byte_count_ratio(messages: Sequence[bytes], pos: int, min_samples: int = 8) -> float:
+    """Fraction of messages where the single byte at ``pos`` equals the number of
+    bytes that follow it — i.e. it is a 1-byte length/count field (e.g. a Modbus
+    ``byte_count``). Holds even when the value is constant within a fixed-length
+    family, so such a field can be protected from being merged into the data."""
+    usable = 0
+    matches = 0
+    for message in messages:
+        if pos >= len(message):
+            continue
+        usable += 1
+        if message[pos] == len(message) - (pos + 1):
+            matches += 1
+    if usable < min_samples:
+        return 0.0
+    return matches / usable
+
+
+def detect_payload_length_field(
+    messages: Sequence[bytes],
+    body_start: int = 0,
+    match_ratio: float = 0.90,
+    min_distinct_lengths: int = 3,
+    min_samples: int = 8,
+    max_scan_offset: int = 48,
+) -> Optional[int]:
+    """Locate a length/count field that delimits a trailing variable-length payload.
+
+    Scans body offsets for a 1- or 2-byte big-endian field whose value equals the
+    number of bytes that follow it (``value == len(msg) - (pos + width)``). To reject
+    a *constant* byte that only coincidentally equals the remaining count at one
+    message length (e.g. a function code 0x04 in a fixed 12-byte request), the field
+    must genuinely TRACK length: the matching messages must span at least
+    ``min_distinct_lengths`` distinct lengths and the field must take that many
+    distinct values. Returns the offset where the variable payload begins
+    (``pos + width``), or ``None`` if no such field exists.
+
+    The latest (largest-offset) qualifying field wins, so structural fields before
+    the count (address/quantity) are preserved and only the true trailing array is
+    collapsed.
+    """
+    if len(messages) < min_samples:
+        return None
+    distinct_lengths = {len(message) for message in messages}
+    if len(distinct_lengths) < min_distinct_lengths:
+        # A fixed-length family has no variable-length payload to delimit.
+        return None
+    max_len = max(distinct_lengths)
+    best_array_start: Optional[int] = None
+    for width in (1, 2):
+        for pos in range(max(0, body_start), min(max_len - width, max_scan_offset)):
+            usable = matches = 0
+            matched_lengths: Set[int] = set()
+            matched_values: Set[int] = set()
+            for message in messages:
+                if len(message) < pos + width:
+                    continue
+                usable += 1
+                value = int.from_bytes(message[pos:pos + width], "big")
+                if value == len(message) - (pos + width):
+                    matches += 1
+                    matched_lengths.add(len(message))
+                    matched_values.add(value)
+            if usable < min_samples:
+                continue
+            if (
+                matches / usable >= match_ratio
+                and len(matched_lengths) >= min_distinct_lengths
+                and len(matched_values) >= min_distinct_lengths
+            ):
+                array_start = pos + width
+                if best_array_start is None or array_start > best_array_start:
+                    best_array_start = array_start
+    return best_array_start
+
+
 def should_merge_segments(
     seg1: Segment,
     seg2: Segment,
@@ -281,6 +359,7 @@ def merge_segments(
     messages_hex: Sequence[str],
     protected_boundaries: Optional[Set[int]] = None,
     merge_width_targets: Sequence[int] = MERGE_WIDTH_TARGETS_DEFAULT,
+    require_single_byte_operand: bool = False,
 ) -> List[Segment]:
     """
     Merge adjacent segments that should be combined.
@@ -297,6 +376,7 @@ def merge_segments(
     protected_boundaries = protected_boundaries or set()
     merge_width_targets = tuple(sorted({int(width) for width in merge_width_targets if int(width) > 0}))
     max_merge_width = max(merge_width_targets, default=0)
+    parsed_messages = [hex_to_bytes(msg) for msg in messages_hex] if require_single_byte_operand else []
 
     # Multi-pass merging: keep merging until no more merges happen
     max_passes = 3
@@ -319,6 +399,14 @@ def merge_segments(
             should_merge = False
             merge_reason = ""
 
+            # When require_single_byte_operand is set, the width-target rules (4,5)
+            # only fire if at least one operand is a single byte, so two
+            # already-formed multi-byte fields (e.g. uint16 + uint16) are never
+            # fused into a wider field while a uint16/uint32 still reconstructs
+            # from 1-byte runs. Adjacent-constant merging (Rule 1) is unaffected.
+            single_byte_operand = (current.end - current.start) == 1 or (next_seg.end - next_seg.start) == 1
+            width_merge_allowed = single_byte_operand or not require_single_byte_operand
+
             # Rule 1: Merge adjacent constants (always)
             if current.kind == next_seg.kind == "constant":
                 should_merge = True
@@ -333,6 +421,16 @@ def merge_segments(
                 elif current.confidence < 0.7 and next_seg.confidence < 0.7:
                     should_merge = True
                     merge_reason = "adjacent_single_byte_low_confidence"
+                # In the hierarchical body path, pair any two adjacent single bytes
+                # into a uint16 regardless of kind. This reconstructs a multi-byte
+                # numeric field whose high byte is near-constant (e.g. a Modbus
+                # register address with a small range: const high + variable low),
+                # which the kind-matched rules above miss. A 1-byte length/count
+                # field (value == bytes-remaining, e.g. byte_count) is left alone so
+                # it is not absorbed into the following data.
+                elif require_single_byte_operand and _one_byte_count_ratio(parsed_messages, current.start) < 0.8:
+                    should_merge = True
+                    merge_reason = "single_byte_pair_to_uint16"
 
             # Rule 3: Merge low-confidence adjacent fields of same kind
             elif (current.kind == next_seg.kind and
@@ -342,13 +440,15 @@ def merge_segments(
 
             # Rule 4: Merge if combined width is reasonable (2 or 4 bytes)
             elif (current.kind == next_seg.kind and
+                  width_merge_allowed and
                   (next_seg.end - current.start) in merge_width_targets):
                 if current.confidence < 0.8 or next_seg.confidence < 0.8:
                     should_merge = True
                     merge_reason = "standard_width_alignment"
 
             # Rule 5: Merge multiple 1-byte segments into standard widths (2, 4 bytes)
-            elif (current.end - current.start) <= 2 and (next_seg.end - next_seg.start) <= 2:
+            elif (width_merge_allowed and
+                  (current.end - current.start) <= 2 and (next_seg.end - next_seg.start) <= 2):
                 combined_width = next_seg.end - current.start
                 if combined_width in merge_width_targets and current.kind == next_seg.kind:
                     # Merge if at least one has low confidence
@@ -418,6 +518,8 @@ def infer_segments(
     length_match_threshold: float = LENGTH_MATCH_THRESHOLD_DEFAULT,
     enable_length_validator: bool = True,
     boundary_confidence_weight: float = BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT,
+    isolate_body_opcode: bool = ISOLATE_BODY_OPCODE_DEFAULT,
+    require_single_byte_operand: bool = False,
 ) -> List[Segment]:
     """
     Infer field segments with anti-fragmentation.
@@ -455,6 +557,26 @@ def infer_segments(
 
     framing_boundary, framing_evidence = framing_body_boundary_hint(framing_summary, max_len)
 
+    # Opcode/command isolation: the first body byte after a confident framing
+    # boundary is, in most binary protocols, a message-type / function / command
+    # code. When it is constant or near-constant within the family, force a
+    # 1-byte boundary right after it so the discriminator stays its own field
+    # instead of being merged into the following uint16/uint32 chunk.
+    opcode_boundary = (
+        body_opcode_boundary_hint(messages, framing_boundary, max_len)
+        if isolate_body_opcode
+        else None
+    )
+
+    # Count/length-byte isolation (hierarchical body path): a 1-byte field right
+    # after the opcode whose value equals the number of bytes that follow it is a
+    # byte_count/length. Force a boundary after it so it is split from the data
+    # even when the data is a single byte (where no entropy boundary appears).
+    count_boundary = None
+    if require_single_byte_operand and opcode_boundary is not None and opcode_boundary < max_len:
+        if _one_byte_count_ratio(messages, opcode_boundary) >= 0.8:
+            count_boundary = opcode_boundary + 1
+
     # Collect boundaries with scores
     boundary_candidates = [(0, float('inf'))]  # Start boundary always included
 
@@ -467,6 +589,14 @@ def infer_segments(
     # Add framing boundary if present
     if framing_boundary is not None:
         boundary_candidates.append((framing_boundary, float('inf')))
+
+    # Force the cut right after the leading body byte (opcode/command isolation)
+    if opcode_boundary is not None:
+        boundary_candidates.append((opcode_boundary, float('inf')))
+
+    # Force the cut right after a leading body count/length byte (byte_count).
+    if count_boundary is not None and 0 < count_boundary < max_len:
+        boundary_candidates.append((count_boundary, float('inf')))
 
     for boundary in length_protected_boundaries:
         if 0 < boundary < max_len:
@@ -498,6 +628,10 @@ def infer_segments(
         protected = {0, max_len, *length_protected_boundaries}
         if framing_boundary is not None:
             protected.add(framing_boundary)
+        if opcode_boundary is not None:
+            protected.add(opcode_boundary)
+        if count_boundary is not None:
+            protected.add(count_boundary)
 
         # Score other boundaries
         scored_boundaries = [
@@ -604,14 +738,50 @@ def infer_segments(
         protected_boundaries = set(length_protected_boundaries)
         if framing_boundary is not None:
             protected_boundaries.add(framing_boundary)
+        if opcode_boundary is not None:
+            # Protect the opcode's right edge so the 1-byte discriminator is
+            # never merged into the following field.
+            protected_boundaries.add(opcode_boundary)
+        if count_boundary is not None:
+            # Protect the count/length byte's right edge so byte_count is not
+            # merged into the data that follows it.
+            protected_boundaries.add(count_boundary)
         segments = merge_segments(
             segments,
             messages_hex,
             protected_boundaries=protected_boundaries,
             merge_width_targets=merge_width_targets,
+            require_single_byte_operand=require_single_byte_operand,
         )
 
     return segments
+
+
+def body_opcode_boundary_hint(
+    messages: Sequence[bytes],
+    framing_boundary: Optional[int],
+    max_len: int,
+    max_cardinality_ratio: float = OPCODE_MAX_CARDINALITY_RATIO,
+) -> Optional[int]:
+    """Return the boundary that isolates the leading body byte as an opcode.
+
+    The first byte of the application body (immediately after a confident
+    framing/transport boundary) is, in most binary protocols, a message-type /
+    function / command code. When that byte is constant or near-constant within
+    the family it is treated as a discriminator and split into its own 1-byte
+    field. Returns ``framing_boundary + 1`` in that case, otherwise ``None``.
+    """
+    if framing_boundary is None:
+        return None
+    if framing_boundary <= 0 or framing_boundary >= max_len - 1:
+        return None
+    values = [message[framing_boundary] for message in messages if len(message) > framing_boundary]
+    if not values:
+        return None
+    cardinality_ratio = len(set(values)) / len(values)
+    if len(set(values)) > 1 and cardinality_ratio > max_cardinality_ratio:
+        return None
+    return framing_boundary + 1
 
 
 def framing_body_boundary_hint(

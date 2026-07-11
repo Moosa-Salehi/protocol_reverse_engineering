@@ -4,453 +4,240 @@ Version: `0.1`
 
 ## Metadata
 
-- **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 11, 'family_ratio': 1.0}], 'field_type_counts': {'length': 33, 'transaction_or_counter': 20, 'constant': 10, 'discriminator': 5}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 11}
-- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-06-07T03:30:58.319121+00:00', 'input_patch_count': 4, 'accepted_patch_count': 1, 'rejected_patch_count': 3}
+- **framing_global_summary**: {'common_header_ends': [{'header_end': 7, 'family_count': 10, 'family_ratio': 1.0}], 'field_type_counts': {'length': 30, 'transaction_or_counter': 20}, 'mean_best_confidence': 1.0, 'families_with_header_candidate': 10}
+- **llm_refinement**: {'artifact_type': 'llm_refinement_summary', 'created_at': '2026-07-10T18:31:26.802831+00:00', 'input_patch_count': 0, 'accepted_patch_count': 0, 'rejected_patch_count': 0}
 
 ## Evaluation
 
 - Messages: `200000` across `1` sessions
-- Corpus assignment coverage: `1` with `11` families
+- Corpus assignment coverage: `1` with `10` families
 - Clustering sample: `100000` messages ratio=`0.5`
-- Parseable families: `11` of `11`
-- Pair hypotheses: `100000` direction_unknown_ratio=`1`
-- Relation edges: `18` echo_edges=`18` length_relation_edges=`1`
-- Semantic coverage: `11` of `11` families ratio=`1`
-- Top semantic labels: `constant`x25, `echoed_request_field`x23, `transaction_or_correlation_id`x21, `discriminator`x15, `payload`x11, `length`x9, `transaction_id`x7, `response_size_selector`x1
-- Framing coverage: `11` of `11` families ratio=`1`
-- Clustering diagnostics: warning_families=`5` split_candidates=`0` merge_candidates=`0`
+- Parseable families: `10` of `10`
+- Pair hypotheses: `99999` direction_unknown_ratio=`1`
+- Relation edges: `6` echo_edges=`6` length_relation_edges=`0`
+- Semantic coverage: `10` of `10` families ratio=`1`
+- Top semantic labels: `constant`x54, `length`x16, `echoed_request_field`x15, `transaction_id`x8, `transaction_or_correlation_id`x8, `address_like`x3
+- Framing coverage: `10` of `10` families ratio=`1`
+- Clustering diagnostics: warning_families=`9` split_candidates=`2` merge_candidates=`24`
 
 ### Clustering Diagnostic Warnings
 
-- `family_1` | messages=`120667` split=`0.2` under_split=`0.2` over_split=`0` warnings=mixed length profile
-- `family_6` | messages=`38027` split=`0.2` under_split=`0.2` over_split=`0` warnings=mixed length profile
-- `family_4` | messages=`14904` split=`0.2` under_split=`0.2` over_split=`0` warnings=mixed length profile
-- `family_5` | messages=`13239` split=`0.2` under_split=`0.2` over_split=`0` warnings=mixed length profile
-- `noise` | messages=`763` split=`0` under_split=`0` over_split=`0` warnings=noise family
+- `family_0` | messages=`39887` split=`0.5` under_split=`0.5` over_split=`0.7488` warnings=high latent dispersion, low latent silhouette, possible over-split merge candidate
+- `family_6` | messages=`19944` split=`0.5` under_split=`0.5` over_split=`0` warnings=high latent dispersion, low latent silhouette
+- `family_9` | messages=`406` split=`0.3` under_split=`0.3` over_split=`0` warnings=high latent dispersion
+- `family_5` | messages=`19944` split=`0.2` under_split=`0.2` over_split=`0.8341` warnings=low latent silhouette, possible over-split merge candidate
+- `family_7` | messages=`19943` split=`0.2` under_split=`0.2` over_split=`0.8341` warnings=low latent silhouette, possible over-split merge candidate
+- `family_3` | messages=`19944` split=`0.2` under_split=`0.2` over_split=`0.8233` warnings=low latent silhouette, possible over-split merge candidate
+- `family_2` | messages=`19944` split=`0.2` under_split=`0.2` over_split=`0.7488` warnings=low latent silhouette, possible over-split merge candidate
+- `family_1` | messages=`39888` split=`0.2` under_split=`0.2` over_split=`0.3166` warnings=low latent silhouette, possible over-split merge candidate
+- `family_4` | messages=`19944` split=`0.2` under_split=`0.2` over_split=`0` warnings=low latent silhouette
+
+### Clustering Merge Candidates
+
+- `family_5` -> `family_7` distance=`0.0299` score=`0.8341`
+- `family_7` -> `family_5` distance=`0.0299` score=`0.8341`
+- `family_5` -> `family_3` distance=`0.0319` score=`0.8233`
+- `family_3` -> `family_5` distance=`0.0319` score=`0.8233`
+- `family_2` -> `family_0` distance=`0.0453` score=`0.7488`
+- `family_0` -> `family_2` distance=`0.0453` score=`0.7488`
+- `family_3` -> `family_7` distance=`0.0616` score=`0.6581`
+- `family_7` -> `family_3` distance=`0.0616` score=`0.6581`
+- `family_3` -> `family_1` distance=`0.1232` score=`0.3166`
+- `family_1` -> `family_3` distance=`0.1232` score=`0.3166`
 
 ### Evaluation Top Relation Edges
 
-- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `noise` -> `family_1` | pairs=`719` avg_score=`5.3887` support=`1` lift=`1.52` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
-- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_1` -> `family_0` | pairs=`39887` avg_score=`6.9362` support=`1` lift=`2.5071` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_5` -> `family_4` | pairs=`19944` avg_score=`6.9675` support=`1` lift=`5.014` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_3` -> `family_2` | pairs=`19944` avg_score=`6.935` support=`1` lift=`5.014` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_7` -> `family_6` | pairs=`19943` avg_score=`6.9675` support=`1` lift=`5.0142` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_9` -> `family_9` | pairs=`203` avg_score=`6.9976` support=`1` lift=`492.6059` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
+- `family_8` -> `family_8` | pairs=`78` avg_score=`6.9968` support=`1` lift=`1282.0385` direction=`1` order=`1` echo_fields=`10` length_rules=`0`
 
 ## Final Ground Truth Evaluation
 
-- Overall score: `0.5224`
-- Verdict: `partial`
-- Matched message types: `10` of `11`
-- Message type matching: accuracy=`0.8333` precision=`0.9091` recall=`0.9091` f1=`0.9091`
-- Field boundary: accuracy=`0.3404` precision=`0.5714` recall=`0.4571` f1=`0.5079`
-- Field semantics: accuracy=`0.0678` precision=`0.1429` recall=`0.1143` f1=`0.127`
-- Relations: accuracy=`0.375` precision=`0.4` recall=`0.8571` f1=`0.5455`
+- Overall score: `0.9706`
+- Verdict: `pass`
+- Matched message types: `11` of `11`
+- Message type matching: accuracy=`1` precision=`1` recall=`1` f1=`1`
+- Field boundary: accuracy=`1` precision=`1` recall=`1` f1=`1`
+- Field semantics: accuracy=`0.7895` precision=`0.8824` recall=`0.8824` f1=`0.8824`
+- Relations: accuracy=`1` precision=`1` recall=`1` f1=`1`
 
 ## LLM Analysis
 
-- Model: `qwen/qwen3.5-397b-a17b`
-- Prompt size: `33002` bytes, `33002` characters, estimated tokens=`8251`
+- Prompt size: `34945` bytes, `34945` characters, estimated tokens=`8737`
 
-# Protocol Specification Synthesis
-
-## Overview
-This is a binary, transaction-based request/response protocol operating over a client-server model. Analysis of 200,000 messages reveals 11 distinct message families. The protocol utilizes a fixed 7-byte header followed by a variable payload, typically totaling 12 bytes in observed samples.
-
-## Message Structure
-- **Header**: 7 bytes
-  - `Transaction ID`: 2 bytes (Endianness varies: LE in requests, mixed in responses)
-  - `Reserved`: 2 bytes (Constant 0x0000)
-  - `Length`: 2 bytes (Big-Endian, usually 0x0005 for requests)
-  - `Marker`: 1 byte (Constant 0x01)
-- **Payload**: Typically 5 bytes
-  - `Address/Data`: 4 bytes
-  - `Status`: 1 byte (in responses)
-
-## Key Findings
-- **Correlation**: Messages are paired using the 2-byte Transaction ID at offset 0.
-- **Addressing**: 32-bit addresses are used at offset 7, suggesting a flat memory or register map.
-- **Relations**: Strong request/response pairs identified (e.g., Family 9 → Family 1). Two weak relations were discarded during validation.
-- **Anomalies**: Some families (e.g., Family 6) show self-correlation, implying they may handle both request and response logic or represent a specific polling pattern.
-
-## Limitations
-The exact semantic meaning of status codes and the specific memory map for the 32-bit addresses remain unknown without application-level context. The mixed endianness of transaction IDs requires further verification.
+_LLM analysis was skipped because stage 15 ran in render-only mode._
 
 ## Family Relations
 
-- Total inferred family edges: `15`
+- Total inferred family edges: `6`
 - Strongest edges:
-- `family_6` -> `family_6` | pairs=`16624` avg_score=`5.2102` support=`0.8886` lift=`4.5996` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_4` -> `family_4` | pairs=`5900` avg_score=`5.1794` support=`0.8477` lift=`10.671` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_5` -> `family_5` | pairs=`5210` avg_score=`5.1828` support=`0.818` lift=`11.9072` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_9` -> `family_1` | pairs=`2353` avg_score=`5.4451` support=`0.8033` lift=`1.2211` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_7` -> `family_1` | pairs=`1737` avg_score=`5.4468` support=`0.9983` lift=`1.5174` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_3` -> `family_1` | pairs=`1539` avg_score=`5.4445` support=`0.7777` lift=`1.1821` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_8` -> `family_6` | pairs=`852` avg_score=`5.4468` support=`0.3826` lift=`1.9803` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_2` -> `family_5` | pairs=`547` avg_score=`5.4451` support=`0.2148` lift=`3.1273` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_0` -> `family_6` | pairs=`545` avg_score=`5.4156` support=`0.5767` lift=`2.9852` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_2` -> `family_4` | pairs=`389` avg_score=`5.4443` support=`0.1528` lift=`1.9233` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_9` -> `family_4` | pairs=`337` avg_score=`5.4467` support=`0.1151` lift=`1.4483` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_3` -> `family_4` | pairs=`260` avg_score=`5.4394` support=`0.1314` lift=`1.6538` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_9` -> `family_5` | pairs=`239` avg_score=`5.4468` support=`0.0816` lift=`1.1877` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_3` -> `family_5` | pairs=`180` avg_score=`5.4467` support=`0.091` lift=`1.3239` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
-- `family_6` -> `family_0` | pairs=`20` avg_score=`5.4668` support=`0.0011` lift=`4.8594` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_1` -> `family_0` | pairs=`39887` avg_score=`6.9362` support=`1` lift=`2.5071` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_5` -> `family_4` | pairs=`19944` avg_score=`6.9675` support=`1` lift=`5.014` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_3` -> `family_2` | pairs=`19944` avg_score=`6.935` support=`1` lift=`5.014` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_7` -> `family_6` | pairs=`19943` avg_score=`6.9675` support=`1` lift=`5.0142` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_9` -> `family_9` | pairs=`203` avg_score=`6.9976` support=`1` lift=`492.6059` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
+- `family_8` -> `family_8` | pairs=`78` avg_score=`6.9968` support=`1` lift=`1282.0385` direction=`1` order=`1` flow=`unknown->unknown` echo_fields=`10`
 
 ## Families
 
-- Total families: `11`
-- Families shown below: `11`
+- Total families: `10`
+- Families shown below: `10`
 
 ### family_1
 
-- Role: `response`
-- Messages: `120667`
-- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
-- Related families: `family_3`, `family_7`, `family_9`
-- Role hint: `response`
-- Semantic confidence: `0.9931`
-- Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.685475` max=`2.732159` mean=`2.314913`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.841241` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.494068`
-- Top discriminator candidates: offset `7` conf=`0.494068` salience=`0.748865`, offset `0` conf=`0.48592` salience=`1.0`, offset `9` conf=`0.380006` salience=`0.295805`
-- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
-
-#### Segments
-
-- bytes `0`..`1` | kind=`variable` confidence=`0.608855`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6535`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.6868927499999999`
-- bytes `11`..`11` | kind=`variable` confidence=`0.7786`
-
-#### Field Hypotheses
-
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
-- bytes `11`..`11` | type=`uint8` confidence=`0.9999`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9998`
-- bytes `2`..`3` | type=`uint16` confidence=`0.99`
-- bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16_be` confidence=`0.5`
-
-#### Framing Hypotheses
-
-- header_end=`7` body_start=`7` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator, `6`..`6` constant
-- header_end=`6` body_start=`6` confidence=`0.9905` fields=`2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length, `5`..`5` discriminator
-
-#### Semantic Labels
-
-- bytes `4`..`5` | label=`length` confidence=`1.0`
-- bytes `11`..`11` | label=`discriminator` confidence=`0.9999`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9998`
-- bytes `2`..`3` | label=`constant` confidence=`0.99`
-- bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `7`..`10` | label=`payload` confidence=`0.7`
-
-#### Notes
-
-- Echoes request fields from family_3 with up to 10 strong offset matches.
-- Echoes request fields from family_7 with up to 10 strong offset matches.
-- Echoes request fields from family_9 with up to 10 strong offset matches.
-- Detected common protocol pattern: length field, discriminator
-
-#### Feature Summary
-
-- Messages with repetition: `120667` (`1.0`)
-- Repeated n-gram instances: `151662`
-- Top motifs: `0000`x242047, `000000`x121075, `0101`x83129, `0100`x67963, `0006`x66531
-
-### family_6
-
-- Role: `response`
-- Messages: `38027`
-- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
-- Related families: `family_0`, `family_6`, `family_8`
-- Role hint: `response`
-- Semantic confidence: `0.5199`
-- Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.485475` max=`3.027169` mean=`2.389712`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.98095` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.498314`
-- Top discriminator candidates: offset `7` conf=`0.498314` salience=`0.748865`, offset `8` conf=`0.375128` salience=`0.374394`, offset `9` conf=`0.312571` salience=`0.295805`
-- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
-
-#### Segments
-
-- bytes `0`..`1` | kind=`variable` confidence=`0.6103749999999999`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6521`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.6774165`
-- bytes `11`..`11` | kind=`variable` confidence=`0.7738`
-
-#### Field Hypotheses
-
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
-- bytes `11`..`11` | type=`uint8` confidence=`0.9997`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9986`
-- bytes `2`..`3` | type=`uint16` confidence=`0.99`
-- bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16` confidence=`0.5`
-
-#### Framing Hypotheses
-
-- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-
-#### Semantic Labels
-
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
-- bytes `4`..`5` | label=`length` confidence=`1.0`
-- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9986`
-- bytes `2`..`3` | label=`constant` confidence=`0.99`
-- bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-
-#### Notes
-
-- Echoes request fields from family_0 with up to 10 strong offset matches.
-- Echoes request fields from family_6 with up to 10 strong offset matches.
-- Echoes request fields from family_8 with up to 10 strong offset matches.
-- Detected common protocol pattern: length field, discriminator
-
-#### Feature Summary
-
-- Messages with repetition: `38027` (`1.0`)
-- Repeated n-gram instances: `45619`
-- Top motifs: `0000`x76283, `000000`x38136, `0101`x21262, `0006`x19674, `0601`x19441
-
-### family_4
-
-- Role: `response`
-- Messages: `14904`
-- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
-- Related families: `family_2`, `family_3`, `family_4`, `family_9`
-- Role hint: `response`
-- Semantic confidence: `0.5385`
-- Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.685475` max=`3.027169` mean=`2.379388`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.941612` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.49805`
-- Top discriminator candidates: offset `7` conf=`0.49805` salience=`0.748865`, offset `8` conf=`0.373791` salience=`0.374394`, offset `9` conf=`0.354963` salience=`0.295805`
-- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
-
-#### Segments
-
-- bytes `0`..`1` | kind=`variable` confidence=`0.636405`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6524`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.6802142499999999`
-- bytes `11`..`11` | kind=`variable` confidence=`0.7778`
-
-#### Field Hypotheses
-
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
-- bytes `11`..`11` | type=`uint8` confidence=`0.9996`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9975`
-- bytes `2`..`3` | type=`uint16` confidence=`0.99`
-- bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16` confidence=`0.5`
-
-#### Framing Hypotheses
-
-- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-
-#### Semantic Labels
-
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
-- bytes `4`..`5` | label=`length` confidence=`1.0`
-- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `6`..`6` | label=`response_size_selector` confidence=`1.0`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9975`
-- bytes `2`..`3` | label=`constant` confidence=`0.99`
-- bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
-
-#### Notes
-
-- Echoes request fields from family_2 with up to 10 strong offset matches.
-- Echoes request fields from family_3 with up to 10 strong offset matches.
-- Echoes request fields from family_4 with up to 10 strong offset matches.
-- Echoes request fields from family_9 with up to 10 strong offset matches.
-- Detected common protocol pattern: length field, discriminator
-
-#### Feature Summary
-
-- Messages with repetition: `14904` (`1.0`)
-- Repeated n-gram instances: `18144`
-- Top motifs: `0000`x30047, `000000`x15110, `0101`x8267, `000006`x7951, `000601`x7951
-
-### family_5
-
-- Role: `response`
-- Messages: `13239`
-- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 01`
-- Related families: `family_2`, `family_3`, `family_5`, `family_9`
-- Role hint: `response`
-- Semantic confidence: `0.5424`
-- Length stats: min=`10` max=`12` distinct=`3`
-- Entropy summary: min=`1.846439` max=`3.027169` mean=`2.402529`
-- Candidate discriminator offset: `7` cardinality=`5` entropy=`1.93922` salience=`0.748865` mutual_information=`0.093383` contrastive_separation=`0.828125` confidence=`0.497816`
-- Top discriminator candidates: offset `7` conf=`0.497816` salience=`0.748865`, offset `8` conf=`0.374642` salience=`0.374394`, offset `9` conf=`0.340863` salience=`0.295805`
-- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
-
-#### Segments
-
-- bytes `0`..`1` | kind=`variable` confidence=`0.631655`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6522`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.67858975`
-- bytes `11`..`11` | kind=`variable` confidence=`0.7765`
-
-#### Field Hypotheses
-
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
-- bytes `11`..`11` | type=`uint8` confidence=`0.9997`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9974`
-- bytes `2`..`3` | type=`uint16` confidence=`0.99`
-- bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16` confidence=`0.5`
-
-#### Framing Hypotheses
-
-- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-
-#### Semantic Labels
-
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
-- bytes `4`..`5` | label=`length` confidence=`1.0`
-- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9974`
-- bytes `2`..`3` | label=`constant` confidence=`0.99`
-- bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-
-#### Notes
-
-- Echoes request fields from family_2 with up to 10 strong offset matches.
-- Echoes request fields from family_3 with up to 10 strong offset matches.
-- Echoes request fields from family_5 with up to 10 strong offset matches.
-- Echoes request fields from family_9 with up to 10 strong offset matches.
-- Detected common protocol pattern: length field, discriminator
-
-#### Feature Summary
-
-- Messages with repetition: `13239` (`1.0`)
-- Repeated n-gram instances: `15569`
-- Top motifs: `0000`x26488, `000000`x13239, `0101`x7474, `000006`x6875, `000601`x6875
-
-### family_9
-
 - Role: `request`
-- Messages: `2933`
-- Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
-- Related families: `family_1`, `family_4`, `family_5`
+- Messages: `39888`
+- Template: `?? ?? 00 00 00 06 01 01 00 ?? 00 01`
+- Related families: `family_0`
 - Role hint: `request`
 - Semantic confidence: `1.0`
-- Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.617492` max=`3.027169` mean=`3.020272`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`3.463243` salience=`0.352579` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.358296`
-- Top discriminator candidates: offset `10` conf=`0.358296` salience=`0.352579`, offset `9` conf=`0.340144` salience=`0.295805`, offset `8` conf=`0.335651` salience=`0.374394`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`1.729574` max=`2.221252` mean=`2.214693`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.638115`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6686`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.7069899999999999`
-- bytes `11`..`11` | kind=`constant` confidence=`0.8654`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9935`
+- bytes `8`..`9` | type=`uint16` confidence=`0.9999`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.8643` endian=`big`
 
 #### Framing Hypotheses
 
 - header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length, `7`..`7` length
 - header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`0.9668` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9935`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `8`..`9` | label=`address_like` confidence=`0.91`
 
 #### Notes
 
-- Detected common protocol pattern: transaction ID, length field, discriminator
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
-- Messages with repetition: `2933` (`1.0`)
-- Repeated n-gram instances: `2953`
-- Top motifs: `0000`x5876, `000000`x2943, `000005`x2925, `000501`x2925, `010402`x2925
+- Messages with repetition: `39888` (`1.0`)
+- Repeated n-gram instances: `40513`
+- Top motifs: `0000`x79934, `000000`x40046, `0100`x40037, `000006`x39888, `000601`x39888
+
+### family_0
+
+- Role: `response`
+- Messages: `39887`
+- Template: `?? ?? 00 00 00 04 01 01 01 00`
+- Related families: `family_1`
+- Role hint: `response`
+- Semantic confidence: `1.0`
+- Length stats: min=`10` max=`10` distinct=`1`
+- Entropy summary: min=`1.485475` max=`2.046439` mean=`2.039969`
+- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
+
+#### Segments
+
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
+
+#### Field Hypotheses
+
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.99`
+- bytes `0`..`1` | type=`uint16_be` confidence=`0.8643` endian=`big`
+
+#### Framing Hypotheses
+
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`0.9668` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+
+#### Semantic Labels
+
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `9`..`9` | label=`constant` confidence=`0.99`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+
+#### Notes
+
+- Echoes request fields from family_1 with up to 10 strong offset matches.
+- Detected common protocol pattern: transaction ID, length field
+
+#### Feature Summary
+
+- Messages with repetition: `39887` (`1.0`)
+- Repeated n-gram instances: `80240`
+- Top motifs: `0000`x79932, `0101`x79774, `000000`x40045, `0100`x40036, `0004`x39888
 
 ### family_2
 
-- Role: `request`
-- Messages: `2548`
-- Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
-- Related families: `family_4`, `family_5`
-- Role hint: `request`
+- Role: `response`
+- Messages: `19944`
+- Template: `?? ?? 00 00 00 04 01 02 01 00`
+- Related families: `family_3`
+- Role hint: `response`
 - Semantic confidence: `1.0`
-- Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.617492` max=`3.027169` mean=`3.02023`
-- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.016887` salience=`0.374394` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.335581`
-- Top discriminator candidates: offset `8` conf=`0.335581` salience=`0.374394`, offset `10` conf=`0.331555` salience=`0.352579`, offset `9` conf=`0.318615` salience=`0.295805`
+- Length stats: min=`10` max=`10` distinct=`1`
+- Entropy summary: min=`1.721928` max=`2.370951` mean=`2.315659`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.642485`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6688`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.7153499999999999`
-- bytes `11`..`11` | kind=`constant` confidence=`0.8652`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`9` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9898`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `9`..`9` | type=`uint8` confidence=`0.9765` endian=`big`
+- bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
 #### Framing Hypotheses
 
@@ -460,108 +247,121 @@ The exact semantic meaning of status codes and the specific memory map for the 3
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
-- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `7`..`7` | label=`length` confidence=`1.0`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9898`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
-
-#### Notes
-
-- Detected common protocol pattern: transaction ID, length field, discriminator
-
-#### Feature Summary
-
-- Messages with repetition: `2548` (`1.0`)
-- Repeated n-gram instances: `2568`
-- Top motifs: `0000`x5106, `000000`x2558, `000005`x2544, `000501`x2544, `010402`x2544
-
-### family_8
-
-- Role: `request`
-- Messages: `2227`
-- Template: `?? ?? 00 00 00 05 01 04 02 2c ??`
-- Related families: `family_6`
-- Role hint: `request`
-- Semantic confidence: `1.0`
-- Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.550341` max=`3.027169` mean=`3.017568`
-- Candidate discriminator offset: `9` cardinality=`7` entropy=`0.30222` salience=`0.295805` mutual_information=`0.184592` contrastive_separation=`0.859375` confidence=`0.335587`
-- Top discriminator candidates: offset `9` conf=`0.335587` salience=`0.295805`, offset `10` conf=`0.331031` salience=`0.352579`
-- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
-
-#### Segments
-
-- bytes `0`..`1` | kind=`variable` confidence=`0.6476149999999999`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`10` | kind=`variable` confidence=`0.71877`
-
-#### Field Hypotheses
-
-- bytes `7`..`10` | type=`uint32` confidence=`0.9901`
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16_be` confidence=`0.95` endian=`big`
-
-#### Framing Hypotheses
-
-- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length, `7`..`7` length
-- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
-
-#### Semantic Labels
-
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9901`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `9`..`9` | label=`length` confidence=`0.9765`
 - bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
-- bytes `7`..`10` | label=`payload` confidence=`0.7`
 
 #### Notes
 
-- Detected common protocol pattern: transaction ID, discriminator
+- Echoes request fields from family_3 with up to 10 strong offset matches.
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
-- Messages with repetition: `2227` (`1.0`)
-- Repeated n-gram instances: `2245`
-- Top motifs: `0000`x4463, `000000`x2236, `000005`x2227, `000501`x2227, `010402`x2227
+- Messages with repetition: `19944` (`1.0`)
+- Repeated n-gram instances: `20169`
+- Top motifs: `0000`x39963, `000000`x20019, `000004`x19944, `000401`x19944, `010201`x19944
 
 ### family_3
 
 - Role: `request`
-- Messages: `1985`
-- Template: `?? ?? 00 00 00 05 01 04 02 2c ?? 00`
-- Related families: `family_1`, `family_4`, `family_5`
+- Messages: `19944`
+- Template: `?? ?? 00 00 00 06 01 02 00 08 00 01`
+- Related families: `family_2`
 - Role hint: `request`
-- Semantic confidence: `0.999`
-- Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.617492` max=`3.027169` mean=`3.018191`
-- Candidate discriminator offset: `10` cardinality=`9` entropy=`2.726791` salience=`0.352579` mutual_information=`0.308526` contrastive_separation=`0.890625` confidence=`0.407873`
-- Top discriminator candidates: offset `10` conf=`0.407873` salience=`0.352579`, offset `9` conf=`0.354687` salience=`0.295805`, offset `8` conf=`0.33585` salience=`0.374394`
+- Semantic confidence: `1.0`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`1.950826` max=`2.450826` mean=`2.443359`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.6524599999999999`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6684`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.722285`
-- bytes `11`..`11` | kind=`constant` confidence=`0.8658`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
-- bytes `7`..`10` | type=`uint32` confidence=`0.995`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`9` | type=`uint16` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
+- bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
+
+#### Framing Hypotheses
+
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`0.9594` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+
+#### Semantic Labels
+
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `6`..`6` | label=`echoed_request_field` confidence=`1.0`
+- bytes `8`..`9` | label=`echoed_request_field` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`9` | label=`constant` confidence=`0.99`
+
+#### Notes
+
+- Detected common protocol pattern: transaction ID, length field
+
+#### Feature Summary
+
+- Messages with repetition: `19944` (`1.0`)
+- Repeated n-gram instances: `20258`
+- Top motifs: `0000`x39963, `0800`x20026, `0200`x20025, `000000`x20019, `0601`x19945
+
+### family_4
+
+- Role: `response`
+- Messages: `19944`
+- Template: `?? ?? 00 00 00 05 01 03 02 00 ??`
+- Related families: `family_5`
+- Role hint: `response`
+- Semantic confidence: `1.0`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`2.222192` max=`2.732159` mean=`2.704875`
+- Candidate discriminator offset: `10` cardinality=`16` entropy=`3.755839` salience=`0.410478` mutual_information=`0.4089` contrastive_separation=`1.0` confidence=`0.407711`
+- Top discriminator candidates: offset `10` conf=`0.407711` salience=`0.410478`
+- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
+
+#### Segments
+
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`10` | kind=`variable` confidence=`1.0`
+
+#### Field Hypotheses
+
+- bytes `9`..`10` | type=`keyword` confidence=`0.9992`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
 #### Framing Hypotheses
 
@@ -571,112 +371,180 @@ The exact semantic meaning of status codes and the specific memory map for the 3
 
 #### Semantic Labels
 
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `7`..`7` | label=`length` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+
+#### Notes
+
+- Echoes request fields from family_5 with up to 10 strong offset matches.
+- Detected common protocol pattern: transaction ID, length field
+
+#### Feature Summary
+
+- Messages with repetition: `19944` (`1.0`)
+- Repeated n-gram instances: `21150`
+- Top motifs: `0000`x39963, `0005`x20914, `0200`x20028, `000000`x20019, `0501`x19945
+
+### family_5
+
+- Role: `request`
+- Messages: `19944`
+- Template: `?? ?? 00 00 00 06 01 03 00 08 00 01`
+- Related families: `family_4`
+- Role hint: `request`
+- Semantic confidence: `1.0`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`1.896241` max=`2.450826` mean=`2.443464`
+- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
+
+#### Segments
+
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
+
+#### Field Hypotheses
+
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`9` | type=`uint16` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
+- bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
+
+#### Framing Hypotheses
+
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`0.9594` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+
+#### Semantic Labels
+
 - bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.995`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`9` | label=`constant` confidence=`0.99`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
 - bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
 
 #### Notes
 
-- Echoes request fields from family_4 with up to 1 strong offset matches.
-- Response size is tied to request fields from family_4.
-- Detected common protocol pattern: transaction ID, length field, discriminator
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
-- Messages with repetition: `1985` (`1.0`)
-- Repeated n-gram instances: `2001`
-- Top motifs: `0000`x3978, `000000`x1993, `000005`x1973, `000501`x1973, `010402`x1973
+- Messages with repetition: `19944` (`1.0`)
+- Repeated n-gram instances: `20242`
+- Top motifs: `0000`x39963, `000000`x20019, `0300`x20018, `0800`x20016, `0001`x19945
+
+### family_6
+
+- Role: `response`
+- Messages: `19944`
+- Template: `?? ?? 00 00 00 05 01 04 02 ?? ??`
+- Related families: `family_7`
+- Role hint: `response`
+- Semantic confidence: `1.0`
+- Length stats: min=`11` max=`11` distinct=`1`
+- Entropy summary: min=`2.049452` max=`3.027169` mean=`2.99683`
+- Candidate discriminator offset: `9` cardinality=`18` entropy=`1.222633` salience=`0.581767` mutual_information=`0.621806` contrastive_separation=`1.0` confidence=`0.468878`
+- Top discriminator candidates: offset `9` conf=`0.468878` salience=`0.581767`, offset `10` conf=`0.378674` salience=`0.410478`
+- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
+
+#### Segments
+
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`8` | kind=`variable` confidence=`1.0`
+- bytes `9`..`10` | kind=`variable` confidence=`1.0`
+
+#### Field Hypotheses
+
+- bytes `9`..`10` | type=`keyword` confidence=`0.9906`
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`8` | type=`uint8` confidence=`0.99`
+- bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
+
+#### Framing Hypotheses
+
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length, `7`..`7` length
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+
+#### Semantic Labels
+
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `7`..`7` | label=`length` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`8` | label=`constant` confidence=`0.99`
+- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+
+#### Notes
+
+- Echoes request fields from family_7 with up to 10 strong offset matches.
+- Detected common protocol pattern: transaction ID, length field
+
+#### Feature Summary
+
+- Messages with repetition: `19944` (`1.0`)
+- Repeated n-gram instances: `20582`
+- Top motifs: `0000`x40439, `000000`x20027, `0005`x19945, `0104`x19945, `000005`x19944
 
 ### family_7
 
 - Role: `request`
-- Messages: `1740`
-- Template: `?? ?? 00 00 00 05 01 04 02 2d ??`
-- Related families: `family_1`
-- Role hint: `request`
-- Semantic confidence: `1.0`
-- Length stats: min=`11` max=`11` distinct=`1`
-- Entropy summary: min=`2.732159` max=`3.027169` mean=`3.023486`
-- Candidate discriminator offset: `9` cardinality=`5` entropy=`0.02806` salience=`0.295805` mutual_information=`0.184592` contrastive_separation=`0.828125` confidence=`0.347244`
-- Top discriminator candidates: offset `9` conf=`0.347244` salience=`0.295805`, offset `10` conf=`0.336984` salience=`0.352579`
-- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
-
-#### Segments
-
-- bytes `0`..`1` | kind=`variable` confidence=`0.660725`
-- bytes `2`..`6` | kind=`constant` confidence=`0.85`
-- bytes `7`..`10` | kind=`variable` confidence=`0.716965`
-
-#### Field Hypotheses
-
-- bytes `2`..`6` | type=`bytes` confidence=`0.99`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9891`
-- bytes `0`..`1` | type=`uint16_le` confidence=`0.95` endian=`little`
-
-#### Framing Hypotheses
-
-- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length, `7`..`7` length
-- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
-
-#### Semantic Labels
-
-- bytes `0`..`1` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`echoed_request_field` confidence=`1.0`
-- bytes `2`..`6` | label=`constant` confidence=`0.99`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.9891`
-- bytes `0`..`1` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
-- bytes `7`..`10` | label=`payload` confidence=`0.7`
-
-#### Notes
-
-- Detected common protocol pattern: transaction ID, discriminator
-
-#### Feature Summary
-
-- Messages with repetition: `1740` (`1.0`)
-- Repeated n-gram instances: `1744`
-- Top motifs: `0000`x3482, `000000`x1742, `000005`x1740, `000501`x1740, `010402`x1740
-
-### family_0
-
-- Role: `request`
-- Messages: `967`
-- Template: `?? ?? 00 00 00 05 01 04 02 ?? ?? 00`
+- Messages: `19943`
+- Template: `?? ?? 00 00 00 06 01 04 00 08 00 01`
 - Related families: `family_6`
 - Role hint: `request`
-- Semantic confidence: `0.9646`
-- Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.40401` max=`3.027169` mean=`2.97951`
-- Candidate discriminator offset: `10` cardinality=`17` entropy=`2.492763` salience=`0.352579` mutual_information=`0.308526` contrastive_separation=`1.0` confidence=`0.349007`
-- Top discriminator candidates: offset `10` conf=`0.349007` salience=`0.352579`, offset `8` conf=`0.338217` salience=`0.374394`, offset `9` conf=`0.314457` salience=`0.295805`
+- Semantic confidence: `1.0`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`1.780672` max=`2.450826` mean=`2.443191`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.69977`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6663`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.73169`
-- bytes `11`..`11` | kind=`constant` confidence=`0.8711`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9793`
-- bytes `0`..`1` | type=`uint16_be` confidence=`0.95` endian=`big`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`9` | type=`uint16` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
+- bytes `0`..`1` | type=`uint16_le` confidence=`0.9327` endian=`little`
 
 #### Framing Hypotheses
 
@@ -689,78 +557,144 @@ The exact semantic meaning of status codes and the specific memory map for the 3
 - bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
 - bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `7`..`7` | label=`length` confidence=`1.0`
+- bytes `8`..`9` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `4`..`5` | label=`transaction_or_correlation_id` confidence=`0.95`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.95`
-- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`9` | label=`constant` confidence=`0.99`
 
 #### Notes
 
-- Echoes request fields from family_6 with up to 10 strong offset matches.
-- Detected common protocol pattern: transaction ID, length field, discriminator
+- Detected common protocol pattern: transaction ID, length field
 
 #### Feature Summary
 
-- Messages with repetition: `967` (`1.0`)
-- Repeated n-gram instances: `981`
-- Top motifs: `0000`x1940, `000000`x973, `0005`x924, `0104`x924, `000005`x923
+- Messages with repetition: `19943` (`1.0`)
+- Repeated n-gram instances: `20265`
+- Top motifs: `0000`x39969, `000000`x20026, `0800`x20021, `0400`x20019, `010400`x19944
 
-### noise
+### family_9
 
-- Role: `request`
-- Messages: `763`
-- Template: `?? ?? 00 00 00 ?? 01 ?? ?? ?? ?? 00`
-- Role hint: `request`
-- Semantic confidence: `0.9423`
-- Length stats: min=`11` max=`12` distinct=`2`
-- Entropy summary: min=`2.450826` max=`3.027169` mean=`2.958612`
-- Candidate discriminator offset: `8` cardinality=`2` entropy=`0.515799` salience=`0.374394` mutual_information=`0.093933` contrastive_separation=`0.78125` confidence=`0.342407`
-- Top discriminator candidates: offset `8` conf=`0.342407` salience=`0.374394`, offset `10` conf=`0.326058` salience=`0.352579`, offset `9` conf=`0.292872` salience=`0.295805`
+- Role: `unknown`
+- Messages: `406`
+- Template: `?? ?? 00 00 00 06 01 06 00 08 00 ??`
+- Related families: `family_9`
+- Role hint: `unknown`
+- Semantic confidence: `0.5`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.054585` max=`2.450826` mean=`2.316514`
+- Candidate discriminator offset: `11` cardinality=`15` entropy=`2.017045` salience=`0.531013` mutual_information=`0.027679` contrastive_separation=`0.984375` confidence=`0.326755`
+- Top discriminator candidates: offset `11` conf=`0.326755` salience=`0.531013`
 - Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
 
 #### Segments
 
-- bytes `0`..`1` | kind=`variable` confidence=`0.7014799999999999`
-- bytes `2`..`3` | kind=`constant` confidence=`0.8763`
-- bytes `4`..`5` | kind=`variable` confidence=`0.6637`
-- bytes `6`..`6` | kind=`constant` confidence=`1.0`
-- bytes `7`..`10` | kind=`variable` confidence=`0.6955567500000001`
-- bytes `11`..`11` | kind=`constant` confidence=`0.8806`
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
 
 #### Field Hypotheses
 
-- bytes `4`..`5` | type=`uint16_be` confidence=`1.0` endian=`big`
 - bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
 - bytes `6`..`6` | type=`uint8` confidence=`0.99`
-- bytes `11`..`11` | type=`uint8` confidence=`0.99`
-- bytes `0`..`1` | type=`uint16_be` confidence=`0.9423` endian=`big`
-- bytes `7`..`10` | type=`uint32` confidence=`0.9109`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `8`..`9` | type=`uint16` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.9631`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
 
 #### Framing Hypotheses
 
-- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
-- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`4` constant, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`0.9293` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
 
 #### Semantic Labels
 
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
 - bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
 - bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
 - bytes `6`..`6` | label=`constant` confidence=`0.99`
-- bytes `11`..`11` | label=`constant` confidence=`0.99`
-- bytes `7`..`10` | label=`discriminator` confidence=`0.95`
-- bytes `0`..`1` | label=`transaction_id` confidence=`0.85`
-- bytes `7`..`10` | label=`payload` confidence=`0.7`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `8`..`9` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
+- bytes `10`..`11` | label=`address_like` confidence=`0.91`
 
 #### Notes
 
-- Detected common protocol pattern: transaction ID, length field, discriminator
+- Echoes request fields from family_9 with up to 10 strong offset matches.
 
 #### Feature Summary
 
-- Messages with repetition: `763` (`1.0`)
-- Repeated n-gram instances: `797`
-- Top motifs: `0000`x1542, `000000`x779, `000005`x675, `000501`x675, `010402`x675
+- Messages with repetition: `406` (`1.0`)
+- Repeated n-gram instances: `706`
+- Top motifs: `0000`x814, `0008`x686, `0006`x418, `0800`x410, `000000`x408
+
+### family_8
+
+- Role: `unknown`
+- Messages: `156`
+- Template: `?? ?? 00 00 00 06 01 05 00 ?? ff 00`
+- Related families: `family_8`
+- Role hint: `unknown`
+- Semantic confidence: `0.5`
+- Length stats: min=`12` max=`12` distinct=`1`
+- Entropy summary: min=`2.450826` max=`2.617492` mean=`2.611082`
+- Framing hypothesis: header=`0`..`6` body_start=`7` confidence=`1.0`
+
+#### Segments
+
+- bytes `0`..`1` | kind=`variable` confidence=`1.0`
+- bytes `2`..`3` | kind=`variable` confidence=`1.0`
+- bytes `4`..`5` | kind=`variable` confidence=`1.0`
+- bytes `6`..`6` | kind=`variable` confidence=`1.0`
+- bytes `7`..`7` | kind=`variable` confidence=`1.0`
+- bytes `8`..`9` | kind=`variable` confidence=`1.0`
+- bytes `10`..`11` | kind=`variable` confidence=`1.0`
+
+#### Field Hypotheses
+
+- bytes `2`..`3` | type=`uint16` confidence=`0.99`
+- bytes `4`..`5` | type=`uint16` confidence=`0.99`
+- bytes `6`..`6` | type=`uint8` confidence=`0.99`
+- bytes `7`..`7` | type=`uint8` confidence=`0.99`
+- bytes `10`..`11` | type=`uint16` confidence=`0.99`
+- bytes `8`..`9` | type=`uint16` confidence=`0.9872`
+- bytes `0`..`1` | type=`blob` confidence=`0.5`
+
+#### Framing Hypotheses
+
+- header_end=`7` body_start=`7` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+- header_end=`8` body_start=`8` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length, `7`..`7` length
+- header_end=`6` body_start=`6` confidence=`1.0` fields=`0`..`1` transaction_or_counter, `0`..`3` transaction_or_counter, `2`..`5` length, `4`..`5` length, `5`..`5` length
+
+#### Semantic Labels
+
+- bytes `2`..`3` | label=`echoed_request_field` confidence=`1.0`
+- bytes `4`..`5` | label=`length` confidence=`1.0`
+- bytes `4`..`5` | label=`echoed_request_field` confidence=`1.0`
+- bytes `7`..`7` | label=`length` confidence=`1.0`
+- bytes `2`..`3` | label=`constant` confidence=`0.99`
+- bytes `4`..`5` | label=`constant` confidence=`0.99`
+- bytes `6`..`6` | label=`constant` confidence=`0.99`
+- bytes `7`..`7` | label=`constant` confidence=`0.99`
+- bytes `10`..`11` | label=`constant` confidence=`0.99`
+- bytes `2`..`3` | label=`transaction_or_correlation_id` confidence=`0.95`
+
+#### Notes
+
+- Echoes request fields from family_8 with up to 10 strong offset matches.
+
+#### Feature Summary
+
+- Messages with repetition: `156` (`1.0`)
+- Repeated n-gram instances: `158`
+- Top motifs: `0000`x312, `0500`x158, `000000`x156, `000006`x156, `000601`x156

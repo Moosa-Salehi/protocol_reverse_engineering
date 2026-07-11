@@ -80,7 +80,38 @@ def best_numeric_endian(chunks: Sequence[bytes]) -> Tuple[str | None, Dict[str, 
             float(stats[endian].get("low_magnitude_score", 0.0) or 0.0),
         ),
     )
+    if _big_endian_monotonic_prior_applies(best_endian, stats):
+        stats["big"]["selection_prior"] = "high_monotonic_big_endian"
+        best_endian = "big"
     return best_endian, stats
+
+
+def _big_endian_monotonic_prior_applies(
+    selected_endian: str,
+    stats: Dict[str, Dict[str, Any]],
+) -> bool:
+    """Prefer big-endian when it is the clearly monotonic interpretation.
+
+    Low-magnitude and delta-consistency terms can make little-endian win by a
+    small margin for high-valued big-endian transaction identifiers. A near-
+    perfect big-endian monotonic ratio is stronger evidence for network-order
+    transaction/counter fields unless the little-endian view is equally
+    monotonic.
+    """
+    if selected_endian != "little" or "big" not in stats or "little" not in stats:
+        return False
+
+    big = stats["big"]
+    little = stats["little"]
+    big_monotonic = float(big.get("monotonic_ratio", 0.0) or 0.0)
+    little_monotonic = float(little.get("monotonic_ratio", 0.0) or 0.0)
+    score_gap = float(little.get("sequence_score", 0.0) or 0.0) - float(big.get("sequence_score", 0.0) or 0.0)
+
+    return (
+        big_monotonic >= 0.99
+        and (big_monotonic - little_monotonic) >= 0.02
+        and score_gap <= 0.12
+    )
 
 
 def pad_messages(messages: Iterable[bytes], pad_value: int = 0) -> List[bytes]:

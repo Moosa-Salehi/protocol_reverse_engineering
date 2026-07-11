@@ -7,7 +7,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from protocol_re.inference.boundary_detection import infer_field_hypotheses, infer_segments
+from protocol_re.inference.boundary_detection import (
+    detect_payload_length_field,
+    infer_field_hypotheses,
+    infer_segments,
+)
+from protocol_re.inference.discriminator_fields import detect_global_discriminator
+from protocol_re.inference.semantic_labeling import summarize_semantics
+from protocol_re.clustering.family_discovery import refine_families_by_discriminator
+from protocol_re.clustering.structural_features import volatile_offsets
 from protocol_re.inference.framing import FramingFieldRegion, FramingLayoutHypothesis, _dedupe_layouts, _header_boundary_scores
 from protocol_re.corpus.request_response_pairing import pair_request_response_messages
 from protocol_re.inference.request_response_relations import _echo_candidates, _length_correlation_relations
@@ -288,6 +296,21 @@ def test_best_numeric_endian_prefers_monotonic_low_variance_interpretation() -> 
     assert stats["little"]["sequence_score"] > stats["big"]["sequence_score"]
 
 
+def test_best_numeric_endian_prefers_big_when_big_is_strictly_monotonic() -> None:
+    values = [
+        64023, 64048, 64058, 64068, 64076, 64108, 64153, 64161,
+        64204, 64215, 64253, 64260, 64307, 64332, 64338, 64383,
+    ]
+    chunks = [value.to_bytes(2, "big") for value in values]
+
+    endian, stats = best_numeric_endian(chunks)
+
+    assert stats["big"]["monotonic_ratio"] == 1.0
+    assert stats["little"]["sequence_score"] > stats["big"]["sequence_score"]
+    assert endian == "big"
+    assert stats["big"]["selection_prior"] == "high_monotonic_big_endian"
+
+
 def test_boundary_counter_endian_is_data_driven() -> None:
     messages = [f"{value:04x}" for value in (1, 2, 3, 4, 5, 6)]
     segments = [Segment(start=0, end=2, kind="variable", confidence=0.9)]
@@ -297,6 +320,45 @@ def test_boundary_counter_endian_is_data_driven() -> None:
     assert fields[0].field_type == "counter_or_transaction_id"
     assert fields[0].endian == "big"
     assert fields[0].evidence["selected_endian"] == "big"
+
+
+def test_framed_pdu_fields_get_protocol_agnostic_semantic_roles() -> None:
+    family_data = {
+        "family_0": {
+            "message_count": 6,
+            "template": "?? ?? 00 00 00 06 01 03 ?? ?? ?? ??",
+            "field_hypotheses": [
+                {"start": 0, "length": 2, "field_type": "counter_or_transaction_id", "endian": "big", "confidence": 0.95, "evidence": {"cardinality_ratio": 1.0}},
+                {"start": 2, "length": 2, "field_type": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+                {"start": 4, "length": 2, "field_type": "length", "endian": "big", "confidence": 1.0, "evidence": {"length_match_score": 1.0}},
+                {"start": 6, "length": 1, "field_type": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+                {"start": 7, "length": 1, "field_type": "keyword", "confidence": 0.99, "evidence": {"cardinality_ratio": 0.1}},
+                {"start": 8, "length": 2, "field_type": "blob", "endian": "big", "confidence": 0.7, "evidence": {"cardinality_ratio": 0.4}},
+                {"start": 10, "length": 2, "field_type": "blob", "endian": "big", "confidence": 0.7, "evidence": {"cardinality_ratio": 0.3}},
+            ],
+        }
+    }
+    relations_payload = {
+        "role_hints": {"family_0": {"role_hint": "request", "request_like_pairs": 1, "response_like_pairs": 0}},
+        "family_edges": [],
+    }
+    framing_data = {
+        "families": {
+            "family_0": {
+                "layout_hypotheses": [{"header_end": 7, "body_start": 7, "confidence": 1.0}]
+            }
+        }
+    }
+
+    semantics = summarize_semantics(family_data, relations_payload, framing_data=framing_data)
+    labels = {
+        (label["start"], label["length"], label["label"])
+        for label in semantics["family_0"]["field_labels"]
+    }
+
+    assert (7, 1, "opcode") in labels
+    assert (8, 2, "address_like") in labels
+    assert (10, 2, "count_like") in labels
 
 
 def test_length_validator_preserves_adjacent_protocol_id_boundary() -> None:
@@ -311,6 +373,7 @@ def test_length_validator_preserves_adjacent_protocol_id_boundary() -> None:
         enable_merging=True,
         length_match_threshold=0.8,
         framing_summary={"layout_hypotheses": [{"confidence": 1.0, "body_start": 2, "header_end": 2}]},
+        isolate_body_opcode=False,
     )
     spans = [(segment.start, segment.end) for segment in segments]
 
@@ -320,6 +383,86 @@ def test_length_validator_preserves_adjacent_protocol_id_boundary() -> None:
     length_segment = next(segment for segment in segments if (segment.start, segment.end) == (4, 6))
     assert length_segment.evidence["semantic_hint"] == "length"
     assert length_segment.evidence["length_match_ratio"] == 1.0
+
+
+def test_body_opcode_is_isolated_as_standalone_field() -> None:
+    # MBAP(7) + PDU; function code at offset 7 is constant within the family,
+    # address (8-9) and quantity (10-11) vary. Without isolation the constant
+    # opcode is merged rightward into a wider field; with isolation it must
+    # stay a 1-byte field of its own.
+    messages = [
+        f"{txn:04x}00000006" + "01" + "03" + f"{addr:04x}" + "0001"
+        for txn, addr in [(1, 8), (2, 19), (3, 100), (4, 200), (5, 7), (6, 41)]
+    ]
+    framing = {"layout_hypotheses": [{"confidence": 1.0, "body_start": 7, "header_end": 7}]}
+
+    isolated = infer_segments(messages, framing_summary=framing, isolate_body_opcode=True)
+    spans = [(segment.start, segment.end) for segment in isolated]
+    assert (7, 8) in spans  # opcode isolated as its own byte
+    # no segment starts at the opcode offset and extends past it
+    assert not any(start == 7 and end > 8 for start, end in spans)
+    opcode = next(seg for seg in isolated if (seg.start, seg.end) == (7, 8))
+    assert opcode.kind == "constant"
+
+    not_isolated = infer_segments(messages, framing_summary=framing, isolate_body_opcode=False)
+    merged_spans = [(segment.start, segment.end) for segment in not_isolated]
+    # Pre-fix behaviour: the opcode is fused into a wider field starting at 7.
+    assert any(start == 7 and end > 8 for start, end in merged_spans)
+
+
+def test_payload_length_field_delimits_variable_array() -> None:
+    # Modbus read-registers response: MBAP(7) + fc(1) + byte_count(1) + N data
+    # bytes. byte_count at offset 8 equals the number of trailing data bytes, so
+    # the variable register array begins at offset 9 regardless of message length.
+    messages = []
+    for txn, regs in [(1, 1), (2, 2), (3, 5), (4, 8), (5, 16), (6, 3), (7, 10), (8, 4), (9, 7), (10, 12)]:
+        data = bytes((i * 7) % 256 for i in range(regs * 2))
+        body = bytes([0x04, regs * 2]) + data
+        frame = txn.to_bytes(2, "big") + b"\x00\x00" + (1 + len(body)).to_bytes(2, "big") + b"\x01" + body
+        messages.append(frame)
+    array_start = detect_payload_length_field(messages, body_start=7)
+    assert array_start == 9  # right after fc(7) + byte_count(8)
+
+
+def test_payload_length_field_rejects_constant_opcode_coincidence() -> None:
+    # A constant function code (0x04) that happens to equal len - (pos + 1) at the
+    # dominant length must NOT be mistaken for a length field: a real length field
+    # tracks message length, a constant opcode does not. Most messages are 12 bytes
+    # (where 0x04 == 12 - 8) plus a few other lengths to exercise the tracking guard.
+    messages = [
+        bytes.fromhex(f"{txn:04x}00000006" + "04" + f"{addr:04x}" + "0001")
+        for txn, addr in [(1, 8), (2, 19), (3, 100), (4, 200), (5, 7), (6, 41), (7, 9), (8, 55)]
+    ]
+    # add a couple of longer messages where the constant 0x04 no longer matches
+    messages.append(bytes.fromhex("000900000009" + "04" + "0001" + "0002" + "abcd"))
+    messages.append(bytes.fromhex("000a0000000b" + "04" + "0001" + "0002" + "abcdef99"))
+    assert detect_payload_length_field(messages, body_start=7) is None
+
+
+def test_payload_length_field_no_op_on_fixed_length_family() -> None:
+    # Single-length family has no variable-length payload to delimit.
+    messages = [
+        bytes.fromhex(f"{txn:04x}00000006" + "03" + f"{addr:04x}" + "0001")
+        for txn, addr in [(1, 8), (2, 19), (3, 100), (4, 200), (5, 7), (6, 41), (7, 9), (8, 55)]
+    ]
+    assert detect_payload_length_field(messages, body_start=7) is None
+
+
+def test_variable_leading_body_byte_is_not_force_split() -> None:
+    # When the first body byte is high-cardinality it is not an opcode and must
+    # not be force-split: isolation should leave the segmentation unchanged.
+    messages = [
+        f"{txn:04x}00000006" + f"{lead:02x}" + f"{rest:08x}"
+        for txn, lead, rest in [
+            (1, 0x10, 0x11112222), (2, 0x37, 0x33334444), (3, 0x9a, 0x55556666),
+            (4, 0xc1, 0x77778888), (5, 0x2d, 0x9999aaaa), (6, 0xf4, 0xbbbbcccc),
+        ]
+    ]
+    framing = {"layout_hypotheses": [{"confidence": 1.0, "body_start": 7, "header_end": 7}]}
+
+    isolated = infer_segments(messages, framing_summary=framing, isolate_body_opcode=True)
+    baseline = infer_segments(messages, framing_summary=framing, isolate_body_opcode=False)
+    assert [(s.start, s.end) for s in isolated] == [(s.start, s.end) for s in baseline]
 
 
 def test_boundary_support_blends_segment_confidence() -> None:
@@ -343,6 +486,7 @@ def test_boundary_support_blends_segment_confidence() -> None:
         enable_length_validator=False,
         framing_summary={"layout_hypotheses": [{"confidence": 1.0, "body_start": 2, "header_end": 2}]},
         boundary_confidence_weight=0.5,
+        isolate_body_opcode=False,
     )
 
     assert [(segment.start, segment.end) for segment in split_segments] == [(0, 2), (2, 4)]
@@ -395,6 +539,40 @@ def test_pairing_infers_direction_from_stable_server_port() -> None:
     assert all(pair.evidence.get("opposite_direction") == 1.0 for pair in pairs)
     assert all("direction_unknown" not in pair.evidence for pair in pairs)
     assert {record.direction for record in records} == {"client_to_server", "server_to_client"}
+
+
+def test_correlation_id_pairing_survives_orphan_response_offset() -> None:
+    # Stream starts mid-conversation with an orphan response, then alternates
+    # request/response sharing a 2-byte transaction id at offset 0. Adjacency
+    # pairing would couple each response with the *next* request (off by one);
+    # correlation-id pairing must recover the true same-transaction pairs.
+    def msg(mid, txn, body, idx):
+        return MessageRecord(
+            msg_id=mid, source_file="c.pcap", session_id="s", session_key="s",
+            src_ip="", src_port=0, dst_ip="", dst_port=0, direction="unknown",
+            payload_hex=f"{txn:04x}" + body, payload_len=2 + len(body) // 2,
+            index_in_session=idx,
+        )
+
+    records = [msg(0, 0x1000, "0302002a", 0)]  # orphan response (txn 0x1000)
+    mid = 1
+    for k, txn in enumerate(range(0x1001, 0x1006)):
+        records.append(msg(mid, txn, "03" + f"{k:04x}" + "01", mid))      # request
+        records.append(msg(mid + 1, txn, "0302002a", mid + 1))            # response
+        mid += 2
+
+    pairs = pair_request_response_messages(
+        records,
+        assignments=[FamilyAssignment(msg_id=r.msg_id, family_id="f") for r in records],
+    )
+
+    assert len(pairs) == 5
+    by_txn = {r.msg_id: r.payload_hex[:4] for r in records}
+    # every pair couples two messages of the SAME transaction id
+    assert all(by_txn[p.request_msg_id] == by_txn[p.response_msg_id] for p in pairs)
+    assert all(p.evidence.get("pairing_mode") == "correlation_id" for p in pairs)
+    # the orphan response (msg 0) must be left unpaired
+    assert all(0 not in (p.request_msg_id, p.response_msg_id) for p in pairs)
 
 
 def test_transaction_id_echo_not_penalized_as_counter() -> None:
@@ -520,3 +698,203 @@ def test_field_matching_shifts_absolute_prediction_for_body_relative_truth() -> 
     assert matches[0]["boundary_score"] == 1.0
     assert matches[0]["semantic_score"] == 1.0
     assert matches[0]["offset_shift"] == 7
+
+
+# ---------------------------------------------------------------------------
+# Discriminator-aware family refinement (P1.5)
+# ---------------------------------------------------------------------------
+
+
+def _refine_record(msg_id: int, payload: bytes, direction: str = "request") -> MessageRecord:
+    return MessageRecord(
+        msg_id=msg_id,
+        source_file="capture.pcap",
+        session_id="s",
+        session_key="s",
+        src_ip="10.0.0.1",
+        src_port=1234,
+        dst_ip="10.0.0.2",
+        dst_port=502,
+        direction=direction,
+        payload_hex=payload.hex(),
+        payload_len=len(payload),
+    )
+
+
+def _mbap_pdu(txn: int, fc: int, data: bytes = b"\x00\x00", unit: int = 1) -> bytes:
+    """Synthetic Modbus MBAP header + PDU: txn(2) proto(2)=0 length(2) unit(1) fc(1) data."""
+    body = bytes([fc]) + data
+    length = len(body) + 1  # unit + pdu, constant when data length is constant
+    return txn.to_bytes(2, "big") + b"\x00\x00" + length.to_bytes(2, "big") + bytes([unit]) + body
+
+
+def test_detect_global_discriminator_picks_function_code_offset() -> None:
+    # Impure bootstrap labels (each pairs two function codes) over MBAP+PDU; the
+    # function code sits at offset 7. The transaction id (offsets 0-1, high
+    # cardinality / entropy, independent of label) and the constant protocol-id
+    # (offsets 2-3) must lose to it.
+    records = []
+    family_by_msg_id = {}
+    msg_id = 0
+    txn = 0
+    label_of_fc = {1: "family_a", 2: "family_a", 3: "family_b", 4: "family_b"}
+    for fc in (1, 2, 3, 4):
+        for _ in range(20):
+            data = bytes([txn % 256, (txn * 7) % 256])
+            records.append(_refine_record(msg_id, _mbap_pdu(txn, fc, data)))
+            family_by_msg_id[msg_id] = label_of_fc[fc]
+            msg_id += 1
+            txn += 1
+
+    result = detect_global_discriminator(records, family_by_msg_id)
+
+    assert result is not None
+    assert result["offset"] == 7
+    assert result["width"] == 1
+    assert result["cardinality"] == 4
+    assert result["global_mi"] >= 0.25
+
+
+def test_detect_global_discriminator_structural_fallback_ignores_bad_bootstrap() -> None:
+    # Bootstrap labels are assigned independently of the function code (a degraded
+    # clustering that does not track message type), so MI is ~0. The detector must
+    # still find the opcode at offset 7 via the structural fallback: txn id
+    # (offsets 0-1, high cardinality), constant protocol-id/unit, and the MBAP
+    # length field are all rejected, leaving the first body byte.
+    records = []
+    family_by_msg_id = {}
+    data_len_by_fc = {1: 4, 2: 2, 3: 6, 4: 1}
+    msg_id = 0
+    txn = 0
+    for fc in (1, 2, 3, 4):
+        for _ in range(20):
+            records.append(_refine_record(msg_id, _mbap_pdu(txn, fc, b"\x00" * data_len_by_fc[fc])))
+            family_by_msg_id[msg_id] = f"family_{msg_id % 3}"  # independent of fc
+            msg_id += 1
+            txn += 1
+
+    result = detect_global_discriminator(records, family_by_msg_id)
+
+    assert result is not None
+    assert result["offset"] == 7
+    assert result["width"] == 1
+    assert result["global_mi"] < 0.25  # fallback path engaged, not label-guided
+
+
+def _impure_modbus_corpus():
+    """Bootstrap: family_0 mixes fc1+fc2 (must split); family_1 and family_2 are
+    both pure fc3 with identical length+role (must merge). All requests, constant
+    payload length so length-bucket and role match across fragments."""
+    records = []
+    assignments = []
+    fc_by_msg_id = {}
+    msg_id = 0
+    txn = 0
+
+    def add(fc, family_id, confidence):
+        nonlocal msg_id, txn
+        records.append(_refine_record(msg_id, _mbap_pdu(txn, fc)))
+        assignments.append(FamilyAssignment(msg_id=msg_id, family_id=family_id, confidence=confidence))
+        fc_by_msg_id[msg_id] = fc
+        msg_id += 1
+        txn += 1
+
+    for _ in range(20):
+        add(1, "family_0", 0.9)
+    for _ in range(20):
+        add(2, "family_0", 0.8)
+    for _ in range(15):
+        add(3, "family_1", 0.7)
+    for _ in range(15):
+        add(3, "family_2", 0.6)
+    return records, assignments, fc_by_msg_id
+
+
+def test_refine_splits_impure_family_and_merges_fragments() -> None:
+    records, assignments, fc_by_msg_id = _impure_modbus_corpus()
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is True
+    assert meta["offset"] == 7
+    assert meta["width"] == 1
+
+    family_by_msg_id = {item.msg_id: item.family_id for item in refined}
+    families_for = lambda fc: {family_by_msg_id[mid] for mid, value in fc_by_msg_id.items() if value == fc}
+
+    # fc1 and fc2 each collapse to a single family, distinct from one another:
+    # the impure family_0 was split.
+    assert len(families_for(1)) == 1
+    assert len(families_for(2)) == 1
+    assert families_for(1) != families_for(2)
+
+    # fc3 spanned two bootstrap families but is one type → one refined family.
+    assert len(families_for(3)) == 1
+
+    assert meta["family_count_before"] == 3
+    assert meta["family_count_after"] == 3
+    assert meta["split_count"] >= 1
+    assert meta["merge_count"] >= 1
+
+
+def test_refine_is_noop_without_discriminator() -> None:
+    # Constant payloads carry no discriminator; labels are assigned independently
+    # of the bytes. Detection returns None → pass-through.
+    records = []
+    assignments = []
+    for msg_id in range(20):
+        records.append(_refine_record(msg_id, b"\xaa\xbb\xcc\xdd"))
+        assignments.append(FamilyAssignment(msg_id=msg_id, family_id=f"family_{msg_id % 2}", confidence=0.5))
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is False
+    assert [item.family_id for item in refined] == [item.family_id for item in assignments]
+    assert [item.msg_id for item in refined] == [item.msg_id for item in assignments]
+
+
+def test_refine_preserves_assignment_json_shape() -> None:
+    records, assignments, _ = _impure_modbus_corpus()
+    confidence_by_msg_id = {item.msg_id: item.confidence for item in assignments}
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is True
+    assert len(refined) == len(assignments)
+    for item in refined:
+        payload = item.to_dict()
+        assert set(payload) == {"msg_id", "family_id", "confidence"}
+        # Confidence is carried through untouched; only family_id is re-keyed.
+        assert payload["confidence"] == confidence_by_msg_id[item.msg_id]
+
+
+def test_refine_deterministic() -> None:
+    records, assignments, _ = _impure_modbus_corpus()
+
+    first, first_meta = refine_families_by_discriminator(records, assignments)
+    second, second_meta = refine_families_by_discriminator(records, assignments)
+
+    assert [(item.msg_id, item.family_id) for item in first] == [
+        (item.msg_id, item.family_id) for item in second
+    ]
+    assert first_meta == second_meta
+
+
+def test_volatile_offsets_flags_saturated_txn_id() -> None:
+    # Offsets 0-1 saturate across the byte range (a 2-byte transaction id over
+    # many messages); offset 7 is a low-cardinality opcode. The fix must flag the
+    # saturated id bytes without flagging the opcode.
+    records = []
+    for i in range(256):
+        b0 = i
+        b1 = (i * 73 + 17) % 256
+        fc = (i % 4) + 1
+        payload = bytes([b0, b1, 0, 0, 0, 4, 1, fc, 0, 0])
+        records.append(_refine_record(i, payload))
+
+    noisy = volatile_offsets(records, width=10)
+
+    assert 0 in noisy
+    assert 1 in noisy
+    assert 7 not in noisy
+
