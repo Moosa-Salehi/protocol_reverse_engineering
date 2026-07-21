@@ -79,6 +79,11 @@ def main() -> None:
     parser.add_argument("--render-only", action="store_true", help="Only render prompt, don't call LLM")
     parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing output response instead of calling the LLM API")
     parser.add_argument("--use-user-provided-response", action="store_true", help="Load filled LLM response from data/user_provided_LLM_responses before calling the API")
+    parser.add_argument(
+        "--user-response-dir",
+        default="data/user_provided_LLM_responses",
+        help="Directory for user-provided LLM response placeholders",
+    )
 
     # Multi-stage result inputs
     parser.add_argument("--boundary-summary", help="Boundary refinement summary JSON from stage 07b")
@@ -196,7 +201,10 @@ def main() -> None:
     print(f"    - Relation validation: {'Yes' if relation_summary else 'No'}")
     print(f"    - Evaluation metrics: {'Yes' if evaluation_metrics else 'No'}")
 
-    user_response_path = make_user_response_path("protocol_synthesis")
+    user_response_path = make_user_response_path(
+        "protocol_synthesis",
+        response_dir=args.user_response_dir,
+    )
     ensure_user_response_placeholder(
         user_response_path,
         stage="protocol_synthesis",

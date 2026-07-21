@@ -106,6 +106,24 @@ python main.py pcaps/ --tshark-filter <filter>
 python main.py --use-existing-messages
 ```
 
+### Running Multiple Instances
+
+Give each pipeline instance separate data, output, and log directories:
+
+```bash
+python main.py pcaps/modbus/ --tshark-filter mbtcp \
+  --data-dir runs/modbus/data \
+  --output-dir runs/modbus/output \
+  --log-dir runs/modbus/logs
+
+python main.py pcaps/s7/ --tshark-filter s7comm \
+  --data-dir runs/s7/data \
+  --output-dir runs/s7/output \
+  --log-dir runs/s7/logs
+```
+
+`main.py` passes `--log-dir` to every stage. Default cache files, collected PCAPs, LLM stage results, and user-provided response placeholders are also placed under the selected `--data-dir`, so these runs do not write shared pipeline artifacts.
+
 **Common TShark filters:**
 
 | Protocol | Filter | Description |
@@ -131,7 +149,7 @@ python main.py source_files/ --collect --tshark-filter mbtcp
 ```
 
 This will:
-1. Collect all PCAPs from `source_files/` into `pcaps/`
+1. Collect all PCAPs from `source_files/` into `<data-dir>/pcaps/` (or `--pcap-dir`)
 2. Remove duplicate captures
 3. Run the full pipeline
 
@@ -710,6 +728,12 @@ Required (one of):
   --tshark-filter FILTER        TShark display filter (e.g., mbtcp)
   --extraction-method tcp       Use TCP port extraction
   --use-existing-messages       Skip extraction, use existing data/01_messages.jsonl
+
+Instance directories:
+  --data-dir DIR                Pipeline data artifacts and default caches
+  --output-dir DIR              Rendered report output
+  --log-dir DIR                 Pipeline and per-stage logs
+  --pcap-dir DIR                Collected PCAP directory (default: <data-dir>/pcaps)
 
 Extraction:
   --max-messages N              Maximum messages to extract (default: 200000)

@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Import structured logging
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
-from protocol_re.utils.logging import setup_pipeline_logging
+from protocol_re.utils.logging import StructuredLogger, setup_pipeline_logging
 
 # ---------------------------------------------------------
 # Color output (fallback if colorama absent)
@@ -37,10 +37,6 @@ DEFAULT_MAX_MESSAGES = 200_000
 # Ensure child scripts can import the local package without installation.
 os.environ["PYTHONPATH"] = str(SRC_PATH)
 
-# Setup structured logging
-log_dir = PROJECT_ROOT / "logs"
-logger = setup_pipeline_logging(log_dir)
-
 def _script(name: str) -> str:
     return str(PROJECT_ROOT / "scripts" / name)
 
@@ -53,6 +49,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     data_dir = args.data_dir
     pcap_dir = args.pcap_dir
     output_dir = args.output_dir
+    log_dir = args.log_dir
 
     messages_jsonl = data_dir / "01_messages.jsonl"
     assignments_json = data_dir / "02_family_assignments.json"
@@ -79,6 +76,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     final_evaluation_json = data_dir / "15_evaluation_result.json"
     html_report = output_dir / "protocol_report.html"
     llm_stage_results_dir = data_dir / "llm_stage_results"
+    user_response_dir = data_dir / "user_provided_LLM_responses"
 
     pipeline: list[tuple[str, list[str]]] = []
 
@@ -208,6 +206,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 str(args.llm_boundary_confidence),
                 "--results-dir",
                 _path(llm_stage_results_dir),
+                "--user-response-dir",
+                _path(user_response_dir),
             ]
             + (["--render-only"] if args.llm_render_only else [])
             + (["--use-user-provided-response"] if args.use_user_provided_response else []),
@@ -285,6 +285,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 str(args.llm_relation_confidence),
                 "--results-dir",
                 _path(llm_stage_results_dir),
+                "--user-response-dir",
+                _path(user_response_dir),
             ]
             + (["--render-only"] if args.llm_render_only else [])
             + (["--use-user-provided-response"] if args.use_user_provided_response else []),
@@ -333,6 +335,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 str(args.llm_semantic_confidence),
                 "--results-dir",
                 _path(llm_stage_results_dir),
+                "--user-response-dir",
+                _path(user_response_dir),
             ]
             + (["--render-only"] if args.llm_render_only else [])
             + (["--use-user-provided-response"] if args.use_user_provided_response else []),
@@ -478,6 +482,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 _path(families_labeled_json),
                 "--relation-summary",
                 _path(relations_validated_json),
+                "--user-response-dir",
+                _path(user_response_dir),
             ],
         ),
         (
@@ -558,6 +564,9 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     if step_name == "19_export_html":
                         step_args.extend(["--ground-truth-json", _path(args.ground_truth_json)])
 
+    for _, step_args in pipeline:
+        step_args.extend(["--log-dir", _path(log_dir)])
+
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
             if name == args.stop_after:
@@ -567,7 +576,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     return pipeline
 
 
-def run_step(name: str, step_args: list[str]) -> bool:
+def run_step(name: str, step_args: list[str], logger: StructuredLogger) -> bool:
     print(f"\n{CYAN}--- Running step: {name} ---{RESET}")
     # These mirror the print()s above/below for the on-disk log; file_only keeps
     # them out of the console so output isn't duplicated.
@@ -636,7 +645,7 @@ def run_step(name: str, step_args: list[str]) -> bool:
         return False
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Protocol RE Pipeline Runner")
     runner_group = parser.add_argument_group("Runner - inputs, outputs, and execution control")
     collect_group = parser.add_argument_group("Stage 01 - collect_pcaps / Stage 02 - dedup_pcaps")
@@ -657,11 +666,16 @@ def parse_args() -> argparse.Namespace:
     runner_group.add_argument(
         "--use-existing-messages",
         action="store_true",
-        help="Skip corpus extraction/building and use data/01_messages.jsonl from --data-dir.",
+        help="Skip corpus extraction/building and use <data-dir>/01_messages.jsonl.",
     )
-    runner_group.add_argument("--pcap-dir", type=Path, default=Path("pcaps"), help="Normalized PCAP output/input directory.")
+    runner_group.add_argument(
+        "--pcap-dir",
+        type=Path,
+        help="Normalized PCAP output/input directory. Defaults to <data-dir>/pcaps.",
+    )
     runner_group.add_argument("--data-dir", type=Path, default=Path("data"), help="Pipeline data artifact directory.")
     runner_group.add_argument("--output-dir", type=Path, default=Path("output"), help="Rendered report output directory.")
+    runner_group.add_argument("--log-dir", type=Path, default=Path("logs"), help="Pipeline and stage log directory.")
     runner_group.add_argument("--stop-after", help="Run through the named pipeline step and then stop; useful for smoke tests.")
 
     collect_group.add_argument(
@@ -703,8 +717,7 @@ def parse_args() -> argparse.Namespace:
     family_group.add_argument(
         "--family-latent-cache-path",
         type=Path,
-        default=Path("data/02_latent_cache.json"),
-        help="Cache path for payload-hash neural latent vectors.",
+        help="Cache path for payload-hash neural latent vectors. Defaults to <data-dir>/02_latent_cache.json.",
     )
     family_group.add_argument(
         "--family-neural-batch-size",
@@ -827,8 +840,7 @@ def parse_args() -> argparse.Namespace:
     discriminator_group.add_argument(
         "--discriminator-salience-cache-path",
         type=Path,
-        default=Path("data/07_salience_cache.json"),
-        help="Cache path for learned discriminator/opcode salience scores.",
+        help="Cache path for learned discriminator/opcode salience scores. Defaults to <data-dir>/07_salience_cache.json.",
     )
 
     relations_group.add_argument("--min-edge-pairs", type=int, default=2, help="Minimum pair count for relation edge pruning.")
@@ -855,7 +867,7 @@ def parse_args() -> argparse.Namespace:
     llm_analysis_group.add_argument(
         "--use-user-provided-response",
         action="store_true",
-        help="Use filled response files from data/user_provided_LLM_responses before calling the LLM API.",
+        help="Use filled response files from <data-dir>/user_provided_LLM_responses before calling the LLM API.",
     )
 
     llm_analysis_group.add_argument("--llm-boundary-confidence", type=float, default=0.6, help="Minimum confidence for LLM boundary merge suggestions (default: 0.6).")
@@ -863,7 +875,7 @@ def parse_args() -> argparse.Namespace:
     llm_analysis_group.add_argument("--llm-relation-confidence", type=float, default=0.7, help="Minimum confidence for LLM relation validation (default: 0.7).")
 
     final_eval_group.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation.")
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def warn_missing_requirements() -> None:
@@ -898,15 +910,23 @@ def _resolve_under_project(path: Path) -> Path:
 
 
 def validate_args(args: argparse.Namespace) -> None:
-    args.pcap_dir = _resolve_under_project(args.pcap_dir)
     args.data_dir = _resolve_under_project(args.data_dir)
     args.output_dir = _resolve_under_project(args.output_dir)
+    args.log_dir = _resolve_under_project(args.log_dir)
+    if args.pcap_dir:
+        args.pcap_dir = _resolve_under_project(args.pcap_dir)
+    else:
+        args.pcap_dir = args.data_dir / "pcaps"
     args.llm_config = _resolve_under_project(args.llm_config)
     args.family_neural_model_path = _resolve_under_project(args.family_neural_model_path)
     if args.family_latent_cache_path:
         args.family_latent_cache_path = _resolve_under_project(args.family_latent_cache_path)
+    else:
+        args.family_latent_cache_path = args.data_dir / "02_latent_cache.json"
     if args.discriminator_salience_cache_path:
         args.discriminator_salience_cache_path = _resolve_under_project(args.discriminator_salience_cache_path)
+    else:
+        args.discriminator_salience_cache_path = args.data_dir / "07_salience_cache.json"
     messages_jsonl = args.data_dir / "01_messages.jsonl"
     if args.max_messages is not None and args.max_messages <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --max-messages must be greater than 0.")
@@ -952,6 +972,7 @@ def validate_args(args: argparse.Namespace) -> None:
 def prepare_output_dirs(args: argparse.Namespace) -> None:
     args.data_dir.mkdir(parents=True, exist_ok=True)
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    args.log_dir.mkdir(parents=True, exist_ok=True)
     if args.collect:
         args.pcap_dir.mkdir(parents=True, exist_ok=True)
 
@@ -967,17 +988,20 @@ def output_paths(args: argparse.Namespace) -> list[Path]:
 def main() -> None:
     print(f"{CYAN}=== Protocol RE Pipeline Runner ==={RESET}")
 
-    logger.info("Pipeline started")
     start = time.time()
 
     args = parse_args()
 
-    logger.info(f"Project root: {PROJECT_ROOT}")
-    logger.info(f"PYTHONPATH set to: {SRC_PATH}")
-
     warn_missing_requirements()
     validate_args(args)
     prepare_output_dirs(args)
+
+    logger = setup_pipeline_logging(args.log_dir)
+    logger.info("Pipeline started")
+    logger.info(f"Project root: {PROJECT_ROOT}")
+    logger.info(f"PYTHONPATH set to: {SRC_PATH}")
+    logger.info(f"Data directory: {args.data_dir}")
+    logger.info(f"Output directory: {args.output_dir}")
 
     if args.use_existing_messages:
         source = args.data_dir / "01_messages.jsonl"
@@ -999,7 +1023,7 @@ def main() -> None:
     for idx, (name, step_args) in enumerate(pipeline, 1):
         logger.info(f"Stage {idx}/{len(pipeline)}: {name}")
         with logger.stage(name):
-            ok = run_step(name, step_args)
+            ok = run_step(name, step_args, logger)
             if not ok:
                 print(f"{RED}\nPipeline aborted due to failure in step: {name}{RESET}")
                 logger.error(f"Pipeline aborted at step: {name}")
