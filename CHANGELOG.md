@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-07-22
 
 ### Added
+- Isolated pipeline instance paths with `--data-dir`, `--output-dir`, and `--log-dir`.
+  The selected log directory is passed to every stage, and generated artifacts, caches,
+  user-provided LLM response placeholders, reports, and logs stay within their instance
+  directories so concurrent runs do not interfere with each other.
 - Transaction/correlation-id request-response pairing in
   `corpus/request_response_pairing.py`: `detect_correlation_field()` finds a header field
   that varies across messages but matches a nearby message within a small window (rejecting
@@ -28,6 +32,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   capture), a single shared MBAP header type, documented offset convention, and per-FC
   responses. Removed phantom FC15/FC16/exception types and added the previously missing FC02
   (Read Discrete Inputs).
+
+### Changed
+- `--llm-render-only` now renders only the stage 15 protocol-synthesis prompt. It skips LLM
+  boundary refinement, semantic labeling, and relation validation, prevents stale stage
+  summaries from being auto-loaded, and omits their sections from the HTML report.
+- HTML family rulers now use the final `field_hypotheses` boundaries and semantic attributes
+  instead of stale pre-refinement summaries.
+
+### Fixed
+- Family-card tooltips are rendered in a body-level overlay so they are not clipped by card
+  or report wrappers.
+- Serialized chat-completion response content is displayed in the HTML LLM Analysis section.
+- Boundary and semantic refinement sections are hidden when their stage failed with an
+  `llm_api` error.
+- Boundary and semantic refinement applied/rejected counts and row statuses now reflect
+  validation and final-model data instead of stale stage counters.
 
 ## [1.0.1] - 2026-06-07
 
@@ -86,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hybrid feature fusion with adaptive weighting
 - Multi-stage LLM integration with evidence-gated validation
 - Improved logging and observability
-- Code structure refactoring 
+- Code structure refactoring
 - Diagnostic tools for neural features, boundaries, and fusion
 
 ### Changed
