@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from html import escape
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -344,12 +345,22 @@ def _json_pre(value: Any, empty: str = "No result details available.") -> str:
     return _text_pre(text, empty=empty)
 
 
+def _validation_counts(result: Dict[str, Any]) -> tuple[Any, Any]:
+    validation_log = result.get("validation_log")
+    if isinstance(validation_log, list) and validation_log:
+        applied = sum(entry.get("applied") is True for entry in validation_log if isinstance(entry, dict))
+        rejected = sum(entry.get("applied") is not True for entry in validation_log if isinstance(entry, dict))
+        return applied, rejected
+    applied = result.get("applied_count", result.get("kept_count", result.get("applied", 0)))
+    rejected = result.get("rejected_count", result.get("discarded_count", result.get("rejected", 0)))
+    return applied, rejected
+
+
 def _stage_status_metrics(result: Optional[Dict[str, Any]], stage_label: str) -> str:
     result = result or {}
     success = result.get("success")
     status = "unknown" if success is None else "success" if success else "failed"
-    applied = result.get("applied_count", result.get("kept_count", result.get("applied", 0)))
-    rejected = result.get("rejected_count", result.get("discarded_count", result.get("rejected", 0)))
+    applied, rejected = _validation_counts(result)
     metrics = (
         f'{_metric("Stage", stage_label)}'
         f'{_metric("Status", status)}'
@@ -373,13 +384,13 @@ def _stage_text_details(stage: Optional[Dict[str, Any]], title: str, stage_label
         details = _relation_stage_table(result)
     else:
         details = _generic_stage_summary(result)
-    return f"""
-    <section class="llm-stage-block">
-      <h4>{_text(title)}</h4>
-      {_stage_status_metrics(result, stage_label)}
-      {details}
-    </section>
-    """
+    return (
+        '<section class="llm-stage-block">'
+        f'<h4>{_text(title)}</h4>'
+        f'{_stage_status_metrics(result, stage_label)}'
+        f'{details}'
+        '</section>'
+    )
 
 
 def _list_text(items: Any, limit: int = 3) -> str:
@@ -593,6 +604,24 @@ def _select_fields(labels: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any
             chosen.append(lab)
             cursor = start + length
     return chosen
+
+
+def _ruler_labels(family: Dict[str, Any], fallback: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
+    labels = []
+    for field in family.get("field_hypotheses", []) or []:
+        if not isinstance(field, dict):
+            continue
+        attributes = field.get("attributes") if isinstance(field.get("attributes"), dict) else {}
+        labels.append(
+            {
+                "start": field.get("start", 0),
+                "length": field.get("length", 1),
+                "label": attributes.get("semantic_role") or attributes.get("label") or field.get("field_type") or "field",
+                "field_type": attributes.get("encoding_type") or attributes.get("encoding") or field.get("field_type") or "",
+                "confidence": attributes.get("semantic_confidence", field.get("confidence", 0.0)),
+            }
+        )
+    return labels or list(fallback or [])
 
 
 def _gt_fields_for_family(family_id: str, field_matches: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
@@ -904,14 +933,24 @@ def _family_refinement_blocks(family_id: str, llm_stage_results: Optional[Dict[s
         return ""
     boundary = (llm_stage_results.get("boundary_refinement") or {}).get(family_id)
     semantic = (llm_stage_results.get("semantic_labeling") or {}).get(family_id)
+    if boundary and (boundary.get("result") or {}).get("error_category") == "llm_api":
+        boundary = None
+    if semantic and (semantic.get("result") or {}).get("error_category") == "llm_api":
+        semantic = None
     if not boundary and not semantic:
         return ""
-    return (
-        '<h4>LLM Boundary Refinement</h4>'
-        f'{_stage_text_details(boundary, "Boundary Detection Refinement", "boundary_refinement")}'
-        '<h4>LLM Semantic Refinement</h4>'
-        f'{_stage_text_details(semantic, "Semantic Labeling Refinement", "semantic_labeling")}'
-    )
+    blocks = []
+    if boundary:
+        blocks.append(
+            '<h4>LLM Boundary Refinement</h4>'
+            + _stage_text_details(boundary, "Boundary Detection Refinement", "boundary_refinement")
+        )
+    if semantic:
+        blocks.append(
+            '<h4>LLM Semantic Refinement</h4>'
+            + _stage_text_details(semantic, "Semantic Labeling Refinement", "semantic_labeling")
+        )
+    return "".join(blocks)
 
 
 def _family_card(
@@ -925,7 +964,7 @@ def _family_card(
     feature = family.get("feature_summary") or {}
     keyword = family.get("keyword_summary") or {}
     framing = family.get("framing_summary") or {}
-    labels = semantic.get("field_labels", []) or []
+    labels = _ruler_labels(family, semantic.get("field_labels", []) or [])
     gt_fields = _gt_fields_for_family(str(family_id), field_matches)
     role = family.get("role", "unknown")
     role_tone = "request" if role == "request" else "response" if role == "response" else "unknown"
@@ -952,6 +991,9 @@ def _family_card(
             )
     related = family.get("related_families", []) or []
     related_html = "".join(_pill(item, "related") for item in related[:8]) or '<span class="muted">No direct relation links</span>'
+    refinement_html = _family_refinement_blocks(str(family_id), llm_stage_results)
+    if refinement_html:
+        refinement_html = f"      {refinement_html}\n"
     return f"""
     <section class="family-card" id="family-{_text(family_id)}">
       <header>
@@ -978,7 +1020,7 @@ def _family_card(
         <summary>Framing Evidence {_tip('Hypotheses about where the header ends and the body begins, plus the candidate header field layout, derived from cross-message framing analysis.')}</summary>
         {_framing_panel(framing)}
       </details>
-      {_family_refinement_blocks(str(family_id), llm_stage_results)}
+{refinement_html}\
       <h4>Related Families</h4>
       <div class="pill-row">{related_html}</div>
     </section>
@@ -1089,6 +1131,43 @@ def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
     """
 
 
+def _llm_response_text(response: Any) -> str:
+    if response in (None, ""):
+        return ""
+    payload = response
+    if isinstance(response, str):
+        try:
+            payload = json.loads(response)
+        except (TypeError, ValueError):
+            return response.strip()
+    if not isinstance(payload, dict):
+        return str(payload).strip()
+    choices = payload.get("choices")
+    if isinstance(choices, list):
+        for choice in choices:
+            if not isinstance(choice, dict):
+                continue
+            message = choice.get("message")
+            if not isinstance(message, dict):
+                continue
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                return content.strip()
+            if isinstance(content, list):
+                parts = [
+                    str(part.get("text", ""))
+                    for part in content
+                    if isinstance(part, dict) and part.get("text")
+                ]
+                if parts:
+                    return "\n".join(parts).strip()
+    for key in ("output_text", "content", "text"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
 def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
     if not llm_analysis:
         return ""
@@ -1105,7 +1184,11 @@ def _llm_analysis_block(llm_analysis: Optional[Dict[str, Any]]) -> str:
         f'{usage_metrics}'
         '</div>'
     )
-    analysis_markdown = llm_analysis.get("markdown_summary") or llm_analysis.get("analysis_markdown")
+    analysis_markdown = (
+        llm_analysis.get("markdown_summary")
+        or llm_analysis.get("analysis_markdown")
+        or _llm_response_text(llm_analysis.get("response"))
+    )
     if analysis_markdown:
         body = f"<pre>{_text(str(analysis_markdown).strip())}</pre>"
     elif llm_analysis.get("render_only"):
@@ -1759,32 +1842,22 @@ details {{ margin: 14px 0; }}
 summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 .footer {{ padding: 28px min(6vw, 72px) 56px; color: var(--muted); }}
 
-/* --- Tooltips (CSS-only) --- */
+/* --- Tooltips --- */
 [data-tip] {{ position: relative; }}
-[data-tip]:hover:after {{
-  content: attr(data-tip);
-  position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
-  width: max-content; max-width: 320px; white-space: normal; text-align: left;
-  letter-spacing: normal; font-weight: 400; word-spacing: normal;
+.report-tooltip {{
+  position: fixed; left: 0; top: 0; width: max-content; max-width: min(320px, calc(100vw - 24px));
+  white-space: normal; text-align: left; letter-spacing: normal; font-weight: 400; word-spacing: normal;
   background: #05201b; color: #eef4df; border: 1px solid var(--accent-2);
   padding: 9px 12px; border-radius: 12px; font-size: .82rem; line-height: 1.45;
-  box-shadow: 0 14px 40px rgba(0,0,0,.55); z-index: 9999; pointer-events: none;
+  box-shadow: 0 14px 40px rgba(0,0,0,.55); z-index: 2147483647; pointer-events: none;
+  opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .12s, transform .12s;
 }}
-[data-tip]:hover:before {{
-  content: ""; position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%);
-  border: 6px solid transparent; border-top-color: var(--accent-2); z-index: 9999; pointer-events: none;
-}}
+.report-tooltip.visible {{ opacity: 1; visibility: visible; transform: none; }}
 .tip-dot {{
   display:inline-flex; align-items:center; justify-content:center; width: 15px; height: 15px;
   margin-left: 6px; border-radius: 50%; background: rgba(68,215,182,.18); color: var(--accent-2);
   font-style: normal; font-size: .68rem; font-weight: 700; cursor: help; vertical-align: middle;
 }}
-/* Edge-anchored tooltip variants (avoid viewport overflow) */
-.tip-left[data-tip]:hover:after {{ left: 0; transform: none; }}
-.tip-left[data-tip]:hover:before {{ left: 16px; transform: none; }}
-.tip-right[data-tip]:hover:after {{ left: auto; right: 0; transform: none; }}
-.tip-right[data-tip]:hover:before {{ left: auto; right: 16px; transform: none; }}
-
 /* --- Section jump navigation (fixed, right side) --- */
 .jump-nav {{
   position: fixed; right: 14px; top: 50%; transform: translateY(-50%); z-index: 500;
@@ -1799,14 +1872,6 @@ summary {{ cursor:pointer; color: var(--accent-2); font-weight: 700; }}
 }}
 .jump-item:hover {{ color: #0b0f0e; background: var(--accent); }}
 .jump-item svg {{ width: 19px; height: 19px; }}
-/* Nav tooltips open to the LEFT so they stay on-screen */
-.jump-item[data-tip]:hover:after {{
-  left: auto; right: calc(100% + 12px); top: 50%; bottom: auto; transform: translateY(-50%);
-}}
-.jump-item[data-tip]:hover:before {{
-  left: auto; right: calc(100% + 6px); top: 50%; bottom: auto; transform: translateY(-50%);
-  border: 6px solid transparent; border-left-color: var(--accent-2); border-top-color: transparent;
-}}
 .jump-families .jump-sub {{
   position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
   display: none; flex-direction: column; gap: 2px; min-width: 140px;
@@ -1934,6 +1999,7 @@ details.evidence[open] > summary:before {{ content: "▾ "; }}
 </style>
 </head>
 <body>
+  <div class="report-tooltip" id="report-tooltip" role="tooltip"></div>
   {jump_nav}
   <header class="hero" id="top">
     <div class="hero-card">
@@ -1954,6 +2020,56 @@ details.evidence[open] > summary:before {{ content: "▾ "; }}
     {family_cards}
   </main>
   <footer class="footer">Generated by Protocol RE. Raw payloads are omitted from this report.</footer>
+  <script>
+  (() => {{
+    const tooltip = document.getElementById("report-tooltip");
+    let owner = null;
+
+    const position = (target) => {{
+      const rect = target.getBoundingClientRect();
+      const gap = 10;
+      const margin = 12;
+      const width = tooltip.offsetWidth;
+      const height = tooltip.offsetHeight;
+      let left = rect.left + rect.width / 2 - width / 2;
+      left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+      let top = rect.top - height - gap;
+      if (top < margin) top = rect.bottom + gap;
+      top = Math.max(margin, Math.min(top, window.innerHeight - height - margin));
+      tooltip.style.left = `${{Math.round(left)}}px`;
+      tooltip.style.top = `${{Math.round(top)}}px`;
+    }};
+
+    const show = (target) => {{
+      const text = target && target.getAttribute("data-tip");
+      if (!text) return;
+      owner = target;
+      tooltip.textContent = text;
+      tooltip.classList.add("visible");
+      position(target);
+    }};
+    const hide = (target) => {{
+      if (target && owner !== target) return;
+      owner = null;
+      tooltip.classList.remove("visible");
+    }};
+
+    document.addEventListener("pointerover", (event) => {{
+      const target = event.target.closest && event.target.closest("[data-tip]");
+      if (target && target !== owner) show(target);
+    }});
+    document.addEventListener("pointerout", (event) => {{
+      if (owner && !owner.contains(event.relatedTarget)) hide(owner);
+    }});
+    document.addEventListener("focusin", (event) => {{
+      const target = event.target.closest && event.target.closest("[data-tip]");
+      if (target) show(target);
+    }});
+    document.addEventListener("focusout", () => hide(owner));
+    window.addEventListener("scroll", () => owner && position(owner), true);
+    window.addEventListener("resize", () => owner && position(owner));
+  }})();
+  </script>
 </body>
 </html>
 """
