@@ -356,6 +356,51 @@ def _validation_counts(result: Dict[str, Any]) -> tuple[Any, Any]:
     return applied, rejected
 
 
+def _boundary_result_with_final_status(
+    result: Dict[str, Any],
+    family: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    validation_log = result.get("validation_log")
+    final_fields = (family or {}).get("field_hypotheses")
+    if not isinstance(validation_log, list) or not validation_log or not isinstance(final_fields, list):
+        return result
+
+    final_spans = set()
+    for field in final_fields:
+        if not isinstance(field, dict):
+            continue
+        try:
+            start = int(field.get("start", 0))
+            length = int(field.get("length", 0))
+        except (TypeError, ValueError):
+            continue
+        if length > 0:
+            final_spans.add((start, start + length))
+
+    updated_log = []
+    for entry in validation_log:
+        if not isinstance(entry, dict):
+            updated_log.append(entry)
+            continue
+        suggestion = entry.get("suggestion") if isinstance(entry.get("suggestion"), dict) else {}
+        merged = suggestion.get("merged_field") if isinstance(suggestion.get("merged_field"), dict) else {}
+        try:
+            start = int(merged.get("start_offset", merged.get("start")))
+            end = int(merged.get("end_offset", merged.get("end")))
+        except (TypeError, ValueError):
+            updated_log.append(entry)
+            continue
+        updated_entry = dict(entry)
+        updated_entry["applied"] = (start, end) in final_spans
+        if not updated_entry["applied"]:
+            updated_entry["final_status_reason"] = "Proposed merged span is not present in the final field boundaries."
+        updated_log.append(updated_entry)
+
+    updated_result = dict(result)
+    updated_result["validation_log"] = updated_log
+    return updated_result
+
+
 def _stage_status_metrics(result: Optional[Dict[str, Any]], stage_label: str) -> str:
     result = result or {}
     success = result.get("success")
@@ -438,7 +483,7 @@ def _boundary_stage_table(result: Dict[str, Any]) -> str:
             f"<td>{_text(_list_text(fields, limit=8))}</td>"
             f"<td><code>{_text(span)}</code></td>"
             f"<td>{_text(suggestion.get('confidence', ''))}</td>"
-            f"<td>{_text(suggestion.get('rationale') or entry.get('reason') or '')}</td>"
+            f"<td>{_text(entry.get('final_status_reason') or suggestion.get('rationale') or entry.get('reason') or '')}</td>"
             "</tr>"
         )
     if not rows:
@@ -928,7 +973,11 @@ def _framing_panel(framing_summary: Dict[str, Any]) -> str:
     )
 
 
-def _family_refinement_blocks(family_id: str, llm_stage_results: Optional[Dict[str, Any]]) -> str:
+def _family_refinement_blocks(
+    family_id: str,
+    llm_stage_results: Optional[Dict[str, Any]],
+    family: Optional[Dict[str, Any]] = None,
+) -> str:
     if not llm_stage_results:
         return ""
     boundary = (llm_stage_results.get("boundary_refinement") or {}).get(family_id)
@@ -941,6 +990,9 @@ def _family_refinement_blocks(family_id: str, llm_stage_results: Optional[Dict[s
         return ""
     blocks = []
     if boundary:
+        boundary = dict(boundary)
+        boundary_result = boundary.get("result") if isinstance(boundary.get("result"), dict) else {}
+        boundary["result"] = _boundary_result_with_final_status(boundary_result, family)
         blocks.append(
             '<h4>LLM Boundary Refinement</h4>'
             + _stage_text_details(boundary, "Boundary Detection Refinement", "boundary_refinement")
@@ -991,7 +1043,7 @@ def _family_card(
             )
     related = family.get("related_families", []) or []
     related_html = "".join(_pill(item, "related") for item in related[:8]) or '<span class="muted">No direct relation links</span>'
-    refinement_html = _family_refinement_blocks(str(family_id), llm_stage_results)
+    refinement_html = _family_refinement_blocks(str(family_id), llm_stage_results, family)
     if refinement_html:
         refinement_html = f"      {refinement_html}\n"
     return f"""
