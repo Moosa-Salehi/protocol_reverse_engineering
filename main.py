@@ -188,33 +188,32 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     )
 
     # Stage 07b - LLM Boundary Refinement
-    pipeline.append(
-        (
-            "07b_refine_boundaries_llm",
-            [
-                _script("07b_refine_boundaries_llm.py"),
-                _path(messages_jsonl),
-                _path(families_json),
-                _path(families_refined_json),
-                "--assignments-json",
-                _path(assignments_json),
-                "--features-json",
-                _path(family_features_json),
-                "--llm-config",
-                _path(args.llm_config),
-                "--min-confidence",
-                str(args.llm_boundary_confidence),
-                "--results-dir",
-                _path(llm_stage_results_dir),
-                "--user-response-dir",
-                _path(user_response_dir),
-            ]
-            + (["--render-only"] if args.llm_render_only else [])
-            + (["--use-user-provided-response"] if args.use_user_provided_response else []),
+    if not args.llm_render_only:
+        pipeline.append(
+            (
+                "07b_refine_boundaries_llm",
+                [
+                    _script("07b_refine_boundaries_llm.py"),
+                    _path(messages_jsonl),
+                    _path(families_json),
+                    _path(families_refined_json),
+                    "--assignments-json",
+                    _path(assignments_json),
+                    "--features-json",
+                    _path(family_features_json),
+                    "--llm-config",
+                    _path(args.llm_config),
+                    "--min-confidence",
+                    str(args.llm_boundary_confidence),
+                    "--results-dir",
+                    _path(llm_stage_results_dir),
+                    "--user-response-dir",
+                    _path(user_response_dir),
+                ]
+                + (["--use-user-provided-response"] if args.use_user_provided_response else []),
+            )
         )
-    )
-    # Use refined families for subsequent stages
-    families_for_model = families_refined_json
+    families_for_model = families_json if args.llm_render_only else families_refined_json
 
     pipeline.extend([
             (
@@ -270,30 +269,29 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         ])
 
     # Stage 10b - LLM Relation Validation
-    pipeline.append(
-        (
-            "10b_validate_relations_llm",
-            [
-                _script("10b_validate_relations_llm.py"),
-                _path(relations_json),
-                _path(relations_validated_json),
-                "--families-json",
-                _path(families_for_model),
-                "--llm-config",
-                _path(args.llm_config),
-                "--min-confidence",
-                str(args.llm_relation_confidence),
-                "--results-dir",
-                _path(llm_stage_results_dir),
-                "--user-response-dir",
-                _path(user_response_dir),
-            ]
-            + (["--render-only"] if args.llm_render_only else [])
-            + (["--use-user-provided-response"] if args.use_user_provided_response else []),
+    if not args.llm_render_only:
+        pipeline.append(
+            (
+                "10b_validate_relations_llm",
+                [
+                    _script("10b_validate_relations_llm.py"),
+                    _path(relations_json),
+                    _path(relations_validated_json),
+                    "--families-json",
+                    _path(families_for_model),
+                    "--llm-config",
+                    _path(args.llm_config),
+                    "--min-confidence",
+                    str(args.llm_relation_confidence),
+                    "--results-dir",
+                    _path(llm_stage_results_dir),
+                    "--user-response-dir",
+                    _path(user_response_dir),
+                ]
+                + (["--use-user-provided-response"] if args.use_user_provided_response else []),
+            )
         )
-    )
-    # Use validated relations for subsequent stages
-    relations_for_model = relations_validated_json
+    relations_for_model = relations_json if args.llm_render_only else relations_validated_json
 
     pipeline.extend([
             (
@@ -314,36 +312,35 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         ])
 
     # Stage 11b - LLM Semantic Labeling
-    pipeline.append(
-        (
-            "11b_label_semantics_llm",
-            [
-                _script("11b_label_semantics_llm.py"),
-                _path(families_for_model),
-                _path(families_labeled_json),
-                "--relations-json",
-                _path(relations_for_model),
-                "--features-json",
-                _path(family_features_json),
-                "--messages-jsonl",
-                _path(messages_jsonl),
-                "--assignments-json",
-                _path(assignments_json),
-                "--llm-config",
-                _path(args.llm_config),
-                "--min-confidence",
-                str(args.llm_semantic_confidence),
-                "--results-dir",
-                _path(llm_stage_results_dir),
-                "--user-response-dir",
-                _path(user_response_dir),
-            ]
-            + (["--render-only"] if args.llm_render_only else [])
-            + (["--use-user-provided-response"] if args.use_user_provided_response else []),
+    if not args.llm_render_only:
+        pipeline.append(
+            (
+                "11b_label_semantics_llm",
+                [
+                    _script("11b_label_semantics_llm.py"),
+                    _path(families_for_model),
+                    _path(families_labeled_json),
+                    "--relations-json",
+                    _path(relations_for_model),
+                    "--features-json",
+                    _path(family_features_json),
+                    "--messages-jsonl",
+                    _path(messages_jsonl),
+                    "--assignments-json",
+                    _path(assignments_json),
+                    "--llm-config",
+                    _path(args.llm_config),
+                    "--min-confidence",
+                    str(args.llm_semantic_confidence),
+                    "--results-dir",
+                    _path(llm_stage_results_dir),
+                    "--user-response-dir",
+                    _path(user_response_dir),
+                ]
+                + (["--use-user-provided-response"] if args.use_user_provided_response else []),
+            )
         )
-    )
-    # Use labeled families for protocol model
-    families_for_model = families_labeled_json
+        families_for_model = families_labeled_json
 
     pipeline.extend([
             (
@@ -398,9 +395,12 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(html_report),
                     "--evaluation-json",
                     _path(evaluation_json),
-                    "--llm-stage-results-dir",
-                    _path(llm_stage_results_dir),
-                ],
+                ]
+                + (
+                    []
+                    if args.llm_render_only
+                    else ["--llm-stage-results-dir", _path(llm_stage_results_dir)]
+                ),
             ),
         ]
     )
@@ -475,16 +475,21 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 _path(llm_prompt_md),
                 "--evaluation-json",
                 _path(evaluation_json),
-                # Multi-stage summaries (auto-detected if files exist)
-                "--boundary-summary",
-                _path(families_refined_json),
-                "--semantic-summary",
-                _path(families_labeled_json),
-                "--relation-summary",
-                _path(relations_validated_json),
                 "--user-response-dir",
                 _path(user_response_dir),
-            ],
+            ]
+            + (
+                ["--disable-multi-stage-summaries"]
+                if args.llm_render_only
+                else [
+                    "--boundary-summary",
+                    _path(families_refined_json),
+                    "--semantic-summary",
+                    _path(families_labeled_json),
+                    "--relation-summary",
+                    _path(relations_validated_json),
+                ]
+            ),
         ),
         (
             "15b_apply_llm_refinement",

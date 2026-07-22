@@ -1099,7 +1099,11 @@ def _relation_llm_decision(relation: Dict[str, Any], relation_stage: Optional[Di
     return None
 
 
-def _relation_rows(model: Dict[str, Any], llm_stage_results: Optional[Dict[str, Any]] = None) -> str:
+def _relation_rows(
+    model: Dict[str, Any],
+    llm_stage_results: Optional[Dict[str, Any]] = None,
+    include_llm_validation: bool = True,
+) -> str:
     rows = []
     relation_stage = (llm_stage_results or {}).get("relation_validation")
     for relation in _relations(model):
@@ -1116,6 +1120,7 @@ def _relation_rows(model: Dict[str, Any], llm_stage_results: Optional[Dict[str, 
                 f"{_pill('model-attached', 'related')} {_text(relation.get('llm_confidence', ''))}"
                 f"<br><small>{_text(relation.get('llm_rationale'))}</small>"
             )
+        llm_cell = f"<td>{llm_html}</td>" if include_llm_validation else ""
         rows.append(
             "<tr>"
             f"<td><code>{_text(relation.get('request_family_id'))}</code></td>"
@@ -1129,10 +1134,11 @@ def _relation_rows(model: Dict[str, Any], llm_stage_results: Optional[Dict[str, 
             f"<td>{_text(relation.get('dominant_direction', 'unknown'))}</td>"
             f"<td>{len(relation.get('echo_fields', []) or [])}</td>"
             f"<td>{len(relation.get('length_relations', []) or [])}</td>"
-            f"<td>{llm_html}</td>"
+            f"{llm_cell}"
             "</tr>"
         )
-    return "".join(rows) or '<tr><td colspan="12">No relation evidence.</td></tr>'
+    column_count = 12 if include_llm_validation else 11
+    return "".join(rows) or f'<tr><td colspan="{column_count}">No relation evidence.</td></tr>'
 
 
 def _evaluation_block(evaluation: Optional[Dict[str, Any]]) -> str:
@@ -1576,7 +1582,11 @@ def _truth_comparison_block(
     """
 
 
-def _relation_graph_block(model: Dict[str, Any], relation_rows: str = "") -> str:
+def _relation_graph_block(
+    model: Dict[str, Any],
+    relation_rows: str = "",
+    include_llm_validation: bool = True,
+) -> str:
     families = model.get("families", []) or []
     relations = model.get("relations", []) or []
     # Keep every edge with two known endpoints (including self-relations).
@@ -1711,11 +1721,17 @@ def _relation_graph_block(model: Dict[str, Any], relation_rows: str = "") -> str
     )
     table_html = ""
     if relation_rows:
+        validation_tip = " and any LLM validation" if include_llm_validation else ""
+        validation_header = "<th>LLM Validation</th>" if include_llm_validation else ""
         table_html = (
             '<details class="evidence"><summary>Strongest relations — full metrics table '
-            + _tip("Every inferred relation with its pair count, scores, direction/order consistency, echo fields, length rules and any LLM validation.")
+            + _tip(
+                "Every inferred relation with its pair count, scores, direction/order consistency, "
+                f"echo fields, length rules{validation_tip}."
+            )
             + "</summary>"
-            '<table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th><th>LLM Validation</th></tr></thead>'
+            '<table><thead><tr><th>Request</th><th>Response</th><th>Pairs</th><th>Score</th><th>Support</th><th>Lift</th><th>Direction</th><th>Order</th><th>Flow</th><th>Echoes</th><th>Length Rules</th>'
+            f"{validation_header}</tr></thead>"
             f"<tbody>{relation_rows}</tbody></table></details>"
         )
     return f"""
@@ -1742,12 +1758,19 @@ def render_protocol_model_html(
     ground_truth: Optional[Dict[str, Any]] = None,
 ) -> str:
     families = _families(model)
+    llm_render_only = bool((llm_analysis or {}).get("render_only"))
+    visible_llm_stage_results = None if llm_render_only else llm_stage_results
     # Ground-truth field matches (if available) let each family card show an
     # aligned ground-truth row beneath its discovered fields.
     field_matches = ((final_evaluation or {}).get("matches", {}) or {}).get("fields", []) or []
     gt_match_by_family = _gt_match_by_family(final_evaluation, ground_truth)
     family_cards = "\n".join(
-        _family_card(family, llm_stage_results, field_matches, gt_match_by_family.get(str(family.get("family_id"))))
+        _family_card(
+            family,
+            visible_llm_stage_results,
+            field_matches,
+            gt_match_by_family.get(str(family.get("family_id"))),
+        )
         for family in families
     )
     # Pull structured summaries out of the flat metadata table so they can be
@@ -1756,18 +1779,30 @@ def render_protocol_model_html(
     framing_summary_block = _framing_summary_block(metadata.pop("framing_global_summary", None))
     patch_validation_summary = metadata.pop("llm_patch_validation", None)
     compact_refinement_summary = metadata.pop("llm_refinement", None)
-    llm_refinement_block = _llm_refinement_block(patch_validation_summary or compact_refinement_summary)
+    llm_refinement_block = (
+        ""
+        if llm_render_only
+        else _llm_refinement_block(patch_validation_summary or compact_refinement_summary)
+    )
     metadata_rows = _kv_rows(metadata)
     metadata_section = (
         f'<section class="panel"><h2>Metadata</h2>'
         f'<table class="meta-table"><tbody>{metadata_rows}</tbody></table></section>'
         if metadata_rows else ""
     )
-    relation_rows = _relation_rows(model, llm_stage_results)
+    relation_rows = _relation_rows(
+        model,
+        visible_llm_stage_results,
+        include_llm_validation=not llm_render_only,
+    )
     llm_block = _llm_analysis_block(llm_analysis)
     overview_block = _overview_block(model)
     truth_comparison_block = _truth_comparison_block(model, final_evaluation)
-    relation_graph_block = _relation_graph_block(model, relation_rows)
+    relation_graph_block = _relation_graph_block(
+        model,
+        relation_rows,
+        include_llm_validation=not llm_render_only,
+    )
     pipeline_eval_block = _evaluation_block(evaluation)
     all_families = model.get("families", []) or []
     total_messages = sum(int(family.get("message_count", 0) or 0) for family in all_families)

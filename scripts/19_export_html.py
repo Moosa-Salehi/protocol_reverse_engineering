@@ -164,11 +164,15 @@ def main() -> None:
         if ground_truth:
             logger.info(f"Loaded ground truth from {args.ground_truth_json}")
 
-        llm_stage_results = _load_llm_stage_results(args.llm_stage_results_dir, args.protocol_model_json)
-        if llm_stage_results:
-            logger.info(f"Loaded LLM stage results from {llm_stage_results.get('results_dir')}")
-            logger.metric("boundary_refinement_stage_results", len(llm_stage_results.get("boundary_refinement", {})), "families")
-            logger.metric("semantic_labeling_stage_results", len(llm_stage_results.get("semantic_labeling", {})), "families")
+        llm_stage_results = None
+        if llm_analysis and llm_analysis.get("render_only"):
+            logger.info("Skipping LLM refinement stage results for render-only report")
+        else:
+            llm_stage_results = _load_llm_stage_results(args.llm_stage_results_dir, args.protocol_model_json)
+            if llm_stage_results:
+                logger.info(f"Loaded LLM stage results from {llm_stage_results.get('results_dir')}")
+                logger.metric("boundary_refinement_stage_results", len(llm_stage_results.get("boundary_refinement", {})), "families")
+                logger.metric("semantic_labeling_stage_results", len(llm_stage_results.get("semantic_labeling", {})), "families")
 
         patch_validation = _load_patch_validation(args.patch_validation_json, args.protocol_model_json)
         if patch_validation:

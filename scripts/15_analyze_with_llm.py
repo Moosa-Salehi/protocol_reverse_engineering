@@ -89,6 +89,11 @@ def main() -> None:
     parser.add_argument("--boundary-summary", help="Boundary refinement summary JSON from stage 07b")
     parser.add_argument("--semantic-summary", help="Semantic labeling summary JSON from stage 11b")
     parser.add_argument("--relation-summary", help="Relation validation summary JSON from stage 10b")
+    parser.add_argument(
+        "--disable-multi-stage-summaries",
+        action="store_true",
+        help="Do not load or auto-detect boundary, semantic, or relation LLM stage summaries",
+    )
     parser.add_argument("--evaluation-json", help="Pipeline evaluation metrics JSON")
 
     # Legacy compatibility
@@ -120,17 +125,18 @@ def main() -> None:
     relation_summary = None
     evaluation_metrics = None
 
-    if args.boundary_summary:
-        print(f"[+] Loading boundary refinement summary from {args.boundary_summary}")
-        boundary_summary = load_stage_summary(args.boundary_summary)
+    if not args.disable_multi_stage_summaries:
+        if args.boundary_summary:
+            print(f"[+] Loading boundary refinement summary from {args.boundary_summary}")
+            boundary_summary = load_stage_summary(args.boundary_summary)
 
-    if args.semantic_summary:
-        print(f"[+] Loading semantic labeling summary from {args.semantic_summary}")
-        semantic_summary = load_stage_summary(args.semantic_summary)
+        if args.semantic_summary:
+            print(f"[+] Loading semantic labeling summary from {args.semantic_summary}")
+            semantic_summary = load_stage_summary(args.semantic_summary)
 
-    if args.relation_summary:
-        print(f"[+] Loading relation validation summary from {args.relation_summary}")
-        relation_summary = load_stage_summary(args.relation_summary)
+        if args.relation_summary:
+            print(f"[+] Loading relation validation summary from {args.relation_summary}")
+            relation_summary = load_stage_summary(args.relation_summary)
 
     if args.evaluation_json:
         print(f"[+] Loading evaluation metrics from {args.evaluation_json}")
@@ -139,26 +145,27 @@ def main() -> None:
     # Auto-detect summaries from standard locations if not provided
     data_dir = Path(args.protocol_model_json).parent
 
-    if not boundary_summary:
-        auto_path = data_dir / "05_families_refined.json"
-        if auto_path.exists():
-            print(f"[*] Auto-detected boundary refinement: {auto_path}")
-            data = load_json(str(auto_path))
-            boundary_summary = data.get("llm_refinement_summary")
+    if not args.disable_multi_stage_summaries:
+        if not boundary_summary:
+            auto_path = data_dir / "05_families_refined.json"
+            if auto_path.exists():
+                print(f"[*] Auto-detected boundary refinement: {auto_path}")
+                data = load_json(str(auto_path))
+                boundary_summary = data.get("llm_refinement_summary")
 
-    if not semantic_summary:
-        auto_path = data_dir / "05_families_labeled.json"
-        if auto_path.exists():
-            print(f"[*] Auto-detected semantic labeling: {auto_path}")
-            data = load_json(str(auto_path))
-            semantic_summary = data.get("llm_labeling_summary")
+        if not semantic_summary:
+            auto_path = data_dir / "05_families_labeled.json"
+            if auto_path.exists():
+                print(f"[*] Auto-detected semantic labeling: {auto_path}")
+                data = load_json(str(auto_path))
+                semantic_summary = data.get("llm_labeling_summary")
 
-    if not relation_summary:
-        auto_path = data_dir / "08_relations_validated.json"
-        if auto_path.exists():
-            print(f"[*] Auto-detected relation validation: {auto_path}")
-            data = load_json(str(auto_path))
-            relation_summary = data.get("llm_validation_summary")
+        if not relation_summary:
+            auto_path = data_dir / "08_relations_validated.json"
+            if auto_path.exists():
+                print(f"[*] Auto-detected relation validation: {auto_path}")
+                data = load_json(str(auto_path))
+                relation_summary = data.get("llm_validation_summary")
 
     if not evaluation_metrics:
         auto_path = data_dir / "11_evaluation.json"
