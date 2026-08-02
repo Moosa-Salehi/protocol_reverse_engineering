@@ -202,6 +202,15 @@ def _pair_session_by_correlation(
         partner_index: Optional[int] = None
         for j in range(i + 1, min(len(session_records), i + 1 + window)):
             if not used[j] and values[j] == values[i]:
+                response = session_records[j]
+                if request.direction in RESPONSE_DIRECTIONS:
+                    continue
+                if response.direction in REQUEST_DIRECTIONS:
+                    continue
+                if request.direction in REQUEST_DIRECTIONS and response.direction not in RESPONSE_DIRECTIONS | {"unknown"}:
+                    continue
+                if response.direction in RESPONSE_DIRECTIONS and request.direction not in REQUEST_DIRECTIONS | {"unknown"}:
+                    continue
                 partner_index = j
                 break
         if partner_index is None:

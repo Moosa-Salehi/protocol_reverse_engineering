@@ -136,6 +136,8 @@ def _prune_family_edges(
 
     retained_by_request: Dict[str, List[Tuple[str, str, List[PairRecord], Dict[str, object]]]] = defaultdict(list)
     for (request_family, response_family), family_pairs in grouped_pairs.items():
+        if request_family == "noise" or response_family == "noise":
+            continue
         features = _edge_features(
             request_family,
             response_family,

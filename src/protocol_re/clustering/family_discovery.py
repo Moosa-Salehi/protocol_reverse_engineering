@@ -308,12 +308,22 @@ def refine_families_by_discriminator(
     # bucket; ties break on larger size then smaller signature (deterministic).
     large_signatures = [sig for sig, members in members_by_signature.items() if len(members) >= min_family_size]
     merged_into: Dict[Any, Any] = {}
+    noise_signatures: set[Any] = set()
     if large_signatures:
         for signature in sorted(members_by_signature):
             members = members_by_signature[signature]
             if len(members) >= min_family_size:
                 continue
             value, bucket, role = signature
+
+            same_value_targets = [
+                target
+                for target in large_signatures
+                if target[0] == value and target[2] == role
+            ]
+            if role != "unknown" and not same_value_targets:
+                noise_signatures.add(signature)
+                continue
 
             def _distance(target: Any) -> tuple[int, int, int, int, Any]:
                 t_value, t_bucket, t_role = target
@@ -330,6 +340,8 @@ def refine_families_by_discriminator(
 
     final_members: Dict[Any, List[int]] = defaultdict(list)
     for signature, members in members_by_signature.items():
+        if signature in noise_signatures:
+            continue
         target = merged_into.get(signature, signature)
         final_members[target].extend(members)
 
@@ -343,6 +355,8 @@ def refine_families_by_discriminator(
         family_id = family_id_by_signature[signature]
         for msg_id in members:
             new_family_by_msg_id[msg_id] = family_id
+    for signature in noise_signatures:
+        noise_msg_ids.extend(members_by_signature[signature])
     for msg_id in noise_msg_ids:
         new_family_by_msg_id[msg_id] = "noise"
 
