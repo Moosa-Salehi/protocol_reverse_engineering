@@ -271,6 +271,7 @@ def detect_global_discriminator(
                     "_mi": mi,
                     "_type_mi": type_mi,
                     "_effective_cardinality": effective_cardinality,
+                    "_stable_ratio": stable_ratio,
                 }
             )
     if not candidates:
@@ -307,6 +308,23 @@ def detect_global_discriminator(
             if candidate["_type_mi"] >= min_structure_mi
             and candidate["_effective_cardinality"] >= min_type_cardinality
         ]
+        filtered_meaningful = []
+        for candidate in meaningful:
+            low_cardinality_dominant = (
+                candidate["_effective_cardinality"] == min_type_cardinality
+                and candidate["_stable_ratio"] >= _FR.LOW_CARDINALITY_DOMINANCE_MIN
+            )
+            stronger_later_candidate = any(
+                later["offset"] > candidate["offset"]
+                and later["_effective_cardinality"] > candidate["_effective_cardinality"]
+                and later["_type_mi"]
+                >= candidate["_type_mi"] * _FR.LATER_TYPE_MI_IMPROVEMENT_RATIO
+                for later in meaningful
+            )
+            if low_cardinality_dominant and stronger_later_candidate:
+                continue
+            filtered_meaningful.append(candidate)
+        meaningful = filtered_meaningful
         if meaningful:
             chosen = min(meaningful, key=lambda candidate: (candidate["offset"], candidate["width"]))
             return {key: value for key, value in chosen.items() if not key.startswith("_")}

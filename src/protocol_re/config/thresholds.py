@@ -676,13 +676,20 @@ class FamilyRefinement:
     MIN_STRUCTURE_MI: float = 0.1
 
     # Minimum effective cardinality for the type-aware path to treat a byte as an
-    # opcode. Two distinct values are sufficient: small captures and narrow protocol
-    # profiles may legitimately exercise only two or three operations. Requiring
-    # four caused the real Modbus function-code byte to be rejected in such corpora,
-    # allowing a later payload value to win despite weaker structural placement.
-    # Constants remain excluded by MIN_CARDINALITY and structurally inert binary
-    # flags still have to clear the conditional type-information floor.
-    MIN_TYPE_CARDINALITY: int = 2
+    # opcode. Three distinct values support narrow captures while excluding common
+    # near-binary header fields such as unit/device ids. A floor of four rejected
+    # the real opcode in the 11K-message corpus; a floor of two admitted the Unit ID
+    # in the 200K-message corpus. Three is the protocol-agnostic boundary observed
+    # across both: small opcode sets survive, binary address/flag fields do not.
+    MIN_TYPE_CARDINALITY: int = 3
+
+    # A minimally-cardinal candidate dominated by one value is often a unit/device
+    # id rather than an opcode. Suppress it only when a later candidate has richer
+    # cardinality and materially stronger conditional type information. This keeps
+    # balanced three-opcode captures while rejecting the skewed Unit ID in the
+    # 200K-message corpus.
+    LOW_CARDINALITY_DOMINANCE_MIN: float = 0.60
+    LATER_TYPE_MI_IMPROVEMENT_RATIO: float = 1.15
 
     # Cardinality window. Below MIN it is a constant (no discrimination); above
     # MAX it is an address / data / counter / transaction-id field, not a type
