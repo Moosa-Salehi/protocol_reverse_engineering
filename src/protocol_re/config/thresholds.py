@@ -624,6 +624,18 @@ class FamilyRefinement:
 
     # --- Global discriminator detection (detect_global_discriminator) ---
 
+    # Exclude transaction/correlation-id fields from discriminator candidacy.
+    # A correlation id (e.g. the Modbus MBAP transaction id at offset 0-1) is a
+    # per-message counter echoed between a request and its response — never a type
+    # code. On a SHORT capture its high byte spans few enough distinct values to
+    # slip under MAX_CARDINALITY and, sitting at offset 0, gets picked ahead of the
+    # true opcode by the earliest-survivor rule (the txn-id-high-byte trap). Reusing
+    # the request/response pairing detector (detect_correlation_field) to mask those
+    # bytes is protocol-agnostic and a no-op when no correlation id is present. On a
+    # long capture the same field is already rejected by MAX_CARDINALITY, so masking
+    # it changes nothing — the discriminator still lands on the opcode. Default ON.
+    EXCLUDE_CORRELATION_OFFSETS: bool = True
+
     # Header region (bytes) scanned for the discriminator. The type/command code
     # of binary protocols lives in the first few header bytes.
     MAX_OFFSET: int = 16
@@ -664,16 +676,20 @@ class FamilyRefinement:
     MIN_STRUCTURE_MI: float = 0.1
 
     # Minimum effective cardinality for the type-aware path to treat a byte as an
-    # opcode. A type/command code takes at least a few distinct values (Modbus uses
-    # ~12 function codes); a near-binary field that merely correlates with length is
-    # a flag or a coarse address, not a type code. This is what separates the
-    # multi-device Unit-Id at offset 6 (effective cardinality 3 on the non-noise
-    # subset: two masters 0x01/0xff plus a gateway 0xfe, incidentally clearing the
-    # type-MI floor) from the function code at offset 7 (effective cardinality 12 on
-    # the multi-device corpus, 4 on the single-device one). Set to 4: it admits the
-    # opcode on both corpora and excludes the leading address. A protocol with fewer
-    # than 4 opcodes is still reachable through the downstream label-guided path.
-    MIN_TYPE_CARDINALITY: int = 4
+    # opcode. Three distinct values support narrow captures while excluding common
+    # near-binary header fields such as unit/device ids. A floor of four rejected
+    # the real opcode in the 11K-message corpus; a floor of two admitted the Unit ID
+    # in the 200K-message corpus. Three is the protocol-agnostic boundary observed
+    # across both: small opcode sets survive, binary address/flag fields do not.
+    MIN_TYPE_CARDINALITY: int = 3
+
+    # A minimally-cardinal candidate dominated by one value is often a unit/device
+    # id rather than an opcode. Suppress it only when a later candidate has richer
+    # cardinality and materially stronger conditional type information. This keeps
+    # balanced three-opcode captures while rejecting the skewed Unit ID in the
+    # 200K-message corpus.
+    LOW_CARDINALITY_DOMINANCE_MIN: float = 0.60
+    LATER_TYPE_MI_IMPROVEMENT_RATIO: float = 1.15
 
     # Cardinality window. Below MIN it is a constant (no discrimination); above
     # MAX it is an address / data / counter / transaction-id field, not a type

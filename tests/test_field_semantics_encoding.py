@@ -781,6 +781,23 @@ def test_detect_global_discriminator_structural_fallback_ignores_bad_bootstrap()
     assert result["global_mi"] < 0.25  # fallback path engaged, not label-guided
 
 
+def test_detect_global_discriminator_excludes_detected_correlation_offsets() -> None:
+    records = []
+    family_by_msg_id = {}
+    msg_id = 0
+    for txn, fc in enumerate((1, 2, 3, 4)):
+        for direction, data in (("request", bytes([txn])), ("response", bytes([txn, 0xAA, 0x55]))):
+            records.append(_refine_record(msg_id, _mbap_pdu(txn, fc, data), direction=direction))
+            family_by_msg_id[msg_id] = "family_a" if fc < 3 else "family_b"
+            msg_id += 1
+
+    result = detect_global_discriminator(records, family_by_msg_id)
+
+    assert result is not None
+    assert result["offset"] == 7
+    assert result["width"] == 1
+
+
 def _impure_modbus_corpus():
     """Bootstrap: family_0 mixes fc1+fc2 (must split); family_1 and family_2 are
     both pure fc3 with identical length+role (must merge). All requests, constant

@@ -68,6 +68,11 @@ def main() -> None:
     parser.add_argument("--min-confidence", type=float, default=0.5, help="Minimum confidence for semantic labels")
     parser.add_argument("--prompt-template", help="Custom prompt template path")
     parser.add_argument("--results-dir", default="data/llm_stage_results", help="Directory for stage results")
+    parser.add_argument(
+        "--user-response-dir",
+        default="data/user_provided_LLM_responses",
+        help="Directory for user-provided LLM response placeholders",
+    )
     parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing stage result responses instead of calling the LLM API")
     parser.add_argument("--use-user-provided-response", action="store_true", help="Load filled LLM responses from data/user_provided_LLM_responses before calling the API")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
@@ -214,7 +219,11 @@ def main() -> None:
             family_features = {}
 
         result_path = results_dir / f"semantic_labeling_{family_id}.json"
-        user_response_path = make_user_response_path("semantic_labeling", family_id)
+        user_response_path = make_user_response_path(
+            "semantic_labeling",
+            family_id,
+            response_dir=args.user_response_dir,
+        )
         prompt_path = results_dir / f"semantic_labeling_{family_id}_prompt.md"
         ensure_user_response_placeholder(
             user_response_path,

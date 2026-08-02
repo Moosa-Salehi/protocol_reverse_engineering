@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.config.thresholds import DiscriminatorDetection as _DD
 from protocol_re.config.thresholds import FamilyRefinement as _FR
+from protocol_re.corpus.request_response_pairing import detect_correlation_field
 from protocol_re.inference.boundary_detection import infer_template
 from protocol_re.model.schema import MessageRecord
 from protocol_re.neural.salience import attention_offset_salience, encoder_gradient_salience, merge_salience_scores
@@ -216,6 +217,21 @@ def detect_global_discriminator(
             if _length_field_match_ratio(messages, offset, width) >= length_field_match_ratio:
                 header_offsets.update(range(offset, offset + width))
 
+    if _FR.EXCLUDE_CORRELATION_OFFSETS:
+        records_by_session: Dict[str, List[MessageRecord]] = defaultdict(list)
+        for record in records:
+            if family_by_msg_id.get(record.msg_id) not in (None, "noise"):
+                records_by_session[record.session_id].append(record)
+        correlation_support: Counter[Tuple[int, int]] = Counter()
+        for session_records in records_by_session.values():
+            correlation_field = detect_correlation_field(session_records)
+            if correlation_field is not None:
+                correlation_support[correlation_field] += len(session_records)
+        if correlation_support:
+            correlation_field, _support = correlation_support.most_common(1)[0]
+            correlation_offset, correlation_width = correlation_field
+            header_offsets.update(range(correlation_offset, correlation_offset + correlation_width))
+
     candidates: List[Dict[str, Any]] = []
     for offset in range(max_offset):
         for width in scan_widths:
@@ -255,6 +271,7 @@ def detect_global_discriminator(
                     "_mi": mi,
                     "_type_mi": type_mi,
                     "_effective_cardinality": effective_cardinality,
+                    "_stable_ratio": stable_ratio,
                 }
             )
     if not candidates:
@@ -291,6 +308,23 @@ def detect_global_discriminator(
             if candidate["_type_mi"] >= min_structure_mi
             and candidate["_effective_cardinality"] >= min_type_cardinality
         ]
+        filtered_meaningful = []
+        for candidate in meaningful:
+            low_cardinality_dominant = (
+                candidate["_effective_cardinality"] == min_type_cardinality
+                and candidate["_stable_ratio"] >= _FR.LOW_CARDINALITY_DOMINANCE_MIN
+            )
+            stronger_later_candidate = any(
+                later["offset"] > candidate["offset"]
+                and later["_effective_cardinality"] > candidate["_effective_cardinality"]
+                and later["_type_mi"]
+                >= candidate["_type_mi"] * _FR.LATER_TYPE_MI_IMPROVEMENT_RATIO
+                for later in meaningful
+            )
+            if low_cardinality_dominant and stronger_later_candidate:
+                continue
+            filtered_meaningful.append(candidate)
+        meaningful = filtered_meaningful
         if meaningful:
             chosen = min(meaningful, key=lambda candidate: (candidate["offset"], candidate["width"]))
             return {key: value for key, value in chosen.items() if not key.startswith("_")}

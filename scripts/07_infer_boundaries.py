@@ -60,6 +60,23 @@ def _segments_from_boundaries(positions) -> list:
     ]
 
 
+def _regularize_fixed_operand_tail(
+    positions: set[int],
+    messages_hex: list[str],
+    operand_start: int,
+    message_length: int,
+) -> set[int]:
+    if not messages_hex or len({len(item) // 2 for item in messages_hex}) != 1:
+        return positions
+    if message_length - operand_start != 4:
+        return positions
+    interior = sorted(position for position in positions if operand_start < position < message_length)
+    midpoint = operand_start + 2
+    if interior in ([operand_start + 1], [operand_start + 3]):
+        return (positions - set(interior)) | {midpoint}
+    return positions
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Infer field boundaries and coarse field types from message families.")
     parser.add_argument("input_jsonl", help="Canonical message corpus JSONL")
@@ -190,6 +207,8 @@ def main() -> None:
                 discriminator_width = int(_refine.get("width", 1) or 1)
             for record in records:
                 family_id = family_by_msg_id.get(record.msg_id)
+                if family_id == "noise":
+                    continue
                 if family_id is None and not args.include_unassigned:
                     continue
                 grouped[family_id or "unassigned"].append(record.payload_hex)
@@ -303,6 +322,12 @@ def main() -> None:
                         for cut in (discriminator_offset, discriminator_offset + discriminator_width):
                             if 0 < cut < fam_len:
                                 positions.add(cut)
+                        positions = _regularize_fixed_operand_tail(
+                            positions,
+                            messages_hex,
+                            discriminator_offset + discriminator_width,
+                            fam_len,
+                        )
                     # Variable-length payload modeling: when the family carries a
                     # length/count field that delimits a trailing variable-length
                     # array (Modbus register/coil data after byte_count), the

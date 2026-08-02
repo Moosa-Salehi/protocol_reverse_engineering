@@ -276,7 +276,7 @@ def detect_payload_length_field(
     messages: Sequence[bytes],
     body_start: int = 0,
     match_ratio: float = 0.90,
-    min_distinct_lengths: int = 3,
+    min_distinct_lengths: int = 2,
     min_samples: int = 8,
     max_scan_offset: int = 48,
 ) -> Optional[int]:
