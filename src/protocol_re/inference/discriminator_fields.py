@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from protocol_re.config.thresholds import DiscriminatorDetection as _DD
 from protocol_re.config.thresholds import FamilyRefinement as _FR
+from protocol_re.corpus.request_response_pairing import detect_correlation_field
 from protocol_re.inference.boundary_detection import infer_template
 from protocol_re.model.schema import MessageRecord
 from protocol_re.neural.salience import attention_offset_salience, encoder_gradient_salience, merge_salience_scores
@@ -215,6 +216,19 @@ def detect_global_discriminator(
         for width in scan_widths:
             if _length_field_match_ratio(messages, offset, width) >= length_field_match_ratio:
                 header_offsets.update(range(offset, offset + width))
+
+    if _FR.EXCLUDE_CORRELATION_OFFSETS:
+        records_by_session: Dict[str, List[MessageRecord]] = defaultdict(list)
+        for record in records:
+            if family_by_msg_id.get(record.msg_id) not in (None, "noise"):
+                records_by_session[record.session_id].append(record)
+        for session_records in records_by_session.values():
+            correlation_field = detect_correlation_field(session_records)
+            if correlation_field is not None:
+                correlation_offset, correlation_width = correlation_field
+                header_offsets.update(
+                    range(correlation_offset, correlation_offset + correlation_width)
+                )
 
     candidates: List[Dict[str, Any]] = []
     for offset in range(max_offset):

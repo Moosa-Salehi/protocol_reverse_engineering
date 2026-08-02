@@ -624,6 +624,18 @@ class FamilyRefinement:
 
     # --- Global discriminator detection (detect_global_discriminator) ---
 
+    # Exclude transaction/correlation-id fields from discriminator candidacy.
+    # A correlation id (e.g. the Modbus MBAP transaction id at offset 0-1) is a
+    # per-message counter echoed between a request and its response — never a type
+    # code. On a SHORT capture its high byte spans few enough distinct values to
+    # slip under MAX_CARDINALITY and, sitting at offset 0, gets picked ahead of the
+    # true opcode by the earliest-survivor rule (the txn-id-high-byte trap). Reusing
+    # the request/response pairing detector (detect_correlation_field) to mask those
+    # bytes is protocol-agnostic and a no-op when no correlation id is present. On a
+    # long capture the same field is already rejected by MAX_CARDINALITY, so masking
+    # it changes nothing — the discriminator still lands on the opcode. Default ON.
+    EXCLUDE_CORRELATION_OFFSETS: bool = True
+
     # Header region (bytes) scanned for the discriminator. The type/command code
     # of binary protocols lives in the first few header bytes.
     MAX_OFFSET: int = 16
