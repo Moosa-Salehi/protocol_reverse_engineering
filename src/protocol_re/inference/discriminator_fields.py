@@ -222,13 +222,15 @@ def detect_global_discriminator(
         for record in records:
             if family_by_msg_id.get(record.msg_id) not in (None, "noise"):
                 records_by_session[record.session_id].append(record)
+        correlation_support: Counter[Tuple[int, int]] = Counter()
         for session_records in records_by_session.values():
             correlation_field = detect_correlation_field(session_records)
             if correlation_field is not None:
-                correlation_offset, correlation_width = correlation_field
-                header_offsets.update(
-                    range(correlation_offset, correlation_offset + correlation_width)
-                )
+                correlation_support[correlation_field] += len(session_records)
+        if correlation_support:
+            correlation_field, _support = correlation_support.most_common(1)[0]
+            correlation_offset, correlation_width = correlation_field
+            header_offsets.update(range(correlation_offset, correlation_offset + correlation_width))
 
     candidates: List[Dict[str, Any]] = []
     for offset in range(max_offset):

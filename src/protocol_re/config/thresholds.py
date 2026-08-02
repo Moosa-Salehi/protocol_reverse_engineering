@@ -676,16 +676,13 @@ class FamilyRefinement:
     MIN_STRUCTURE_MI: float = 0.1
 
     # Minimum effective cardinality for the type-aware path to treat a byte as an
-    # opcode. A type/command code takes at least a few distinct values (Modbus uses
-    # ~12 function codes); a near-binary field that merely correlates with length is
-    # a flag or a coarse address, not a type code. This is what separates the
-    # multi-device Unit-Id at offset 6 (effective cardinality 3 on the non-noise
-    # subset: two masters 0x01/0xff plus a gateway 0xfe, incidentally clearing the
-    # type-MI floor) from the function code at offset 7 (effective cardinality 12 on
-    # the multi-device corpus, 4 on the single-device one). Set to 4: it admits the
-    # opcode on both corpora and excludes the leading address. A protocol with fewer
-    # than 4 opcodes is still reachable through the downstream label-guided path.
-    MIN_TYPE_CARDINALITY: int = 4
+    # opcode. Two distinct values are sufficient: small captures and narrow protocol
+    # profiles may legitimately exercise only two or three operations. Requiring
+    # four caused the real Modbus function-code byte to be rejected in such corpora,
+    # allowing a later payload value to win despite weaker structural placement.
+    # Constants remain excluded by MIN_CARDINALITY and structurally inert binary
+    # flags still have to clear the conditional type-information floor.
+    MIN_TYPE_CARDINALITY: int = 2
 
     # Cardinality window. Below MIN it is a constant (no discrimination); above
     # MAX it is an address / data / counter / transaction-id field, not a type
