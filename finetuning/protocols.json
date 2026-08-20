@@ -1,0 +1,22 @@
+{
+  "train": {
+    "cip": {"filter": "cip", "aliases": ["cip"]},
+    "iec104": {"filter": "iec60870_104", "aliases": ["iec104", "iec_104", "iec-104", "60870"]},
+    "bacnet": {"filter": "bacapp", "aliases": ["bacnet", "bacapp"]},
+    "s7comm": {"filter": "s7comm", "aliases": ["s7", "s7comm"]},
+    "mms": {"filter": "mms", "aliases": ["mms"]},
+    "dnp3": {"filter": "dnp3", "aliases": ["dnp3"]},
+    "hart_ip": {"filter": "hart_ip", "aliases": ["hart", "hart-ip", "hart_ip"]},
+    "enip": {"filter": "enip", "aliases": ["enip", "ethernetip", "ethernet-ip"]},
+    "ethercat": {"filter": "ecat", "aliases": ["ethercat", "ecat"]},
+    "opcua": {"filter": "opcua", "aliases": ["opcua", "opc-ua", "opc_ua"]},
+    "zigbee": {"filter": "zbee_nwk", "aliases": ["zigbee", "zbee"]},
+    "profinet": {"filter": "pn_io", "aliases": ["profinet", "pn_io"]},
+    "powerlink": {"filter": "epl", "aliases": ["powerlink", "epl"]}
+  },
+  "holdout": {
+    "modbus": {"filter": "mbtcp || modbus", "aliases": ["modbus", "mbtcp"]},
+    "goose": {"filter": "goose", "aliases": ["goose"]}
+  }
+}
+
