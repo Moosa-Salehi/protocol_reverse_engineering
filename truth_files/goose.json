@@ -1,0 +1,51 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "goose",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "IEC 61850 GOOSE",
+    "version": "IEC 61850-8-1",
+    "description": "Ground truth for the ISO/IEC 61850 Generic Object Oriented Substation Event (GOOSE) Ethernet profile. The eight-byte GOOSE transport header precedes an ASN.1 BER-encoded GoosePdu. Header offsets are wire-absolute; PDU offsets are relative to the BER tag (0x61). GOOSE has no request/response transaction relation.",
+    "offset_convention": "GOOSE transport header fields use offsets 0..7. GoosePdu fields are relative to the start of the BER Application [1] constructed value (the 0x61 tag). BER lengths and nested field encodings may vary with value size.",
+    "message_types": [
+      {
+        "message_type_id": "goose_header",
+        "name": "GOOSE Transport Header",
+        "role": "header",
+        "description": "The fixed eight-byte GOOSE header carried after the Ethernet/VLAN headers.",
+        "fields": [
+          {"name": "appid", "start": 0, "length": 2, "field_type": "uint16", "endian": "big", "required": true, "description": "Application identifier."},
+          {"name": "length", "start": 2, "length": 2, "field_type": "uint16", "endian": "big", "required": true, "description": "Total GOOSE frame length from APPID through the end of the PDU."},
+          {"name": "reserved_1", "start": 4, "length": 2, "field_type": "uint16", "endian": "big", "required": true, "constant_value": 0, "description": "Reserved and normally zero."},
+          {"name": "reserved_2", "start": 6, "length": 2, "field_type": "uint16", "endian": "big", "required": true, "constant_value": 0, "description": "Reserved and normally zero."}
+        ]
+      },
+      {
+        "message_type_id": "goose_pdu",
+        "name": "GOOSE GoosePdu",
+        "role": "notification",
+        "description": "ASN.1 BER-encoded IEC 61850 GoosePdu, beginning with application tag 0x61.",
+        "fields": [
+          {"name": "goose_pdu_tag", "start": 0, "length": 1, "field_type": "uint8", "required": true, "constant_value": 97, "description": "ASN.1 Application [1] constructed tag (0x61)."},
+          {"name": "go_cb_ref", "start": 2, "length": null, "field_type": "string", "required": true, "description": "GOOSE control block reference (context-specific tag 0x80)."},
+          {"name": "time_allowed_to_live", "start": null, "length": 4, "field_type": "uint32", "endian": "big", "required": true, "description": "TimeAllowedToLive in milliseconds (context-specific tag 0x81)."},
+          {"name": "dat_set", "start": null, "length": null, "field_type": "string", "required": true, "description": "Dataset reference (context-specific tag 0x82)."},
+          {"name": "go_id", "start": null, "length": null, "field_type": "string", "required": false, "description": "Optional human-readable GOOSE identifier (context-specific tag 0x83)."},
+          {"name": "timestamp", "start": null, "length": 8, "field_type": "bytes", "required": true, "description": "UtcTime timestamp (context-specific tag 0x84)."},
+          {"name": "st_num", "start": null, "length": 4, "field_type": "uint32", "endian": "big", "required": true, "description": "State number (context-specific tag 0x85)."},
+          {"name": "sq_num", "start": null, "length": 4, "field_type": "uint32", "endian": "big", "required": true, "description": "Sequence number (context-specific tag 0x86)."},
+          {"name": "simulation", "start": null, "length": 1, "field_type": "bool", "required": false, "description": "Simulation flag (context-specific tag 0x87)."},
+          {"name": "conf_rev", "start": null, "length": 4, "field_type": "uint32", "endian": "big", "required": true, "description": "Configuration revision (context-specific tag 0x88)."},
+          {"name": "nds_com", "start": null, "length": 1, "field_type": "bool", "required": false, "description": "Needs commissioning flag (context-specific tag 0x89)."},
+          {"name": "num_entries", "start": null, "length": 2, "field_type": "uint16", "endian": "big", "required": true, "description": "Number of allData entries (context-specific tag 0x8A)."},
+          {"name": "all_data", "start": null, "length": null, "field_type": "bytes", "required": true, "description": "ASN.1 sequence of subscribed data values (context-specific tag 0xAB)."}
+        ]
+      }
+    ],
+    "relations": []
+  }
+}
