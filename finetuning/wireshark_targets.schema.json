@@ -1,0 +1,5 @@
+{
+  "description": "Trusted Wireshark semantic targets joined to protocol-re family fields by protocol-relative offset and width.",
+  "type": "object",
+  "additionalProperties": {"type": "array", "items": {"type": "object", "required": ["offset", "width", "wireshark_name", "semantic_role"], "properties": {"offset": {"type": "integer", "minimum": 0}, "width": {"type": "integer", "minimum": 1}, "wireshark_name": {"type": "string"}, "semantic_role": {"type": "string"}, "field_type": {"type": "string"}, "encoding_type": {"type": "string"}}}}
+}

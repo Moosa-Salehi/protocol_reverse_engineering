@@ -26,9 +26,10 @@ foreach($Entry in $Protocols){
   if($LASTEXITCODE -ne 0){throw "Pipeline failed for $Name"}
   & $Python "$Root\scripts\14_export_llm_evidence.py" "$Data\10_protocol_model.json" "$Data\12_llm_evidence.json" --evaluation-json "$Data\11_evaluation.json" --pretty --log-dir $Logs
   if($LASTEXITCODE -ne 0){throw "Evidence export failed for $Name"}
-  & $Python "$PSScriptRoot\build_evidence_dataset.py" "$Data\10_protocol_model.json" "$JsonlDir\$Name.jsonl" --evidence-bundle "$Data\12_llm_evidence.json"
+  $Targets=Join-Path $Work "wireshark_targets\$Name.json"
+  if(-not(Test-Path $Targets)){Write-Warning "Skipping $Name: create $Targets from trusted Wireshark annotations first"; continue}
+  & $Python "$PSScriptRoot\build_evidence_dataset.py" "$Data\10_protocol_model.json" "$JsonlDir\$Name.jsonl" --evidence-bundle "$Data\12_llm_evidence.json" --wireshark-targets $Targets
   if($LASTEXITCODE -ne 0){throw "Candidate JSONL generation failed for $Name"}
 }
 Write-Host "Candidate artifacts created under $Work"
 Write-Host "Review/teacher-validate targets, then concatenate approved JSONL files for Ubuntu training."
-

@@ -33,20 +33,27 @@ def evidence_for_family(family: dict[str, Any], bundle: dict[str, Any] | None) -
         "framing": compact(family.get("framing_summary", {})),
     }
 
-def semantic_target(family: dict[str, Any]) -> dict[str, Any] | None:
+def semantic_target(family: dict[str, Any], wireshark: dict[str, Any] | None) -> dict[str, Any] | None:
     labels = []
+    ws_fields = (wireshark or {}).get(str(family.get("family_id")), [])
+    ws_by_offset = {(int(x.get("offset")), int(x.get("width"))): x for x in ws_fields if x.get("offset") is not None and x.get("width") is not None}
     for index, field in enumerate(family.get("field_hypotheses", []) or []):
         attrs = field.get("attributes", {}) if isinstance(field.get("attributes"), dict) else {}
-        role = field.get("semantic_role") or attrs.get("semantic_role")
-        if role not in ROLE_SET: continue
-        labels.append({"field_index": index, "offset": field.get("start", field.get("offset", 0)), "width": field.get("width", (field.get("end", 0) - field.get("start", 0))), "field_type": field.get("field_type", "bytes"), "encoding_type": field.get("encoding_type", field.get("field_type", "bytes")), "semantic_role": role, "human_label": attrs.get("label", role), "confidence": float(field.get("confidence", field.get("semantic_confidence", attrs.get("semantic_confidence", 0.8)))), "evidence": attrs.get("semantic_evidence", ["reviewed pipeline semantic annotation"]), "alternative_roles": []})
+        offset = int(field.get("start", field.get("offset", 0))); width = int(field.get("width", (field.get("end", 0) - offset)))
+        ws = ws_by_offset.get((offset, width))
+        if not ws: continue
+        role = ws.get("semantic_role")
+        if role not in ROLE_SET: raise ValueError(f"Wireshark target for {family.get('family_id')} offset {offset} has invalid mapped role {role!r}")
+        labels.append({"field_index": index, "offset": offset, "width": width, "field_type": ws.get("field_type", field.get("field_type", "bytes")), "encoding_type": ws.get("encoding_type", ws.get("field_type", field.get("field_type", "bytes"))), "semantic_role": role, "human_label": ws.get("wireshark_name", ws.get("name", role)), "confidence": 1.0, "evidence": ["trusted Wireshark dissector", f"Wireshark field: {ws.get('wireshark_name', ws.get('name', 'unknown'))}"], "alternative_roles": []})
     return {"family_id": family.get("family_id"), "family_role": family.get("role", "unknown"), "semantic_labels": labels, "unlabeled_fields": [i for i, f in enumerate(family.get("field_hypotheses", []) or []) if i >= len(labels)], "notes": "Target taken from reviewed or teacher-validated pipeline annotations."} if labels else None
 
-def boundary_target(family: dict[str, Any]) -> dict[str, Any] | None:
-    fields = family.get("field_hypotheses", []) or []
-    boundaries = [int(f.get("end")) for f in fields if f.get("end") is not None]
-    if not boundaries: return None
-    return {"family_id": family.get("family_id"), "boundaries": sorted(set(boundaries)), "confidence": min(1.0, sum(float(f.get("confidence", 0.7)) for f in fields) / len(fields)), "evidence_refs": ["reviewed_pipeline_field_boundaries"]}
+def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    ws_fields = (wireshark or {}).get(str(family.get("family_id")), [])
+    if ws_fields:
+        boundaries = sorted({int(x["offset"]) + int(x["width"]) for x in ws_fields if x.get("offset") is not None and x.get("width") is not None})
+        if boundaries:
+            return {"family_id": family.get("family_id"), "boundaries": boundaries, "confidence": 1.0, "evidence_refs": ["trusted_wireshark_dissector_offsets"]}
+    return None
 
 def record(task: str, evidence: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     system = "You are an expert Protocol Reverse Engineering Analyst. Return one JSON object and no Markdown fences."
@@ -54,13 +61,15 @@ def record(task: str, evidence: dict[str, Any], target: dict[str, Any]) -> dict[
     return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id")}}
 
 def main() -> None:
-    p = argparse.ArgumentParser(); p.add_argument("protocol_model", type=Path); p.add_argument("output", type=Path); p.add_argument("--evidence-bundle", type=Path); p.add_argument("--tasks", nargs="+", choices=["boundary_refinement","semantic_labeling"], default=["boundary_refinement","semantic_labeling"]); p.add_argument("--max-families", type=int, default=0)
-    a = p.parse_args(); model = load(a.protocol_model); bundle = load(a.evidence_bundle) if a.evidence_bundle else None; families = (model.get("families") or [])[:a.max_families or None]; a.output.parent.mkdir(parents=True, exist_ok=True); count=0; skipped=0
+    p = argparse.ArgumentParser(); p.add_argument("protocol_model", type=Path); p.add_argument("output", type=Path); p.add_argument("--evidence-bundle", type=Path); p.add_argument("--wireshark-targets", type=Path, help="JSON mapping family_id to trusted Wireshark fields; required for semantic_labeling"); p.add_argument("--tasks", nargs="+", choices=["boundary_refinement","semantic_labeling"], default=["boundary_refinement","semantic_labeling"]); p.add_argument("--max-families", type=int, default=0)
+    a = p.parse_args(); model = load(a.protocol_model); bundle = load(a.evidence_bundle) if a.evidence_bundle else None; wireshark = load(a.wireshark_targets) if a.wireshark_targets else None
+    if wireshark is None: raise SystemExit("--wireshark-targets is required; trusted Wireshark targets are the only gold supervision")
+    families = (model.get("families") or [])[:a.max_families or None]; a.output.parent.mkdir(parents=True, exist_ok=True); count=0; skipped=0
     with a.output.open("w", encoding="utf-8") as out:
         for family in families:
             ev=evidence_for_family(family,bundle); ev["protocol"]=model.get("protocol_name", model.get("metadata",{}).get("protocol_name","unknown"))
             for task in a.tasks:
-                target = boundary_target(family) if task == "boundary_refinement" else semantic_target(family)
+                target = boundary_target(family, wireshark) if task == "boundary_refinement" else semantic_target(family, wireshark)
                 if target is None: skipped += 1; continue
                 out.write(json.dumps(record(task,ev,target),ensure_ascii=False)+"\n"); count += 1
     print(json.dumps({"written":count,"skipped_without_targets":skipped,"output":str(a.output)},indent=2))

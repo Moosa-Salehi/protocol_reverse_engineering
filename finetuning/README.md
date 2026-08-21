@@ -52,7 +52,7 @@ python .\finetuning\build_evidence_dataset.py `
   --evidence-bundle .\runs\cip\14_llm_evidence.json
 ```
 
-The builder creates whole-family, multi-task examples and includes explicit task tags. It preserves endian values already present in the reviewed model; it never assumes big endian. If endian is unknown, keep the target type as `bytes` or omit the semantic target until it is reviewed.
+The builder creates whole-family, multi-task examples and includes explicit task tags. Boundary and semantic targets must be supplied separately in `wireshark_targets/<protocol>.json`, using the schema in `wireshark_targets.schema.json`. These targets are trusted Wireshark dissector labels joined to pipeline fields by protocol-relative offset and width. The Wireshark name is retained only in the assistant evidence/audit record; it is not placed in the user prompt. The mapped `semantic_role` must belong to the project validator taxonomy. The builder rejects missing or invalid mappings.
 
 ## Ubuntu 24.04 VM
 
