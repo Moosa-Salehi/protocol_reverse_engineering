@@ -11,7 +11,7 @@ The repository's full semantic prompt is longer than this GPU can train in full.
 ## Prerequisites
 
 - Windows 10/11, current NVIDIA driver
-- Python 3.11 x64
+- Python 3.12 x64
 - Wireshark with TShark installed and `tshark.exe` on `PATH`
 - Git and Git LFS
 - At least 35 GB free disk space for the Hugging Face cache, checkpoints, and merged model
