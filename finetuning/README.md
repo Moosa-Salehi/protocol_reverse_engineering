@@ -21,6 +21,11 @@ The repository's full semantic prompt is longer than this GPU can train in full.
 From PowerShell in the repository root:
 
 ```powershell
+[Environment]::SetEnvironmentVariable(                            
+  "HF_HOME",
+  "D:\huggingface",
+  "User"
+)
 Set-ExecutionPolicy -Scope Process Bypass
 .\finetuning\setup_windows.ps1
 .\finetuning\build_dataset_windows.ps1
