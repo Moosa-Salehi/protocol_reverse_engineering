@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import random
 from collections import Counter
 from pathlib import Path
 
@@ -30,9 +29,15 @@ def main() -> None:
         unique[digest] = record
         protocols[record.get("metadata", {}).get("protocol", "unknown")] += 1
     records = list(unique.values())
-    random.Random(args.seed).shuffle(records)
-    validation_count = max(1, round(len(records) * args.validation_fraction)) if len(records) > 1 else 0
-    validation, train = records[:validation_count], records[validation_count:]
+    # Stable group split prevents the same protocol/family appearing in both sets.
+    train, validation = [], []
+    for record in records:
+        meta = record.get("metadata", {})
+        group = f"{meta.get('protocol','unknown')}:{meta.get('family_id','unknown')}"
+        fraction = int(hashlib.sha256(f"{args.seed}:{group}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+        (validation if fraction < args.validation_fraction else train).append(record)
+    if not validation and len(train) > 1:
+        validation.append(train.pop())
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for name, subset in (("train", train), ("validation", validation)):
         with (args.output_dir / f"{name}.jsonl").open("w", encoding="utf-8") as handle:
@@ -45,4 +50,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
