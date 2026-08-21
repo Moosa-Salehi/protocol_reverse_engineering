@@ -83,7 +83,8 @@ python prepare_dataset.py data/raw.jsonl data/split
 python train_unsloth.py \
   --train data/split/train.jsonl \
   --validation data/split/validation.jsonl \
-  --output output/qwen-protocol-re \
+  --model Qwen/Qwen2.5-14B-Instruct \
+  --output output/qwen25-14b-protocol-re \
   --max-seq-length 4096 \
   --rank 16 \
   --epochs 2
@@ -91,10 +92,10 @@ python train_unsloth.py \
 
 Training uses assistant-response-only loss. Before training, every rendered chat example is token-counted. If an example exceeds 4096 tokens, training stops and writes `oversized_examples.json`; examples are never silently truncated. Compact the pipeline evidence or increase context only after checking available VRAM.
 
-Start with a short smoke run before the full job:
+The Ubuntu training script automatically runs a smoke-test stage before the full job. It selects a deterministic small subset, trains for two optimizer steps, evaluates, and verifies that the adapter files were written. Run it directly when debugging the environment:
 
 ```bash
-python train_unsloth.py --train data/smoke_train.jsonl --validation data/smoke_validation.jsonl --output output/smoke --max-seq-length 4096 --epochs 0.05
+bash smoke_test_ubuntu.sh
 ```
 
 ## Export
@@ -102,7 +103,7 @@ python train_unsloth.py --train data/smoke_train.jsonl --validation data/smoke_v
 The safest artifact is the LoRA adapter. Merge it on the VM using `merge_adapter.py`, then convert with `llama.cpp`:
 
 ```bash
-python merge_adapter.py --adapter output/qwen-protocol-re/adapter --output output/merged
+python merge_adapter.py --model Qwen/Qwen2.5-14B-Instruct --adapter output/qwen25-14b-protocol-re/adapter --output output/merged
 python /path/to/llama.cpp/convert_hf_to_gguf.py output/merged --outfile output/protocol-re-f16.gguf --outtype f16
 /path/to/llama.cpp/build/bin/llama-quantize output/protocol-re-f16.gguf output/protocol-re-Q4_K_M.gguf Q4_K_M
 ```
@@ -115,7 +116,7 @@ Install a CUDA-enabled `llama.cpp` build and place `llama-cli.exe` on `PATH`:
 
 ```powershell
 .\finetuning\infer_windows.ps1 `
-  -Model "D:\Models\Qwen2.5-Coder-7B-ProtocolRE-Q4_K_M.gguf" `
+  -Model "D:\Models\Qwen2.5-14B-ProtocolRE-Q4_K_M.gguf" `
   -PromptFile ".\data\rendered_boundary_prompt.txt"
 ```
 
