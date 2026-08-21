@@ -11,7 +11,28 @@ Modbus and GOOSE should remain held-out protocols because this repository has tr
 
 ## Data preparation on Windows
 
-Run the normal pipeline separately for each training protocol, producing at least:
+Install Wireshark with command-line tools (`tshark.exe` and `mergecap.exe`) on `PATH`, and install the repository's normal Python dependencies. Then run:
+
+```powershell
+.\finetuning\build_dataset_windows.ps1 `
+  -PcapDir "D:\tez\practical\traffic\pcaps" `
+  -BudgetPerProtocol 20000 `
+  -MaxMessages 20000
+```
+
+This performs the missing PCAP-side workflow entirely on Windows:
+
+1. Recursively inventories every PCAP against every configured training-protocol display filter.
+2. Ignores captures with zero matching packets.
+3. Allocates a per-protocol packet budget across matching captures using square-root proportional weighting, minimum coverage, and a per-file cap.
+4. Extracts selected packets in small chunks to avoid the Windows command-line limit, then merges the chunks.
+5. Runs the normal repository pipeline independently for every protocol.
+6. Exports the normal statistical LLM evidence bundle.
+7. Creates candidate boundary/semantic JSONL files under `finetuning/windows_data/candidate_jsonl`.
+
+The exact inventory and allocation are saved in `finetuning/windows_data/sampled_pcaps/sampling_report.json`. Add `-IncludeHoldout` only for evaluation artifact generation; do not mix Modbus or GOOSE records into the training JSONL.
+
+The automated workflow produces at least:
 
 ```text
 <protocol>/10_protocol_model.json
