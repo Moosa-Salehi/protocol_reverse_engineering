@@ -136,7 +136,9 @@ Install a CUDA-enabled `llama.cpp` build and place `llama-cli.exe` on `PATH`:
 ```powershell
 .\finetuning\inference\infer_windows.ps1 `
   -Model "D:\Models\Qwen2.5-14B-ProtocolRE-Q4_K_M.gguf" `
-  -PromptFile ".\data\rendered_boundary_prompt.txt"
+-PromptFile ".\data\rendered_boundary_prompt.txt"
+
+# Optional deterministic controls: `-Seed 42 -MaxTokens 512`
 ```
 
 Use the same task tags and evidence serialization at inference that were used in training. The RTX 3050 is appropriate for Q4_K_M inference, although a 4096-token prompt may be slow.
