@@ -22,6 +22,6 @@ def main():
             prompt_tokens.append(len(tok(rendered,add_special_tokens=False)["input_ids"])); target_tokens.append(len(tok(target,add_special_tokens=False)["input_ids"])); parsed=json.loads(target)
             fields.append(len(parsed.get("semantic_labels",[]))); boundaries.append(len(parsed.get("boundaries",[])))
     if not records: raise ValueError("Dataset is empty")
-    report={"records":records,"protocols":dict(sorted(protocols.items())),"tasks":dict(sorted(tasks.items())),"families":dict(sorted(families.items())),"prompt_tokens":stats(prompt_tokens),"target_tokens":stats(target_tokens),"semantic_fields_per_record":stats(fields),"boundaries_per_record":stats(boundaries)}
+    report={"tokenizer":a.tokenizer,"tokenizer_revision":getattr(tok,"_commit_hash",None) or tok.init_kwargs.get("_commit_hash"),"records":records,"protocols":dict(sorted(protocols.items())),"tasks":dict(sorted(tasks.items())),"families":dict(sorted(families.items())),"prompt_tokens":stats(prompt_tokens),"target_tokens":stats(target_tokens),"semantic_fields_per_record":stats(fields),"boundaries_per_record":stats(boundaries)}
     a.output.parent.mkdir(parents=True,exist_ok=True); a.output.write_text(json.dumps(report,indent=2),encoding="utf-8"); print(json.dumps(report,indent=2))
 if __name__=="__main__": main()

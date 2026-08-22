@@ -64,6 +64,8 @@ python dataset-generation/audit_leakage.py \
 
 The training script also writes `data/dataset_summary.json`, including protocol/task/family counts, target sizes, and tokenizer-rendered prompt lengths. Review this summary before starting a long run.
 
+Ubuntu dependencies are pinned in `training/requirements-ubuntu.txt`. Each run also writes Python, CUDA, GPU, package-version, and git-commit information to `output/qwen25-14b-protocol-re/environment.json`; the dataset summary records the tokenizer reference and resolved cached revision when available.
+
 Generate records for every protocol and concatenate the resulting JSONL files:
 
 ```powershell
