@@ -1,5 +1,7 @@
 # Multi-task boundary and semantic fine-tuning
 
+For the complete operational procedure, see [how-to-fine-tune.md](how-to-fine-tune.md).
+
 This directory trains one LoRA adapter for two explicitly tagged tasks:
 
 - `boundary_refinement`
