@@ -53,6 +53,15 @@ cat data/approved/*.jsonl > data/raw.jsonl
 
 Do not concatenate candidate files directly. The promotion command rejects records that lack the trusted approval metadata. If targets were produced by an untrusted teacher, keep them unapproved and review them before promotion.
 
+Before splitting or training, run the leakage audit. It rejects duplicate train/holdout prompts, protocol aliases or target markers in prompts, and—when the sampling report is supplied—source PCAPs shared across train and holdout:
+
+```bash
+python dataset-generation/audit_leakage.py \
+  --train data/raw.jsonl \
+  --holdout data/holdout.jsonl \
+  --sampling-report windows_data/sampled_pcaps/sampling_report.json
+```
+
 Generate records for every protocol and concatenate the resulting JSONL files:
 
 ```powershell

@@ -11,13 +11,14 @@ from pathlib import Path
 from typing import Any
 
 ROLE_SET = {"address","bitfield","byte_count","checksum","constant","correlation_id","counter","crc","data","device_id","discriminator","error_code","flags","function_code","length","opcode","padding","payload","quantity","reserved","sequence_number","status","timestamp","transaction_id","unit_id","value"}
+LEAKAGE_KEYS = {"semantic_role", "semantic_label", "semantic_labels", "human_label", "wireshark_name", "wireshark_field"}
 
 def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 def compact(value: Any, limit: int = 16) -> Any:
     if isinstance(value, list): return value[:limit]
-    if isinstance(value, dict): return {k: compact(v, limit) for k, v in value.items()}
+    if isinstance(value, dict): return {k: compact(v, limit) for k, v in value.items() if k not in LEAKAGE_KEYS}
     return value
 
 def evidence_for_family(family: dict[str, Any], bundle: dict[str, Any] | None) -> dict[str, Any]:
@@ -61,7 +62,8 @@ def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = N
 
 def record(task: str, evidence: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     system = "You are an expert Protocol Reverse Engineering Analyst. Return one JSON object and no Markdown fences."
-    user = f"### TASK: {task}\n\nUse only the supplied statistical and relational evidence. Do not infer labels from dissector names.\n\n## Evidence Bundle\n```json\n{json.dumps(evidence, indent=2, ensure_ascii=False)}\n```"
+    prompt_evidence = {k:v for k,v in evidence.items() if k != "protocol"}
+    user = f"### TASK: {task}\n\nUse only the supplied statistical and relational evidence. Do not infer labels from dissector names.\n\n## Evidence Bundle\n```json\n{json.dumps(prompt_evidence, indent=2, ensure_ascii=False)}\n```"
     return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id"),"reviewed":True,"approved":True,"reviewer":"wireshark","supervision_source":"trusted_wireshark_targets"}}
 
 def main() -> None:
