@@ -78,6 +78,8 @@ def main() -> None:
                 target = boundary_target(family, wireshark) if task == "boundary_refinement" else semantic_target(family, wireshark)
                 if target is None: skipped += 1; continue
                 out.write(json.dumps(record(task,ev,target),ensure_ascii=False)+"\n"); count += 1
-    print(json.dumps({"written":count,"skipped_without_targets":skipped,"output":str(a.output)},indent=2))
+    summary={"written":count,"skipped_without_targets":skipped,"output":str(a.output)}
+    a.output.with_suffix(".summary.json").write_text(json.dumps(summary,indent=2),encoding="utf-8")
+    print(json.dumps(summary,indent=2))
 
 if __name__ == "__main__": main()

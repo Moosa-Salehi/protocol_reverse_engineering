@@ -62,6 +62,8 @@ python dataset-generation/audit_leakage.py \
   --sampling-report windows_data/sampled_pcaps/sampling_report.json
 ```
 
+The training script also writes `data/dataset_summary.json`, including protocol/task/family counts, target sizes, and tokenizer-rendered prompt lengths. Review this summary before starting a long run.
+
 Generate records for every protocol and concatenate the resulting JSONL files:
 
 ```powershell
