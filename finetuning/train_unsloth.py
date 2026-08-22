@@ -24,7 +24,9 @@ def main() -> None:
     if oversized:
         report=a.output/"oversized_examples.json"; report.write_text(json.dumps(oversized,indent=2),encoding="utf-8")
         raise RuntimeError(f"{len(oversized)} examples exceed {a.max_seq_length} tokens; no truncation was performed. See {report}")
-    config_kwargs=dict(output_dir=str(a.output),dataset_text_field="text",num_train_epochs=a.epochs,max_steps=a.max_steps,per_device_train_batch_size=1,per_device_eval_batch_size=1,gradient_accumulation_steps=a.gradient_accumulation,learning_rate=a.learning_rate,warmup_ratio=0.03,logging_steps=1 if a.max_steps > 0 else 5,eval_strategy="steps" if a.max_steps > 0 else "epoch",eval_steps=1 if a.max_steps > 0 else None,save_strategy="steps" if a.max_steps > 0 else "epoch",save_steps=a.max_steps if a.max_steps > 0 else 500,save_total_limit=1,packing=False,gradient_checkpointing=True,fp16=False,bf16=True,optim="adamw_8bit",report_to="none")
+    import torch
+    bf16 = bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
+    config_kwargs=dict(output_dir=str(a.output),dataset_text_field="text",num_train_epochs=a.epochs,max_steps=a.max_steps,per_device_train_batch_size=1,per_device_eval_batch_size=1,gradient_accumulation_steps=a.gradient_accumulation,learning_rate=a.learning_rate,warmup_ratio=0.03,logging_steps=1 if a.max_steps > 0 else 5,eval_strategy="steps" if a.max_steps > 0 else "epoch",eval_steps=1 if a.max_steps > 0 else None,save_strategy="steps" if a.max_steps > 0 else "epoch",save_steps=a.max_steps if a.max_steps > 0 else 500,save_total_limit=1,packing=False,gradient_checkpointing=True,fp16=not bf16,bf16=bf16,optim="adamw_8bit",report_to="none")
     config_kwargs["max_length" if "max_length" in inspect.signature(SFTConfig).parameters else "max_seq_length"] = a.max_seq_length
     args=SFTConfig(**config_kwargs)
     trainer_kwargs=dict(model=model,train_dataset=ds["train"],eval_dataset=ds["validation"],args=args)

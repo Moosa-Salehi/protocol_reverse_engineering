@@ -54,7 +54,7 @@ def semantic_target(family: dict[str, Any], wireshark: dict[str, Any] | None) ->
 def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = None) -> dict[str, Any] | None:
     ws_fields = (wireshark or {}).get(str(family.get("family_id")), [])
     if ws_fields:
-        boundaries = sorted({int(x["offset"]) + int(x["width"]) for x in ws_fields if x.get("offset") is not None and x.get("width") is not None})
+        boundaries = sorted({boundary for x in ws_fields if x.get("offset") is not None and x.get("width") is not None and int(x["width"]) > 0 for boundary in (int(x["offset"]), int(x["offset"]) + int(x["width"]))})
         if boundaries:
             return {"family_id": family.get("family_id"), "boundaries": boundaries, "confidence": 1.0, "evidence_refs": ["trusted_wireshark_dissector_offsets"]}
     return None

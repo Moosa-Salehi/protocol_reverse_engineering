@@ -15,6 +15,8 @@ def main() -> None:
     parser.add_argument("--validation-fraction", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
+    if not 0 < args.validation_fraction < 1:
+        raise ValueError("--validation-fraction must be between 0 and 1")
     unique = {}
     protocols = Counter()
     for line_number, line in enumerate(args.input.read_text(encoding="utf-8").splitlines(), 1):
@@ -49,6 +51,11 @@ def main() -> None:
         validation.append(train.pop())
     if not train:
         raise ValueError("Split produced no training records; reduce --validation-fraction")
+    tasks = {record.get("metadata", {}).get("task") for record in records}
+    for subset_name, subset in (("train", train), ("validation", validation)):
+        missing = tasks - {record.get("metadata", {}).get("task") for record in subset}
+        if missing:
+            raise ValueError(f"{subset_name} split is missing task(s): {sorted(missing)}")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for name, subset in (("train", train), ("validation", validation)):
         with (args.output_dir / f"{name}.jsonl").open("w", encoding="utf-8") as handle:

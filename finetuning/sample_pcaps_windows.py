@@ -58,7 +58,7 @@ def main()->None:
             output=outdir/f"{file_index:05d}_{path.stem}.pcapng"
             write_selected(a.tshark,a.mergecap,path,spec["filter"],chosen,output)
             items.append({"source":str(path),"matching_packets":len(frames),"sampled_packets":take,"output":str(output)})
-        report["protocols"][protocol]={"filter":spec["filter"],"matching_files":len(matches),"matching_packets":sum(len(x[1]) for x in matches),"sampled_packets":sum(allocations),"files":items}
+        report["protocols"][protocol]={"filter":spec["filter"],"matching_files":len(matches),"matching_packets":sum(len(x[1]) for x in matches),"sampled_packets":sum(allocations),"budget_per_protocol":a.budget_per_protocol,"min_per_file_requested":a.min_per_file,"max_per_file":a.max_per_file,"files":items}
         print(f"[{protocol}] {len(matches)} files, {sum(len(x[1]) for x in matches)} matches, {sum(allocations)} sampled",flush=True)
     (a.output_dir/"sampling_report.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
 if __name__=="__main__":main()
