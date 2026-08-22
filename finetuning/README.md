@@ -14,7 +14,7 @@ Modbus and GOOSE should remain held-out protocols because this repository has tr
 Install Wireshark with command-line tools (`tshark.exe` and `mergecap.exe`) on `PATH`, and install the repository's normal Python dependencies. Then run:
 
 ```powershell
-.\finetuning\build_dataset_windows.ps1 `
+.\finetuning\dataset-generation\build_dataset_windows.ps1 `
   -PcapDir "D:\tez\practical\traffic\pcaps" `
   -BudgetPerProtocol 20000 `
   -MaxMessages 20000
@@ -46,7 +46,7 @@ Only use semantic targets whose `semantic_role` values were reviewed or generate
 Generate records for every protocol and concatenate the resulting JSONL files:
 
 ```powershell
-python .\finetuning\build_evidence_dataset.py `
+python .\finetuning\dataset-generation\build_evidence_dataset.py `
   .\runs\cip\10_protocol_model.json `
   .\finetuning\data\cip.jsonl `
   --evidence-bundle .\runs\cip\12_llm_evidence.json
@@ -71,7 +71,7 @@ Install Python 3.11 on Ubuntu 24.04:
 sudo apt update
 sudo apt install -y python3.11 python3.11-venv git git-lfs build-essential
 cd finetuning
-bash setup_ubuntu.sh
+bash training/setup_ubuntu.sh
 ```
 
 Upload the prepared JSONL files rather than the full PCAP corpus. Concatenate them, split by protocol/family group, then train:
@@ -79,8 +79,8 @@ Upload the prepared JSONL files rather than the full PCAP corpus. Concatenate th
 ```bash
 cat data/protocols/*.jsonl > data/raw.jsonl
 source .venv/bin/activate
-python prepare_dataset.py data/raw.jsonl data/split
-python train_unsloth.py \
+python dataset-generation/prepare_dataset.py data/raw.jsonl data/split
+python training/train_unsloth.py \
   --train data/split/train.jsonl \
   --validation data/split/validation.jsonl \
   --model Qwen/Qwen2.5-14B-Instruct \
@@ -95,7 +95,7 @@ Training uses assistant-response-only loss. Before training, every rendered chat
 The Ubuntu training script automatically runs a smoke-test stage before the full job. It selects a deterministic small subset, trains for two optimizer steps, evaluates, and verifies that the adapter files were written. Run it directly when debugging the environment:
 
 ```bash
-bash smoke_test_ubuntu.sh
+bash training/smoke_test_ubuntu.sh
 ```
 
 ## Export
@@ -103,7 +103,7 @@ bash smoke_test_ubuntu.sh
 The safest artifact is the LoRA adapter. Merge it on the VM using `merge_adapter.py`, then convert with `llama.cpp`:
 
 ```bash
-python merge_adapter.py --model Qwen/Qwen2.5-14B-Instruct --adapter output/qwen25-14b-protocol-re/adapter --output output/merged
+python inference/merge_adapter.py --model Qwen/Qwen2.5-14B-Instruct --adapter output/qwen25-14b-protocol-re/adapter --output output/merged
 python /path/to/llama.cpp/convert_hf_to_gguf.py output/merged --outfile output/protocol-re-f16.gguf --outtype f16
 /path/to/llama.cpp/build/bin/llama-quantize output/protocol-re-f16.gguf output/protocol-re-Q4_K_M.gguf Q4_K_M
 ```
@@ -115,7 +115,7 @@ Download the adapter, merged tokenizer/configuration, Q4_K_M GGUF, dataset summa
 Install a CUDA-enabled `llama.cpp` build and place `llama-cli.exe` on `PATH`:
 
 ```powershell
-.\finetuning\infer_windows.ps1 `
+.\finetuning\inference\infer_windows.ps1 `
   -Model "D:\Models\Qwen2.5-14B-ProtocolRE-Q4_K_M.gguf" `
   -PromptFile ".\data\rendered_boundary_prompt.txt"
 ```

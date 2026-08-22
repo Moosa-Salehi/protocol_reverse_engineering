@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source .venv/bin/activate
-python make_smoke_dataset.py \
+python dataset-generation/make_smoke_dataset.py \
   --train data/split/train.jsonl \
   --validation data/split/validation.jsonl \
   --output-dir data/smoke
 rm -rf output/smoke
-python train_unsloth.py \
+python training/train_unsloth.py \
   --model Qwen/Qwen2.5-14B-Instruct \
   --train data/smoke/train.jsonl \
   --validation data/smoke/validation.jsonl \
