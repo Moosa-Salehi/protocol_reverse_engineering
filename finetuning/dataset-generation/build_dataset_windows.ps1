@@ -21,6 +21,7 @@ if($IncludeHoldout){$Protocols+=@($Config.holdout.PSObject.Properties)}
 $JsonlDir=Join-Path $Work "candidate_jsonl";New-Item -ItemType Directory -Force -Path $JsonlDir|Out-Null
 foreach($Entry in $Protocols){
   $Name=$Entry.Name;$Filter=$Entry.Value.filter;$SampleInput=Join-Path $Samples $Name
+  $SetName = if($Config.holdout.PSObject.Properties.Name -contains $Name){"holdout"}else{"train"}
   if(-not(Test-Path $SampleInput)){Write-Warning "No sampled PCAPs for $Name";continue}
   $Run=Join-Path $Work "runs\$Name";$Data=Join-Path $Run "data";$Output=Join-Path $Run "output";$Logs=Join-Path $Run "logs"
   & $Python "$Root\main.py" $SampleInput --extraction-method tshark --tshark-filter $Filter --max-messages $MaxMessages --data-dir $Data --output-dir $Output --log-dir $Logs --llm-render-only --stop-after 13_evaluate_pipeline
@@ -29,7 +30,8 @@ foreach($Entry in $Protocols){
   if($LASTEXITCODE -ne 0){throw "Evidence export failed for $Name"}
   $Targets=Join-Path $Work "wireshark_targets\$Name.json"
   if(-not(Test-Path $Targets)){Write-Warning "Skipping $Name: create $Targets from trusted Wireshark annotations first"; continue}
-  & $Python "$PSScriptRoot\build_evidence_dataset.py" "$Data\10_protocol_model.json" "$JsonlDir\$Name.jsonl" --evidence-bundle "$Data\12_llm_evidence.json" --wireshark-targets $Targets
+  $SetDir=Join-Path $JsonlDir $SetName;New-Item -ItemType Directory -Force -Path $SetDir|Out-Null
+  & $Python "$PSScriptRoot\build_evidence_dataset.py" "$Data\10_protocol_model.json" "$SetDir\$Name.jsonl" --evidence-bundle "$Data\12_llm_evidence.json" --wireshark-targets $Targets
   if($LASTEXITCODE -ne 0){throw "Candidate JSONL generation failed for $Name"}
 }
 Write-Host "Candidate artifacts created under $Work"
