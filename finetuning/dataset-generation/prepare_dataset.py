@@ -23,11 +23,13 @@ def main() -> None:
         if not line.strip():
             continue
         record = json.loads(line)
+        metadata = record.get("metadata", {})
+        if metadata.get("reviewed") is not True or metadata.get("approved") is not True:
+            raise ValueError(f"Unapproved record at line {line_number}; run promote_reviewed.py first")
         messages = record.get("messages")
         if not isinstance(messages, list) or [m.get("role") for m in messages] != ["system", "user", "assistant"]:
             raise ValueError(f"Invalid messages at line {line_number}")
         json.loads(messages[-1]["content"])
-        metadata = record.get("metadata", {})
         # Keep distinct tasks/targets even when they share the same evidence prompt.
         dedup_key = json.dumps(
             {"prompt": messages[1]["content"], "task": metadata.get("task"), "target": messages[-1]["content"]},

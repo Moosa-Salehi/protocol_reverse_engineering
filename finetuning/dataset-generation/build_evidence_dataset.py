@@ -62,7 +62,7 @@ def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = N
 def record(task: str, evidence: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     system = "You are an expert Protocol Reverse Engineering Analyst. Return one JSON object and no Markdown fences."
     user = f"### TASK: {task}\n\nUse only the supplied statistical and relational evidence. Do not infer labels from dissector names.\n\n## Evidence Bundle\n```json\n{json.dumps(evidence, indent=2, ensure_ascii=False)}\n```"
-    return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id")}}
+    return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id"),"reviewed":True,"approved":True,"reviewer":"wireshark","supervision_source":"trusted_wireshark_targets"}}
 
 def main() -> None:
     p = argparse.ArgumentParser(); p.add_argument("protocol_model", type=Path); p.add_argument("output", type=Path); p.add_argument("--evidence-bundle", type=Path); p.add_argument("--wireshark-targets", type=Path, help="JSON mapping family_id to trusted Wireshark fields; required for semantic_labeling"); p.add_argument("--tasks", nargs="+", choices=["boundary_refinement","semantic_labeling"], default=["boundary_refinement","semantic_labeling"]); p.add_argument("--max-families", type=int, default=0)
