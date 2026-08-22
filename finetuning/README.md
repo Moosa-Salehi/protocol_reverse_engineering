@@ -141,3 +141,5 @@ python inference/evaluate_holdout.py \
   --adapter output/qwen25-14b-protocol-re/adapter \
   --output output/holdout_report.json
 ```
+
+The report includes JSON validity, exact target match, and task-level precision, recall, and F1 metrics by protocol. Boundary metrics compare predicted offsets; semantic metrics compare `(field_index, semantic_role)` pairs.
