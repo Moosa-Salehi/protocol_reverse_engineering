@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Evaluate a causal LM on approved holdout chat JSONL records."""
 from __future__ import annotations
-import argparse, json
+import argparse, hashlib, json
 from collections import defaultdict
 from pathlib import Path
 import torch
@@ -11,7 +11,7 @@ def parse_args():
     p=argparse.ArgumentParser(); p.add_argument("--data",type=Path,required=True); p.add_argument("--model",required=True); p.add_argument("--adapter",type=Path); p.add_argument("--output",type=Path,required=True); p.add_argument("--max-new-tokens",type=int,default=512); return p.parse_args()
 
 def main():
-    a=parse_args(); rows=[json.loads(x) for x in a.data.read_text(encoding="utf-8").splitlines() if x.strip()]
+    a=parse_args(); data_bytes=a.data.read_bytes(); rows=[json.loads(x) for x in data_bytes.decode("utf-8").splitlines() if x.strip()]
     tok=AutoTokenizer.from_pretrained(a.adapter or a.model)
     model=AutoModelForCausalLM.from_pretrained(a.model,torch_dtype="auto",device_map="auto")
     if a.adapter:
@@ -43,6 +43,6 @@ def main():
         pden=s["tp"]+s["fp"]; rden=s["tp"]+s["fn"]; fden=2*s["tp"]+s["fp"]+s["fn"]
         d={"count":s["count"],"valid_json":s["valid_json"],"parse_errors":s["parse_errors"],"json_validity":s["valid_json"]/s["count"],"exact_match":s["exact"]/s["count"],"true_positive":s["tp"],"false_positive":s["fp"],"false_negative":s["fn"],"precision":s["tp"]/pden if pden else 0.0,"recall":s["tp"]/rden if rden else 0.0,"f1":2*s["tp"]/fden if fden else 0.0}
         report["/".join(key)]=d
-    a.output.parent.mkdir(parents=True,exist_ok=True); a.output.write_text(json.dumps({"model":a.model,"adapter":str(a.adapter) if a.adapter else None,"records":len(rows),"metrics":report,"predictions":predictions},indent=2),encoding="utf-8")
+    a.output.parent.mkdir(parents=True,exist_ok=True); a.output.write_text(json.dumps({"model":a.model,"adapter":str(a.adapter) if a.adapter else None,"dataset_sha256":hashlib.sha256(data_bytes).hexdigest(),"records":len(rows),"metrics":report,"predictions":predictions},indent=2),encoding="utf-8")
     print(json.dumps(report,indent=2))
 if __name__=="__main__": main()

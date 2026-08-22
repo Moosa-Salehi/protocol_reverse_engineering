@@ -143,3 +143,15 @@ python inference/evaluate_holdout.py \
 ```
 
 The report includes JSON validity, exact target match, and task-level precision, recall, and F1 metrics by protocol. Boundary metrics compare predicted offsets; semantic metrics compare `(field_index, semantic_role)` pairs.
+
+To run the base-model baseline and fine-tuned evaluation on the same records and produce metric deltas automatically:
+
+```bash
+bash inference/run_holdout_comparison.sh \
+  data/holdout.jsonl \
+  Qwen/Qwen2.5-14B-Instruct \
+  output/qwen25-14b-protocol-re/adapter \
+  output/holdout
+```
+
+This writes `base.json`, `finetuned.json`, and `comparison.json`. Positive deltas indicate improvement; negative deltas indicate regression.
