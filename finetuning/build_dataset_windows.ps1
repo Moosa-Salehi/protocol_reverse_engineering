@@ -19,10 +19,10 @@ $Protocols=@($Config.train.PSObject.Properties)
 if($IncludeHoldout){$Protocols+=@($Config.holdout.PSObject.Properties)}
 $JsonlDir=Join-Path $Work "candidate_jsonl";New-Item -ItemType Directory -Force -Path $JsonlDir|Out-Null
 foreach($Entry in $Protocols){
-  $Name=$Entry.Name;$Filter=$Entry.Value.filter;$Input=Join-Path $Samples $Name
-  if(-not(Test-Path $Input)){Write-Warning "No sampled PCAPs for $Name";continue}
+  $Name=$Entry.Name;$Filter=$Entry.Value.filter;$SampleInput=Join-Path $Samples $Name
+  if(-not(Test-Path $SampleInput)){Write-Warning "No sampled PCAPs for $Name";continue}
   $Run=Join-Path $Work "runs\$Name";$Data=Join-Path $Run "data";$Output=Join-Path $Run "output";$Logs=Join-Path $Run "logs"
-  & $Python "$Root\main.py" $Input --extraction-method tshark --tshark-filter $Filter --max-messages $MaxMessages --data-dir $Data --output-dir $Output --log-dir $Logs --llm-render-only --stop-after 13_evaluate_pipeline
+  & $Python "$Root\main.py" $SampleInput --extraction-method tshark --tshark-filter $Filter --max-messages $MaxMessages --data-dir $Data --output-dir $Output --log-dir $Logs --llm-render-only --stop-after 13_evaluate_pipeline
   if($LASTEXITCODE -ne 0){throw "Pipeline failed for $Name"}
   & $Python "$Root\scripts\14_export_llm_evidence.py" "$Data\10_protocol_model.json" "$Data\12_llm_evidence.json" --evaluation-json "$Data\11_evaluation.json" --pretty --log-dir $Logs
   if($LASTEXITCODE -ne 0){throw "Evidence export failed for $Name"}

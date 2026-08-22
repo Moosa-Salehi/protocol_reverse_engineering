@@ -36,7 +36,7 @@ The automated workflow produces at least:
 
 ```text
 <protocol>/10_protocol_model.json
-<protocol>/14_llm_evidence.json
+<protocol>/12_llm_evidence.json
 ```
 
 Do not use a fixed packet count per capture. Inventory every PCAP for each display filter, ignore zero-match files, then allocate a protocol-level budget proportionally across matching files with a per-file cap. Deduplicate payloads before running the pipeline. The pipeline artifacts—not PDML—are the fine-tuning input.
@@ -49,7 +49,7 @@ Generate records for every protocol and concatenate the resulting JSONL files:
 python .\finetuning\build_evidence_dataset.py `
   .\runs\cip\10_protocol_model.json `
   .\finetuning\data\cip.jsonl `
-  --evidence-bundle .\runs\cip\14_llm_evidence.json
+  --evidence-bundle .\runs\cip\12_llm_evidence.json
 ```
 
 The builder creates whole-family, multi-task examples and includes explicit task tags. Boundary and semantic targets must be supplied separately in `wireshark_targets/<protocol>.json`, using the schema in `wireshark_targets.schema.json`. These targets are trusted Wireshark dissector labels joined to pipeline fields by protocol-relative offset and width. The Wireshark name is retained only in the assistant evidence/audit record; it is not placed in the user prompt. The mapped `semantic_role` must belong to the project validator taxonomy. The builder rejects missing or invalid mappings.

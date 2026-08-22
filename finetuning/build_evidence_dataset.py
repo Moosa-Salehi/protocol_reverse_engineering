@@ -39,13 +39,17 @@ def semantic_target(family: dict[str, Any], wireshark: dict[str, Any] | None) ->
     ws_by_offset = {(int(x.get("offset")), int(x.get("width"))): x for x in ws_fields if x.get("offset") is not None and x.get("width") is not None}
     for index, field in enumerate(family.get("field_hypotheses", []) or []):
         attrs = field.get("attributes", {}) if isinstance(field.get("attributes"), dict) else {}
-        offset = int(field.get("start", field.get("offset", 0))); width = int(field.get("width", (field.get("end", 0) - offset)))
+        offset = int(field.get("start", field.get("offset", 0)))
+        width = int(field.get("width", field.get("length", field.get("end", 0) - offset)))
+        if width <= 0:
+            continue
         ws = ws_by_offset.get((offset, width))
         if not ws: continue
         role = ws.get("semantic_role")
         if role not in ROLE_SET: raise ValueError(f"Wireshark target for {family.get('family_id')} offset {offset} has invalid mapped role {role!r}")
         labels.append({"field_index": index, "offset": offset, "width": width, "field_type": ws.get("field_type", field.get("field_type", "bytes")), "encoding_type": ws.get("encoding_type", ws.get("field_type", field.get("field_type", "bytes"))), "semantic_role": role, "human_label": ws.get("wireshark_name", ws.get("name", role)), "confidence": 1.0, "evidence": ["trusted Wireshark dissector", f"Wireshark field: {ws.get('wireshark_name', ws.get('name', 'unknown'))}"], "alternative_roles": []})
-    return {"family_id": family.get("family_id"), "family_role": family.get("role", "unknown"), "semantic_labels": labels, "unlabeled_fields": [i for i, f in enumerate(family.get("field_hypotheses", []) or []) if i >= len(labels)], "notes": "Target taken from reviewed or teacher-validated pipeline annotations."} if labels else None
+    labeled_indices = {item["field_index"] for item in labels}
+    return {"family_id": family.get("family_id"), "family_role": family.get("role", "unknown"), "semantic_labels": labels, "unlabeled_fields": [i for i, _ in enumerate(family.get("field_hypotheses", []) or []) if i not in labeled_indices], "notes": "Target taken from reviewed or teacher-validated pipeline annotations."} if labels else None
 
 def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = None) -> dict[str, Any] | None:
     ws_fields = (wireshark or {}).get(str(family.get("family_id")), [])
