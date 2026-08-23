@@ -47,7 +47,7 @@ foreach($Entry in $Protocols){
       continue
     }
   }
-  if(-not(Test-Path $Targets)){Write-Warning "Skipping $Name: create $Targets from trusted Wireshark annotations first"; continue}
+  if(-not(Test-Path $Targets)){Write-Warning "Skipping {$Name}: create $Targets from trusted Wireshark annotations first"; continue}
   $SetDir=Join-Path $JsonlDir $SetName;New-Item -ItemType Directory -Force -Path $SetDir|Out-Null
   & $Python "$PSScriptRoot\build_evidence_dataset.py" "$Data\10_protocol_model.json" "$SetDir\$Name.jsonl" --evidence-bundle "$Data\12_llm_evidence.json" --wireshark-targets $Targets
   if($LASTEXITCODE -ne 0){throw "Candidate JSONL generation failed for $Name"}
