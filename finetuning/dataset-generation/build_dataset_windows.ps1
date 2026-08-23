@@ -1,5 +1,5 @@
 param(
-  [string]$PcapDir="D:\tez\practical\traffic\pcaps",
+  [string]$PcapDir="D:\tez\practical\traffic",
   [string]$Python="py",
   [int]$BudgetPerProtocol=20000,
   [int]$MaxMessages=20000,

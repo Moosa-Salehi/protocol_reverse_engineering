@@ -17,7 +17,7 @@ Install Wireshark with command-line tools (`tshark.exe` and `mergecap.exe`) on `
 
 ```powershell
 .\finetuning\dataset-generation\build_dataset_windows.ps1 `
-  -PcapDir "D:\tez\practical\traffic\pcaps" `
+  -PcapDir "D:\tez\practical\traffic" `
   -BudgetPerProtocol 20000 `
   -MaxMessages 20000
 ```
