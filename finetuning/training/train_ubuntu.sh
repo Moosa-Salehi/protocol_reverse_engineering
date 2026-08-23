@@ -2,7 +2,9 @@
 set -euo pipefail
 source .venv/bin/activate
 test -f data/raw.jsonl || { echo "Upload/concatenate reviewed protocol JSONL files into data/raw.jsonl first"; exit 1; }
-if test -f data/holdout.jsonl; then
+if test -f data/holdout.jsonl && test -f data/sampling_report.json; then
+  python dataset-generation/audit_leakage.py --train data/raw.jsonl --holdout data/holdout.jsonl --sampling-report data/sampling_report.json
+elif test -f data/holdout.jsonl; then
   python dataset-generation/audit_leakage.py --train data/raw.jsonl --holdout data/holdout.jsonl
 else
   python dataset-generation/audit_leakage.py --train data/raw.jsonl

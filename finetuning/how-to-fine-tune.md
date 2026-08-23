@@ -1,8 +1,30 @@
 # How to fine-tune the protocol-re model
 
-This guide covers the complete workflow: generate evidence and trusted targets on Windows, approve and split the dataset, train on Ubuntu with CUDA, evaluate unseen protocols, and export the model.
+This guide covers the complete workflow: generate evidence and trusted targets on Windows, automatically approve/check/split the dataset, train on Ubuntu with CUDA, evaluate unseen protocols, and export the model.
 
 Run Windows commands from the repository root. Run Ubuntu commands from the `finetuning` directory unless a section says otherwise.
+
+## What is manual and what is automatic?
+
+Only commands shown in a code block are commands for the user to run. Commands inside a script are run automatically by that script and must not also be run individually unless you are diagnosing a failed stage.
+
+Manual decisions cannot safely be automated:
+
+- Choose training versus holdout protocols (stage 1).
+- Install Windows prerequisites and select the PCAP directory (stage 2).
+- Create and verify trusted Wireshark target mappings (stage 4). This is the ground truth for training, so generating it from the pipeline's own predictions would invalidate the experiment.
+- Copy the prepared bundle to the VM, because the VM address and transfer method are environment-specific.
+- Review evaluation results and decide whether a model is acceptable.
+
+User-run entry points:
+
+1. `build_dataset_windows.ps1` generates samples, pipeline evidence, and candidate JSONL.
+2. After trusted target review, rerun `build_dataset_windows.ps1`; it regenerates candidate JSONL for all configured protocols.
+3. `prepare_dataset_windows.ps1` promotes approved records, assembles/audits/summarizes/splits the dataset, and creates the complete VM input bundle.
+4. `setup_ubuntu.sh` creates the Ubuntu environment.
+5. `smoke_test_ubuntu.sh` verifies the transferred dataset and GPU training environment.
+6. `train_ubuntu.sh` revalidates the dataset, runs another smoke test, and performs full training.
+7. Evaluation, merge, conversion, and Windows inference remain explicit commands because they are separate decisions/artifact-producing operations.
 
 ## 1. Choose training and holdout protocols
 
@@ -109,7 +131,9 @@ Requirements:
 - `semantic_role` must be in the taxonomy accepted by `build_evidence_dataset.py`.
 - Wireshark names are used only in targets/audit evidence; they are removed from prompts.
 
-After creating a target file, generate its JSONL directly without rerunning PCAP sampling:
+After creating all target files, rerun the stage 3 command. Its fixed seed makes sampling reproducible for unchanged inputs, and the script will now also generate candidate JSONL for every protocol with a target file.
+
+To regenerate just one protocol's JSONL while correcting a target, use:
 
 ```powershell
 py .\finetuning\dataset-generation\build_evidence_dataset.py `
@@ -130,43 +154,63 @@ Optional builder arguments:
 
 Each JSONL has a sibling `.summary.json` containing written and skipped counts.
 
-## 5. Promote approved data
+## 5. Automatically approve, assemble, audit, summarize, and split
 
-Records generated from trusted Wireshark targets carry Wireshark approval metadata. Run the structural promotion gate for every file:
+Records generated from trusted Wireshark targets carry Wireshark approval metadata. The following single command performs the former stages 5, 6, 8, 9, and 10 for every candidate file:
 
 ```powershell
-py .\finetuning\dataset-generation\promote_reviewed.py `
-  .\finetuning\windows_data\candidate_jsonl\train\cip.jsonl `
-  .\finetuning\windows_data\approved\train\cip.jsonl
-
-py .\finetuning\dataset-generation\promote_reviewed.py `
-  .\finetuning\windows_data\candidate_jsonl\holdout\modbus.jsonl `
-  .\finetuning\windows_data\approved\holdout\modbus.jsonl
+.\finetuning\dataset-generation\prepare_dataset_windows.ps1
 ```
 
-If a target source is not trusted, set `reviewed` and `approved` to false until it has been checked. Do not bypass the promotion step.
+It automatically:
 
-## 6. Assemble files for Ubuntu
+- Promotes all structurally valid `reviewed=true`, `approved=true` candidate records.
+- Concatenates training protocols into `raw.jsonl` and holdouts into `holdout.jsonl` without mixing them.
+- Runs leakage and shared-source-PCAP checks.
+- Downloads/loads the Qwen tokenizer and writes tokenizer-aware dataset statistics.
+- Creates the family-grouped training/validation split with seed 42.
 
-Copy the approved protocol JSONL files to the Ubuntu VM. Under `finetuning`, create:
+The first tokenizer load may download files from Hugging Face. Use `-Python "C:\path\to\python.exe"` if needed. If a target source is not trusted, its records must remain unapproved; do not bypass the promotion gate.
+
+Output:
 
 ```text
-data/
-├── approved/
-│   └── <training protocol>.jsonl
-└── holdout-approved/
-    └── <holdout protocol>.jsonl
+finetuning/windows_data/vm_bundle/finetuning/data/
+├── raw.jsonl
+├── holdout.jsonl
+├── sampling_report.json       # when available
+├── dataset_summary.json
+└── split/
+    ├── train.jsonl
+    ├── validation.jsonl
+    └── summary.json
 ```
 
-Concatenate them separately:
+## 6. Copy the exact VM input files
 
-```bash
-mkdir -p data/approved data/holdout-approved
-cat data/approved/*.jsonl > data/raw.jsonl
-cat data/holdout-approved/*.jsonl > data/holdout.jsonl
+Stage 5 automatically creates this exact bundle:
+
+```text
+finetuning/
+├── dataset-generation/
+├── inference/
+├── training/
+└── data/
 ```
 
-Never include a holdout file in `data/raw.jsonl`.
+It intentionally excludes `.venv`, `windows_data`, `output`, and `__pycache__`. Transfer only `finetuning/windows_data/vm_bundle/finetuning` by your normal shared-folder, SCP, or archive workflow. Place it anywhere in the Ubuntu user's writable storage, then enter that directory. Before the smoke test, the VM must have at least these files:
+
+```text
+finetuning/training/requirements-ubuntu.txt
+finetuning/training/setup_ubuntu.sh
+finetuning/training/smoke_test_ubuntu.sh
+finetuning/training/train_unsloth.py
+finetuning/dataset-generation/make_smoke_dataset.py
+finetuning/data/raw.jsonl
+finetuning/data/holdout.jsonl
+finetuning/data/split/train.jsonl
+finetuning/data/split/validation.jsonl
+```
 
 ## 7. Set up Ubuntu and CUDA
 
@@ -176,7 +220,8 @@ Recommended for Qwen2.5-14B QLoRA:
 - Python 3.11
 - NVIDIA GPU with 24 GB VRAM, such as RTX 3090
 - At least 32 GB system RAM for training
-- More RAM for merging the full model
+- 64 GB system RAM minimum for merging the full 14B model; 80-96 GB is recommended to avoid out-of-memory failures
+- At least 80 GB free disk for the model cache, merged FP16 model, and temporary/output files (more if retaining multiple copies)
 
 From the `finetuning` directory:
 
@@ -187,9 +232,11 @@ source .venv/bin/activate
 
 The setup installs pinned versions from `training/requirements-ubuntu.txt`, verifies CUDA, and reports BF16 support.
 
-## 8. Audit leakage
+## 8. Optional: rerun individual dataset checks on Ubuntu
 
-Run the audit before training:
+The former stages 8-10 are dataset preparation and now run automatically on Windows in stage 5. They appear here only as diagnostic commands. `train_ubuntu.sh` also reruns them as a safety check before training.
+
+Leakage audit:
 
 ```bash
 python dataset-generation/audit_leakage.py \
@@ -208,7 +255,7 @@ python dataset-generation/audit_leakage.py \
 
 The audit rejects prompt overlap, within-set duplicate prompts, protocol aliases in prompts, target markers in prompts, and optionally shared source PCAPs.
 
-## 9. Inspect dataset quality
+### Dataset quality
 
 Generate tokenizer-aware statistics:
 
@@ -221,7 +268,7 @@ python dataset-generation/summarize_dataset.py \
 
 Check protocol and task balance, family counts, prompt-token p95/max, target lengths, and target density. Prompts longer than the configured training context will be rejected later.
 
-## 10. Split the training dataset
+### Training/validation split
 
 ```bash
 python dataset-generation/prepare_dataset.py \
@@ -242,7 +289,7 @@ data/split/summary.json
 
 This validation split measures performance on known training protocols. `data/holdout.jsonl` measures cross-protocol generalization and is never passed to the trainer.
 
-## 11. Run the smoke test
+## 9. Run the smoke test
 
 ```bash
 bash training/smoke_test_ubuntu.sh
@@ -250,7 +297,7 @@ bash training/smoke_test_ubuntu.sh
 
 It creates task-covering subsets, trains for two optimizer steps, evaluates, saves an adapter, and checks the expected files under `output/smoke`.
 
-## 12. Train
+## 10. Train
 
 The complete automated command is:
 
@@ -293,7 +340,7 @@ output/qwen25-14b-protocol-re/
 └── environment.json
 ```
 
-## 13. Evaluate base model versus adapter
+## 11. Evaluate base model versus adapter
 
 Run both models on the identical holdout file:
 
@@ -328,9 +375,9 @@ python inference/evaluate_holdout.py \
   --seed 42
 ```
 
-## 14. Merge and convert to GGUF
+## 12. Merge and convert to GGUF
 
-Merging a 14B model can require substantially more than 32 GB of system RAM. Perform this step on a machine with sufficient CPU memory:
+Qwen2.5-14B has roughly 28 GB of FP16 weights. Loading, merging, and serializing require additional working memory, so use 64 GB RAM as the practical minimum and 80-96 GB when possible. Close other memory-heavy programs before merging:
 
 ```bash
 python inference/merge_adapter.py \
@@ -353,7 +400,26 @@ python /path/to/llama.cpp/convert_hf_to_gguf.py \
   Q4_K_M
 ```
 
-## 15. Run GGUF inference on Windows
+## 13. Copy results back to Windows and run GGUF inference
+
+Copy these result paths from the VM back to Windows after training/evaluation:
+
+```text
+finetuning/output/qwen25-14b-protocol-re/adapter/
+finetuning/output/qwen25-14b-protocol-re/config.json
+finetuning/output/qwen25-14b-protocol-re/environment.json
+finetuning/output/holdout/base.json
+finetuning/output/holdout/finetuned.json
+finetuning/output/holdout/comparison.json
+```
+
+If merge/conversion ran on the VM, also copy:
+
+```text
+finetuning/output/merged/                    # optional; large HF model
+finetuning/output/protocol-re-f16.gguf       # optional; very large
+finetuning/output/protocol-re-Q4_K_M.gguf    # required for the Windows command below
+```
 
 Install a CUDA-enabled `llama.cpp` build and place `llama-cli.exe` on `PATH`:
 
@@ -367,7 +433,7 @@ Install a CUDA-enabled `llama.cpp` build and place `llama-cli.exe` on `PATH`:
 
 The prompt file must contain the same `### TASK:` and `Evidence Bundle` structure used during training. Inference is deterministic by default.
 
-## 16. Preserve artifacts
+## 14. Preserve artifacts
 
 Keep these files with every experiment:
 
