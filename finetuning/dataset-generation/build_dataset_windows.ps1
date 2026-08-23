@@ -3,6 +3,8 @@ param(
   [string]$Python="py",
   [int]$BudgetPerProtocol=20000,
   [int]$MaxMessages=20000,
+  [int]$MinimumTargetSupport=2,
+  [switch]$SkipTargetGeneration,
   [switch]$IncludeHoldout
 )
 $ErrorActionPreference="Stop"
@@ -29,10 +31,24 @@ foreach($Entry in $Protocols){
   & $Python "$Root\scripts\14_export_llm_evidence.py" "$Data\10_protocol_model.json" "$Data\12_llm_evidence.json" --evaluation-json "$Data\11_evaluation.json" --pretty --log-dir $Logs
   if($LASTEXITCODE -ne 0){throw "Evidence export failed for $Name"}
   $Targets=Join-Path $Work "wireshark_targets\$Name.json"
+  if(-not $SkipTargetGeneration){
+    $Report=Join-Path $Work "wireshark_target_reports\$Name.review.json"
+    $PcapFiles=@(Get-ChildItem $SampleInput -File | Where-Object {$_.Extension -in ".pcap", ".pcapng", ".cap"} | Sort-Object FullName)
+    if($PcapFiles.Count -eq 0){Write-Warning "No sampled PCAP files available for automatic targets: $Name"}
+    else{
+      $targetArgs=@("$PSScriptRoot\generate_wireshark_targets.py", "$Data\10_protocol_model.json", "$Data\01_messages.jsonl", "$Data\02_family_assignments.json")
+      $targetArgs+=@($PcapFiles.FullName)
+      $targetArgs+=@("--filter",$Filter,"--output",$Targets,"--report",$Report,"--minimum-support",$MinimumTargetSupport)
+      & $Python @targetArgs
+      if($LASTEXITCODE -ne 0){throw "Automatic Wireshark target generation failed for $Name"}
+      Write-Warning "Generated target candidates for $Name. Review $Report, then rerun with -SkipTargetGeneration to create approved candidate JSONL."
+      continue
+    }
+  }
   if(-not(Test-Path $Targets)){Write-Warning "Skipping $Name: create $Targets from trusted Wireshark annotations first"; continue}
   $SetDir=Join-Path $JsonlDir $SetName;New-Item -ItemType Directory -Force -Path $SetDir|Out-Null
   & $Python "$PSScriptRoot\build_evidence_dataset.py" "$Data\10_protocol_model.json" "$SetDir\$Name.jsonl" --evidence-bundle "$Data\12_llm_evidence.json" --wireshark-targets $Targets
   if($LASTEXITCODE -ne 0){throw "Candidate JSONL generation failed for $Name"}
 }
 Write-Host "Candidate artifacts created under $Work"
-Write-Host "Review/teacher-validate targets, then concatenate approved JSONL files for Ubuntu training."
+Write-Host "Review ambiguity reports under $Work\wireshark_target_reports, then run prepare_dataset_windows.ps1."

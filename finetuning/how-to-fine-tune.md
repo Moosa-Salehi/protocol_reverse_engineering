@@ -97,15 +97,23 @@ finetuning/windows_data/
     └── holdout/
 ```
 
-On the first run, candidate generation may be skipped because trusted target files do not exist yet. The pipeline evidence is still produced.
+The first run generates conservative Wireshark target candidates and review reports. It deliberately waits for review before creating approved training JSONL.
 
-## 4. Configure trusted Wireshark targets
+## 4. Review automatically generated Wireshark targets
 
-Create one file per protocol:
+Stage 3 runs TShark's `jsonraw` export on each sampled capture and creates one target file per protocol:
 
 ```text
 finetuning/windows_data/wireshark_targets/<protocol>.json
 ```
+
+It joins TShark packets to the pipeline corpus and family assignments, converts frame-relative offsets to pipeline-payload-relative offsets, and accepts only fields with an unambiguous semantic mapping and repeated packet support. It also creates:
+
+```text
+finetuning/windows_data/wireshark_target_reports/<protocol>.review.json
+```
+
+Review this report and the generated target file. Confirm the accepted mappings, correct any wrong mapping, and manually resolve only important fields listed under `ambiguous` or `unmatched`. This reduces stage 4 to exception review instead of entering every field manually.
 
 The file maps pipeline family IDs to trusted Wireshark fields. It must follow `dataset-generation/wireshark_targets.schema.json`:
 
@@ -131,7 +139,16 @@ Requirements:
 - `semantic_role` must be in the taxonomy accepted by `build_evidence_dataset.py`.
 - Wireshark names are used only in targets/audit evidence; they are removed from prompts.
 
-After creating all target files, rerun the stage 3 command. Its fixed seed makes sampling reproducible for unchanged inputs, and the script will now also generate candidate JSONL for every protocol with a target file.
+After making corrections, rerun stage 3 with `-SkipTargetGeneration` so it preserves the reviewed target files and regenerates candidate JSONL:
+
+```powershell
+.\finetuning\dataset-generation\build_dataset_windows.ps1 `
+  -PcapDir "D:\traffic\pcaps" `
+  -BudgetPerProtocol 20000 `
+  -MaxMessages 20000 `
+  -IncludeHoldout `
+  -SkipTargetGeneration
+```
 
 To regenerate just one protocol's JSONL while correcting a target, use:
 
@@ -152,7 +169,7 @@ Optional builder arguments:
 --max-families 20
 ```
 
-Each JSONL has a sibling `.summary.json` containing written and skipped counts.
+Each JSONL has a sibling `.summary.json` containing written and skipped counts. `-MinimumTargetSupport` controls how many observations a mapping needs; the default is 2. Increasing it is more conservative.
 
 ## 5. Automatically approve, assemble, audit, summarize, and split
 
