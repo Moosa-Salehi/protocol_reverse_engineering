@@ -23,7 +23,7 @@ User-run entry points:
 3. `prepare_dataset_windows.ps1` promotes approved records, assembles/audits/summarizes/splits the dataset, and creates the complete VM input bundle.
 4. `setup_ubuntu.sh` creates the Ubuntu environment.
 5. `smoke_test_ubuntu.sh` verifies the transferred dataset and GPU training environment.
-6. `train_ubuntu.sh` revalidates the dataset, runs another smoke test, and performs full training.
+6. `train_ubuntu.sh` captures the environment, runs another smoke test, and performs full training using the split prepared on Windows.
 7. Evaluation, merge, conversion, and Windows inference remain explicit commands because they are separate decisions/artifact-producing operations.
 
 ## 1. Choose training and holdout protocols
@@ -251,7 +251,7 @@ The setup installs pinned versions from `training/requirements-ubuntu.txt`, veri
 
 ## 8. Optional: rerun individual dataset checks on Ubuntu
 
-The former stages 8-10 are dataset preparation and now run automatically on Windows in stage 5. They appear here only as diagnostic commands. `train_ubuntu.sh` also reruns them as a safety check before training.
+The former stages 8-10 are dataset preparation and now run automatically on Windows in stage 5. They appear here only as optional diagnostic commands and are not rerun by `train_ubuntu.sh`.
 
 Leakage audit:
 
@@ -322,7 +322,7 @@ The complete automated command is:
 bash training/train_ubuntu.sh
 ```
 
-It runs leakage auditing, dataset summarization, environment capture, splitting, the smoke test, and full training.
+It verifies that the Windows-prepared split exists, captures the environment, runs the smoke test, and performs full training. It does not repeat leakage auditing, dataset summarization, or splitting.
 
 Default full-training command:
 
