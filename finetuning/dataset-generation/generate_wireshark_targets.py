@@ -122,10 +122,19 @@ def main() -> None:
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--tshark", default="tshark")
     parser.add_argument("--minimum-support", type=int, default=2)
+    parser.add_argument("--minimum-family-packets", type=int, default=2,
+                        help="Minimum packets contributing to a family before targets are eligible")
+    parser.add_argument("--minimum-family-purity", type=float, default=0.95,
+                        help="Minimum dominant packet signature share required for a family")
     args = parser.parse_args()
+    if args.minimum_family_packets < 1:
+        parser.error("--minimum-family-packets must be at least 1")
+    if not 0.0 < args.minimum_family_purity <= 1.0:
+        parser.error("--minimum-family-purity must be in (0, 1]")
     model = load_json(args.protocol_model); catalog = tshark_field_catalog(args.tshark)
     corpus = corpus_index(args.messages, args.assignments)
     observations: dict[str, dict[tuple[int, int], Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
+    packet_signatures: dict[str, Counter[tuple[tuple[int, int, str], ...]]] = defaultdict(Counter)
     errors = []; unmatched_packets = 0; ambiguous_families = 0
     for pcap in args.pcap:
         try:
@@ -145,22 +154,35 @@ def main() -> None:
                 if payload_start is None:
                     unmatched_packets += 1; continue
                 payload_end = payload_start + len(payload) // 2
+                signature = []
                 for abbrev, _raw, frame_offset, width in fields:
                     protocol = abbrev.split(".", 1)[0]
                     if protocol in EXCLUDED_PROTOCOLS or width <= 0 or not (payload_start <= frame_offset and frame_offset + width <= payload_end):
                         continue
+                    signature.append((frame_offset - payload_start, width, abbrev))
                     observations[family][(frame_offset - payload_start, width)][abbrev] += 1
+                if signature:
+                    packet_signatures[family][tuple(sorted(set(signature)))] += 1
         except (OSError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             errors.append(f"{pcap}: {exc}")
 
-    targets: dict[str, list[dict[str, Any]]] = {}; review: dict[str, Any] = {"errors": errors, "ambiguous": [], "unmatched": []}
+    targets: dict[str, list[dict[str, Any]]] = {}; review: dict[str, Any] = {"errors": errors, "ambiguous": [], "unmatched": [], "rejected_families": []}
     for family in model.get("families", []) or []:
         family_id = str(family.get("family_id")); accepted = []
+        signature_counts = packet_signatures[family_id]
+        packet_count = sum(signature_counts.values())
+        dominant_signature, dominant_count = signature_counts.most_common(1)[0] if signature_counts else ((), 0)
+        purity = dominant_count / packet_count if packet_count else 0.0
+        eligible = packet_count >= args.minimum_family_packets and purity >= args.minimum_family_purity
+        if not eligible:
+            review["rejected_families"].append({"family_id": family_id, "packet_count": packet_count, "purity": round(purity, 4), "required_packets": args.minimum_family_packets, "required_purity": args.minimum_family_purity})
+            continue
         for field in family.get("field_hypotheses", []) or []:
             offset = int(field.get("start", field.get("offset", 0)) or 0)
             width = int(field.get("width", field.get("length", 0)) or 0)
-            counts = observations[family_id].get((offset, width), Counter())
-            supported = [(name, count) for name, count in counts.most_common() if count >= args.minimum_support]
+            dominant_names = {name for field_offset, field_width, name in dominant_signature if field_offset == offset and field_width == width}
+            supported = [(name, dominant_count) for name in sorted(dominant_names)
+                         if dominant_count >= args.minimum_support]
             candidates = []
             for abbrev, count in supported:
                 info = catalog.get(abbrev, {}); role = semantic_role(abbrev, info.get("name", abbrev))
@@ -176,7 +198,7 @@ def main() -> None:
                 review["unmatched"].append({"family_id": family_id, "offset": offset, "width": width})
         if accepted:
             targets[family_id] = accepted
-    review["summary"] = {"target_families": len(targets), "target_fields": sum(map(len, targets.values())), "ambiguous_fields": len(review["ambiguous"]), "unmatched_fields": len(review["unmatched"]), "unmatched_packets": unmatched_packets, "ambiguous_packet_families": ambiguous_families}
+    review["summary"] = {"target_families": len(targets), "target_fields": sum(map(len, targets.values())), "ambiguous_fields": len(review["ambiguous"]), "unmatched_fields": len(review["unmatched"]), "rejected_families": len(review["rejected_families"]), "unmatched_packets": unmatched_packets, "ambiguous_packet_families": ambiguous_families}
     args.output.parent.mkdir(parents=True, exist_ok=True); args.report.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(targets, indent=2), encoding="utf-8"); args.report.write_text(json.dumps(review, indent=2), encoding="utf-8")
     print(json.dumps(review["summary"] | {"output": str(args.output), "report": str(args.report)}, indent=2))

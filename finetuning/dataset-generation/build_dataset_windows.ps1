@@ -4,6 +4,8 @@ param(
   [int]$BudgetPerProtocol=20000,
   [int]$MaxMessages=20000,
   [int]$MinimumTargetSupport=2,
+  [int]$MinimumFamilyPackets=2,
+  [double]$MinimumFamilyPurity=0.95,
   [switch]$SkipTargetGeneration,
   [switch]$IncludeHoldout
 )
@@ -38,7 +40,7 @@ foreach($Entry in $Protocols){
     else{
       $targetArgs=@("$PSScriptRoot\generate_wireshark_targets.py", "$Data\10_protocol_model.json", "$Data\01_messages.jsonl", "$Data\02_family_assignments.json")
       $targetArgs+=@($PcapFiles.FullName)
-      $targetArgs+=@("--filter",$Filter,"--output",$Targets,"--report",$Report,"--minimum-support",$MinimumTargetSupport)
+      $targetArgs+=@("--filter",$Filter,"--output",$Targets,"--report",$Report,"--minimum-support",$MinimumTargetSupport,"--minimum-family-packets",$MinimumFamilyPackets,"--minimum-family-purity",$MinimumFamilyPurity)
       & $Python @targetArgs
       if($LASTEXITCODE -ne 0){throw "Automatic Wireshark target generation failed for $Name"}
       Write-Warning "Generated target candidates for $Name. Review $Report, then rerun with -SkipTargetGeneration to create approved candidate JSONL."
