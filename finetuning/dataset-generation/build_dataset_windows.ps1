@@ -1,13 +1,14 @@
 param(
   [string]$PcapDir="D:\tez\practical\traffic",
-  [string]$Python="py",
+  [string]$Python="py -3.12",
   [int]$BudgetPerProtocol=20000,
   [int]$MaxMessages=20000,
   [int]$MinimumTargetSupport=2,
   [int]$MinimumFamilyPackets=2,
   [double]$MinimumFamilyPurity=0.95,
   [switch]$SkipTargetGeneration,
-  [switch]$IncludeHoldout
+  [switch]$IncludeHoldout,
+  [switch]$ReuseSampledPcaps
 )
 $ErrorActionPreference="Stop"
 $FinetuningRoot=Split-Path -Parent $PSScriptRoot
@@ -15,10 +16,19 @@ $Root=Split-Path -Parent $FinetuningRoot
 $Work=Join-Path $FinetuningRoot "windows_data"
 $Samples=Join-Path $Work "sampled_pcaps"
 New-Item -ItemType Directory -Force -Path $Samples | Out-Null
-$sampleArgs=@("$PSScriptRoot\sample_pcaps_windows.py","--pcap-dir",$PcapDir,"--output-dir",$Samples,"--budget-per-protocol",$BudgetPerProtocol)
-if($IncludeHoldout){$sampleArgs+="--include-holdout"}
-& $Python @sampleArgs
-if($LASTEXITCODE -ne 0){throw "PCAP inventory/sampling failed"}
+function Invoke-Python([string[]]$Arguments) {
+  if($Python -eq "py -3.12") { & py -3.12 @Arguments }
+  else { & $Python @Arguments }
+  if($LASTEXITCODE -ne 0){throw "Python command failed: $Python $($Arguments -join ' ')"}
+}
+$samplingReport=Join-Path $Samples "sampling_report.json"
+if($ReuseSampledPcaps -and (Test-Path $samplingReport)) {
+  Write-Host "Reusing existing sampled PCAPs in $Samples"
+} else {
+  $sampleArgs=@("$PSScriptRoot\sample_pcaps_windows.py","--pcap-dir",$PcapDir,"--output-dir",$Samples,"--budget-per-protocol",$BudgetPerProtocol)
+  if($IncludeHoldout){$sampleArgs+="--include-holdout"}
+  Invoke-Python $sampleArgs
+}
 $Config=Get-Content -Raw "$PSScriptRoot\protocols.json" | ConvertFrom-Json
 $Protocols=@($Config.train.PSObject.Properties)
 if($IncludeHoldout){$Protocols+=@($Config.holdout.PSObject.Properties)}
@@ -28,10 +38,8 @@ foreach($Entry in $Protocols){
   $SetName = if($Config.holdout.PSObject.Properties.Name -contains $Name){"holdout"}else{"train"}
   if(-not(Test-Path $SampleInput)){Write-Warning "No sampled PCAPs for $Name";continue}
   $Run=Join-Path $Work "runs\$Name";$Data=Join-Path $Run "data";$Output=Join-Path $Run "output";$Logs=Join-Path $Run "logs"
-  & $Python "$Root\main.py" $SampleInput --extraction-method tshark --tshark-filter $Filter --max-messages $MaxMessages --data-dir $Data --output-dir $Output --log-dir $Logs --llm-render-only --stop-after 13_evaluate_pipeline
-  if($LASTEXITCODE -ne 0){throw "Pipeline failed for $Name"}
-  & $Python "$Root\scripts\14_export_llm_evidence.py" "$Data\10_protocol_model.json" "$Data\12_llm_evidence.json" --evaluation-json "$Data\11_evaluation.json" --pretty --log-dir $Logs
-  if($LASTEXITCODE -ne 0){throw "Evidence export failed for $Name"}
+  Invoke-Python @("$Root\main.py", $SampleInput, "--extraction-method", "tshark", "--tshark-filter", $Filter, "--max-messages", $MaxMessages, "--data-dir", $Data, "--output-dir", $Output, "--log-dir", $Logs, "--llm-render-only", "--stop-after", "13_evaluate_pipeline")
+  Invoke-Python @("$Root\scripts\14_export_llm_evidence.py", "$Data\10_protocol_model.json", "$Data\12_llm_evidence.json", "--evaluation-json", "$Data\11_evaluation.json", "--pretty", "--log-dir", $Logs)
   $Targets=Join-Path $Work "wireshark_targets\$Name.json"
   if(-not $SkipTargetGeneration){
     $Report=Join-Path $Work "wireshark_target_reports\$Name.review.json"
@@ -41,16 +49,14 @@ foreach($Entry in $Protocols){
       $targetArgs=@("$PSScriptRoot\generate_wireshark_targets.py", "$Data\10_protocol_model.json", "$Data\01_messages.jsonl", "$Data\02_family_assignments.json")
       $targetArgs+=@($PcapFiles.FullName)
       $targetArgs+=@("--filter",$Filter,"--output",$Targets,"--report",$Report,"--minimum-support",$MinimumTargetSupport,"--minimum-family-packets",$MinimumFamilyPackets,"--minimum-family-purity",$MinimumFamilyPurity)
-      & $Python @targetArgs
-      if($LASTEXITCODE -ne 0){throw "Automatic Wireshark target generation failed for $Name"}
+      Invoke-Python $targetArgs
       Write-Warning "Generated target candidates for $Name. Review $Report, then rerun with -SkipTargetGeneration to create approved candidate JSONL."
       continue
     }
   }
   if(-not(Test-Path $Targets)){Write-Warning "Skipping {$Name}: create $Targets from trusted Wireshark annotations first"; continue}
   $SetDir=Join-Path $JsonlDir $SetName;New-Item -ItemType Directory -Force -Path $SetDir|Out-Null
-  & $Python "$PSScriptRoot\build_evidence_dataset.py" "$Data\10_protocol_model.json" "$SetDir\$Name.jsonl" --evidence-bundle "$Data\12_llm_evidence.json" --wireshark-targets $Targets
-  if($LASTEXITCODE -ne 0){throw "Candidate JSONL generation failed for $Name"}
+  Invoke-Python @("$PSScriptRoot\build_evidence_dataset.py", "$Data\10_protocol_model.json", "$SetDir\$Name.jsonl", "--evidence-bundle", "$Data\12_llm_evidence.json", "--wireshark-targets", $Targets)
 }
 Write-Host "Candidate artifacts created under $Work"
 Write-Host "Review ambiguity reports under $Work\wireshark_target_reports, then run prepare_dataset_windows.ps1."
