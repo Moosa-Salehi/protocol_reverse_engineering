@@ -448,6 +448,25 @@ def discover_families(
             conformance_meta = {"applied": False, "reason": "no_constant_invariant_detected"}
 
     working_records = unique_messages(records)
+    # Empty protocol captures are valid inventory results (for example when a
+    # configured display filter has no matching packets), but clustering
+    # algorithms require at least one sample and otherwise fail with obscure
+    # shape/index errors. Return an empty, well-formed result so callers can
+    # skip downstream artifact generation cleanly.
+    if not working_records:
+        return ClusteringResult(
+            assignments=[],
+            labels=[],
+            sample_size=0,
+            feature_shape=(0, 0),
+            feature_mode="empty",
+            requested_feature_mode=feature_mode,
+            neural_model=neural_model_path,
+            latent_cache=latent_cache_path,
+            fallback_reason="no_messages",
+            diagnostics=build_family_diagnostics(records, []),
+            conformance=conformance_meta,
+        )
     if sample_size is not None and len(working_records) > sample_size:
         working_records = working_records[:sample_size]
 

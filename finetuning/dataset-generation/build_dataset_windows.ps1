@@ -36,7 +36,8 @@ $JsonlDir=Join-Path $Work "candidate_jsonl";New-Item -ItemType Directory -Force 
 foreach($Entry in $Protocols){
   $Name=$Entry.Name;$Filter=$Entry.Value.filter;$SampleInput=Join-Path $Samples $Name
   $SetName = if($Config.holdout.PSObject.Properties.Name -contains $Name){"holdout"}else{"train"}
-  if(-not(Test-Path $SampleInput)){Write-Warning "No sampled PCAPs for $Name";continue}
+  $PcapFiles=@(Get-ChildItem $SampleInput -File -ErrorAction SilentlyContinue | Where-Object {$_.Extension -in ".pcap", ".pcapng", ".cap"})
+  if($PcapFiles.Count -eq 0){Write-Warning "No sampled PCAPs for $Name; skipping protocol";continue}
   $Run=Join-Path $Work "runs\$Name";$Data=Join-Path $Run "data";$Output=Join-Path $Run "output";$Logs=Join-Path $Run "logs"
   Invoke-Python @("$Root\main.py", $SampleInput, "--extraction-method", "tshark", "--tshark-filter", $Filter, "--max-messages", $MaxMessages, "--data-dir", $Data, "--output-dir", $Output, "--log-dir", $Logs, "--llm-render-only", "--stop-after", "13_evaluate_pipeline")
   Invoke-Python @("$Root\scripts\14_export_llm_evidence.py", "$Data\10_protocol_model.json", "$Data\12_llm_evidence.json", "--evaluation-json", "$Data\11_evaluation.json", "--pretty", "--log-dir", $Logs)
