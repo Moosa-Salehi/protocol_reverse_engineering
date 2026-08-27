@@ -450,7 +450,18 @@ def _extract_tshark_packets(
         "ek",
     ]
     try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        # TShark's EK/JSON output can contain non-UTF-8 bytes in dissector
+        # display strings (notably malformed or vendor-specific IEC104 data).
+        # Decode explicitly and replace only invalid text bytes; payloads are
+        # represented as hex and therefore remain lossless.
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
     except FileNotFoundError as exc:
         raise RuntimeError("tshark is required for --extraction-method tshark but was not found on PATH.") from exc
 
