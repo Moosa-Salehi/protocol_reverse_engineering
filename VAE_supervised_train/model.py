@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 from torch import nn
 from torch.nn import functional as F
+from pathlib import Path
 
 
 class ResidualBlock(nn.Module):
@@ -61,10 +62,40 @@ class SupervisedVAE(nn.Module):
         return self.decoder(z).view(-1, self.max_len, 256), mu, logvar
 
 
+def _atomic_torch_save(payload: dict, path: str) -> None:
+    destination = Path(path)
+    temporary = destination.with_suffix(destination.suffix + ".tmp")
+    torch.save(payload, temporary)
+    temporary.replace(destination)
+
+
 def save_checkpoint(path: str, model: SupervisedVAE, config: dict, metrics: dict, epoch: int) -> None:
-    torch.save({"format": "protocol-re-supervised-vae-v1", "model_state": model.state_dict(),
-                "model_config": {"max_len": model.max_len, "latent_dim": model.latent_dim},
-                "training_config": config, "metrics": metrics, "epoch": epoch}, path)
+    _atomic_torch_save({"format": "protocol-re-supervised-vae-v1", "model_state": model.state_dict(),
+                        "model_config": {"max_len": model.max_len, "latent_dim": model.latent_dim},
+                        "training_config": config, "metrics": metrics, "epoch": epoch}, path)
+
+
+def save_training_checkpoint(path: str, model: SupervisedVAE, optimizer, scaler, config: dict,
+                             epoch: int, best_key, stale: int, best_metrics: dict | None) -> None:
+    _atomic_torch_save({"format": "protocol-re-supervised-vae-training-v1", "model_state": model.state_dict(),
+                        "model_config": {"max_len": model.max_len, "latent_dim": model.latent_dim},
+                        "optimizer_state": optimizer.state_dict(), "scaler_state": scaler.state_dict(),
+                        "training_config": config, "epoch": epoch, "best_key": best_key,
+                        "stale": stale, "best_metrics": best_metrics}, path)
+
+
+def load_training_checkpoint(path: str, model: SupervisedVAE, optimizer, scaler,
+                             device: str | torch.device = "cpu") -> dict:
+    payload = torch.load(path, map_location=device, weights_only=False)
+    if payload.get("format") != "protocol-re-supervised-vae-training-v1":
+        raise ValueError("Resume requires a latest training checkpoint, not a best model checkpoint")
+    expected = {"max_len": model.max_len, "latent_dim": model.latent_dim}
+    if payload.get("model_config") != expected:
+        raise ValueError(f"Resume model configuration mismatch: {payload.get('model_config')} != {expected}")
+    model.load_state_dict(payload["model_state"])
+    optimizer.load_state_dict(payload["optimizer_state"])
+    scaler.load_state_dict(payload.get("scaler_state", {}))
+    return payload
 
 
 def load_checkpoint(path: str, device: str | torch.device = "cpu") -> tuple[SupervisedVAE, dict]:

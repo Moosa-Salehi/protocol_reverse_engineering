@@ -29,26 +29,37 @@ def embed_dataset(model, dataset, device, batch_size: int) -> np.ndarray:
     return output
 
 
-def evaluate_embeddings(dataset, embeddings: np.ndarray, min_cluster_size: int, min_samples: int | None,
-                        epsilon: float) -> dict:
+def evaluate_embeddings(dataset, embeddings: np.ndarray, min_cluster_size: int = 5,
+                        min_samples: int | None = None, epsilon: float = 0.0,
+                        protocol_parameters: dict[str, dict] | None = None) -> dict:
     per_protocol, aggregate_truth, aggregate_predicted = {}, [], []
     cluster_offset = 0
     protocols = sorted({row["protocol_id"] for row in dataset.rows})
+    selected_parameters = {}
     for protocol in protocols:
         indexes = np.asarray([i for i, row in enumerate(dataset.rows) if row["protocol_id"] == protocol])
         truth_keys = [dataset.rows[i]["trusted_family_id"] for i in indexes]
         mapping = {key: number for number, key in enumerate(sorted(set(truth_keys)))}
         truth = np.asarray([mapping[key] for key in truth_keys])
-        predicted = run_hdbscan(embeddings[indexes], min_cluster_size, min_samples, epsilon)
+        parameters = (protocol_parameters or {}).get(protocol, {})
+        protocol_min_cluster_size = int(parameters.get("min_cluster_size", min_cluster_size))
+        protocol_min_samples = parameters.get("min_samples", min_samples)
+        protocol_epsilon = float(parameters.get("cluster_selection_epsilon", epsilon))
+        predicted = run_hdbscan(embeddings[indexes], protocol_min_cluster_size,
+                                protocol_min_samples, protocol_epsilon)
         per_protocol[protocol] = clustering_metrics(truth, predicted)
+        selected_parameters[protocol] = {
+            "min_cluster_size": protocol_min_cluster_size,
+            "min_samples": protocol_min_samples,
+            "cluster_selection_epsilon": protocol_epsilon,
+        }
         aggregate_truth.extend(f"{protocol}:{key}" for key in truth_keys)
         aggregate_predicted.extend([-1 if value < 0 else cluster_offset + int(value) for value in predicted])
         cluster_offset += max(0, len(set(predicted.tolist()) - {-1}))
     global_mapping = {key: number for number, key in enumerate(sorted(set(aggregate_truth)))}
     overall = clustering_metrics(np.asarray([global_mapping[x] for x in aggregate_truth]), np.asarray(aggregate_predicted))
     return {"per_protocol": per_protocol, "overall": overall,
-            "hdbscan": {"min_cluster_size": min_cluster_size, "min_samples": min_samples,
-                        "cluster_selection_epsilon": epsilon}}
+            "hdbscan_per_protocol": selected_parameters}
 
 
 def main() -> None:
@@ -62,6 +73,8 @@ def main() -> None:
     parser.add_argument("--min-cluster-size", type=int, default=5)
     parser.add_argument("--min-samples", type=int)
     parser.add_argument("--cluster-selection-epsilon", type=float, default=0.0)
+    parser.add_argument("--use-checkpoint-hdbscan", action=argparse.BooleanOptionalAction, default=True,
+                        help="Use per-protocol HDBSCAN settings saved with a revised trainer checkpoint.")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output", type=Path)
@@ -73,8 +86,11 @@ def main() -> None:
     if not dataset.rows:
         raise SystemExit("No eligible records selected")
     embeddings = embed_dataset(model, dataset, args.device, args.batch_size)
+    saved_parameters = None
+    if args.use_checkpoint_hdbscan:
+        saved_parameters = (checkpoint.get("metrics") or {}).get("hdbscan_per_protocol")
     report = evaluate_embeddings(dataset, embeddings, args.min_cluster_size, args.min_samples,
-                                 args.cluster_selection_epsilon)
+                                 args.cluster_selection_epsilon, saved_parameters)
     report["checkpoint"] = str(args.checkpoint)
     report["checkpoint_epoch"] = checkpoint.get("epoch")
     rendered = json.dumps(report, indent=2, sort_keys=True)

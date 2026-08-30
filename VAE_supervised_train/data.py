@@ -23,6 +23,49 @@ class MessageFamilyDataset(Dataset):
         self.labels = np.asarray([self.key_to_label[(row["protocol_id"], row["trusted_family_id"])] for row in self.rows])
         self.max_len = max_len
 
+    @classmethod
+    def from_rows(cls, rows: list[dict], max_len: int) -> "MessageFamilyDataset":
+        dataset = cls.__new__(cls)
+        dataset.rows = rows
+        keys = sorted({(row["protocol_id"], row["trusted_family_id"]) for row in rows})
+        dataset.key_to_label = {key: index for index, key in enumerate(keys)}
+        dataset.labels = np.asarray([
+            dataset.key_to_label[(row["protocol_id"], row["trusted_family_id"])] for row in rows
+        ])
+        dataset.max_len = max_len
+        return dataset
+
+    def stratified_subset(self, max_per_family: int, max_per_protocol: int, seed: int) -> "MessageFamilyDataset":
+        """Return a deterministic evaluation subset without changing the training corpus."""
+        rng = np.random.default_rng(seed)
+        by_protocol_family: dict[tuple[str, str], list[int]] = {}
+        for index, row in enumerate(self.rows):
+            key = (row["protocol_id"], row["trusted_family_id"])
+            by_protocol_family.setdefault(key, []).append(index)
+
+        selected_by_protocol: dict[str, list[int]] = {}
+        for (protocol, _), indexes in sorted(by_protocol_family.items()):
+            indexes_array = np.asarray(indexes)
+            if max_per_family > 0 and len(indexes_array) > max_per_family:
+                indexes_array = rng.choice(indexes_array, max_per_family, replace=False)
+            selected_by_protocol.setdefault(protocol, []).extend(int(x) for x in indexes_array)
+
+        selected = []
+        for protocol, indexes in sorted(selected_by_protocol.items()):
+            indexes_array = np.asarray(indexes)
+            if max_per_protocol > 0 and len(indexes_array) > max_per_protocol:
+                # Preserve at least one member of every family before filling remaining slots.
+                grouped: dict[str, list[int]] = {}
+                for index in indexes:
+                    grouped.setdefault(self.rows[index]["trusted_family_id"], []).append(index)
+                mandatory = [int(rng.choice(values)) for values in grouped.values()]
+                remaining = np.asarray(sorted(set(indexes) - set(mandatory)))
+                capacity = max(0, max_per_protocol - len(mandatory))
+                extra = rng.choice(remaining, min(capacity, len(remaining)), replace=False).tolist() if capacity else []
+                indexes_array = np.asarray(mandatory + extra)
+            selected.extend(int(x) for x in indexes_array)
+        return MessageFamilyDataset.from_rows([self.rows[index] for index in sorted(selected)], self.max_len)
+
     def __len__(self) -> int:
         return len(self.rows)
 
