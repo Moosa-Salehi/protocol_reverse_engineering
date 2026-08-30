@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import warnings
 from pathlib import Path
@@ -10,9 +11,18 @@ from pathlib import Path
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# PyTorch requires this to make CUDA matrix operations deterministic. It must be set
+# before the first CUDA operation and avoids repeated CuBLAS determinism warnings.
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
 if "--show-warnings" not in sys.argv:
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=FutureWarning)
+    warnings.filterwarnings(
+        "ignore",
+        message=r"Deterministic behavior was enabled.*CuBLAS.*",
+        category=UserWarning,
+    )
 
 import numpy as np
 import torch
@@ -68,6 +78,22 @@ def tune_hdbscan(dataset, embeddings: np.ndarray, sizes: list[int], samples: lis
 
 def parse_optional_ints(value: str) -> list[int | None]:
     return [None if item.strip().lower() in {"none", "auto"} else int(item) for item in value.split(",")]
+
+
+def describe_device(device_name: str, amp_enabled: bool) -> str:
+    device = torch.device(device_name)
+    if device.type == "cuda":
+        if not torch.cuda.is_available():
+            raise SystemExit(f"CUDA device requested ({device_name}), but torch.cuda.is_available() is false")
+        index = device.index if device.index is not None else torch.cuda.current_device()
+        properties = torch.cuda.get_device_properties(index)
+        memory_gib = properties.total_memory / (1024 ** 3)
+        capability = torch.cuda.get_device_capability(index)
+        return (f"Device: CUDA GPU {index} - {properties.name} | CUDA {torch.version.cuda} | "
+                f"compute capability {capability[0]}.{capability[1]} | {memory_gib:.1f} GiB | "
+                f"mixed precision: {'enabled' if amp_enabled else 'disabled'}")
+    return (f"Device: CPU | threads: {torch.get_num_threads()} | "
+            f"mixed precision: disabled")
 
 
 def main() -> None:
@@ -141,9 +167,12 @@ def main() -> None:
                                          args.examples_per_family, args.batches_per_epoch, args.seed)
     loader = DataLoader(train_data, batch_sampler=sampler, num_workers=args.num_workers,
                         pin_memory=args.device.startswith("cuda"))
+    amp_enabled = args.device.startswith("cuda") and not args.no_mixed_precision
+    tqdm.write(describe_device(args.device, amp_enabled))
+    tqdm.write(f"Deterministic mode: enabled | CUBLAS_WORKSPACE_CONFIG="
+               f"{os.environ['CUBLAS_WORKSPACE_CONFIG']}")
     model = SupervisedVAE(args.max_len, args.latent_dim).to(args.device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-    amp_enabled = args.device.startswith("cuda") and not args.no_mixed_precision
     scaler = torch.amp.GradScaler("cuda", enabled=amp_enabled)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.metrics.parent.mkdir(parents=True, exist_ok=True)

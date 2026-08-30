@@ -43,6 +43,11 @@ Training displays epoch, batch, loss, and HDBSCAN-tuning progress with `tqdm`. D
 and future warnings are hidden by default. Use `--show-warnings` to restore them or
 `--no-progress` for non-interactive logs.
 
+At startup the trainer prints whether it is using CPU or CUDA. For CUDA it also reports
+the GPU model, CUDA version, compute capability, memory, and mixed-precision status.
+`CUBLAS_WORKSPACE_CONFIG=:4096:8` is set before PyTorch operations so deterministic CUDA
+training does not emit repeated CuBLAS warnings.
+
 Interrupted revised runs can resume with complete optimizer and early-stopping state:
 
 ```bash
