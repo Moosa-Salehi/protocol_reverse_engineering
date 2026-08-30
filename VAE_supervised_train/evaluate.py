@@ -12,6 +12,7 @@ if __package__ in {None, ""}:
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 from VAE_supervised_train.common import parse_protocols, seed_everything
 from VAE_supervised_train.data import MessageFamilyDataset
@@ -20,10 +21,12 @@ from VAE_supervised_train.model import load_checkpoint
 
 
 @torch.inference_mode()
-def embed_dataset(model, dataset, device, batch_size: int) -> np.ndarray:
+def embed_dataset(model, dataset, device, batch_size: int, progress: bool = False) -> np.ndarray:
     output = np.zeros((len(dataset), model.latent_dim), dtype=np.float32)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0)
-    for byte_ids, mask, _, indexes in loader:
+    batches = tqdm(loader, desc="Embedding validation", unit="batch", leave=False,
+                   disable=not progress, dynamic_ncols=True)
+    for byte_ids, mask, _, indexes in batches:
         mu, _ = model.encode(byte_ids.to(device), mask.to(device))
         output[indexes.numpy()] = mu.cpu().numpy()
     return output
@@ -85,7 +88,7 @@ def main() -> None:
                                    args.min_confidence, args.min_family_support)
     if not dataset.rows:
         raise SystemExit("No eligible records selected")
-    embeddings = embed_dataset(model, dataset, args.device, args.batch_size)
+    embeddings = embed_dataset(model, dataset, args.device, args.batch_size, progress=True)
     saved_parameters = None
     if args.use_checkpoint_hdbscan:
         saved_parameters = (checkpoint.get("metrics") or {}).get("hdbscan_per_protocol")

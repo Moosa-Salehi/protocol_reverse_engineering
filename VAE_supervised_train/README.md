@@ -39,6 +39,10 @@ training. Metrics are JSONL by default; pass `--metrics-format json` for a singl
 array. To run expensive full-corpus validation only when the subset produces a new best
 candidate, add `--full-validation-on-best`.
 
+Training displays epoch, batch, loss, and HDBSCAN-tuning progress with `tqdm`. Deprecation
+and future warnings are hidden by default. Use `--show-warnings` to restore them or
+`--no-progress` for non-interactive logs.
+
 Interrupted revised runs can resume with complete optimizer and early-stopping state:
 
 ```bash

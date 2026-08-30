@@ -4,15 +4,21 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import warnings
 from pathlib import Path
 
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+if "--show-warnings" not in sys.argv:
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=FutureWarning)
+
 import numpy as np
 import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 from VAE_supervised_train.common import parse_protocols, seed_everything
 from VAE_supervised_train.data import FamilyBalancedBatchSampler, MessageFamilyDataset
@@ -34,10 +40,14 @@ def aggregate_validation(report: dict) -> dict:
     return metrics
 
 
-def tune_hdbscan(dataset, embeddings: np.ndarray, sizes: list[int], samples: list[int | None], epsilons: list[float]):
+def tune_hdbscan(dataset, embeddings: np.ndarray, sizes: list[int], samples: list[int | None],
+                 epsilons: list[float], progress: bool = True):
     parameters = {}
     protocols = sorted({row["protocol_id"] for row in dataset.rows})
-    for protocol in protocols:
+    protocol_progress = tqdm(protocols, desc="HDBSCAN tuning", unit="protocol", leave=False,
+                             disable=not progress, dynamic_ncols=True)
+    for protocol in protocol_progress:
+        protocol_progress.set_postfix_str(protocol)
         indexes = [i for i, row in enumerate(dataset.rows) if row["protocol_id"] == protocol]
         protocol_data = MessageFamilyDataset.from_rows([dataset.rows[i] for i in indexes], dataset.max_len)
         protocol_embeddings = embeddings[np.asarray(indexes)]
@@ -111,6 +121,9 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--no-mixed-precision", action="store_true")
+    parser.add_argument("--show-warnings", action="store_true",
+                        help="Show deprecation and future warnings hidden by default.")
+    parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bars.")
     args = parser.parse_args()
     seed_everything(args.seed)
     train_protocols = parse_protocols(args.train_protocols)
@@ -148,19 +161,21 @@ def main() -> None:
         best_key = tuple(resumed["best_key"]) if resumed.get("best_key") is not None else None
         best_metrics = resumed.get("best_metrics")
         stale = int(resumed.get("stale", 0))
-        print(json.dumps({"resumed_from": str(args.resume), "start_epoch": start_epoch,
-                          "best_key": best_key, "stale": stale}, sort_keys=True))
-    print(json.dumps({"training_records": len(train_data), "validation_records": len(validation_data),
-                      "full_validation_records": len(full_validation_data),
-                      "validation_families": len(validation_data.key_to_label)}, sort_keys=True))
+        tqdm.write(f"Resumed {args.resume} at epoch {start_epoch} (stale validations: {stale})")
+    tqdm.write(f"Training records: {len(train_data):,} | validation subset: {len(validation_data):,} "
+               f"| full validation: {len(full_validation_data):,} | families: {len(validation_data.key_to_label)}")
     metric_rows = []
     metrics_mode = "a" if args.resume and args.metrics_format == "jsonl" else "w"
     with args.metrics.open(metrics_mode, encoding="utf-8") as metric_file:
-        for epoch in range(start_epoch, args.epochs + 1):
+        epoch_progress = tqdm(range(start_epoch, args.epochs + 1), desc="Training", unit="epoch",
+                              disable=args.no_progress, dynamic_ncols=True)
+        for epoch in epoch_progress:
             sampler.set_epoch(epoch)
             model.train()
             sums = {name: 0.0 for name in ("total", "supcon", "triplet", "compact", "separation", "collapse", "kl", "reconstruction")}
-            for byte_ids, mask, labels, _ in loader:
+            batch_progress = tqdm(loader, desc=f"Epoch {epoch}/{args.epochs}", unit="batch", leave=False,
+                                  disable=args.no_progress, dynamic_ncols=True)
+            for batch_number, (byte_ids, mask, labels, _) in enumerate(batch_progress, start=1):
                 byte_ids, mask, labels = byte_ids.to(args.device), mask.to(args.device), labels.to(args.device)
                 optimizer.zero_grad(set_to_none=True)
                 with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=amp_enabled):
@@ -191,11 +206,16 @@ def main() -> None:
                                     ("compact", compact), ("separation", separation), ("collapse", collapse),
                                     ("kl", kl), ("reconstruction", recon)):
                     sums[name] += float(value.detach())
+                if batch_number == 1 or batch_number % 25 == 0:
+                    batch_progress.set_postfix(loss=f"{sums['total'] / batch_number:.4f}")
             row = {"epoch": epoch, "train": {key: value / len(loader) for key, value in sums.items()}}
             if epoch % args.validate_every == 0 or epoch == args.epochs:
+                epoch_progress.set_description(f"Validating epoch {epoch}")
                 model.eval()
-                embeddings = embed_dataset(model, validation_data, args.device, args.validation_batch_size)
-                report, selection = tune_hdbscan(validation_data, embeddings, sizes, samples, epsilons)
+                embeddings = embed_dataset(model, validation_data, args.device, args.validation_batch_size,
+                                           progress=not args.no_progress)
+                report, selection = tune_hdbscan(validation_data, embeddings, sizes, samples, epsilons,
+                                                 not args.no_progress)
                 report["validation_scope"] = "stratified_subset"
                 report["validation_record_count"] = len(validation_data)
                 row["validation"] = report
@@ -203,7 +223,8 @@ def main() -> None:
                 if best_key is None or key < best_key:
                     if args.full_validation_on_best:
                         full_embeddings = embed_dataset(model, full_validation_data, args.device,
-                                                        args.validation_batch_size)
+                                                        args.validation_batch_size,
+                                                        progress=not args.no_progress)
                         report = evaluate_embeddings(
                             full_validation_data, full_embeddings,
                             protocol_parameters=report["hdbscan_per_protocol"]
@@ -233,7 +254,16 @@ def main() -> None:
                 json.dump(metric_rows, metric_file, indent=2, sort_keys=True)
                 metric_file.truncate()
                 metric_file.flush()
-            print(json.dumps(row, sort_keys=True))
+            train_loss = row["train"]["total"]
+            if "checkpoint_key" in row:
+                key = row["checkpoint_key"]
+                status = "best" if row["best"] else f"stale={stale}/{args.patience}"
+                tqdm.write(f"Epoch {epoch}: loss={train_loss:.4f}, count_error={key[0]}, "
+                           f"impurity={key[1]:.6f}, noise={key[3]:.3f} ({status})")
+            else:
+                tqdm.write(f"Epoch {epoch}: loss={train_loss:.4f}")
+            epoch_progress.set_description("Training")
+            epoch_progress.set_postfix(loss=f"{train_loss:.4f}", best_count_error=(best_key or ("-",))[0])
             save_training_checkpoint(str(latest_path), model, optimizer, scaler, config, epoch,
                                      best_key, stale, best_metrics)
             if stale >= args.patience:
