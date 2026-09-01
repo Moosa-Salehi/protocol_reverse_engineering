@@ -12,7 +12,9 @@ from collections import Counter
 from pathlib import Path
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    project_root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(project_root))
+    sys.path.insert(0, str(project_root / "src"))
 
 # PyTorch requires this to make CUDA matrix operations deterministic. It must be set
 # before the first CUDA operation and avoids repeated CuBLAS determinism warnings.
