@@ -126,11 +126,15 @@ def main() -> None:
                         help="Minimum packets contributing to a family before targets are eligible")
     parser.add_argument("--minimum-family-purity", type=float, default=0.95,
                         help="Minimum dominant packet signature share required for a family")
+    parser.add_argument("--boundary-minimum-family-purity", type=float, default=0.80,
+                        help="Lower purity threshold for boundary-only evidence")
     args = parser.parse_args()
     if args.minimum_family_packets < 1:
         parser.error("--minimum-family-packets must be at least 1")
     if not 0.0 < args.minimum_family_purity <= 1.0:
         parser.error("--minimum-family-purity must be in (0, 1]")
+    if not 0.0 < args.boundary_minimum_family_purity <= args.minimum_family_purity:
+        parser.error("--boundary-minimum-family-purity must be in (0, minimum-family-purity]")
     model = load_json(args.protocol_model); catalog = tshark_field_catalog(args.tshark)
     corpus = corpus_index(args.messages, args.assignments)
     observations: dict[str, dict[tuple[int, int], Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
@@ -173,8 +177,9 @@ def main() -> None:
         packet_count = sum(signature_counts.values())
         dominant_signature, dominant_count = signature_counts.most_common(1)[0] if signature_counts else ((), 0)
         purity = dominant_count / packet_count if packet_count else 0.0
-        eligible = packet_count >= args.minimum_family_packets and purity >= args.minimum_family_purity
-        if not eligible:
+        trusted = packet_count >= args.minimum_family_packets and purity >= args.minimum_family_purity
+        boundary_eligible = packet_count >= args.minimum_family_packets and purity >= args.boundary_minimum_family_purity
+        if not boundary_eligible:
             review["rejected_families"].append({"family_id": family_id, "packet_count": packet_count, "purity": round(purity, 4), "required_packets": args.minimum_family_packets, "required_purity": args.minimum_family_purity})
             continue
         for field in family.get("field_hypotheses", []) or []:
@@ -189,9 +194,15 @@ def main() -> None:
                 if role:
                     candidates.append((abbrev, info, role, count))
             roles = {item[2] for item in candidates}
-            if candidates and len(roles) == 1:
+            if candidates and len(roles) == 1 and trusted:
                 abbrev, info, role, count = candidates[0]
-                accepted.append({"offset": offset, "width": width, "wireshark_name": info.get("name", abbrev), "wireshark_field": abbrev, "semantic_role": role, "field_type": field.get("field_type", "bytes"), "encoding_type": encoding_type(info.get("type", ""), width), "support": count})
+                accepted.append({"offset": offset, "width": width, "wireshark_name": info.get("name", abbrev), "wireshark_field": abbrev, "semantic_role": role, "field_type": field.get("field_type", "bytes"), "encoding_type": encoding_type(info.get("type", ""), width), "support": count, "status": "trusted"})
+            elif boundary_eligible and supported:
+                abbrev, count = supported[0]
+                info = catalog.get(abbrev, {})
+                accepted.append({"offset": offset, "width": width, "wireshark_name": info.get("name", abbrev), "wireshark_field": abbrev, "semantic_role": next(iter(roles), None), "field_type": field.get("field_type", "bytes"), "encoding_type": encoding_type(info.get("type", ""), width), "support": count, "status": "boundary_only"})
+                if len(roles) > 1 or not candidates:
+                    review["ambiguous"].append({"family_id": family_id, "offset": offset, "width": width, "observed": supported, "mapped_roles": sorted(roles), "status": "boundary_only"})
             elif supported:
                 review["ambiguous"].append({"family_id": family_id, "offset": offset, "width": width, "observed": supported, "mapped_roles": sorted(roles)})
             else:

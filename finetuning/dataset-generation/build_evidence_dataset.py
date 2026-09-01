@@ -47,6 +47,8 @@ def semantic_target(family: dict[str, Any], wireshark: dict[str, Any] | None) ->
         ws = ws_by_offset.get((offset, width))
         if not ws: continue
         role = ws.get("semantic_role")
+        if ws.get("status") == "boundary_only":
+            continue
         if role not in ROLE_SET: raise ValueError(f"Wireshark target for {family.get('family_id')} offset {offset} has invalid mapped role {role!r}")
         labels.append({"field_index": index, "offset": offset, "width": width, "field_type": ws.get("field_type", field.get("field_type", "bytes")), "encoding_type": ws.get("encoding_type", ws.get("field_type", field.get("field_type", "bytes"))), "semantic_role": role, "human_label": ws.get("wireshark_name", ws.get("name", role)), "confidence": 1.0, "evidence": ["trusted Wireshark dissector", f"Wireshark field: {ws.get('wireshark_name', ws.get('name', 'unknown'))}"], "alternative_roles": []})
     labeled_indices = {item["field_index"] for item in labels}
@@ -57,14 +59,15 @@ def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = N
     if ws_fields:
         boundaries = sorted({boundary for x in ws_fields if x.get("offset") is not None and x.get("width") is not None and int(x["width"]) > 0 for boundary in (int(x["offset"]), int(x["offset"]) + int(x["width"]))})
         if boundaries:
-            return {"family_id": family.get("family_id"), "boundaries": boundaries, "confidence": 1.0, "evidence_refs": ["trusted_wireshark_dissector_offsets"]}
+            boundary_only = any(x.get("status") == "boundary_only" for x in ws_fields)
+            return {"family_id": family.get("family_id"), "boundaries": boundaries, "confidence": 0.8 if boundary_only else 1.0, "evidence_refs": ["wireshark_dissector_offsets", "boundary_only" if boundary_only else "trusted_wireshark_dissector_offsets"]}
     return None
 
 def record(task: str, evidence: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     system = "You are an expert Protocol Reverse Engineering Analyst. Return one JSON object and no Markdown fences."
     prompt_evidence = {k:v for k,v in evidence.items() if k != "protocol"}
     user = f"### TASK: {task}\n\nUse only the supplied statistical and relational evidence. Do not infer labels from dissector names.\n\n## Evidence Bundle\n```json\n{json.dumps(prompt_evidence, indent=2, ensure_ascii=False)}\n```"
-    return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id"),"reviewed":False,"approved":False,"reviewer":None,"supervision_source":"trusted_wireshark_targets","candidate":True}}
+    return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id"),"reviewed":False,"approved":False,"reviewer":None,"supervision_source":"wireshark_targets_with_confidence_tiers","candidate":True}}
 
 def main() -> None:
     p = argparse.ArgumentParser(); p.add_argument("protocol_model", type=Path); p.add_argument("output", type=Path); p.add_argument("--evidence-bundle", type=Path); p.add_argument("--wireshark-targets", type=Path, help="JSON mapping family_id to trusted Wireshark fields; required for semantic_labeling"); p.add_argument("--tasks", nargs="+", choices=["boundary_refinement","semantic_labeling"], default=["boundary_refinement","semantic_labeling"]); p.add_argument("--max-families", type=int, default=0)
