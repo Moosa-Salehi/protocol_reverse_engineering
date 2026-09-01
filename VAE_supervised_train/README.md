@@ -29,15 +29,24 @@ for measuring transfer, but records are never randomly split. Families below
 `--min-family-support` are excluded from training; singleton families remain available
 to evaluation. Sampling with replacement safely handles small families.
 
-The revised defaults write `best_v2.pth`, `latest.pth`, and `metrics_v2.jsonl`, preserving
-the original experimental run. Validation is performed every five epochs on a
-deterministic family-stratified subset. All eligible records are still used for
-training. Each protocol tunes HDBSCAN independently over larger cluster-size values.
+The current defaults write `best_v3.pth`, `latest_v3.pth`, and `metrics_v3.jsonl`,
+preserving earlier runs. Validation is performed every five epochs on a deterministic
+family-stratified subset. All eligible records are still used for training. Each
+protocol tunes HDBSCAN independently.
 
 With the default zero reconstruction weight, the decoder is bypassed completely during
 training. Metrics are JSONL by default; pass `--metrics-format json` for a single JSON
-array. To run expensive full-corpus validation only when the subset produces a new best
-candidate, add `--full-validation-on-best`.
+array. When the subset produces a new best candidate, full-corpus validation is enabled
+by default. It re-embeds all messages and retunes HDBSCAN per protocol using absolute
+cluster sizes plus fractions of that protocol's population. Only the full-corpus score
+can update `best_v3.pth`; subset metrics are only a fast candidate gate. Disable this
+behavior with `--no-full-validation-on-best`.
+
+Candidate full embeddings are stored under `checkpoints/full_embedding_cache/`. Each
+cache entry includes a model signature and is reused only when the weights and dataset
+shape match. Full HDBSCAN tuning uses a two-stage search: all population-scaled cluster
+sizes are scanned first, then `min_samples` and epsilon are refined around the winning
+size.
 
 Training displays epoch, batch, loss, and HDBSCAN-tuning progress with `tqdm`. Deprecation
 and future warnings are hidden by default. Use `--show-warnings` to restore them or
@@ -53,7 +62,7 @@ Interrupted revised runs can resume with complete optimizer and early-stopping s
 ```bash
 python VAE_supervised_train/train.py \
   --dataset VAE_supervised_train/cache/messages.jsonl \
-  --resume VAE_supervised_train/checkpoints/latest.pth
+  --resume VAE_supervised_train/checkpoints/latest_v3.pth
 ```
 
 `--epochs` is the final epoch number when resuming, not the number of additional epochs.
@@ -65,7 +74,7 @@ Evaluate a checkpoint with independent HDBSCAN runs per protocol:
 ```bash
 python VAE_supervised_train/evaluate.py \
   --dataset VAE_supervised_train/cache/messages.jsonl \
-  --checkpoint VAE_supervised_train/checkpoints/best_v2.pth \
+  --checkpoint VAE_supervised_train/checkpoints/best_v3.pth \
   --output VAE_supervised_train/checkpoints/evaluation.json
 ```
 

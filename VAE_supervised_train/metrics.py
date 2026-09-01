@@ -48,13 +48,13 @@ def clustering_metrics(truth: np.ndarray, predicted: np.ndarray) -> dict[str, An
 
 
 def run_hdbscan(embeddings: np.ndarray, min_cluster_size: int = 5, min_samples: int | None = None,
-                cluster_selection_epsilon: float = 0.0) -> np.ndarray:
+                cluster_selection_epsilon: float = 0.0, standardized: bool = False) -> np.ndarray:
     if len(embeddings) < 2:
         return np.full(len(embeddings), -1, dtype=int)
-    scaled = StandardScaler().fit_transform(embeddings)
+    scaled = embeddings if standardized else StandardScaler().fit_transform(embeddings)
     return hdbscan.HDBSCAN(min_cluster_size=min(min_cluster_size, len(embeddings)), min_samples=min_samples,
                            cluster_selection_epsilon=cluster_selection_epsilon,
-                           cluster_selection_method="eom").fit_predict(scaled)
+                           cluster_selection_method="eom", allow_single_cluster=True).fit_predict(scaled)
 
 
 def checkpoint_key(metrics: dict[str, Any]) -> tuple[float, ...]:

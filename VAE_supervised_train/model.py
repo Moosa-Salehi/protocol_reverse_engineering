@@ -76,11 +76,13 @@ def save_checkpoint(path: str, model: SupervisedVAE, config: dict, metrics: dict
 
 
 def save_training_checkpoint(path: str, model: SupervisedVAE, optimizer, scaler, config: dict,
-                             epoch: int, best_key, stale: int, best_metrics: dict | None) -> None:
+                             epoch: int, best_key, subset_best_key, stale: int,
+                             best_metrics: dict | None) -> None:
     _atomic_torch_save({"format": "protocol-re-supervised-vae-training-v1", "model_state": model.state_dict(),
                         "model_config": {"max_len": model.max_len, "latent_dim": model.latent_dim},
                         "optimizer_state": optimizer.state_dict(), "scaler_state": scaler.state_dict(),
                         "training_config": config, "epoch": epoch, "best_key": best_key,
+                        "subset_best_key": subset_best_key, "selection_scope": "full_corpus",
                         "stale": stale, "best_metrics": best_metrics}, path)
 
 
