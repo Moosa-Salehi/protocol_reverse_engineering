@@ -85,6 +85,10 @@ The checkpoint is intentionally a new format and is not silently compatible with
 legacy `assets/pre_trained/industrial_VAE.pth`. Its deterministic `mu` vector is the
 embedding intended for HDBSCAN.
 
+The top-level `main.py` pipeline now defaults to `best_v3.pth` and neural family
+features. Explicit `--family-neural-model-path` and `--family-supervised-hdbscan-checkpoint` 
+arguments can still override these defaults.
+
 To use the supervised encoder in the existing family-discovery stage, pass the
 checkpoint as the neural model and provide the existing filter argument. 
 The filter is metadata and it is never supplied to the model:

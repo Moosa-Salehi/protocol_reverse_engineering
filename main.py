@@ -191,7 +191,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     stage04_args = next(arguments for name, arguments in pipeline if name == "04_discover_families")
     if args.tshark_filter:
         stage04_args.extend(["--tshark-filter", args.tshark_filter])
-    if args.family_supervised_hdbscan_checkpoint:
+    if args.family_supervised_hdbscan_checkpoint and args.tshark_filter:
         stage04_args.extend(["--supervised-hdbscan-checkpoint", _path(args.family_supervised_hdbscan_checkpoint)])
 
     # Stage 07b - LLM Boundary Refinement
@@ -717,18 +717,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     family_group.add_argument(
         "--family-feature-mode",
         choices=["raw_bytes", "structural", "neural", "hybrid"],
-        default="hybrid",
-        help="Feature encoding for family discovery. Default: raw_bytes.",
+        default="neural",
+        help="Feature encoding for family discovery. Default: neural supervised embeddings.",
     )
     family_group.add_argument(
         "--family-neural-model-path",
         type=Path,
-        default=Path("assets/pre_trained/industrial_VAE.pth"),
-        help="Optional VAE encoder checkpoint for neural/hybrid family discovery.",
+        default=Path("VAE_supervised_train/checkpoints/best_v3.pth"),
+        help="VAE encoder checkpoint for neural/hybrid family discovery. Defaults to the supervised checkpoint.",
     )
     family_group.add_argument(
         "--family-supervised-hdbscan-checkpoint",
         type=Path,
+        default=Path("VAE_supervised_train/checkpoints/best_v3.pth"),
         help="Supervised VAE checkpoint whose protocol-local HDBSCAN settings are used by stage 04.",
     )
     family_group.add_argument(
@@ -938,7 +939,7 @@ def validate_args(args: argparse.Namespace) -> None:
     args.family_neural_model_path = _resolve_under_project(args.family_neural_model_path)
     if args.family_supervised_hdbscan_checkpoint:
         args.family_supervised_hdbscan_checkpoint = _resolve_under_project(args.family_supervised_hdbscan_checkpoint)
-        if not args.family_supervised_hdbscan_checkpoint.is_file():
+        if not args.family_supervised_hdbscan_checkpoint.is_file() and args.tshark_filter:
             raise SystemExit(f"{RED}Error:{RESET} supervised HDBSCAN checkpoint does not exist: {args.family_supervised_hdbscan_checkpoint}")
     if args.family_latent_cache_path:
         args.family_latent_cache_path = _resolve_under_project(args.family_latent_cache_path)
