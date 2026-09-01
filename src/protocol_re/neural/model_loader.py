@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from protocol_re.config.thresholds import NeuralModel as _NM
-from protocol_re.neural.encoder import TorchPayloadEncoder
+from protocol_re.neural.encoder import SupervisedPayloadEncoder, TorchPayloadEncoder
 
 try:
     from protocol_re.neural.enhanced_encoder import EnhancedTorchPayloadEncoder
@@ -148,7 +148,9 @@ def load_optional_encoder_with_reason(
 
     try:
         # Choose encoder type based on use_enhanced flag
-        if use_enhanced and ENHANCED_ENCODER_AVAILABLE:
+        if _is_supervised_artifact(artifact):
+            encoder = SupervisedPayloadEncoder(model, latent_dim=latent_dim, max_length=max_len)
+        elif use_enhanced and ENHANCED_ENCODER_AVAILABLE:
             encoder = EnhancedTorchPayloadEncoder(
                 model,
                 latent_dim=latent_dim,
@@ -172,6 +174,16 @@ def _extract_model(artifact: object, *, latent_dim: int = 32, max_len: int = 256
 
     # Case 2: dict containing a module under known keys
     if isinstance(artifact, dict):
+        if artifact.get("format") == "protocol-re-supervised-vae-v1":
+            try:
+                from VAE_supervised_train.model import SupervisedVAE
+                config = artifact.get("model_config") or {"latent_dim": latent_dim, "max_len": max_len}
+                model = SupervisedVAE(**config)
+                model.load_state_dict(artifact["model_state"])
+                model.eval()
+                return model
+            except Exception:
+                return None
         for key in ("encoder", "model", "module"):
             candidate = artifact.get(key)
             if hasattr(candidate, "eval") and callable(getattr(candidate, "eval", None)):
@@ -186,6 +198,10 @@ def _extract_model(artifact: object, *, latent_dim: int = 32, max_len: int = 256
             return model
 
     return None
+
+
+def _is_supervised_artifact(artifact: object) -> bool:
+    return isinstance(artifact, dict) and artifact.get("format") == "protocol-re-supervised-vae-v1"
 
 def _torch_load_model_artifact(path: Path) -> object:
     try:

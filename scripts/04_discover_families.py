@@ -23,6 +23,8 @@ def main() -> None:
     parser.add_argument("--hdbscan-min-cluster-size", type=int, default=50)
     parser.add_argument("--feature-mode", choices=["raw_bytes", "structural", "neural", "hybrid"], default="raw_bytes")
     parser.add_argument("--neural-model-path", default="industrial_VAE.pth")
+    parser.add_argument("--tshark-filter", help="Tshark filter supplied by user.")
+    parser.add_argument("--supervised-hdbscan-checkpoint", help="Supervised VAE checkpoint containing protocol-local HDBSCAN settings.")
     parser.add_argument("--latent-cache-path")
     parser.add_argument("--neural-batch-size", type=int, default=256)
     parser.add_argument("--fusion-method", choices=["concat", "adaptive", "learned", "fixed"], default="adaptive",
@@ -62,6 +64,31 @@ def main() -> None:
     parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer detection")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
+
+    # The filter is the user-provided. It is metadata only and never enters the neural model.
+    supervised_hdbscan = None
+    protocol_filter = (args.tshark_filter or "").strip().lower()
+    if args.supervised_hdbscan_checkpoint:
+        try:
+            with open(args.supervised_hdbscan_checkpoint, "rb") as handle:
+                import torch
+                checkpoint = torch.load(handle, map_location="cpu", weights_only=False)
+            saved = (checkpoint.get("metrics") or {}).get("hdbscan_per_protocol", {})
+            if protocol_filter:
+                matches = [key for key in saved if key == protocol_filter or key in protocol_filter or protocol_filter in key]
+                if len(matches) == 1:
+                    supervised_hdbscan = saved[matches[0]]
+                elif len(matches) > 1:
+                    raise ValueError(f"Ambiguous --tshark-filter {protocol_filter!r}: matches {matches}")
+                else:
+                    raise ValueError(f"No settings for {protocol_filter!r} in checkpoint")
+            elif len(saved) == 1:
+                supervised_hdbscan = next(iter(saved.values()))
+            else:
+                raise ValueError("--tshark-filter is required with a multi-protocol supervised checkpoint")
+            args.hdbscan_min_cluster_size = int(supervised_hdbscan["min_cluster_size"])
+        except Exception as exc:
+            parser.error(f"could not load supervised HDBSCAN settings: {exc}")
 
     # Setup logging
     logger = setup_stage_logging("04_discover_families", Path(args.log_dir))
@@ -112,7 +139,7 @@ def main() -> None:
         result = discover_families(
             records,
             method=args.method,
-            sample_size=args.sample_size,
+            sample_size=None if args.sample_size <= 0 else args.sample_size,
             pca_components=args.pca_components,
             dbscan_eps=args.dbscan_eps,
             dbscan_min_samples=args.dbscan_min_samples,
@@ -187,7 +214,7 @@ def main() -> None:
             effective_mode=result.feature_mode,
         )
 
-    requested_sample = args.sample_size if args.sample_size is not None else len(records)
+    requested_sample = args.sample_size if args.sample_size and args.sample_size > 0 else len(records)
     assignment_strategy = (
         "full_corpus_clustering"
         if result.sample_size >= len(records)
@@ -214,6 +241,9 @@ def main() -> None:
             "fallback_reason": result.fallback_reason,
             "discriminator_refinement": result.refinement,
             "conformance_filter": result.conformance,
+            "tshark_filter": args.tshark_filter,
+            "supervised_hdbscan_checkpoint": args.supervised_hdbscan_checkpoint,
+            "supervised_hdbscan": supervised_hdbscan,
         },
     }
 

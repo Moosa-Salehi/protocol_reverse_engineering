@@ -84,3 +84,18 @@ Evaluation automatically uses the saved per-protocol HDBSCAN settings. Pass
 The checkpoint is intentionally a new format and is not silently compatible with the
 legacy `assets/pre_trained/industrial_VAE.pth`. Its deterministic `mu` vector is the
 embedding intended for HDBSCAN.
+
+To use the supervised encoder in the existing family-discovery stage, pass the
+checkpoint as the neural model and provide the existing filter argument. 
+The filter is metadata and it is never supplied to the model:
+
+```bash
+python scripts/04_discover_families.py input_messages.jsonl families.json \
+  --method hdbscan \
+  --feature-mode neural \
+  --neural-model-path VAE_supervised_train/checkpoints/best_v3.pth \
+  --supervised-hdbscan-checkpoint VAE_supervised_train/checkpoints/best_v3.pth \
+  --tshark-filter modbus \
+  --sample-size 0 \
+  --pca-components 0
+```
