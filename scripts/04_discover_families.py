@@ -68,6 +68,11 @@ def main() -> None:
     # The filter is the user-provided. It is metadata only and never enters the neural model.
     supervised_hdbscan = None
     protocol_filter = (args.tshark_filter or "").strip().lower()
+    protocol_aliases = {
+        "iec60870_104": "iec104",
+        "iec60870-104": "iec104",
+    }
+    protocol_id = protocol_aliases.get(protocol_filter, protocol_filter)
     if args.supervised_hdbscan_checkpoint:
         try:
             with open(args.supervised_hdbscan_checkpoint, "rb") as handle:
@@ -75,7 +80,7 @@ def main() -> None:
                 checkpoint = torch.load(handle, map_location="cpu", weights_only=False)
             saved = (checkpoint.get("metrics") or {}).get("hdbscan_per_protocol", {})
             if protocol_filter:
-                matches = [key for key in saved if key == protocol_filter or key in protocol_filter or protocol_filter in key]
+                matches = [key for key in saved if key == protocol_id or key in protocol_id or protocol_id in key]
                 if len(matches) == 1:
                     supervised_hdbscan = saved[matches[0]]
                 elif len(matches) > 1:
