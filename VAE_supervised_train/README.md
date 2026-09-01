@@ -2,7 +2,10 @@
 
 This directory contains an isolated experimental pipeline. Trusted protocol and family
 metadata is used by annotation, balanced sampling, loss construction, and evaluation;
-the model input contains only payload byte IDs and a padding mask.
+the model input contains only payload byte IDs and a padding mask. TShark protocol fields
+provide training labels only. Model inputs use the same generic TCP, UDP, or L2 payload
+extraction as the runtime pipeline, so a checkpoint can be applied to an unknown filter
+such as `tcp.dstport == 6768`.
 
 Build the cached dataset from the existing sampled captures:
 
@@ -15,6 +18,8 @@ python VAE_supervised_train/build_dataset.py \
 Each PCAP result is cached under `cache/pcap_records/`. Re-running the command reuses a
 cache entry when the source path, size, modification time, extraction rules, and
 confidence threshold are unchanged. Use `--force` only to deliberately rerun TShark.
+The v2 manifest records `tshark_transport_or_l2_payload` as the input representation;
+the trainer rejects older dissector-level datasets.
 
 Train on all eligible records (there is no database row split):
 
@@ -32,7 +37,8 @@ to evaluation. Sampling with replacement safely handles small families.
 The current defaults write `best_v3.pth`, `latest_v3.pth`, and `metrics_v3.jsonl`,
 preserving earlier runs. Validation is performed every five epochs on a deterministic
 family-stratified subset. All eligible records are still used for training. Each
-protocol tunes HDBSCAN independently.
+protocol tunes HDBSCAN independently. The checkpoint also stores population-scaled
+global settings for filters that cannot be mapped to a known training protocol.
 
 With the default zero reconstruction weight, the decoder is bypassed completely during
 training. Metrics are JSONL by default; pass `--metrics-format json` for a single JSON

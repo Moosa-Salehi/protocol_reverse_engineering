@@ -21,6 +21,8 @@ def main() -> None:
     parser.add_argument("--dbscan-eps", type=float, default=40.0)
     parser.add_argument("--dbscan-min-samples", type=int, default=5)
     parser.add_argument("--hdbscan-min-cluster-size", type=int, default=50)
+    parser.add_argument("--hdbscan-min-samples", type=int)
+    parser.add_argument("--hdbscan-cluster-selection-epsilon", type=float, default=0.0)
     parser.add_argument("--feature-mode", choices=["raw_bytes", "structural", "neural", "hybrid"], default="raw_bytes")
     parser.add_argument("--neural-model-path", default="industrial_VAE.pth")
     parser.add_argument("--tshark-filter", help="Tshark filter supplied by user.")
@@ -67,6 +69,7 @@ def main() -> None:
 
     # The filter is the user-provided. It is metadata only and never enters the neural model.
     supervised_hdbscan = None
+    supervised_hdbscan_is_global = False
     protocol_filter = (args.tshark_filter or "").strip().lower()
     protocol_aliases = {
         "iec60870_104": "iec104",
@@ -85,6 +88,13 @@ def main() -> None:
                 import torch
                 checkpoint = torch.load(handle, map_location="cpu", weights_only=False)
             saved = (checkpoint.get("metrics") or {}).get("hdbscan_per_protocol", {})
+            saved_global = (checkpoint.get("metrics") or {}).get("hdbscan_global")
+            input_contract = checkpoint.get("input_contract") or {}
+            if input_contract.get("payload_source") != "tshark_transport_or_l2_payload":
+                raise ValueError(
+                    "checkpoint was not trained on generic transport/L2 payloads; rebuild the "
+                    "training dataset and retrain the supervised VAE"
+                )
             if protocol_filter:
                 matches = [key for key in saved if key == protocol_id or key in protocol_id or protocol_id in key]
                 if len(matches) == 1:
@@ -92,12 +102,31 @@ def main() -> None:
                 elif len(matches) > 1:
                     raise ValueError(f"Ambiguous --tshark-filter {protocol_filter!r}: matches {matches}")
                 else:
-                    raise ValueError(f"No settings for {protocol_filter!r} in checkpoint")
+                    supervised_hdbscan = saved_global
+                    supervised_hdbscan_is_global = True
             elif len(saved) == 1:
                 supervised_hdbscan = next(iter(saved.values()))
             else:
                 raise ValueError("--tshark-filter is required with a multi-protocol supervised checkpoint")
+            if supervised_hdbscan is None and saved:
+                values = list(saved.values())
+                sizes = sorted(int(item["min_cluster_size"]) for item in values)
+                sample_values = sorted(int(item["min_samples"]) for item in values if item.get("min_samples") is not None)
+                supervised_hdbscan = {
+                    "min_cluster_size": sizes[len(sizes) // 2],
+                    "min_samples": sample_values[len(sample_values) // 2] if sample_values else None,
+                    "cluster_selection_epsilon": 0.0,
+                    "selection": "derived_global_checkpoint_fallback",
+                }
+                supervised_hdbscan_is_global = True
+            if supervised_hdbscan is None:
+                raise ValueError("checkpoint contains no HDBSCAN settings")
             args.hdbscan_min_cluster_size = int(supervised_hdbscan["min_cluster_size"])
+            args.hdbscan_min_samples = supervised_hdbscan.get("min_samples")
+            args.hdbscan_cluster_selection_epsilon = float(
+                supervised_hdbscan.get("cluster_selection_epsilon", 0.0)
+            )
+            args.standardize_latent = True
         except Exception as exc:
             parser.error(f"could not load supervised HDBSCAN settings: {exc}")
 
@@ -115,6 +144,11 @@ def main() -> None:
         records = load_corpus_jsonl(args.input_jsonl)
         logger.metric("message_count", len(records), "messages")
         logger.info(f"Loaded {len(records)} messages")
+
+    if supervised_hdbscan_is_global and supervised_hdbscan:
+        fraction = supervised_hdbscan.get("min_cluster_size_fraction")
+        if fraction is not None:
+            args.hdbscan_min_cluster_size = max(2, round(len(records) * float(fraction)))
 
     framing_data = None
     if args.layer_aware and args.framing_json:
@@ -155,6 +189,8 @@ def main() -> None:
             dbscan_eps=args.dbscan_eps,
             dbscan_min_samples=args.dbscan_min_samples,
             hdbscan_min_cluster_size=args.hdbscan_min_cluster_size,
+            hdbscan_min_samples=args.hdbscan_min_samples,
+            hdbscan_cluster_selection_epsilon=args.hdbscan_cluster_selection_epsilon,
             feature_mode=args.feature_mode,
             neural_model_path=args.neural_model_path,
             latent_cache_path=args.latent_cache_path,

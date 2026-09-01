@@ -10,9 +10,12 @@ from pathlib import Path
 from typing import Any
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    project_root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(project_root))
+    sys.path.insert(0, str(project_root / "src"))
 
 from VAE_supervised_train.common import file_fingerprint, stable_id, write_jsonl
+from protocol_re.io.extract_payloads import _extract_tshark_packets, _payloads_from_tshark_packets
 
 
 PROTOCOLS: dict[str, dict[str, Any]] = {
@@ -105,31 +108,39 @@ def tshark_packets(path: Path, display_filter: str) -> list[dict[str, Any]]:
 
 def process_pcap(path: Path, protocol_id: str, config: dict[str, Any], threshold: float) -> tuple[list[dict], Counter]:
     accepted, stats = [], Counter()
+    generic_payloads: dict[int, list[dict[str, Any]]] = {}
+    for payload in _payloads_from_tshark_packets(_extract_tshark_packets(str(path), config["filter"])):
+        frame_number = int(payload.get("metadata", {}).get("frame", {}).get("number") or 0)
+        generic_payloads.setdefault(frame_number, []).append(payload)
     for packet in tshark_packets(path, config["filter"]):
         layers = packet.get("_source", {}).get("layers", {})
         frame = layers.get("frame", {})
         family = select_family(layers, config["fields"])
         if family is None and config.get("constant_family") and config["raw"][0] in layers:
             family = (str(config["constant_family"]), f"{config['raw'][0]}_dissector", 1.0)
-        payload = select_payload(layers, config["raw"])
         if family is None:
             stats["rejected_family"] += 1
             continue
-        if payload is None:
+        frame_number = int(frame.get("frame.number", 0))
+        payload_matches = generic_payloads.get(frame_number, [])
+        if len(payload_matches) != 1:
             stats["rejected_payload"] += 1
             continue
         family_id, field_name, confidence = family
         if confidence < threshold:
             stats["rejected_confidence"] += 1
             continue
-        payload_hex, offset, length, dissector = payload
-        frame_number = int(frame.get("frame.number", 0))
+        payload_hex = str(payload_matches[0]["payload_hex"])
+        length = len(payload_hex) // 2
         accepted.append({
-            "record_id": stable_id(protocol_id, path, frame_number, offset, payload_hex),
+            "record_id": stable_id(protocol_id, path, frame_number, payload_hex),
             "payload_hex": payload_hex, "payload_len": length, "protocol_id": protocol_id,
-            "source_pcap": str(path), "frame_number": frame_number, "frame_offset": offset,
+            "source_pcap": str(path), "frame_number": frame_number, "frame_offset": 0,
             "trusted_family_id": family_id, "annotation_confidence": confidence,
-            "annotation_evidence": {"field_name": field_name, "dissector": dissector},
+            "annotation_evidence": {
+                "field_name": field_name,
+                "payload_source": "tshark_transport_or_l2_payload",
+            },
         })
         stats["accepted"] += 1
     return accepted, stats
@@ -153,7 +164,12 @@ def main() -> None:
     for protocol_id in sorted(selected):
         for pcap in sorted((args.pcap_root / protocol_id).glob("*.pcap*")):
             fingerprint = file_fingerprint(pcap)
-            cache_key = stable_id(fingerprint, PROTOCOLS[protocol_id], args.min_confidence)
+            cache_key = stable_id(
+                "tshark_transport_or_l2_payload_v1",
+                fingerprint,
+                PROTOCOLS[protocol_id],
+                args.min_confidence,
+            )
             cache_path = cache_dir / f"{protocol_id}_{cache_key}.json"
             if cache_path.exists() and not args.force:
                 cached = json.loads(cache_path.read_text(encoding="utf-8"))
@@ -164,7 +180,8 @@ def main() -> None:
             all_rows.extend(rows)
             totals.update(stats)
     write_jsonl(args.output, all_rows)
-    manifest = {"format": "protocol-re-trusted-families-v1", "records": len(all_rows),
+    manifest = {"format": "protocol-re-trusted-families-v2", "records": len(all_rows),
+                "payload_source": "tshark_transport_or_l2_payload",
                 "protocols": sorted(selected), "min_confidence": args.min_confidence, "stats": totals}
     args.output.with_suffix(".manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps(manifest, indent=2, sort_keys=True))

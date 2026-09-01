@@ -406,6 +406,8 @@ def discover_families(
     dbscan_eps: float = 40.0,
     dbscan_min_samples: int = 5,
     hdbscan_min_cluster_size: int = 50,
+    hdbscan_min_samples: int | None = None,
+    hdbscan_cluster_selection_epsilon: float = 0.0,
     feature_mode: str = "raw_bytes",
     neural_model_path: str | None = None,
     latent_cache_path: str | None = None,
@@ -519,7 +521,7 @@ def discover_families(
         # One standardizer is fit on the sampled matrix below and reused for every
         # unsampled batch, keeping sampled centroids and batched assignments in a single
         # latent coordinate system (a fresh per-batch fit would not).
-        latent_standardizer = LatentStandardizer() if standardize_latent else None
+        latent_standardizer = LatentStandardizer(clip=None) if standardize_latent else None
 
         feature_info = build_feature_matrix(
             working_records,
@@ -574,7 +576,13 @@ def discover_families(
                 message=".*force_all_finite.*ensure_all_finite.*",
                 category=FutureWarning,
             )
-            labels = hdbscan.HDBSCAN(min_cluster_size=hdbscan_min_cluster_size, allow_single_cluster=True).fit_predict(reduced)
+            labels = hdbscan.HDBSCAN(
+                min_cluster_size=min(hdbscan_min_cluster_size, len(reduced)),
+                min_samples=hdbscan_min_samples,
+                cluster_selection_epsilon=hdbscan_cluster_selection_epsilon,
+                cluster_selection_method="eom",
+                allow_single_cluster=True,
+            ).fit_predict(reduced)
     else:
         raise ValueError(f"Unsupported clustering method: {method}")
 

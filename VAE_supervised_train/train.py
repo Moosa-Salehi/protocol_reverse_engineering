@@ -7,6 +7,8 @@ import json
 import os
 import sys
 import warnings
+import statistics
+from collections import Counter
 from pathlib import Path
 
 if __package__ in {None, ""}:
@@ -97,6 +99,21 @@ def tune_hdbscan(dataset, embeddings: np.ndarray, sizes: list[int], samples: lis
         parameters[protocol] = {"min_cluster_size": best[1], "min_samples": best[2],
                                 "cluster_selection_epsilon": best[3]}
     report = evaluate_embeddings(dataset, embeddings, protocol_parameters=parameters)
+    values = list(parameters.values())
+    protocol_counts = Counter(row["protocol_id"] for row in dataset.rows)
+    non_null_samples = [item["min_samples"] for item in values if item["min_samples"] is not None]
+    report["hdbscan_global"] = {
+        "min_cluster_size": max(2, int(statistics.median(item["min_cluster_size"] for item in values))),
+        "min_cluster_size_fraction": float(statistics.median(
+            item["min_cluster_size"] / max(1, protocol_counts[protocol])
+            for protocol, item in parameters.items()
+        )),
+        "min_samples": int(statistics.median(non_null_samples)) if non_null_samples else None,
+        "cluster_selection_epsilon": float(statistics.median(
+            item["cluster_selection_epsilon"] for item in values
+        )),
+        "selection": "median_of_protocol_tuned_parameters",
+    }
     return report, aggregate_validation(report)
 
 
@@ -217,6 +234,15 @@ def main() -> None:
     parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bars.")
     args = parser.parse_args()
     seed_everything(args.seed)
+    manifest_path = args.dataset.with_suffix(".manifest.json")
+    if not manifest_path.exists():
+        raise SystemExit(f"Dataset manifest not found: {manifest_path}")
+    dataset_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if dataset_manifest.get("payload_source") != "tshark_transport_or_l2_payload":
+        raise SystemExit(
+            "Dataset uses the legacy dissector-level payload representation. "
+            "Rebuild it with VAE_supervised_train/build_dataset.py before training."
+        )
     train_protocols = parse_protocols(args.train_protocols)
     validation_protocols = parse_protocols(args.validation_protocols) if args.validation_protocols else train_protocols
     train_data = MessageFamilyDataset(args.dataset, train_protocols, args.max_len,

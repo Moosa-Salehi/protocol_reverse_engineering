@@ -16,6 +16,8 @@ def _atomic_torch_save(payload: dict, path: str) -> None:
 def save_checkpoint(path: str, model: SupervisedVAE, config: dict, metrics: dict, epoch: int) -> None:
     _atomic_torch_save({"format": "protocol-re-supervised-vae-v1", "model_state": model.state_dict(),
                         "model_config": {"max_len": model.max_len, "latent_dim": model.latent_dim},
+                        "input_contract": {"payload_source": "tshark_transport_or_l2_payload",
+                                           "max_len": model.max_len, "latent_scaling": "standard_scaler"},
                         "training_config": config, "metrics": metrics, "epoch": epoch}, path)
 
 
@@ -24,6 +26,8 @@ def save_training_checkpoint(path: str, model: SupervisedVAE, optimizer, scaler,
                              best_metrics: dict | None) -> None:
     _atomic_torch_save({"format": "protocol-re-supervised-vae-training-v1", "model_state": model.state_dict(),
                         "model_config": {"max_len": model.max_len, "latent_dim": model.latent_dim},
+                        "input_contract": {"payload_source": "tshark_transport_or_l2_payload",
+                                           "max_len": model.max_len, "latent_scaling": "standard_scaler"},
                         "optimizer_state": optimizer.state_dict(), "scaler_state": scaler.state_dict(),
                         "training_config": config, "epoch": epoch, "best_key": best_key,
                         "subset_best_key": subset_best_key, "selection_scope": "full_corpus",
@@ -35,6 +39,8 @@ def load_training_checkpoint(path: str, model: SupervisedVAE, optimizer, scaler,
     payload = torch.load(path, map_location=device, weights_only=False)
     if payload.get("format") != "protocol-re-supervised-vae-training-v1":
         raise ValueError("Resume requires a latest training checkpoint, not a best model checkpoint")
+    if (payload.get("input_contract") or {}).get("payload_source") != "tshark_transport_or_l2_payload":
+        raise ValueError("Resume checkpoint uses the legacy dissector-level payload representation")
     expected = {"max_len": model.max_len, "latent_dim": model.latent_dim}
     if payload.get("model_config") != expected:
         raise ValueError(f"Resume model configuration mismatch: {payload.get('model_config')} != {expected}")

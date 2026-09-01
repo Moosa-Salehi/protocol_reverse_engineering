@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 from protocol_re.neural.model_loader import load_optional_encoder_with_reason
+from protocol_re.neural.encoder import SupervisedPayloadEncoder
 
 try:
     import torch
@@ -143,24 +144,41 @@ def encoder_gradient_salience(
     # to the data-derived max_length instead would break the model's matmul.
     model_length = int(getattr(encoder, "max_length", 0) or max_length)
     try:
-        rows: List[List[float]] = []
-        for payload in payloads[:sample_limit]:
-            clipped = payload[:model_length]
-            row = [value / 255.0 for value in clipped]
-            row.extend([0.0] * (model_length - len(row)))
-            rows.append(row)
-        x = torch.tensor(rows, dtype=torch.float32, requires_grad=True)
-        output = encoder.model(x)
-        if isinstance(output, (tuple, list)):
-            output = output[0]
-        if isinstance(output, dict):
-            for key in ("z", "latent", "mu", "embedding"):
-                if key in output:
-                    output = output[key]
-                    break
-        score = output.float().pow(2).mean()
-        score.backward()
-        salience = x.grad.detach().abs().mean(dim=0).cpu().tolist()
+        if isinstance(encoder, SupervisedPayloadEncoder):
+            byte_ids, mask = encoder._batch_tensor(payloads[:sample_limit])
+            captured = []
+
+            def capture_embedding(_module, _inputs, output):
+                output.retain_grad()
+                captured.append(output)
+
+            hook = encoder.model.byte_embedding.register_forward_hook(capture_embedding)
+            try:
+                mu, _ = encoder.model.encode(byte_ids, mask)
+                mu.float().pow(2).mean().backward()
+            finally:
+                hook.remove()
+            embedding = captured[0]
+            salience = embedding.grad.detach().norm(dim=2).mean(dim=0).cpu().tolist()
+        else:
+            rows: List[List[float]] = []
+            for payload in payloads[:sample_limit]:
+                clipped = payload[:model_length]
+                row = [value / 255.0 for value in clipped]
+                row.extend([0.0] * (model_length - len(row)))
+                rows.append(row)
+            x = torch.tensor(rows, dtype=torch.float32, requires_grad=True)
+            output = encoder.model(x)
+            if isinstance(output, (tuple, list)):
+                output = output[0]
+            if isinstance(output, dict):
+                for key in ("z", "latent", "mu", "embedding"):
+                    if key in output:
+                        output = output[key]
+                        break
+            score = output.float().pow(2).mean()
+            score.backward()
+            salience = x.grad.detach().abs().mean(dim=0).cpu().tolist()
     except Exception as exc:  # pragma: no cover - depends on external model shape
         return {"available": False, "reason": f"gradient_failed:{exc.__class__.__name__}", "offset_scores": []}
     max_score = max(salience) if salience else 0.0

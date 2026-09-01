@@ -19,13 +19,16 @@ try:
     import torch.nn as nn # type: ignore
 except Exception:  # pragma: no cover - optional dependency
     torch = None
+    nn = None
 
 
 # Re-export for backward compatibility
 DEFAULT_MODEL_PATH = _NM.DEFAULT_MODEL_PATH
 
-class ConvVAE(nn.Module):
+class ConvVAE(nn.Module if nn is not None else object):
     def __init__(self, latent_dim=32, max_len=256):
+        if nn is None:
+            raise RuntimeError("PyTorch is required to construct ConvVAE")
         super().__init__()
         self.compressed_len = max_len // 8
         self.flattened_size = 128 * self.compressed_len
@@ -149,7 +152,11 @@ def load_optional_encoder_with_reason(
     try:
         # Choose encoder type based on use_enhanced flag
         if _is_supervised_artifact(artifact):
-            encoder = SupervisedPayloadEncoder(model, latent_dim=latent_dim, max_length=max_len)
+            encoder = SupervisedPayloadEncoder(
+                model,
+                latent_dim=int(getattr(model, "latent_dim", latent_dim)),
+                max_length=int(getattr(model, "max_len", max_len)),
+            )
         elif use_enhanced and ENHANCED_ENCODER_AVAILABLE:
             encoder = EnhancedTorchPayloadEncoder(
                 model,
