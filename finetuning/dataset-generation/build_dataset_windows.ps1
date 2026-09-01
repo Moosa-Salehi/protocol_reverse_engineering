@@ -15,6 +15,7 @@ $FinetuningRoot=Split-Path -Parent $PSScriptRoot
 $Root=Split-Path -Parent $FinetuningRoot
 $Work=Join-Path $FinetuningRoot "windows_data"
 $Samples=Join-Path $Work "sampled_pcaps"
+$SupervisedCheckpoint=Join-Path $Root "VAE_supervised_train\checkpoints\best_v3.pth"
 New-Item -ItemType Directory -Force -Path $Samples | Out-Null
 function Invoke-Python([string[]]$Arguments) {
   if($Python -eq "py -3.12") { & py -3.12 @Arguments }
@@ -39,7 +40,8 @@ foreach($Entry in $Protocols){
   $PcapFiles=@(Get-ChildItem $SampleInput -File -ErrorAction SilentlyContinue | Where-Object {$_.Extension -in ".pcap", ".pcapng", ".cap"})
   if($PcapFiles.Count -eq 0){Write-Warning "No sampled PCAPs for $Name; skipping protocol";continue}
   $Run=Join-Path $Work "runs\$Name";$Data=Join-Path $Run "data";$Output=Join-Path $Run "output";$Logs=Join-Path $Run "logs"
-  Invoke-Python @("$Root\main.py", $SampleInput, "--extraction-method", "tshark", "--tshark-filter", $Filter, "--max-messages", $MaxMessages, "--data-dir", $Data, "--output-dir", $Output, "--log-dir", $Logs, "--llm-render-only", "--stop-after", "13_evaluate_pipeline")
+  if(-not (Test-Path $SupervisedCheckpoint)){ throw "Supervised VAE checkpoint not found: $SupervisedCheckpoint" }
+  Invoke-Python @("$Root\main.py", $SampleInput, "--extraction-method", "tshark", "--tshark-filter", $Filter, "--max-messages", $MaxMessages, "--data-dir", $Data, "--output-dir", $Output, "--log-dir", $Logs, "--family-feature-mode", "neural", "--family-neural-model-path", $SupervisedCheckpoint, "--family-supervised-hdbscan-checkpoint", $SupervisedCheckpoint, "--llm-render-only", "--stop-after", "13_evaluate_pipeline")
   Invoke-Python @("$Root\scripts\14_export_llm_evidence.py", "$Data\10_protocol_model.json", "$Data\12_llm_evidence.json", "--evaluation-json", "$Data\11_evaluation.json", "--pretty", "--log-dir", $Logs)
   $Targets=Join-Path $Work "wireshark_targets\$Name.json"
   if(-not $SkipTargetGeneration){

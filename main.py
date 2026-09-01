@@ -186,6 +186,13 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ),
         ]
     )
+    # Preserve the extraction filter as stage-04 protocol metadata. A supervised
+    # checkpoint uses this value to select protocol-local HDBSCAN settings.
+    stage04_args = next(arguments for name, arguments in pipeline if name == "04_discover_families")
+    if args.tshark_filter:
+        stage04_args.extend(["--tshark-filter", args.tshark_filter])
+    if args.family_supervised_hdbscan_checkpoint:
+        stage04_args.extend(["--supervised-hdbscan-checkpoint", _path(args.family_supervised_hdbscan_checkpoint)])
 
     # Stage 07b - LLM Boundary Refinement
     if not args.llm_render_only:
@@ -720,6 +727,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Optional VAE encoder checkpoint for neural/hybrid family discovery.",
     )
     family_group.add_argument(
+        "--family-supervised-hdbscan-checkpoint",
+        type=Path,
+        help="Supervised VAE checkpoint whose protocol-local HDBSCAN settings are used by stage 04.",
+    )
+    family_group.add_argument(
         "--family-latent-cache-path",
         type=Path,
         help="Cache path for payload-hash neural latent vectors. Defaults to <data-dir>/02_latent_cache.json.",
@@ -924,6 +936,10 @@ def validate_args(args: argparse.Namespace) -> None:
         args.pcap_dir = args.data_dir / "pcaps"
     args.llm_config = _resolve_under_project(args.llm_config)
     args.family_neural_model_path = _resolve_under_project(args.family_neural_model_path)
+    if args.family_supervised_hdbscan_checkpoint:
+        args.family_supervised_hdbscan_checkpoint = _resolve_under_project(args.family_supervised_hdbscan_checkpoint)
+        if not args.family_supervised_hdbscan_checkpoint.is_file():
+            raise SystemExit(f"{RED}Error:{RESET} supervised HDBSCAN checkpoint does not exist: {args.family_supervised_hdbscan_checkpoint}")
     if args.family_latent_cache_path:
         args.family_latent_cache_path = _resolve_under_project(args.family_latent_cache_path)
     else:
