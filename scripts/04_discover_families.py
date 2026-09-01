@@ -71,6 +71,12 @@ def main() -> None:
     protocol_aliases = {
         "iec60870_104": "iec104",
         "iec60870-104": "iec104",
+        "bacapp": "bacnet",
+        "ecat": "ethercat",
+        "zbee_nwk": "zigbee",
+        "pn_io": "profinet",
+        "epl": "powerlink",
+        "mbtcp || modbus": "modbus",
     }
     protocol_id = protocol_aliases.get(protocol_filter, protocol_filter)
     if args.supervised_hdbscan_checkpoint:
