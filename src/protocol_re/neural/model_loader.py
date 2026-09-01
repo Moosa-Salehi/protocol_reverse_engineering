@@ -176,7 +176,7 @@ def _extract_model(artifact: object, *, latent_dim: int = 32, max_len: int = 256
     if isinstance(artifact, dict):
         if artifact.get("format") == "protocol-re-supervised-vae-v1":
             try:
-                from VAE_supervised_train.model import SupervisedVAE
+                from protocol_re.neural.supervised_vae import SupervisedVAE
                 config = artifact.get("model_config") or {"latent_dim": latent_dim, "max_len": max_len}
                 model = SupervisedVAE(**config)
                 model.load_state_dict(artifact["model_state"])
