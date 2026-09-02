@@ -1,6 +1,6 @@
 param(
   [string]$Python = "py",
-  [string]$Tokenizer = "Qwen/Qwen2.5-14B-Instruct",
+  [string]$Tokenizer = "Qwen/Qwen2.5-Coder-7B-Instruct",
   [double]$ValidationFraction = 0.1,
   [int]$Seed = 42
 )

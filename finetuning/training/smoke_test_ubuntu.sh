@@ -7,7 +7,7 @@ python dataset-generation/make_smoke_dataset.py \
   --output-dir data/smoke
 rm -rf output/smoke
 python training/train_unsloth.py \
-  --model Qwen/Qwen2.5-14B-Instruct \
+  --model Qwen/Qwen2.5-Coder-7B-Instruct \
   --train data/smoke/train.jsonl \
   --validation data/smoke/validation.jsonl \
   --output output/smoke \

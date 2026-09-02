@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 DATA=${1:-data/holdout.jsonl}
-MODEL=${2:-Qwen/Qwen2.5-14B-Instruct}
-ADAPTER=${3:-output/qwen25-14b-protocol-re/adapter}
+MODEL=${2:-Qwen/Qwen2.5-Coder-7B-Instruct}
+ADAPTER=${3:-output/qwen25-coder-7b-protocol-re/adapter}
 OUT_DIR=${4:-output/holdout}
 mkdir -p "$OUT_DIR"
 python inference/evaluate_holdout.py --data "$DATA" --model "$MODEL" --output "$OUT_DIR/base.json"

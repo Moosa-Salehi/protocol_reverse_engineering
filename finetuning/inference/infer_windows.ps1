@@ -1,4 +1,4 @@
-param([string]$Model = "D:\Models\Qwen2.5-14B-ProtocolRE-Q4_K_M.gguf", [string]$PromptFile, [int]$Seed=42, [int]$MaxTokens=512)
+param([string]$Model = "D:\Models\Qwen2.5-Coder-7B-ProtocolRE-Q4_K_M.gguf", [string]$PromptFile, [int]$Seed=42, [int]$MaxTokens=512)
 $ErrorActionPreference="Stop"
 if (-not (Test-Path $Model)) { throw "GGUF not found: $Model" }
 if ($PromptFile) {
