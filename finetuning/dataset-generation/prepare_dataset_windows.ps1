@@ -45,10 +45,14 @@ New-Item -ItemType Directory -Force -Path (Join-Path $ApprovedRoot "train"), (Jo
 
 foreach ($setName in @("train", "holdout")) {
   $candidateDir = Join-Path $CandidateRoot $setName
-  if (-not (Test-Path $candidateDir)) { continue }
-  foreach ($candidate in Get-ChildItem $candidateDir -Filter *.jsonl -File | Sort-Object Name) {
-    $approved = Join-Path (Join-Path $ApprovedRoot $setName) $candidate.Name
-    Invoke-Python @((Join-Path $PSScriptRoot "promote_reviewed.py"), $candidate.FullName, $approved)
+    if (-not (Test-Path $candidateDir)) { continue }
+    foreach ($candidate in Get-ChildItem $candidateDir -Filter *.jsonl -File | Sort-Object Name) {
+      if ($candidate.Length -eq 0) {
+        Write-Host "Skipping empty candidate file $($candidate.FullName)"
+        continue
+      }
+      $approved = Join-Path (Join-Path $ApprovedRoot $setName) $candidate.Name
+      Invoke-Python @((Join-Path $PSScriptRoot "promote_reviewed.py"), $candidate.FullName, $approved)
   }
 }
 
