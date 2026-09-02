@@ -67,7 +67,6 @@ $auditArgs = @((Join-Path $PSScriptRoot "audit_leakage.py"), "--train", $raw, "-
 $samplingReport = Join-Path $WindowsData "sampled_pcaps\sampling_report.json"
 if (Test-Path $samplingReport) {
   Copy-Item $samplingReport (Join-Path $DataDir "sampling_report.json")
-  $auditArgs += @("--sampling-report", (Join-Path $DataDir "sampling_report.json"))
 }
 Invoke-Python $auditArgs
 Invoke-Python @((Join-Path $PSScriptRoot "summarize_dataset.py"), $raw, "--tokenizer", $Tokenizer, "--output", (Join-Path $DataDir "dataset_summary.json"))
