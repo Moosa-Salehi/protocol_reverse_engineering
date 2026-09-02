@@ -92,15 +92,19 @@ def locate_payload(frame_hex: str, payload_hex: str, raw_fields: list[tuple[str,
     scored.sort(reverse=True)
     return scored[0][1] if len(scored) == 1 or scored[0][0] > scored[1][0] else None
 
-def corpus_index(messages_path: Path, assignments_path: Path) -> dict[str, dict[str, Counter[str]]]:
+def corpus_index(messages_path: Path, assignments_path: Path) -> dict[str, dict[str, Any]]:
     assignments = {int(x["msg_id"]): str(x["family_id"]) for x in load_json(assignments_path).get("assignments", [])}
-    index: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
+    index: dict[str, dict[str, Any]] = defaultdict(lambda: {"payloads": defaultdict(Counter), "frames": defaultdict(Counter)})
     for line in messages_path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line); family = assignments.get(int(row["msg_id"]))
         if family:
-            index[Path(str(row.get("source_file", ""))).name][clean_hex(row["payload_hex"])][family] += 1
+            entry = index[Path(str(row.get("source_file", ""))).name]
+            entry["payloads"][clean_hex(row["payload_hex"])][family] += 1
+            frame_number = row.get("metadata", {}).get("frame_number") or row.get("frame_number")
+            if frame_number is not None:
+                entry["frames"][str(frame_number)][family] += 1
     return index
 
 def encoding_type(field_type: str, width: int) -> str:
@@ -147,16 +151,37 @@ def main() -> None:
                 frame = next((raw for abbrev, raw, offset, _ in fields if abbrev == "frame" and offset == 0), "")
                 if not frame:
                     continue
-                source_payloads = corpus.get(pcap.name, {})
+                source_entry = corpus.get(pcap.name, {"payloads": {}, "frames": {}})
+                frame_number = str(packet.get("_source", {}).get("layers", {}).get("frame", {}).get("frame.number", ""))
+                frame_families = source_entry["frames"].get(frame_number, Counter())
+                if len(frame_families) == 1:
+                    family = next(iter(frame_families))
+                    payload = None
+                    payload_start = None
+                else:
+                    family = None
+                    payload = None
+                source_payloads = source_entry["payloads"]
                 candidates = [(payload, families) for payload, families in source_payloads.items() if payload and payload in frame]
-                if not candidates:
+                if family is None and not candidates:
                     unmatched_packets += 1; continue
-                payload, family_counts = max(candidates, key=lambda item: len(item[0]))
-                if len(family_counts) != 1:
-                    ambiguous_families += 1; continue
-                family = next(iter(family_counts)); payload_start = locate_payload(frame, payload, fields)
+                if family is None:
+                    payload, family_counts = max(candidates, key=lambda item: len(item[0]))
+                    if len(family_counts) != 1:
+                        ambiguous_families += 1; continue
+                    family = next(iter(family_counts))
+                if payload is not None:
+                    payload_start = locate_payload(frame, payload, fields)
+                if payload_start is None and payload is not None:
+                    unmatched_packets += 1; continue
                 if payload_start is None:
-                    unmatched_packets += 1; continue
+                    # Frame-number joins identify the corpus message; use the
+                    # application payload span when available, otherwise frame bounds.
+                    payload_start = min((offset for abbrev, _raw, offset, width in fields
+                                         if abbrev.split('.', 1)[0] not in EXCLUDED_PROTOCOLS), default=0)
+                    payload = frame[payload_start * 2:]
+                if not payload:
+                    ambiguous_families += 1; continue
                 payload_end = payload_start + len(payload) // 2
                 signature = []
                 for abbrev, _raw, frame_offset, width in fields:
@@ -185,7 +210,8 @@ def main() -> None:
         for field in family.get("field_hypotheses", []) or []:
             offset = int(field.get("start", field.get("offset", 0)) or 0)
             width = int(field.get("width", field.get("length", 0)) or 0)
-            dominant_names = {name for field_offset, field_width, name in dominant_signature if field_offset == offset and field_width == width}
+            dominant_names = {name for field_offset, field_width, name in dominant_signature
+                              if max(field_offset, offset) < min(field_offset + field_width, offset + width)}
             supported = [(name, dominant_count) for name in sorted(dominant_names)
                          if dominant_count >= args.minimum_support]
             candidates = []
@@ -200,7 +226,8 @@ def main() -> None:
             elif boundary_eligible and supported:
                 abbrev, count = supported[0]
                 info = catalog.get(abbrev, {})
-                accepted.append({"offset": offset, "width": width, "wireshark_name": info.get("name", abbrev), "wireshark_field": abbrev, "semantic_role": next(iter(roles), None), "field_type": field.get("field_type", "bytes"), "encoding_type": encoding_type(info.get("type", ""), width), "support": count, "status": "boundary_only"})
+                status = "semantic_candidate" if roles else "boundary_only"
+                accepted.append({"offset": offset, "width": width, "wireshark_name": info.get("name", abbrev), "wireshark_field": abbrev, "semantic_role": next(iter(roles), None), "field_type": field.get("field_type", "bytes"), "encoding_type": encoding_type(info.get("type", ""), width), "support": count, "status": status})
                 if len(roles) > 1 or not candidates:
                     review["ambiguous"].append({"family_id": family_id, "offset": offset, "width": width, "observed": supported, "mapped_roles": sorted(roles), "status": "boundary_only"})
             elif supported:
@@ -209,6 +236,7 @@ def main() -> None:
                 review["unmatched"].append({"family_id": family_id, "offset": offset, "width": width})
         if accepted:
             targets[family_id] = accepted
+    review["observations"] = {family: {f"{offset}:{width}": counts for (offset, width), counts in values.items()} for family, values in observations.items()}
     review["summary"] = {"target_families": len(targets), "target_fields": sum(map(len, targets.values())), "ambiguous_fields": len(review["ambiguous"]), "unmatched_fields": len(review["unmatched"]), "rejected_families": len(review["rejected_families"]), "unmatched_packets": unmatched_packets, "ambiguous_packet_families": ambiguous_families}
     args.output.parent.mkdir(parents=True, exist_ok=True); args.report.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(targets, indent=2), encoding="utf-8"); args.report.write_text(json.dumps(review, indent=2), encoding="utf-8")
