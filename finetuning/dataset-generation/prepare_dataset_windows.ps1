@@ -16,7 +16,7 @@ $DataDir = Join-Path $VmFinetuning "data"
 
 function Invoke-Python {
   param([string[]]$Arguments)
-  & $Python @Arguments
+  & $Python -3.12 @Arguments
   if ($LASTEXITCODE -ne 0) {
     throw "Python command failed: $Python $($Arguments -join ' ')"
   }
