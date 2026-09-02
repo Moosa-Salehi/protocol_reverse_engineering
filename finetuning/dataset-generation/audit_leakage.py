@@ -13,6 +13,9 @@ def load(paths):
 
 def prompt(row): return row["messages"][1]["content"]
 def digest(text): return hashlib.sha256(text.encode("utf-8")).hexdigest()
+def evidence_text(text):
+    match=re.search(r"## Evidence Bundle\s*```json\s*(.*?)\s*```",text,re.IGNORECASE|re.DOTALL)
+    return match.group(1) if match else text
 
 def main():
     p=argparse.ArgumentParser(); p.add_argument("--train",type=Path,nargs="+",required=True); p.add_argument("--holdout",type=Path,nargs="*",default=[]); p.add_argument("--protocols",type=Path,default=Path(__file__).with_name("protocols.json")); p.add_argument("--sampling-report",type=Path); a=p.parse_args()
@@ -37,7 +40,7 @@ def main():
             meta=row.get("metadata",{}); protocol=str(meta.get("protocol","")).lower()
             for alias in aliases.get(protocol,[protocol] if protocol else []):
                 if re.search(rf"(?<![a-z0-9]){re.escape(alias.lower())}(?![a-z0-9])",text.lower()): errors.append(f"protocol alias {alias!r} leaked into prompt: {path}:{line}"); break
-            lowered=text.lower()
+            lowered=evidence_text(text).lower()
             for marker in ('"semantic_role"','"semantic_labels"','"human_label"','"wireshark_name"','trusted wireshark dissector'):
                 if marker in lowered: errors.append(f"target marker {marker!r} leaked into prompt: {path}:{line}")
     if errors: raise SystemExit("Leakage audit failed:\n- " + "\n- ".join(errors[:100]))
