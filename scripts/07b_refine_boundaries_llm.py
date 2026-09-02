@@ -271,7 +271,9 @@ def main() -> None:
 
         # Apply refinements to family
         if result.applied_count > 0:
-            # Note: The actual field updates are in the validation_log
+            applied_log = next((item for item in result.validation_log if item.get("applied")), {})
+            if applied_log.get("updated_fields"):
+                refined_details["field_hypotheses"] = applied_log["updated_fields"]
             refined_details["llm_boundary_refinement"] = {
                 "applied": result.applied_count,
                 "rejected": result.rejected_count,

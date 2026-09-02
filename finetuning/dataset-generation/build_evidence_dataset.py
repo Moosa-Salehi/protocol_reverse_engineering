@@ -16,6 +16,11 @@ LEAKAGE_KEYS = {"semantic_role", "semantic_label", "semantic_labels", "human_lab
 def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
+def load_prompt(task: str) -> str:
+    root = Path(__file__).resolve().parents[2]
+    name = "boundary_refinement.md" if task == "boundary_refinement" else "semantic_labeling.md"
+    return (root / "assets" / "prompts" / name).read_text(encoding="utf-8").strip()
+
 def compact(value: Any, limit: int = 8) -> Any:
     if isinstance(value, list): return [compact(item, limit) for item in value[:limit]]
     if isinstance(value, dict): return {k: compact(v, limit) for k, v in value.items() if k not in LEAKAGE_KEYS}
@@ -75,8 +80,8 @@ def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = N
 def record(task: str, evidence: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     system = "You are an expert Protocol Reverse Engineering Analyst. Return one JSON object and no Markdown fences."
     prompt_evidence = {k:v for k,v in evidence.items() if k != "protocol"}
-    user = f"### TASK: {task}\n\nUse only the supplied statistical and relational evidence. Do not infer labels from dissector names.\n\n## Evidence Bundle\n```json\n{json.dumps(prompt_evidence, indent=2, ensure_ascii=False)}\n```"
-    return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id"),"reviewed":True,"approved":True,"reviewer":"automatic","supervision_source":"wireshark_targets_with_confidence_tiers","candidate":True}}
+    user = load_prompt(task) + f"\n\n## Evidence Bundle\n\n```json\n{json.dumps(prompt_evidence, indent=2, ensure_ascii=False)}\n```\n"
+    return {"messages": [{"role":"system","content":system},{"role":"user","content":user},{"role":"assistant","content":json.dumps(target, separators=(",",":"), ensure_ascii=False)}], "metadata":{"task":task,"protocol":evidence.get("protocol"),"family_id":evidence.get("family_id"),"reviewed":True,"approved":True,"reviewer":"automatic"}}
 
 def main() -> None:
     p = argparse.ArgumentParser(); p.add_argument("protocol_model", type=Path); p.add_argument("output", type=Path); p.add_argument("--evidence-bundle", type=Path); p.add_argument("--wireshark-targets", type=Path, help="JSON mapping family_id to trusted Wireshark fields; required for semantic_labeling"); p.add_argument("--tasks", nargs="+", choices=["boundary_refinement","semantic_labeling"], default=["boundary_refinement","semantic_labeling"]); p.add_argument("--max-families", type=int, default=0)

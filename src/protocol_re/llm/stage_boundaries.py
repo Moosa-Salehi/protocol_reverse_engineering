@@ -208,6 +208,40 @@ def apply_merge_suggestions(
     return updated_fields, validation_log
 
 
+def apply_boundary_list(
+    fields: List[Dict[str, Any]],
+    boundaries: List[Any],
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Merge existing adjacent fields to match a direct boundary list."""
+    if not fields:
+        return [], []
+    starts = [int(field.get("start", field.get("offset", 0)) or 0) for field in fields]
+    widths = [int(field.get("length", field.get("width", 0)) or 0) for field in fields]
+    final_end = max(start + width for start, width in zip(starts, widths))
+    existing_edges = {0, final_end, *starts, *(start + width for start, width in zip(starts, widths))}
+    try:
+        requested = sorted({int(value) for value in boundaries})
+    except (TypeError, ValueError):
+        return fields, [{"valid": False, "applied": False, "reason": "boundaries must contain integers"}]
+    if not requested or requested[0] != 0 or requested[-1] != final_end:
+        return fields, [{"valid": False, "applied": False, "reason": f"boundaries must start at 0 and end at {final_end}"}]
+    invalid = [value for value in requested if value not in existing_edges]
+    if invalid:
+        return fields, [{"valid": False, "applied": False, "reason": f"boundaries are not existing field edges: {invalid}"}]
+
+    updated = []
+    for start, end in zip(requested, requested[1:]):
+        members = [field for field, field_start, width in zip(fields, starts, widths)
+                   if start <= field_start and field_start + width <= end]
+        if not members:
+            return fields, [{"valid": False, "applied": False, "reason": f"no fields cover span {start}:{end}"}]
+        if len(members) == 1 and starts[fields.index(members[0])] == start and widths[fields.index(members[0])] == end - start:
+            updated.append(members[0].copy())
+        else:
+            updated.append({"start": start, "length": end - start, "field_type": "bytes", "confidence": min(float(field.get("confidence", 0.0) or 0.0) for field in members), "evidence": {"source": "llm_boundary_refinement", "merged_field_count": len(members)}})
+    return updated, [{"valid": True, "applied": updated != fields, "reason": "direct boundary list accepted", "boundaries": requested, "updated_fields": updated}]
+
+
 def run_boundary_refinement_stage(
     family_id: str,
     fields: List[Dict[str, Any]],
@@ -275,13 +309,13 @@ def run_boundary_refinement_stage(
             )
         response_json = extract_message_json(response)
 
-        # Extract suggestions
-        suggestions = response_json.get("merge_suggestions", [])
-
-        # Validate and apply suggestions
-        updated_fields, validation_log = apply_merge_suggestions(
-            fields, suggestions, config.min_confidence
-        )
+        if "boundaries" in response_json:
+            suggestions = response_json.get("boundaries", [])
+            updated_fields, validation_log = apply_boundary_list(fields, suggestions)
+        else:
+            # Backward compatibility for existing cached responses.
+            suggestions = response_json.get("merge_suggestions", [])
+            updated_fields, validation_log = apply_merge_suggestions(fields, suggestions, config.min_confidence)
 
         applied_count = sum(1 for log in validation_log if log.get("applied", False))
         rejected_count = len(validation_log) - applied_count
