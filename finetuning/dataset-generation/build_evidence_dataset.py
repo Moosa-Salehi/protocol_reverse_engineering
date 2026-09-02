@@ -16,7 +16,7 @@ LEAKAGE_KEYS = {"semantic_role", "semantic_label", "semantic_labels", "human_lab
 def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
-def compact(value: Any, limit: int = 16) -> Any:
+def compact(value: Any, limit: int = 8) -> Any:
     if isinstance(value, list): return [compact(item, limit) for item in value[:limit]]
     if isinstance(value, dict): return {k: compact(v, limit) for k, v in value.items() if k not in LEAKAGE_KEYS}
     return value
@@ -27,11 +27,10 @@ def evidence_for_family(family: dict[str, Any], bundle: dict[str, Any] | None) -
         "family_id": family.get("family_id"),
         "family_role": family.get("role", "unknown"),
         "message_count": family.get("message_count"),
-        "fields": compact(family.get("field_hypotheses", [])),
-        "field_statistics": compact(candidate.get("field_statistics", {})),
-        "sample_values": compact(candidate.get("sample_values", [])),
-        "relations": compact(candidate.get("relations", [])),
-        "framing": compact(family.get("framing_summary", {})),
+        "fields": compact(family.get("field_hypotheses", []), limit=8),
+        "field_statistics": compact(candidate.get("field_statistics", {}), limit=8),
+        "sample_values": compact(candidate.get("sample_values", []), limit=4),
+        "framing": compact(family.get("framing_summary", {}), limit=4),
     }
 
 def semantic_target(family: dict[str, Any], wireshark: dict[str, Any] | None) -> dict[str, Any] | None:
