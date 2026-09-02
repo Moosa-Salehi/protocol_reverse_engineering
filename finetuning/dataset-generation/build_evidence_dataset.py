@@ -17,7 +17,7 @@ def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 def compact(value: Any, limit: int = 16) -> Any:
-    if isinstance(value, list): return value[:limit]
+    if isinstance(value, list): return [compact(item, limit) for item in value[:limit]]
     if isinstance(value, dict): return {k: compact(v, limit) for k, v in value.items() if k not in LEAKAGE_KEYS}
     return value
 
