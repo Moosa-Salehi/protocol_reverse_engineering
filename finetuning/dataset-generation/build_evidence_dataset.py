@@ -21,17 +21,27 @@ def compact(value: Any, limit: int = 8) -> Any:
     if isinstance(value, dict): return {k: compact(v, limit) for k, v in value.items() if k not in LEAKAGE_KEYS}
     return value
 
-def evidence_for_family(family: dict[str, Any], bundle: dict[str, Any] | None) -> dict[str, Any]:
+def compact_field(field: dict[str, Any]) -> dict[str, Any]:
+    return {key: field.get(key) for key in ("start", "offset", "length", "width", "field_type", "confidence", "endian") if field.get(key) is not None}
+
+def compact_statistics(value: Any) -> Any:
+    if not isinstance(value, dict): return value
+    keys = ("unique_values", "cardinality_ratio", "constant_ratio", "length_match_score", "position_stability")
+    return {key: value[key] for key in keys if key in value}
+
+def evidence_for_family(family: dict[str, Any], bundle: dict[str, Any] | None, task: str) -> dict[str, Any]:
     candidate = next((x for x in (bundle or {}).get("families", []) if str(x.get("family_id")) == str(family.get("family_id"))), {})
-    return {
+    evidence = {
         "family_id": family.get("family_id"),
         "family_role": family.get("role", "unknown"),
         "message_count": family.get("message_count"),
-        "fields": compact(family.get("field_hypotheses", []), limit=8),
-        "field_statistics": compact(candidate.get("field_statistics", {}), limit=8),
-        "sample_values": compact(candidate.get("sample_values", []), limit=4),
-        "framing": compact(family.get("framing_summary", {}), limit=4),
+        "fields": [compact_field(field) for field in (family.get("field_hypotheses", []) or [])[:8]],
+        "field_statistics": compact_statistics(candidate.get("field_statistics", {})),
+        "framing": compact(family.get("framing_summary", {}), limit=2),
     }
+    if task == "semantic_labeling":
+        evidence["sample_values"] = compact(candidate.get("sample_values", []), limit=2)
+    return evidence
 
 def semantic_target(family: dict[str, Any], wireshark: dict[str, Any] | None) -> dict[str, Any] | None:
     labels = []
@@ -75,8 +85,8 @@ def main() -> None:
     families = (model.get("families") or [])[:a.max_families or None]; a.output.parent.mkdir(parents=True, exist_ok=True); count=0; skipped=0
     with a.output.open("w", encoding="utf-8") as out:
         for family in families:
-            ev=evidence_for_family(family,bundle); ev["protocol"]=model.get("protocol_name", model.get("metadata",{}).get("protocol_name","unknown"))
             for task in a.tasks:
+                ev=evidence_for_family(family,bundle,task); ev["protocol"]=model.get("protocol_name", model.get("metadata",{}).get("protocol_name","unknown"))
                 target = boundary_target(family, wireshark) if task == "boundary_refinement" else semantic_target(family, wireshark)
                 if target is None: skipped += 1; continue
                 out.write(json.dumps(record(task,ev,target),ensure_ascii=False)+"\n"); count += 1
