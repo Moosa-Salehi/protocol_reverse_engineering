@@ -17,13 +17,10 @@ Return one JSON object and no Markdown fences:
       "encoding_type": "uint8",
       "semantic_role": "opcode",
       "human_label": "operation selector",
-      "confidence": 0.8,
-      "evidence": ["field position and cardinality"],
       "alternative_roles": []
     }
   ],
-  "unlabeled_fields": [],
-  "notes": ""
+  "unlabeled_fields": []
 }
 ```
 

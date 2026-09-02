@@ -64,9 +64,9 @@ def semantic_target(family: dict[str, Any], wireshark: dict[str, Any] | None) ->
         if ws.get("status") == "boundary_only":
             continue
         if role not in ROLE_SET: raise ValueError(f"Wireshark target for {family.get('family_id')} offset {offset} has invalid mapped role {role!r}")
-        labels.append({"field_index": index, "offset": offset, "width": width, "field_type": ws.get("field_type", field.get("field_type", "bytes")), "encoding_type": ws.get("encoding_type", ws.get("field_type", field.get("field_type", "bytes"))), "semantic_role": role, "human_label": ws.get("wireshark_name", ws.get("name", role)), "confidence": 1.0 if ws.get("status") == "trusted" else 0.6, "evidence": ["trusted Wireshark dissector" if ws.get("status") == "trusted" else "semantic candidate", f"Wireshark field: {ws.get('wireshark_name', ws.get('name', 'unknown'))}"], "alternative_roles": []})
+        labels.append({"field_index": index, "offset": offset, "width": width, "field_type": ws.get("field_type", field.get("field_type", "bytes")), "encoding_type": ws.get("encoding_type", ws.get("field_type", field.get("field_type", "bytes"))), "semantic_role": role, "human_label": ws.get("wireshark_name", ws.get("name", role)), "confidence": 1.0 if ws.get("status") == "trusted" else 0.6, "alternative_roles": []})
     labeled_indices = {item["field_index"] for item in labels}
-    return {"family_id": family.get("family_id"), "family_role": family.get("role", "unknown"), "semantic_labels": labels, "unlabeled_fields": [i for i, _ in enumerate(family.get("field_hypotheses", []) or []) if i not in labeled_indices], "notes": "Target taken from reviewed or teacher-validated pipeline annotations."} if labels else None
+    return {"family_id": family.get("family_id"), "family_role": family.get("role", "unknown"), "semantic_labels": labels, "unlabeled_fields": [i for i, _ in enumerate(family.get("field_hypotheses", []) or []) if i not in labeled_indices]} if labels else None
 
 def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = None) -> dict[str, Any] | None:
     ws_fields = (wireshark or {}).get(str(family.get("family_id")), [])
@@ -74,7 +74,7 @@ def boundary_target(family: dict[str, Any], wireshark: dict[str, Any] | None = N
         boundaries = sorted({boundary for x in ws_fields if x.get("offset") is not None and x.get("width") is not None and int(x["width"]) > 0 for boundary in (int(x["offset"]), int(x["offset"]) + int(x["width"]))})
         if boundaries:
             boundary_only = any(x.get("status") == "boundary_only" for x in ws_fields)
-            return {"family_id": family.get("family_id"), "boundaries": boundaries, "confidence": 0.8 if boundary_only else 1.0, "evidence_refs": ["wireshark_dissector_offsets", "boundary_only" if boundary_only else "trusted_wireshark_dissector_offsets"]}
+            return {"family_id": family.get("family_id"), "boundaries": boundaries, "confidence": 0.8 if boundary_only else 1.0}
     return None
 
 def record(task: str, evidence: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:

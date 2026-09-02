@@ -8,8 +8,7 @@ Return one JSON object and no Markdown fences:
 {
   "family_id": "family_0",
   "boundaries": [0, 1, 3, 7],
-  "confidence": 0.8,
-  "evidence_refs": ["field offsets", "field widths", "framing statistics"]
+  "confidence": 0.8
 }
 ```
 
