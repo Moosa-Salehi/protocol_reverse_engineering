@@ -22,7 +22,12 @@ def load_messages(path: Path) -> dict[int, dict[str, Any]]:
     return out
 
 def load_annotations(path: Path) -> dict[int, dict[str, Any]]:
-    raw = json.loads(path.read_text(encoding="utf-8")) if path.suffix == ".json" else None
+    raw = None
+    if path.suffix == ".json":
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            raw = None  # tolerate JSONL content with a .json suffix
     if raw is not None:
         raw = raw.get("annotations", raw) if isinstance(raw, dict) else raw
         if isinstance(raw, dict): return {int(k): v for k, v in raw.items()}

@@ -18,9 +18,10 @@ foreach ($protocol in $Protocols) {
   $messages = Join-Path $MessagesRoot "$protocol\01_messages.jsonl"
   if (!(Test-Path $messages)) { $messages = Join-Path $MessagesRoot "$protocol\data\01_messages.jsonl" }
   $annotations = Join-Path $AnnotationsRoot "$protocol.jsonl"
-  if (!(Test-Path $annotations)) { $annotations = Join-Path $AnnotationsRoot "$protocol.json" }
+  # Always use JSONL for generated annotations. A legacy/empty .json file must
+  # not shadow the TShark output.
   if (!(Test-Path $messages)) { Write-Warning "Skipping $protocol : messages not found"; continue }
-  if (!(Test-Path $annotations)) {
+  if (!(Test-Path $annotations) -or ((Get-Item $annotations).Length -eq 0)) {
     New-Item -ItemType Directory -Force -Path $AnnotationsRoot | Out-Null
     & $Python (Join-Path $PSScriptRoot "generate_tshark_annotations.py") $messages $MessagesRoot $annotations --filter $protocol --tshark $Tshark
     if ($LASTEXITCODE -ne 0) { throw "TShark annotation generation failed for $protocol" }
