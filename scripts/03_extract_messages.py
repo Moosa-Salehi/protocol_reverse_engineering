@@ -59,6 +59,8 @@ def main() -> None:
         help="Directory for intermediate carved payload JSON files.",
     )
     parser.add_argument("--tshark-workers", type=int, default=4, help="Maximum parallel TShark worker processes.")
+    parser.add_argument("--save-field-spans", action="store_true",
+                        help="Persist TShark raw field offsets in message metadata for cluster-free annotation.")
     parser.add_argument("--max-messages", type=int, help="Maximum number of messages to extract.")
     parser.add_argument(
         "--reassembly-mode",
@@ -97,6 +99,7 @@ def main() -> None:
                 service_port=args.service_port,
                 max_messages=args.max_messages,
                 max_workers=args.tshark_workers,
+                save_field_spans=args.save_field_spans,
             )
         else:
             count = write_messages_from_pcaps_jsonl(

@@ -432,6 +432,7 @@ def _extract_tshark_packets(
     pcap_path: str,
     tshark_filter: str,
     max_packets: int | None = None,
+    save_field_spans: bool = False,
 ) -> List[Dict[str, Any]]:
     cmd = [
         "tshark",
@@ -481,6 +482,21 @@ def _extract_tshark_packets(
         layers = obj["layers"]
         found_protocol = _infer_tshark_protocol(layers, tshark_filter)
         frame_raw = _first(layers.get("frame_raw")) or _get_nested_field(layers, "frame", "frame_raw")
+        field_spans = []
+        def collect(node):
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key.endswith("_raw"):
+                        values = value if isinstance(value, list) and value and isinstance(value[0], list) else [value]
+                        for entry in values:
+                            if isinstance(entry, list) and len(entry) >= 3:
+                                try: field_spans.append({"field": key[:-4], "offset": int(entry[1]), "width": int(entry[2])})
+                                except (TypeError, ValueError): pass
+                    collect(value)
+            elif isinstance(node, list):
+                for child in node: collect(child)
+        if save_field_spans:
+            collect(layers)
         metadata = {
             "frame": {
                 "number": _get_nested_field(layers, "frame", "frame_frame_number"),
@@ -526,6 +542,7 @@ def _extract_tshark_packets(
                 "checksum": _get_nested_field(layers, "udp", "udp_udp_checksum"),
                 "payload": _clean_hex(_get_nested_field(layers, "udp", "udp_udp_payload")),
             },
+            "field_spans": field_spans,
         }
         if found_protocol != "unknown" and frame_raw:
             packets.append({"protocol": found_protocol, "metadata": metadata})
@@ -606,20 +623,20 @@ def _tshark_payload_record_to_message(
         payload_len=len(payload_hex) // 2,
         timestamp=iso_z_to_unix_float(str(payload_record.get("timestamp"))),        
         index_in_session=index_in_session,
-        metadata={"frame_number": metadata.get("frame", {}).get("number") or metadata.get("frame", {}).get("frame.number")},
+        metadata={"frame_number": metadata.get("frame", {}).get("number") or metadata.get("frame", {}).get("frame.number"), "frame_raw": metadata.get("frame", {}).get("raw"), "field_spans": metadata.get("field_spans", [])},
     )
 
 
-def _process_tshark_pcap_worker(args: Tuple[str, str, str, str, Optional[int]]) -> Tuple[str, int, List[MessageRecord]]:
-    pcap_path_str, tshark_filter, packets_dir, payloads_dir, service_port = args
+def _process_tshark_pcap_worker(args: Tuple[str, str, str, str, Optional[int], bool]) -> Tuple[str, int, List[MessageRecord]]:
+    pcap_path_str, tshark_filter, packets_dir, payloads_dir, service_port, save_field_spans = args
     pcap_path = Path(pcap_path_str)
-    cache_stem = _tshark_cache_stem(pcap_path, tshark_filter)
+    cache_stem = _tshark_cache_stem(pcap_path, tshark_filter) + (".spans" if save_field_spans else "")
     packet_json = Path(packets_dir) / f"{cache_stem}.json"
     payload_json = Path(payloads_dir) / f"{cache_stem}.json"
 
     packet_records = []
     if not os.path.exists(packet_json):
-        packet_records = _extract_tshark_packets(str(pcap_path), tshark_filter)
+        packet_records = _extract_tshark_packets(str(pcap_path), tshark_filter, save_field_spans=save_field_spans)
         with open(packet_json, "w", encoding="utf-8") as handle:
             json.dump(packet_records, handle, indent=4)
     else:
@@ -826,6 +843,7 @@ def iter_messages_from_pcaps_tshark(
     service_port: int | None = None,
     max_messages: int | None = None,
     max_workers: int = 4,
+    save_field_spans: bool = False,
 ) -> Iterator[MessageRecord]:
     packets_path = Path(packets_dir)
     payloads_path = Path(payloads_dir)
@@ -837,7 +855,7 @@ def iter_messages_from_pcaps_tshark(
 
     if max_workers <= 1 or len(pcap_paths) <= 1:
         for pcap_path in pcap_paths:
-            _, _, messages = _process_tshark_pcap_worker((str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port))
+            _, _, messages = _process_tshark_pcap_worker((str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port, save_field_spans))
             for message in messages:
                 message.msg_id = next_msg_id
                 yield message
@@ -857,7 +875,7 @@ def iter_messages_from_pcaps_tshark(
             pcap_path = pcap_paths[next_submit_index]
             future = executor.submit(
                 _process_tshark_pcap_worker,
-                (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port),
+                (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port, save_field_spans),
             )
             pending[future] = next_submit_index
             next_submit_index += 1
@@ -885,7 +903,7 @@ def iter_messages_from_pcaps_tshark(
                     pcap_path = pcap_paths[next_submit_index]
                     future = executor.submit(
                         _process_tshark_pcap_worker,
-                        (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port),
+                        (str(pcap_path), tshark_filter, str(packets_path), str(payloads_path), service_port, save_field_spans),
                     )
                     pending[future] = next_submit_index
                     next_submit_index += 1
@@ -920,6 +938,7 @@ def write_messages_from_pcaps_tshark_jsonl(
     service_port: int | None = None,
     max_messages: int | None = None,
     max_workers: int = 4,
+    save_field_spans: bool = False,
 ) -> int:
     count = 0
     with open(output_path, "w", encoding="utf-8") as handle:
@@ -931,6 +950,7 @@ def write_messages_from_pcaps_tshark_jsonl(
             service_port=service_port,
             max_messages=max_messages,
             max_workers=max_workers,
+            save_field_spans=save_field_spans,
         ):
             handle.write(json.dumps(message.to_dict(), sort_keys=True) + "\n")
             count += 1

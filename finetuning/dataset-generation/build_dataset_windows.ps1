@@ -41,7 +41,7 @@ foreach($Entry in $Protocols){
   if($PcapFiles.Count -eq 0){Write-Warning "No sampled PCAPs for $Name; skipping protocol";continue}
   $Run=Join-Path $Work "runs\$Name";$Data=Join-Path $Run "data";$Output=Join-Path $Run "output";$Logs=Join-Path $Run "logs"
   if(-not (Test-Path $SupervisedCheckpoint)){ throw "Supervised VAE checkpoint not found: $SupervisedCheckpoint" }
-  Invoke-Python @("$Root\main.py", $SampleInput, "--extraction-method", "tshark", "--tshark-filter", $Filter, "--max-messages", $MaxMessages, "--data-dir", $Data, "--output-dir", $Output, "--log-dir", $Logs, "--family-feature-mode", "neural", "--family-neural-model-path", $SupervisedCheckpoint, "--family-supervised-hdbscan-checkpoint", $SupervisedCheckpoint, "--llm-render-only", "--stop-after", "13_evaluate_pipeline")
+  Invoke-Python @("$Root\main.py", $SampleInput, "--extraction-method", "tshark", "--tshark-filter", $Filter, "--save-field-spans", "--max-messages", $MaxMessages, "--data-dir", $Data, "--output-dir", $Output, "--log-dir", $Logs, "--family-feature-mode", "neural", "--family-neural-model-path", $SupervisedCheckpoint, "--family-supervised-hdbscan-checkpoint", $SupervisedCheckpoint, "--llm-render-only", "--stop-after", "13_evaluate_pipeline")
   Invoke-Python @("$Root\scripts\14_export_llm_evidence.py", "$Data\10_protocol_model.json", "$Data\12_llm_evidence.json", "--evaluation-json", "$Data\11_evaluation.json", "--pretty", "--log-dir", $Logs)
   $Targets=Join-Path $Work "wireshark_targets\$Name.json"
   if(-not $SkipTargetGeneration){

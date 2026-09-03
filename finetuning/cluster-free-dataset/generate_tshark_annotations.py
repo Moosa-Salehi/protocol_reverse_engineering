@@ -51,6 +51,21 @@ def main():
  p=argparse.ArgumentParser();p.add_argument('messages',type=Path);p.add_argument('pcap_root',type=Path);p.add_argument('output',type=Path);p.add_argument('--filter',required=True);p.add_argument('--tshark',default='tshark');a=p.parse_args()
  rows=[json.loads(x) for x in a.messages.read_text(encoding='utf-8').splitlines() if x.strip()]; byfile={}
  for m in rows: byfile.setdefault(m.get('source_file'),[]).append(m)
+ cached=[]
+ for m in rows:
+  meta=m.get('metadata',{}); spans=meta.get('field_spans',[]); frame=re.sub(r'[^0-9a-f]','',str(meta.get('frame_raw','')).lower()); payload_hex=re.sub(r'[^0-9a-f]','',str(m.get('payload_hex','')).lower())
+  if not spans or not frame or not payload_hex: continue
+  pos=frame.find(payload_hex)
+  if pos < 0: continue
+  start=pos//2; plen=int(m.get('payload_len',0)); boundaries={0,plen}; labels=[]
+  for s in spans:
+   off=int(s.get('offset',-1))-start; width=int(s.get('width',0))
+   if off<0 or width<1 or off+width>plen: continue
+   boundaries.update((off,off+width)); r=role(str(s.get('field','')))
+   if r: labels.append({'offset':off,'width':width,'semantic_role':r,'field_type':'bytes'})
+  cached.append({'msg_id':m['msg_id'],'boundaries':sorted(boundaries),'semantic_labels':labels,'reviewed':True,'approved':True,'reviewer':'tshark-cache','source_frame':meta.get('frame_number')})
+ if cached:
+  a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text('\n'.join(json.dumps(x) for x in cached)+'\n',encoding='utf-8');print(json.dumps({'packets':len(rows),'unmatched':len(rows)-len(cached),'annotations':len(cached),'errors':[],'source':'message_field_spans','output':str(a.output)},indent=2));return
  out=[]; packets=0; unmatched=0; errors=[]
  for pcap in a.pcap_root.rglob('*'):
   if pcap.suffix.lower() not in {'.pcap','.pcapng','.cap'}: continue

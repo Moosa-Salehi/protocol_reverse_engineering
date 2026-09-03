@@ -121,6 +121,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     str(args.tshark_workers),
                 ]
             )
+            if args.save_field_spans:
+                pipeline[-1][1].append("--save-field-spans")
         if args.max_messages is not None:
             pipeline[-1][1].extend(["--max-messages", str(args.max_messages)])
 
@@ -705,6 +707,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     extract_group.add_argument("--tshark-filter", help="TShark display filter for the target protocol, for example mbtcp or s7comm.")
     extract_group.add_argument("--tshark-workers", type=int, default=4, help="Maximum parallel TShark worker processes.")
+    extract_group.add_argument("--save-field-spans", action="store_true",
+                               help="Persist TShark field offsets for cluster-free dataset generation.")
     extract_group.add_argument("--service-port", type=int, help="Legacy TCP extractor port filter. Used with --extraction-method tcp.")
     extract_group.add_argument(
         "--reassembly-mode",
