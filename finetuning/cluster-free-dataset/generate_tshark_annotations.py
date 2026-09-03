@@ -60,7 +60,7 @@ def main():
    errors.append({'pcap':str(pcap),'returncode':exc.returncode}); continue
   for packet in json.loads(proc.stdout or '[]'):
    packets += 1
-   layers=packet.get('_source',{}).get('layers',{}); num=frame_number(layers)
+   layers=packet.get('_source',{}).get('layers',{}); frame=layers.get('frame',{}) if isinstance(layers,dict) else {}; num=scalar(frame.get('frame_frame_number', frame.get('frame.number', frame.get('number')))) or frame_number(layers)
    raw=list(fields(layers)); frame_hex=''.join(raw_hex(layers)); payload=next((m for m in byfile.get(pcap.name,[]) if str(m.get('metadata',{}).get('frame_number',m.get('metadata',{}).get('frame',{}).get('number',m.get('metadata',{}).get('frame',{}).get('frame.number',''))))==str(num)),None)
    if payload is None and frame_hex:
     payload=next((m for m in byfile.get(pcap.name,[]) if re.sub(r'[^0-9a-f]','',str(m.get('payload_hex','')).lower()) in frame_hex),None)
