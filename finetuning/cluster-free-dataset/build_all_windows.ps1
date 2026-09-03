@@ -1,8 +1,8 @@
 param(
-  [Parameter(Mandatory=$true)][string]$MessagesRoot,
-  [Parameter(Mandatory=$true)][string]$AnnotationsRoot,
-  [Parameter(Mandatory=$true)][string]$OutputRoot,
-  [string]$PcapRoot = "",
+  [string]$MessagesRoot = ".\finetuning\windows_data\runs",
+  [string]$AnnotationsRoot = ".\finetuning\cluster-free-dataset\annotations",
+  [string]$OutputRoot = ".\finetuning\cluster-free-dataset\data",
+  [string]$PcapRoot = ".\finetuning\windows_data\sampled_pcaps",
   [string]$Python = "python",
   [int]$BatchSize = 8,
   [string]$Tshark = "tshark",
