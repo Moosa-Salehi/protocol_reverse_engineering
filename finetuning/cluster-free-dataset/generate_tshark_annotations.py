@@ -63,7 +63,8 @@ def main():
    if off<0 or width<1 or off+width>plen: continue
    boundaries.update((off,off+width)); r=role(str(s.get('field','')))
    if r: labels.append({'offset':off,'width':width,'semantic_role':r,'field_type':'bytes'})
-  cached.append({'msg_id':m['msg_id'],'boundaries':sorted(boundaries),'semantic_labels':labels,'reviewed':True,'approved':True,'reviewer':'tshark-cache','source_frame':meta.get('frame_number')})
+  if len(boundaries) > 2:
+   cached.append({'msg_id':m['msg_id'],'boundaries':sorted(boundaries),'semantic_labels':labels,'reviewed':True,'approved':True,'reviewer':'tshark-cache','source_frame':meta.get('frame_number')})
  if cached:
   a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text('\n'.join(json.dumps(x) for x in cached)+'\n',encoding='utf-8');print(json.dumps({'packets':len(rows),'unmatched':len(rows)-len(cached),'annotations':len(cached),'errors':[],'source':'message_field_spans','output':str(a.output)},indent=2));return
  out=[]; packets=0; unmatched=0; errors=[]
@@ -80,9 +81,17 @@ def main():
    if payload is None and frame_hex:
     payload=next((m for m in byfile.get(pcap.name,[]) if re.sub(r'[^0-9a-f]','',str(m.get('payload_hex','')).lower()) in frame_hex),None)
    if payload is None: unmatched += 1; continue
-   plen=int(payload.get('payload_len',0)); spans=sorted({0,plen}|{o for _,o,w in raw if 0<=o<plen}|{o+w for _,o,w in raw if 0<o+w<=plen})
+   plen=int(payload.get('payload_len',0))
+   payload_hex=re.sub(r'[^0-9a-f]','',str(payload.get('payload_hex','')).lower())
+   payload_start=frame_hex.find(payload_hex) if payload_hex else -1
+   payload_start //= 2
+   if payload_start < 0:
+    unmatched += 1
+    continue
+   relative=[(name, o-payload_start, w) for name,o,w in raw]
+   spans=sorted({0,plen}|{o for _,o,w in relative if 0<=o<plen}|{o+w for _,o,w in relative if 0<o+w<=plen})
    labels=[]
-   for name,o,w in raw:
+   for name,o,w in relative:
     if o<0 or w<1 or o+w>plen: continue
     r=role(name)
     if r: labels.append({'offset':o,'width':w,'semantic_role':r,'field_type':'bytes'})
