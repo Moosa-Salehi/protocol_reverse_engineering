@@ -19,7 +19,7 @@ foreach ($protocol in $Protocols) {
   if (!(Test-Path $messages)) { $messages = Join-Path $MessagesRoot "$protocol\data\01_messages.jsonl" }
   $annotations = Join-Path $AnnotationsRoot "$protocol.jsonl"
   if (!(Test-Path $annotations)) { $annotations = Join-Path $AnnotationsRoot "$protocol.json" }
-  if (!(Test-Path $messages)) { Write-Warning "Skipping $protocol: messages not found"; continue }
+  if (!(Test-Path $messages)) { Write-Warning "Skipping $protocol : messages not found"; continue }
   if (!(Test-Path $annotations)) {
     New-Item -ItemType Directory -Force -Path $AnnotationsRoot | Out-Null
     & $Python (Join-Path $PSScriptRoot "generate_tshark_annotations.py") $messages $MessagesRoot $annotations --filter $protocol --tshark $Tshark
