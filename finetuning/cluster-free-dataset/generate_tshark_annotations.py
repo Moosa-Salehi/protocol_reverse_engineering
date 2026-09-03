@@ -37,7 +37,16 @@ def fields(x):
       except: pass
    yield from fields(v)
  elif isinstance(x,list):
-  for y in x: yield from fields(y)
+ for y in x: yield from fields(y)
+def raw_hex(x):
+ if isinstance(x,dict):
+  for k,v in x.items():
+   if k.endswith('_raw'):
+    for e in (v if isinstance(v,list) else [v]):
+     if isinstance(e,list) and e: yield re.sub(r'[^0-9a-f]','',str(e[0]).lower())
+   yield from raw_hex(v)
+ elif isinstance(x,list):
+  for y in x: yield from raw_hex(y)
 def main():
  p=argparse.ArgumentParser();p.add_argument('messages',type=Path);p.add_argument('pcap_root',type=Path);p.add_argument('output',type=Path);p.add_argument('--filter',required=True);p.add_argument('--tshark',default='tshark');a=p.parse_args()
  rows=[json.loads(x) for x in a.messages.read_text(encoding='utf-8').splitlines() if x.strip()]; byfile={}
@@ -52,7 +61,9 @@ def main():
   for packet in json.loads(proc.stdout or '[]'):
    packets += 1
    layers=packet.get('_source',{}).get('layers',{}); num=frame_number(layers)
-   raw=list(fields(layers)); payload=next((m for m in byfile.get(pcap.name,[]) if str(m.get('metadata',{}).get('frame_number',m.get('metadata',{}).get('frame',{}).get('number',m.get('metadata',{}).get('frame',{}).get('frame.number',''))))==str(num)),None)
+   raw=list(fields(layers)); frame_hex=''.join(raw_hex(layers)); payload=next((m for m in byfile.get(pcap.name,[]) if str(m.get('metadata',{}).get('frame_number',m.get('metadata',{}).get('frame',{}).get('number',m.get('metadata',{}).get('frame',{}).get('frame.number',''))))==str(num)),None)
+   if payload is None and frame_hex:
+    payload=next((m for m in byfile.get(pcap.name,[]) if re.sub(r'[^0-9a-f]','',str(m.get('payload_hex','')).lower()) in frame_hex),None)
    if payload is None: unmatched += 1; continue
    plen=int(payload.get('payload_len',0)); spans=sorted({0,plen}|{o for _,o,w in raw if 0<=o<plen}|{o+w for _,o,w in raw if 0<o+w<=plen})
    labels=[]
