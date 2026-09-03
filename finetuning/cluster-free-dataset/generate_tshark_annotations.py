@@ -37,7 +37,7 @@ def fields(x):
       except: pass
    yield from fields(v)
  elif isinstance(x,list):
- for y in x: yield from fields(y)
+  for y in x: yield from fields(y)
 def raw_hex(x):
  if isinstance(x,dict):
   for k,v in x.items():
