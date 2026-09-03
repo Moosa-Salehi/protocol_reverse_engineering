@@ -64,6 +64,7 @@ def validate(a: dict[str, Any], length: int) -> tuple[dict[str, Any] | None, dic
 def main() -> None:
     p = argparse.ArgumentParser(); p.add_argument("messages", type=Path); p.add_argument("annotations", type=Path); p.add_argument("output", type=Path)
     p.add_argument("--protocol", required=True); p.add_argument("--batch-size", type=int, default=8); p.add_argument("--tasks", nargs="+", choices=["boundary_refinement","semantic_labeling"], default=["boundary_refinement","semantic_labeling"])
+    p.add_argument("--include-empty-semantic", action="store_true", help="Keep semantic targets with no labels (disabled by default).")
     args = p.parse_args()
     if args.batch_size < 1: p.error("--batch-size must be >= 1")
     messages, annotations = load_messages(args.messages), load_annotations(args.annotations)
@@ -76,19 +77,21 @@ def main() -> None:
     for group, items in groups.items():
         for start in range(0, len(items), args.batch_size):
             batch = items[start:start + args.batch_size]
-            evidence = [{"msg_id": mid, "direction": msg.get("direction"), "payload_len": msg.get("payload_len"), "payload_hex": msg.get("payload_hex")} for mid, msg, _ in batch]
             for task in args.tasks:
                 targets = []
                 for mid, msg, ann in batch:
                     bt, st = validate(ann, int(msg.get("payload_len", 0)))
                     target = bt if task == "boundary_refinement" else st
                     if target is not None: targets.append((mid, target))
+                if task == "semantic_labeling" and not args.include_empty_semantic:
+                    targets = [(mid, target) for mid, target in targets if target.get("semantic_labels")]
                 if not targets: skipped += 1; continue
-                # One target per message keeps supervision unambiguous while the
-                # prompt supplies neighboring observations as local evidence.
+                # One target per message keeps supervision unambiguous.
                 for mid, target in targets:
-                    prompt = ("### TASK: " + task + "\n\nAnalyze the payload evidence and return the requested JSON.\n\n## Evidence Bundle\n\n```json\n" + json.dumps({"protocol": args.protocol, "messages": evidence}, separators=(",", ":")) + "\n```\n")
-                    rows.append({"messages":[{"role":"system","content":system},{"role":"user","content":prompt},{"role":"assistant","content":json.dumps(target,separators=(",", ":"))}],"metadata":{"task":task,"protocol":args.protocol,"message_id":mid,"evidence_level":"local_batch","reviewed":bool(annotations[mid].get("reviewed", False)),"approved":bool(annotations[mid].get("approved", False)),"reviewer":annotations[mid].get("reviewer")}})
+                    target_msg = messages[mid]
+                    target_evidence = [{"msg_id": mid, "direction": target_msg.get("direction"), "payload_len": target_msg.get("payload_len"), "payload_hex": target_msg.get("payload_hex")}]
+                    prompt = ("### TASK: " + task + "\n\nAnalyze the payload evidence and return the requested JSON.\n\n## Evidence Bundle\n\n```json\n" + json.dumps({"protocol": args.protocol, "messages": target_evidence}, separators=(",", ":")) + "\n```\n")
+                    rows.append({"messages":[{"role":"system","content":system},{"role":"user","content":prompt},{"role":"assistant","content":json.dumps(target,separators=(",", ":"))}],"metadata":{"task":task,"protocol":args.protocol,"message_id":mid,"evidence_level":"single_message","reviewed":bool(annotations[mid].get("reviewed", False)),"approved":bool(annotations[mid].get("approved", False)),"reviewer":annotations[mid].get("reviewer")}})
     args.output.parent.mkdir(parents=True, exist_ok=True); args.output.write_text("\n".join(json.dumps(x) for x in rows) + ("\n" if rows else ""), encoding="utf-8")
     print(json.dumps({"written":len(rows),"skipped_task_batches":skipped,"groups":len(groups),"output":str(args.output)}, indent=2))
 

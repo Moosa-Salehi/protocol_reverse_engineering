@@ -42,13 +42,17 @@ def main() -> None:
     records = list(unique.values())
     if not records:
         raise ValueError("Input contains no valid records")
-    # Stable group split prevents the same protocol/family appearing in both sets.
-    train, validation = [], []
+    # Stratify by protocol/task so every usable stratum is represented in validation.
+    buckets = {}
     for record in records:
         meta = record.get("metadata", {})
-        group = f"{meta.get('protocol','unknown')}:{meta.get('family_id','unknown')}"
-        fraction = int(hashlib.sha256(f"{args.seed}:{group}".encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
-        (validation if fraction < args.validation_fraction else train).append(record)
+        buckets.setdefault((meta.get("protocol", "unknown"), meta.get("task", "unknown")), []).append(record)
+    train, validation = [], []
+    for (protocol, task), bucket in buckets.items():
+        bucket.sort(key=lambda r: hashlib.sha256(json.dumps(r, sort_keys=True).encode()).hexdigest())
+        take = max(1, round(len(bucket) * args.validation_fraction)) if len(bucket) > 1 else 0
+        validation.extend(bucket[:take])
+        train.extend(bucket[take:])
     if not validation and len(train) > 1:
         validation.append(train.pop())
     if not train:
@@ -63,7 +67,7 @@ def main() -> None:
         with (args.output_dir / f"{name}.jsonl").open("w", encoding="utf-8") as handle:
             for record in subset:
                 handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-    summary = {"input": sum(protocols.values()), "deduplicated": len(records), "train": len(train), "validation": len(validation), "protocols": protocols}
+    summary = {"input": sum(protocols.values()), "deduplicated": len(records), "train": len(train), "validation": len(validation), "protocols": protocols, "validation_protocols": Counter(r.get("metadata", {}).get("protocol", "unknown") for r in validation), "validation_tasks": Counter(r.get("metadata", {}).get("task", "unknown") for r in validation)}
     (args.output_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
 
