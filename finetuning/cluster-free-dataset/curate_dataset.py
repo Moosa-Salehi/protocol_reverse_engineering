@@ -11,6 +11,7 @@ def main() -> None:
     p.add_argument("--tokenizer", required=True); p.add_argument("--count", type=int, default=1000)
     p.add_argument("--max-tokens", type=int, default=4096); p.add_argument("--max-boundaries", type=int, default=32)
     p.add_argument("--preferred-payload-length", type=int, default=50); p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--include-holdout", action="store_true")
     a = p.parse_args()
     if a.count < 1 or a.max_tokens < 1 or a.max_boundaries < 2: p.error("invalid limits")
     try:
@@ -19,6 +20,7 @@ def main() -> None:
     except Exception as exc:
         raise SystemExit(f"Tokenizer unavailable: {exc}")
     excluded = {"raw.jsonl", "curated_1000.jsonl"}
+    if not a.include_holdout: excluded |= {"modbus.jsonl", "goose.jsonl"}
     rows = []
     rejected = Counter()
     for path in sorted(a.data_root.glob("*.jsonl")):
@@ -46,16 +48,24 @@ def main() -> None:
                 rows.append((short_score, semantic_score, prompt_tokens, row))
             except (KeyError, ValueError, IndexError, json.JSONDecodeError):
                 rejected["malformed"] += 1
-    rng = random.Random(a.seed)
-    rng.shuffle(rows)
-    rows.sort(key=lambda x: (-x[0], -x[1], x[2]))
-    # Keep both tasks represented whenever possible, then fill by quality score.
-    chosen = []
-    for task in ("boundary_refinement", "semantic_labeling"):
-        pool = [x for x in rows if x[3]["metadata"].get("task") == task]
-        chosen.extend(pool[: a.count // 2])
-    chosen_ids = {id(x[3]) for x in chosen}
-    chosen.extend(x for x in rows if id(x[3]) not in chosen_ids)
+    rng = random.Random(a.seed); rng.shuffle(rows)
+    # Allocate approximately evenly across protocol/task strata, with 20% long examples.
+    protocols = sorted({x[3]["metadata"].get("protocol", "unknown") for x in rows})
+    target_long = round(a.count * 0.20); chosen = []; used = set()
+    def add(pool, limit):
+        pool.sort(key=lambda x: (-x[1], x[2]))
+        for x in pool[:limit]:
+            if id(x[3]) not in used: chosen.append(x); used.add(id(x[3]))
+    per_protocol = max(1, a.count // max(1, len(protocols)))
+    for protocol in protocols:
+        pool = [x for x in rows if x[3]["metadata"].get("protocol") == protocol]
+        tasks = [t for t in ("boundary_refinement", "semantic_labeling") if any(y[3]["metadata"].get("task") == t for y in pool)]
+        for task in tasks: add([x for x in pool if x[3]["metadata"].get("task") == task and x[0] == 1], max(1, per_protocol // max(1, len(tasks))))
+    # Fill the long-payload reserve first, then fill remaining slots round-robin by protocol/task.
+    add([x for x in rows if 50 <= json.loads(x[3]["messages"][1]["content"].split("```json\n",1)[1].rsplit("\n```",1)[0])["messages"][0]["payload_len"] <= 200], max(0, target_long - sum(1 for x in chosen if x[0] == 0)))
+    remaining = [x for x in rows if id(x[3]) not in used]
+    remaining.sort(key=lambda x: (-x[0], -x[1], x[2]))
+    add(remaining, a.count - len(chosen))
     chosen = chosen[:a.count]
     if len(chosen) < a.count: rejected["insufficient_candidates"] = a.count - len(chosen)
     a.output.parent.mkdir(parents=True, exist_ok=True)
