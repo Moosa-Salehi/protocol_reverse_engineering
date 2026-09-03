@@ -38,15 +38,19 @@ def fields(x):
    yield from fields(v)
  elif isinstance(x,list):
   for y in x: yield from fields(y)
-def raw_hex(x):
- if isinstance(x,dict):
-  for k,v in x.items():
-   if k.endswith('_raw'):
-    for e in (v if isinstance(v,list) else [v]):
-     if isinstance(e,list) and e: yield re.sub(r'[^0-9a-f]','',str(e[0]).lower())
-   yield from raw_hex(v)
- elif isinstance(x,list):
-  for y in x: yield from raw_hex(y)
+def packet_frame_hex(layers):
+ if isinstance(layers,dict):
+  value=layers.get('frame_raw')
+  if isinstance(value,list) and value:
+   if isinstance(value[0],list): value=value[0]
+   if value: return re.sub(r'[^0-9a-f]','',str(value[0]).lower())
+  frame=layers.get('frame')
+  if isinstance(frame,dict):
+   value=frame.get('frame_raw')
+   if isinstance(value,list) and value:
+    if isinstance(value[0],list): value=value[0]
+    if value: return re.sub(r'[^0-9a-f]','',str(value[0]).lower())
+ return ''
 def main():
  p=argparse.ArgumentParser();p.add_argument('messages',type=Path);p.add_argument('pcap_root',type=Path);p.add_argument('output',type=Path);p.add_argument('--filter',required=True);p.add_argument('--tshark',default='tshark');a=p.parse_args()
  rows=[json.loads(x) for x in a.messages.read_text(encoding='utf-8').splitlines() if x.strip()]; byfile={}
@@ -65,9 +69,8 @@ def main():
    if r: labels.append({'offset':off,'width':width,'semantic_role':r,'field_type':'bytes'})
   if len(boundaries) > 2:
    cached.append({'msg_id':m['msg_id'],'boundaries':sorted(boundaries),'semantic_labels':labels,'reviewed':True,'approved':True,'reviewer':'tshark-cache','source_frame':meta.get('frame_number')})
- if cached:
-  a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text('\n'.join(json.dumps(x) for x in cached)+'\n',encoding='utf-8');print(json.dumps({'packets':len(rows),'unmatched':len(rows)-len(cached),'annotations':len(cached),'errors':[],'source':'message_field_spans','output':str(a.output)},indent=2));return
- out=[]; packets=0; unmatched=0; errors=[]
+ cached_by_id={x['msg_id']:x for x in cached}
+ out=list(cached); used=set(cached_by_id); packets=0; unmatched=0; errors=[]
  for pcap in a.pcap_root.rglob('*'):
   if pcap.suffix.lower() not in {'.pcap','.pcapng','.cap'}: continue
   try:
@@ -77,9 +80,10 @@ def main():
   for packet in json.loads(proc.stdout or '[]'):
    packets += 1
    layers=packet.get('_source',{}).get('layers',{}); frame=layers.get('frame',{}) if isinstance(layers,dict) else {}; num=scalar(frame.get('frame_frame_number', frame.get('frame.number', frame.get('number')))) or frame_number(layers)
-   raw=list(fields(layers)); frame_hex=''.join(raw_hex(layers)); payload=next((m for m in byfile.get(pcap.name,[]) if str(m.get('metadata',{}).get('frame_number',m.get('metadata',{}).get('frame',{}).get('number',m.get('metadata',{}).get('frame',{}).get('frame.number',''))))==str(num)),None)
+   raw=list(fields(layers)); frame_hex=packet_frame_hex(layers); candidates=[m for m in byfile.get(pcap.name,[]) if m.get('msg_id') not in used]
+   payload=next((m for m in candidates if str(m.get('metadata',{}).get('frame_number',m.get('metadata',{}).get('frame',{}).get('number',m.get('metadata',{}).get('frame',{}).get('frame.number',''))))==str(num) and re.sub(r'[^0-9a-f]','',str(m.get('payload_hex','')).lower()) in frame_hex),None)
    if payload is None and frame_hex:
-    payload=next((m for m in byfile.get(pcap.name,[]) if re.sub(r'[^0-9a-f]','',str(m.get('payload_hex','')).lower()) in frame_hex),None)
+    payload=next((m for m in candidates if re.sub(r'[^0-9a-f]','',str(m.get('payload_hex','')).lower()) in frame_hex),None)
    if payload is None: unmatched += 1; continue
    plen=int(payload.get('payload_len',0))
    payload_hex=re.sub(r'[^0-9a-f]','',str(payload.get('payload_hex','')).lower())
@@ -95,6 +99,9 @@ def main():
     if o<0 or w<1 or o+w>plen: continue
     r=role(name)
     if r: labels.append({'offset':o,'width':w,'semantic_role':r,'field_type':'bytes'})
-   out.append({'msg_id':payload['msg_id'],'boundaries':spans,'semantic_labels':labels,'reviewed':True,'approved':True,'reviewer':'tshark','source_frame':num})
- a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text('\n'.join(json.dumps(x) for x in out)+'\n',encoding='utf-8');print(json.dumps({'packets':packets,'unmatched':unmatched,'annotations':len(out),'errors':errors,'output':str(a.output)},indent=2))
+   if len(spans) <= 2:
+    unmatched += 1
+    continue
+   out.append({'msg_id':payload['msg_id'],'boundaries':spans,'semantic_labels':labels,'reviewed':True,'approved':True,'reviewer':'tshark','source_frame':num}); used.add(payload['msg_id'])
+ a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text('\n'.join(json.dumps(x) for x in out)+'\n',encoding='utf-8');print(json.dumps({'packets_scanned':packets,'packet_match_failures':unmatched,'messages':len(rows),'matched_messages':len(used),'unmatched_messages':len(rows)-len(used),'annotations':len(out),'errors':errors,'output':str(a.output)},indent=2))
 if __name__=='__main__':main()

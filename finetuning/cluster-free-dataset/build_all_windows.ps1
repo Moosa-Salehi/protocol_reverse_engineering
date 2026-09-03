@@ -31,7 +31,9 @@ foreach ($protocol in $Protocols) {
     $entry = $Config.train.PSObject.Properties[$protocol]
     if ($null -eq $entry) { $entry = $Config.holdout.PSObject.Properties[$protocol] }
     if ($null -eq $entry) { throw "No TShark filter configured for $protocol" }
-    & $Python (Join-Path $PSScriptRoot "generate_tshark_annotations.py") $messages $PcapRoot $annotations --filter $entry.Value.filter --tshark $Tshark
+    $protocolPcapRoot = Join-Path $PcapRoot $protocol
+    if (!(Test-Path $protocolPcapRoot)) { $protocolPcapRoot = $PcapRoot }
+    & $Python (Join-Path $PSScriptRoot "generate_tshark_annotations.py") $messages $protocolPcapRoot $annotations --filter $entry.Value.filter --tshark $Tshark
     if ($LASTEXITCODE -ne 0) { throw "TShark annotation generation failed for $protocol" }
     if (!(Test-Path $annotations) -or (Get-Item $annotations).Length -eq 0) { throw "TShark generated no annotations for $protocol; check PcapRoot and frame metadata" }
   }
