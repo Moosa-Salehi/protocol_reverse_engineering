@@ -4,6 +4,7 @@ param(
   [Parameter(Mandatory=$true)][string]$OutputRoot,
   [string]$Python = "python",
   [int]$BatchSize = 8,
+  [string]$Tshark = "tshark",
   [string[]]$Protocols = @()
 )
 $ErrorActionPreference = "Stop"
@@ -19,7 +20,11 @@ foreach ($protocol in $Protocols) {
   $annotations = Join-Path $AnnotationsRoot "$protocol.jsonl"
   if (!(Test-Path $annotations)) { $annotations = Join-Path $AnnotationsRoot "$protocol.json" }
   if (!(Test-Path $messages)) { Write-Warning "Skipping $protocol: messages not found"; continue }
-  if (!(Test-Path $annotations)) { Write-Warning "Skipping $protocol: annotations not found"; continue }
+  if (!(Test-Path $annotations)) {
+    New-Item -ItemType Directory -Force -Path $AnnotationsRoot | Out-Null
+    & $Python (Join-Path $PSScriptRoot "generate_tshark_annotations.py") $messages $MessagesRoot $annotations --filter $protocol --tshark $Tshark
+    if ($LASTEXITCODE -ne 0) { throw "TShark annotation generation failed for $protocol" }
+  }
   $out = Join-Path $OutputRoot "$protocol.jsonl"
   & $Python $Builder $messages $annotations $out --protocol $protocol --batch-size $BatchSize --tasks boundary_refinement semantic_labeling
   if ($LASTEXITCODE -ne 0) { throw "Builder failed for $protocol" }
