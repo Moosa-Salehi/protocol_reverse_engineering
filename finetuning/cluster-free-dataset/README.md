@@ -25,3 +25,9 @@ Each annotation must contain `msg_id` and at least one of `boundaries` or
 Run the normal promotion, leakage audit, rendered-length check, and dataset
 split commands before training. This workflow does not create gold labels from
 raw payloads automatically.
+
+The builder emits one prompt per target message, omits empty semantic targets
+unless `--include-empty-semantic` is explicitly supplied, and rejects prompts
+over its default 12,000-character limit. Protocol identity is kept in record
+metadata rather than copied into the user prompt so the leakage audit can check
+for protocol-name leakage.
