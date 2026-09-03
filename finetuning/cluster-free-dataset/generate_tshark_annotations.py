@@ -29,7 +29,7 @@ def main():
   proc=subprocess.run([a.tshark,'-n','-r',str(pcap),'-Y',a.filter,'-T','jsonraw'],capture_output=True,text=True,check=True)
   for packet in json.loads(proc.stdout or '[]'):
    layers=packet.get('_source',{}).get('layers',{}); frame=layers.get('frame',{}); num=frame.get('frame.number')
-   raw=list(fields(layers)); payload=next((m for m in byfile.get(pcap.name,[]) if str(m.get('metadata',{}).get('frame',{}).get('number',m.get('metadata',{}).get('frame',{}).get('frame.number','')))==str(num)),None)
+   raw=list(fields(layers)); payload=next((m for m in byfile.get(pcap.name,[]) if str(m.get('metadata',{}).get('frame_number',m.get('metadata',{}).get('frame',{}).get('number',m.get('metadata',{}).get('frame',{}).get('frame.number',''))))==str(num)),None)
    if payload is None: continue
    plen=int(payload.get('payload_len',0)); spans=sorted({0,plen}|{o for _,o,w in raw if 0<=o<plen}|{o+w for _,o,w in raw if 0<o+w<=plen})
    labels=[]

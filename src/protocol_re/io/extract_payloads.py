@@ -606,6 +606,7 @@ def _tshark_payload_record_to_message(
         payload_len=len(payload_hex) // 2,
         timestamp=iso_z_to_unix_float(str(payload_record.get("timestamp"))),        
         index_in_session=index_in_session,
+        metadata={"frame_number": metadata.get("frame", {}).get("number") or metadata.get("frame", {}).get("frame.number")},
     )
 
 
