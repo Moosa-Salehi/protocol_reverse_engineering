@@ -8,7 +8,7 @@ from pathlib import Path
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("input", type=Path)
-    p.add_argument("--max-prompt-chars", type=int, default=12000)
+    p.add_argument("--max-prompt-chars", type=int, default=16000)
     p.add_argument("--allow-empty-semantic", action="store_true")
     args = p.parse_args()
     rows = []

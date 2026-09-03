@@ -65,7 +65,7 @@ def main() -> None:
     p = argparse.ArgumentParser(); p.add_argument("messages", type=Path); p.add_argument("annotations", type=Path); p.add_argument("output", type=Path)
     p.add_argument("--protocol", required=True); p.add_argument("--batch-size", type=int, default=8); p.add_argument("--tasks", nargs="+", choices=["boundary_refinement","semantic_labeling"], default=["boundary_refinement","semantic_labeling"])
     p.add_argument("--include-empty-semantic", action="store_true", help="Keep semantic targets with no labels (disabled by default).")
-    p.add_argument("--max-prompt-chars", type=int, default=12000, help="Reject prompts longer than this limit.")
+    p.add_argument("--max-prompt-chars", type=int, default=16000, help="Reject prompts longer than this limit.")
     args = p.parse_args()
     if args.batch_size < 1: p.error("--batch-size must be >= 1")
     if args.max_prompt_chars < 1: p.error("--max-prompt-chars must be >= 1")
