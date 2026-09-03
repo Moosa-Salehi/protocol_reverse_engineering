@@ -38,3 +38,12 @@ Validate a regenerated file before splitting:
 python finetuning/cluster-free-dataset/validate_dataset.py \
   finetuning/cluster-free-dataset/data/combined/raw.jsonl
 ```
+
+On Windows, combine, validate, split, and summarize in one step:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\finetuning\cluster-free-dataset\prepare_combined_windows.ps1
+```
+
+Modbus and GOOSE remain excluded by default as holdout protocols. Use
+`-IncludeHoldout` only when preparing evaluation artifacts.
