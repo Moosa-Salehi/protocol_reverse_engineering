@@ -6,7 +6,8 @@ param(
   [string]$Python = "python",
   [int]$BatchSize = 8,
   [string]$Tshark = "tshark",
-  [string[]]$Protocols = @()
+  [string[]]$Protocols = @(),
+  [ValidateSet("boundary_refinement", "semantic_labeling")][string[]]$Tasks = @("boundary_refinement", "semantic_labeling")
 )
 $ErrorActionPreference = "Stop"
 $Builder = Join-Path $PSScriptRoot "build_payload_dataset.py"
@@ -35,7 +36,7 @@ foreach ($protocol in $Protocols) {
     if (!(Test-Path $annotations) -or (Get-Item $annotations).Length -eq 0) { throw "TShark generated no annotations for $protocol; check PcapRoot and frame metadata" }
   }
   $out = Join-Path $OutputRoot "$protocol.jsonl"
-  & $Python $Builder $messages $annotations $out --protocol $protocol --batch-size $BatchSize --tasks boundary_refinement semantic_labeling
+  & $Python $Builder $messages $annotations $out --protocol $protocol --batch-size $BatchSize --tasks $Tasks
   if ($LASTEXITCODE -ne 0) { throw "Builder failed for $protocol" }
 }
 Write-Host "Cluster-free dataset written to $OutputRoot"
