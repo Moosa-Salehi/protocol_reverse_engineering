@@ -107,6 +107,24 @@ def main() -> None:
                 if task == "semantic_labeling": selected_roles.update(set(roles(best)))
             return result
         quota = min(a.protocol_cap, max(1, a.count // max(1, len(protocols))))
+        if task == "semantic_labeling":
+            long_selected = Counter()
+            while len(chosen) < a.count:
+                progress = False
+                for protocol in sorted(protocols, key=lambda p: (selected[p], p)):
+                    if selected[protocol] >= a.protocol_cap: continue
+                    available = [x for x in pools[protocol] if id(x[5]) not in used and allowed(x, a.count)]
+                    if not available: continue
+                    desired_long = round((selected[protocol] + 1) * .20)
+                    preferred = [x for x in available if x[0] == 0] if long_selected[protocol] < desired_long else [x for x in available if x[0] == 1]
+                    picked = take_balanced(preferred or available, 1)
+                    if not picked: continue
+                    x = picked[0]; chosen.append(x); used.add(id(x[5])); selected[protocol] += 1
+                    if x[0] == 0: long_selected[protocol] += 1
+                    progress = True
+                    if len(chosen) >= a.count: break
+                if not progress: break
+            return chosen, counts
         for protocol in protocols:
             pool = pools[protocol]; long_pool = [x for x in pool if x[0] == 0]
             short_pool = [x for x in pool if x[0] == 1]
