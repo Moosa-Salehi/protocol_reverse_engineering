@@ -120,7 +120,9 @@ def main() -> None:
         while remaining and len(chosen) < a.count:
             eligible = [x for x in remaining if x[5]["metadata"].get("protocol", "unknown") in pools and selected[x[5]["metadata"].get("protocol", "unknown")] < a.protocol_cap]
             if not eligible: break
-            x = take_balanced(eligible, 1)[0]; remaining.remove(x)
+            picked = take_balanced(eligible, 1)
+            if not picked: break
+            x = picked[0]; remaining.remove(x)
             protocol = x[5]["metadata"].get("protocol", "unknown")
             chosen.append(x); selected[protocol] += 1
         return chosen[:a.count], counts
