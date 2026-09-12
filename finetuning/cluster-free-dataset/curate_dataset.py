@@ -151,7 +151,16 @@ def main() -> None:
     semantic_path = a.output.with_name(semantic_stem + a.output.suffix)
     if semantic_path == a.output:
         raise ValueError("boundary and semantic output paths must be different")
-    def write(path, values): path.write_text("\n".join(json.dumps(x[5], ensure_ascii=False) for x in values) + ("\n" if values else ""), encoding="utf-8")
+    def training_record(item):
+        row = json.loads(json.dumps(item[5]))
+        prompt = row["messages"][1]["content"]
+        prefix, encoded = prompt.split("```json\n", 1)
+        evidence_text, suffix = encoded.rsplit("\n```", 1)
+        evidence = json.loads(evidence_text)
+        for message in evidence.get("messages", []): message.pop("msg_id", None)
+        row["messages"][1]["content"] = prefix + "```json\n" + json.dumps(evidence, separators=(",", ":")) + "\n```" + suffix
+        return row
+    def write(path, values): path.write_text("\n".join(json.dumps(training_record(x), ensure_ascii=False) for x in values) + ("\n" if values else ""), encoding="utf-8")
     write(a.output, boundary); write(semantic_path, semantic)
     def report(values, counts):
         role_counts = Counter(label.get("semantic_role") for x in values for label in json.loads(x[5]["messages"][-1]["content"]).get("semantic_labels", []) if label.get("semantic_role"))
