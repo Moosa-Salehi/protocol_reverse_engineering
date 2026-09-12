@@ -12,6 +12,8 @@ def main() -> None:
     p.add_argument("--max-tokens", type=int, default=4096); p.add_argument("--max-boundaries", type=int, default=32)
     p.add_argument("--preferred-payload-length", type=int, default=50); p.add_argument("--seed", type=int, default=42)
     p.add_argument("--include-holdout", action="store_true")
+    p.add_argument("--protocol-cap", type=int, default=100)
+    p.add_argument("--min-protocol-records", type=int, default=10)
     a = p.parse_args()
     if a.count < 1 or a.max_tokens < 1 or a.max_boundaries < 2: p.error("invalid limits")
     try:
@@ -37,41 +39,50 @@ def main() -> None:
                 evidence = json.loads(msgs[1]["content"].split("```json\n", 1)[1].rsplit("\n```", 1)[0])
                 payload_len = int(evidence["messages"][0]["payload_len"])
                 if len(boundaries) > a.max_boundaries: rejected["dense_boundaries"] += 1; continue
-                if boundaries and (boundaries[0] != 0 or boundaries[-1] != payload_len): rejected["boundary_endpoints"] += 1; continue
-                if meta.get("task") == "semantic_labeling":
+                task = meta.get("task")
+                if task == "boundary_refinement" and (not boundaries or boundaries[0] != 0 or boundaries[-1] != payload_len): rejected["boundary_endpoints"] += 1; continue
+                if task == "semantic_labeling":
                     labels = target.get("semantic_labels", [])
                     if not labels: rejected["empty_semantics"] += 1; continue
-                    if min(int(x["offset"]) for x in labels) != 0 or max(int(x["offset"]) + int(x["width"]) for x in labels) != payload_len:
-                        rejected["incomplete_semantics"] += 1; continue
+                if task not in ("boundary_refinement", "semantic_labeling"): rejected["unknown_task"] += 1; continue
                 semantic_score = len(target.get("semantic_labels", []))
                 short_score = 1 if payload_len < a.preferred_payload_length else 0
                 rows.append((short_score, semantic_score, prompt_tokens, row))
             except (KeyError, ValueError, IndexError, json.JSONDecodeError):
                 rejected["malformed"] += 1
     rng = random.Random(a.seed); rng.shuffle(rows)
-    # Allocate approximately evenly across protocol/task strata, with 20% long examples.
-    protocols = sorted({x[3]["metadata"].get("protocol", "unknown") for x in rows})
+    # Remove protocols without enough candidates, then cap each protocol.
+    counts = Counter(x[3]["metadata"].get("protocol", "unknown") for x in rows)
+    protocols = sorted(p for p, n in counts.items() if n >= a.min_protocol_records)
+    rows = [x for x in rows if x[3]["metadata"].get("protocol", "unknown") in protocols]
+    rejected["protocol_below_minimum"] = sum(n for p, n in counts.items() if p not in protocols)
     target_long = round(a.count * 0.20); chosen = []; used = set()
     def add(pool, limit):
         pool.sort(key=lambda x: (-x[1], x[2]))
         for x in pool[:limit]:
             if id(x[3]) not in used: chosen.append(x); used.add(id(x[3]))
-    per_protocol = max(1, a.count // max(1, len(protocols)))
+    per_protocol = min(a.protocol_cap, max(1, a.count // max(1, len(protocols))))
     for protocol in protocols:
         pool = [x for x in rows if x[3]["metadata"].get("protocol") == protocol]
         tasks = [t for t in ("boundary_refinement", "semantic_labeling") if any(y[3]["metadata"].get("task") == t for y in pool)]
         for task in tasks: add([x for x in pool if x[3]["metadata"].get("task") == task and x[0] == 1], max(1, per_protocol // max(1, len(tasks))))
     # Fill the long-payload reserve first, then fill remaining slots round-robin by protocol/task.
     add([x for x in rows if 50 <= json.loads(x[3]["messages"][1]["content"].split("```json\n",1)[1].rsplit("\n```",1)[0])["messages"][0]["payload_len"] <= 200], max(0, target_long - sum(1 for x in chosen if x[0] == 0)))
-    remaining = [x for x in rows if id(x[3]) not in used]
+    remaining = [x for x in rows if id(x[3]) not in used and sum(1 for y in chosen if y[3]["metadata"].get("protocol") == x[3]["metadata"].get("protocol")) < a.protocol_cap]
     remaining.sort(key=lambda x: (-x[0], -x[1], x[2]))
     add(remaining, a.count - len(chosen))
     chosen = chosen[:a.count]
     if len(chosen) < a.count: rejected["insufficient_candidates"] = a.count - len(chosen)
     a.output.parent.mkdir(parents=True, exist_ok=True)
-    a.output.write_text("\n".join(json.dumps(x[3], ensure_ascii=False) for x in chosen) + ("\n" if chosen else ""), encoding="utf-8")
-    report = {"selected": len(chosen), "requested": a.count, "candidates": len(rows), "rejected": rejected, "tasks": Counter(x[3]["metadata"].get("task") for x in chosen), "protocols": Counter(x[3]["metadata"].get("protocol") for x in chosen), "max_prompt_tokens": max((x[2] for x in chosen), default=0), "max_boundaries": max((len(json.loads(x[3]["messages"][-1]["content"]).get("boundaries", [])) for x in chosen), default=0)}
-    a.output.with_name(a.output.stem + "_summary.json").write_text(json.dumps(report, indent=2, default=dict), encoding="utf-8")
-    print(json.dumps(report, indent=2, default=dict))
+    boundary = [x for x in chosen if x[3]["metadata"].get("task") == "boundary_refinement"]
+    semantic = [x for x in chosen if x[3]["metadata"].get("task") == "semantic_labeling"]
+    semantic_path = a.output.with_name(a.output.stem.replace("boundary", "semantic") + a.output.suffix)
+    def write(path, values): path.write_text("\n".join(json.dumps(x[3], ensure_ascii=False) for x in values) + ("\n" if values else ""), encoding="utf-8")
+    write(a.output, boundary); write(semantic_path, semantic)
+    def report(values): return {"selected": len(values), "requested": a.count, "candidates": len(rows), "rejected": rejected, "tasks": Counter(x[3]["metadata"].get("task") for x in values), "protocols": Counter(x[3]["metadata"].get("protocol") for x in values), "max_prompt_tokens": max((x[2] for x in values), default=0), "max_boundaries": max((len(json.loads(x[3]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
+    boundary_report, semantic_report = report(boundary), report(semantic)
+    a.output.with_name(a.output.stem + "_summary.json").write_text(json.dumps(boundary_report, indent=2, default=dict), encoding="utf-8")
+    semantic_path.with_name(semantic_path.stem + "_summary.json").write_text(json.dumps(semantic_report, indent=2, default=dict), encoding="utf-8")
+    print(json.dumps({"boundary": boundary_report, "semantic": semantic_report}, indent=2, default=dict))
 
 if __name__ == "__main__": main()
