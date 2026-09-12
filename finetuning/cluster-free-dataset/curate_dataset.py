@@ -65,21 +65,46 @@ def main() -> None:
         pools = {p: [x for x in task_rows if x[5]["metadata"].get("protocol") == p] for p in protocols}
         for pool in pools.values(): pool.sort(key=lambda x: (-x[0], -x[1], x[4]))
         chosen = []; selected = Counter(); used = set()
+        selected_roles = Counter()
+        role_cache = {}
+        def roles(item):
+            key = id(item[5])
+            if key not in role_cache:
+                labels = json.loads(item[5]["messages"][-1]["content"]).get("semantic_labels", [])
+                role_cache[key] = Counter(x.get("semantic_role") for x in labels if x.get("semantic_role"))
+            return role_cache[key]
+        def take_balanced(pool, limit):
+            available = list(pool); result = []
+            while available and len(result) < limit:
+                if task == "semantic_labeling":
+                    def score(item):
+                        counts = roles(item); total = sum(counts.values()) or 1
+                        rare_reward = sum(count / (1 + selected_roles[role]) for role, count in counts.items()) / total
+                        dominance = max(counts.values(), default=0) / total
+                        return (rare_reward - .25 * dominance, -item[4])
+                    best = max(available, key=score)
+                else:
+                    best = available[0]
+                available.remove(best); result.append(best)
+                if task == "semantic_labeling": selected_roles.update(roles(best))
+            return result
         quota = min(a.protocol_cap, max(1, a.count // max(1, len(protocols))))
         for protocol in protocols:
             pool = pools[protocol]; long_pool = [x for x in pool if x[0] == 0]
             short_pool = [x for x in pool if x[0] == 1]
             long_take = min(len(long_pool), round(quota * .20))
-            take = long_pool[:long_take] + short_pool[:quota-long_take]
-            if len(take) < quota: take += [x for x in pool if x not in take][:quota-len(take)]
+            take = take_balanced(long_pool, long_take)
+            take += take_balanced([x for x in short_pool if x not in take], quota-len(take))
+            if len(take) < quota: take += take_balanced([x for x in pool if x not in take], quota-len(take))
             for x in take: chosen.append(x); used.add(id(x[5])); selected[protocol] += 1
         remaining = [x for x in task_rows if id(x[5]) not in used]
         remaining.sort(key=lambda x: (-x[0], -x[1], x[4]))
-        for x in remaining:
+        while remaining and len(chosen) < a.count:
+            eligible = [x for x in remaining if x[5]["metadata"].get("protocol", "unknown") in pools and selected[x[5]["metadata"].get("protocol", "unknown")] < a.protocol_cap]
+            if not eligible: break
+            x = take_balanced(eligible, 1)[0]; remaining.remove(x)
             protocol = x[5]["metadata"].get("protocol", "unknown")
-            if len(chosen) >= a.count: break
-            if protocol in pools and selected[protocol] < a.protocol_cap:
-                chosen.append(x); selected[protocol] += 1
+            chosen.append(x); selected[protocol] += 1
         return chosen[:a.count], counts
     boundary, boundary_counts = select_task("boundary_refinement")
     semantic, semantic_counts = select_task("semantic_labeling")
@@ -90,7 +115,9 @@ def main() -> None:
         raise ValueError("boundary and semantic output paths must be different")
     def write(path, values): path.write_text("\n".join(json.dumps(x[5], ensure_ascii=False) for x in values) + ("\n" if values else ""), encoding="utf-8")
     write(a.output, boundary); write(semantic_path, semantic)
-    def report(values, counts): return {"selected": len(values), "requested": a.count, "eligible_protocols": sorted(p for p,n in counts.items() if n >= a.min_protocol_records), "excluded_protocols": sorted(p for p,n in counts.items() if n < a.min_protocol_records), "rejected": rejected, "tasks": Counter(x[5]["metadata"].get("task") for x in values), "protocols": Counter(x[5]["metadata"].get("protocol") for x in values), "max_prompt_tokens": max((x[2] for x in values), default=0), "max_target_tokens": max((x[3] for x in values), default=0), "max_total_tokens": max((x[4] for x in values), default=0), "max_boundaries": max((len(json.loads(x[5]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
+    def report(values, counts):
+        role_counts = Counter(label.get("semantic_role") for x in values for label in json.loads(x[5]["messages"][-1]["content"]).get("semantic_labels", []) if label.get("semantic_role"))
+        return {"selected": len(values), "requested": a.count, "eligible_protocols": sorted(p for p,n in counts.items() if n >= a.min_protocol_records), "excluded_protocols": sorted(p for p,n in counts.items() if n < a.min_protocol_records), "rejected": rejected, "tasks": Counter(x[5]["metadata"].get("task") for x in values), "protocols": Counter(x[5]["metadata"].get("protocol") for x in values), "semantic_roles": role_counts, "max_prompt_tokens": max((x[2] for x in values), default=0), "max_target_tokens": max((x[3] for x in values), default=0), "max_total_tokens": max((x[4] for x in values), default=0), "max_boundaries": max((len(json.loads(x[5]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
     boundary_report, semantic_report = report(boundary, boundary_counts), report(semantic, semantic_counts)
     a.output.with_name(a.output.stem + "_summary.json").write_text(json.dumps(boundary_report, indent=2, default=dict), encoding="utf-8")
     semantic_path.with_name(semantic_path.stem + "_summary.json").write_text(json.dumps(semantic_report, indent=2, default=dict), encoding="utf-8")
