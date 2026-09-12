@@ -76,7 +76,10 @@ def main() -> None:
     a.output.parent.mkdir(parents=True, exist_ok=True)
     boundary = [x for x in chosen if x[3]["metadata"].get("task") == "boundary_refinement"]
     semantic = [x for x in chosen if x[3]["metadata"].get("task") == "semantic_labeling"]
-    semantic_path = a.output.with_name(a.output.stem.replace("boundary", "semantic") + a.output.suffix)
+    semantic_stem = a.output.stem.replace("boundary", "semantic") if "boundary" in a.output.stem else a.output.stem + "_semantic"
+    semantic_path = a.output.with_name(semantic_stem + a.output.suffix)
+    if semantic_path == a.output:
+        raise ValueError("boundary and semantic output paths must be different")
     def write(path, values): path.write_text("\n".join(json.dumps(x[3], ensure_ascii=False) for x in values) + ("\n" if values else ""), encoding="utf-8")
     write(a.output, boundary); write(semantic_path, semantic)
     def report(values): return {"selected": len(values), "requested": a.count, "candidates": len(rows), "rejected": rejected, "tasks": Counter(x[3]["metadata"].get("task") for x in values), "protocols": Counter(x[3]["metadata"].get("protocol") for x in values), "max_prompt_tokens": max((x[2] for x in values), default=0), "max_boundaries": max((len(json.loads(x[3]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
