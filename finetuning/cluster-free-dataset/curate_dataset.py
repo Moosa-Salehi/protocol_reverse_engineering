@@ -14,6 +14,8 @@ def main() -> None:
     p.add_argument("--include-holdout", action="store_true")
     p.add_argument("--protocol-cap", type=int, default=100)
     p.add_argument("--min-protocol-records", type=int, default=10)
+    p.add_argument("--max-role-occurrences", type=int, default=3)
+    p.add_argument("--max-role-record-fraction", type=float, default=.5)
     a = p.parse_args()
     if a.count < 1 or a.max_tokens < 1 or a.max_boundaries < 2: p.error("invalid limits")
     try:
@@ -48,6 +50,17 @@ def main() -> None:
                 if task == "semantic_labeling":
                     labels = target.get("semantic_labels", [])
                     if not labels: rejected["empty_semantics"] += 1; continue
+                    keys = [(int(x["offset"]), int(x["width"]), x.get("semantic_role")) for x in labels]
+                    if len(keys) != len(set(keys)): rejected["duplicate_semantic_labels"] += 1; continue
+                    role_occurrences = Counter(role for _, _, role in keys)
+                    if max(role_occurrences.values(), default=0) > a.max_role_occurrences: rejected["role_repetition"] += 1; continue
+                    contained = False
+                    for i, (off1, width1, role1) in enumerate(keys):
+                        for off2, width2, role2 in keys[i + 1:]:
+                            if role1 == role2 and ((off1 <= off2 and off1 + width1 >= off2 + width2) or (off2 <= off1 and off2 + width2 >= off1 + width1)):
+                                contained = True; break
+                        if contained: break
+                    if contained: rejected["contained_same_role"] += 1; continue
                 if task not in ("boundary_refinement", "semantic_labeling"): rejected["unknown_task"] += 1; continue
                 semantic_score = len(target.get("semantic_labels", []))
                 short_score = 1 if payload_len < a.preferred_payload_length else 0
@@ -73,20 +86,25 @@ def main() -> None:
                 labels = json.loads(item[5]["messages"][-1]["content"]).get("semantic_labels", [])
                 role_cache[key] = Counter(x.get("semantic_role") for x in labels if x.get("semantic_role"))
             return role_cache[key]
+        def allowed(item, final_size):
+            if task != "semantic_labeling": return True
+            cap = max(1, round(final_size * a.max_role_record_fraction))
+            return all(selected_roles[role] < cap for role in roles(item))
         def take_balanced(pool, limit):
             available = list(pool); result = []
             while available and len(result) < limit:
                 if task == "semantic_labeling":
                     def score(item):
-                        counts = roles(item); total = sum(counts.values()) or 1
-                        rare_reward = sum(count / (1 + selected_roles[role]) for role, count in counts.items()) / total
-                        dominance = max(counts.values(), default=0) / total
-                        return (rare_reward - .25 * dominance, -item[4])
-                    best = max(available, key=score)
+                        present = set(roles(item))
+                        rare_reward = sum(1 / (1 + selected_roles[role]) for role in present) / max(1, len(present))
+                        return (rare_reward, -item[4])
+                    eligible = [item for item in available if allowed(item, a.count)]
+                    if not eligible: break
+                    best = max(eligible, key=score)
                 else:
                     best = available[0]
                 available.remove(best); result.append(best)
-                if task == "semantic_labeling": selected_roles.update(roles(best))
+                if task == "semantic_labeling": selected_roles.update(set(roles(best)))
             return result
         quota = min(a.protocol_cap, max(1, a.count // max(1, len(protocols))))
         for protocol in protocols:
@@ -117,7 +135,8 @@ def main() -> None:
     write(a.output, boundary); write(semantic_path, semantic)
     def report(values, counts):
         role_counts = Counter(label.get("semantic_role") for x in values for label in json.loads(x[5]["messages"][-1]["content"]).get("semantic_labels", []) if label.get("semantic_role"))
-        return {"selected": len(values), "requested": a.count, "eligible_protocols": sorted(p for p,n in counts.items() if n >= a.min_protocol_records), "excluded_protocols": sorted(p for p,n in counts.items() if n < a.min_protocol_records), "rejected": rejected, "tasks": Counter(x[5]["metadata"].get("task") for x in values), "protocols": Counter(x[5]["metadata"].get("protocol") for x in values), "semantic_roles": role_counts, "max_prompt_tokens": max((x[2] for x in values), default=0), "max_target_tokens": max((x[3] for x in values), default=0), "max_total_tokens": max((x[4] for x in values), default=0), "max_boundaries": max((len(json.loads(x[5]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
+        role_records = Counter(role for x in values for role in {label.get("semantic_role") for label in json.loads(x[5]["messages"][-1]["content"]).get("semantic_labels", []) if label.get("semantic_role")})
+        return {"selected": len(values), "requested": a.count, "eligible_protocols": sorted(p for p,n in counts.items() if n >= a.min_protocol_records), "excluded_protocols": sorted(p for p,n in counts.items() if n < a.min_protocol_records), "rejected": rejected, "tasks": Counter(x[5]["metadata"].get("task") for x in values), "protocols": Counter(x[5]["metadata"].get("protocol") for x in values), "semantic_roles": role_counts, "semantic_role_records": role_records, "max_prompt_tokens": max((x[2] for x in values), default=0), "max_target_tokens": max((x[3] for x in values), default=0), "max_total_tokens": max((x[4] for x in values), default=0), "max_boundaries": max((len(json.loads(x[5]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
     boundary_report, semantic_report = report(boundary, boundary_counts), report(semantic, semantic_counts)
     a.output.with_name(a.output.stem + "_summary.json").write_text(json.dumps(boundary_report, indent=2, default=dict), encoding="utf-8")
     semantic_path.with_name(semantic_path.stem + "_summary.json").write_text(json.dumps(semantic_report, indent=2, default=dict), encoding="utf-8")

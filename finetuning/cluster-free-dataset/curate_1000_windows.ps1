@@ -9,10 +9,12 @@ param(
   [int]$PreferredPayloadLength = 50,
   [switch]$IncludeHoldout,
   [int]$ProtocolCap = 100,
-  [int]$MinProtocolRecords = 10
+  [int]$MinProtocolRecords = 10,
+  [int]$MaxRoleOccurrences = 3,
+  [double]$MaxRoleRecordFraction = 0.5
 )
 $ErrorActionPreference = "Stop"
 $script = Join-Path $PSScriptRoot "curate_dataset.py"
 $holdoutArg = @(); if ($IncludeHoldout) { $holdoutArg = @("--include-holdout") }
-& $Python $script $DataRoot $Output --tokenizer $Tokenizer --count $Count --max-tokens $MaxTokens --max-boundaries $MaxBoundaries --preferred-payload-length $PreferredPayloadLength --protocol-cap $ProtocolCap --min-protocol-records $MinProtocolRecords @holdoutArg
+& $Python $script $DataRoot $Output --tokenizer $Tokenizer --count $Count --max-tokens $MaxTokens --max-boundaries $MaxBoundaries --preferred-payload-length $PreferredPayloadLength --protocol-cap $ProtocolCap --min-protocol-records $MinProtocolRecords --max-role-occurrences $MaxRoleOccurrences --max-role-record-fraction $MaxRoleRecordFraction @holdoutArg
 if ($LASTEXITCODE -ne 0) { throw "Dataset curation failed" }
