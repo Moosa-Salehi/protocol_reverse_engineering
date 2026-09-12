@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Select a small, tokenizer-safe, high-quality fine-tuning subset."""
 from __future__ import annotations
-import argparse, json, random
-from collections import Counter, defaultdict
+import argparse, hashlib, json, random
+from collections import Counter
 from pathlib import Path
 
 def main() -> None:
@@ -23,21 +23,25 @@ def main() -> None:
         raise SystemExit(f"Tokenizer unavailable: {exc}")
     excluded = {"raw.jsonl", "curated_1000.jsonl"}
     if not a.include_holdout: excluded |= {"modbus.jsonl", "goose.jsonl"}
-    rows = []
+    rows = []; seen = set()
     rejected = Counter()
     for path in sorted(a.data_root.glob("*.jsonl")):
-        if path.name in excluded: continue
+        if path.name in excluded or path.name.startswith("curated_"): continue
         for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if not line.strip(): continue
             try:
                 row = json.loads(line); meta = row["metadata"]; msgs = row["messages"]; target = json.loads(msgs[-1]["content"])
                 rendered = tok.apply_chat_template(msgs[:-1], tokenize=False, add_generation_prompt=True)
                 prompt_tokens = len(tok(rendered, add_special_tokens=False)["input_ids"])
-                if prompt_tokens > a.max_tokens: rejected["prompt_tokens"] += 1; continue
+                target_tokens = len(tok(msgs[-1]["content"], add_special_tokens=False)["input_ids"])
+                full_rendered = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False)
+                total_tokens = len(tok(full_rendered, add_special_tokens=False)["input_ids"])
+                if total_tokens > a.max_tokens: rejected["total_tokens"] += 1; continue
                 boundaries = target.get("boundaries", [])
                 payload_len = int(row.get("metadata", {}).get("payload_len", 0) or 0)
                 evidence = json.loads(msgs[1]["content"].split("```json\n", 1)[1].rsplit("\n```", 1)[0])
                 payload_len = int(evidence["messages"][0]["payload_len"])
+                if payload_len > 200: rejected["payload_over_200"] += 1; continue
                 if len(boundaries) > a.max_boundaries: rejected["dense_boundaries"] += 1; continue
                 task = meta.get("task")
                 if task == "boundary_refinement" and (not boundaries or boundaries[0] != 0 or boundaries[-1] != payload_len): rejected["boundary_endpoints"] += 1; continue
@@ -47,16 +51,19 @@ def main() -> None:
                 if task not in ("boundary_refinement", "semantic_labeling"): rejected["unknown_task"] += 1; continue
                 semantic_score = len(target.get("semantic_labels", []))
                 short_score = 1 if payload_len < a.preferred_payload_length else 0
-                rows.append((short_score, semantic_score, prompt_tokens, row))
+                digest = hashlib.sha256((msgs[1]["content"] + "\0" + msgs[-1]["content"]).encode("utf-8")).hexdigest()
+                if digest in seen: rejected["duplicate_prompt_target"] += 1; continue
+                seen.add(digest)
+                rows.append((short_score, semantic_score, prompt_tokens, target_tokens, total_tokens, row))
             except (KeyError, ValueError, IndexError, json.JSONDecodeError):
                 rejected["malformed"] += 1
     rng = random.Random(a.seed); rng.shuffle(rows)
     def select_task(task):
-        task_rows = [x for x in rows if x[3]["metadata"].get("task") == task]
-        counts = Counter(x[3]["metadata"].get("protocol", "unknown") for x in task_rows)
+        task_rows = [x for x in rows if x[5]["metadata"].get("task") == task]
+        counts = Counter(x[5]["metadata"].get("protocol", "unknown") for x in task_rows)
         protocols = sorted(p for p, n in counts.items() if n >= a.min_protocol_records)
-        pools = {p: [x for x in task_rows if x[3]["metadata"].get("protocol") == p] for p in protocols}
-        for pool in pools.values(): pool.sort(key=lambda x: (-x[0], -x[1], x[2]))
+        pools = {p: [x for x in task_rows if x[5]["metadata"].get("protocol") == p] for p in protocols}
+        for pool in pools.values(): pool.sort(key=lambda x: (-x[0], -x[1], x[4]))
         chosen = []; selected = Counter(); used = set()
         quota = min(a.protocol_cap, max(1, a.count // max(1, len(protocols))))
         for protocol in protocols:
@@ -65,11 +72,11 @@ def main() -> None:
             long_take = min(len(long_pool), round(quota * .20))
             take = long_pool[:long_take] + short_pool[:quota-long_take]
             if len(take) < quota: take += [x for x in pool if x not in take][:quota-len(take)]
-            for x in take: chosen.append(x); used.add(id(x[3])); selected[protocol] += 1
-        remaining = [x for x in task_rows if id(x[3]) not in used]
-        remaining.sort(key=lambda x: (-x[0], -x[1], x[2]))
+            for x in take: chosen.append(x); used.add(id(x[5])); selected[protocol] += 1
+        remaining = [x for x in task_rows if id(x[5]) not in used]
+        remaining.sort(key=lambda x: (-x[0], -x[1], x[4]))
         for x in remaining:
-            protocol = x[3]["metadata"].get("protocol", "unknown")
+            protocol = x[5]["metadata"].get("protocol", "unknown")
             if len(chosen) >= a.count: break
             if protocol in pools and selected[protocol] < a.protocol_cap:
                 chosen.append(x); selected[protocol] += 1
@@ -81,9 +88,9 @@ def main() -> None:
     semantic_path = a.output.with_name(semantic_stem + a.output.suffix)
     if semantic_path == a.output:
         raise ValueError("boundary and semantic output paths must be different")
-    def write(path, values): path.write_text("\n".join(json.dumps(x[3], ensure_ascii=False) for x in values) + ("\n" if values else ""), encoding="utf-8")
+    def write(path, values): path.write_text("\n".join(json.dumps(x[5], ensure_ascii=False) for x in values) + ("\n" if values else ""), encoding="utf-8")
     write(a.output, boundary); write(semantic_path, semantic)
-    def report(values, counts): return {"selected": len(values), "requested": a.count, "eligible_protocols": sorted(p for p,n in counts.items() if n >= a.min_protocol_records), "excluded_protocols": sorted(p for p,n in counts.items() if n < a.min_protocol_records), "rejected": rejected, "tasks": Counter(x[3]["metadata"].get("task") for x in values), "protocols": Counter(x[3]["metadata"].get("protocol") for x in values), "max_prompt_tokens": max((x[2] for x in values), default=0), "max_boundaries": max((len(json.loads(x[3]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
+    def report(values, counts): return {"selected": len(values), "requested": a.count, "eligible_protocols": sorted(p for p,n in counts.items() if n >= a.min_protocol_records), "excluded_protocols": sorted(p for p,n in counts.items() if n < a.min_protocol_records), "rejected": rejected, "tasks": Counter(x[5]["metadata"].get("task") for x in values), "protocols": Counter(x[5]["metadata"].get("protocol") for x in values), "max_prompt_tokens": max((x[2] for x in values), default=0), "max_target_tokens": max((x[3] for x in values), default=0), "max_total_tokens": max((x[4] for x in values), default=0), "max_boundaries": max((len(json.loads(x[5]["messages"][-1]["content"]).get("boundaries", [])) for x in values), default=0)}
     boundary_report, semantic_report = report(boundary, boundary_counts), report(semantic, semantic_counts)
     a.output.with_name(a.output.stem + "_summary.json").write_text(json.dumps(boundary_report, indent=2, default=dict), encoding="utf-8")
     semantic_path.with_name(semantic_path.stem + "_summary.json").write_text(json.dumps(semantic_report, indent=2, default=dict), encoding="utf-8")
