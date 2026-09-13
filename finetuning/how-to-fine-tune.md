@@ -110,6 +110,8 @@ Recommended for the default 7B QLoRA run:
 From the transferred `finetuning` directory:
 
 ```bash
+sudo apt update
+sudo apt install -y python3.11 python3.11-venv build-essential
 bash training/setup_ubuntu.sh
 source .venv/bin/activate
 ```
