@@ -26,7 +26,10 @@ def main() -> None:
             raise ValueError(f"line {n}: empty semantic target")
         rows.append(row)
     prompts = defaultdict(set)
-    for row in rows: prompts[row["messages"][1]["content"]].add(row["messages"][2]["content"])
+    for row in rows:
+        # Boundary and semantic records may share evidence, but are distinct tasks.
+        key = (row.get("metadata", {}).get("task"), row["messages"][1]["content"])
+        prompts[key].add(row["messages"][2]["content"])
     conflicts = sum(len(v) > 1 for v in prompts.values())
     if conflicts: raise ValueError(f"{conflicts} prompts have conflicting targets")
     leaked = sum(bool(re.search(r'"protocol"\s*:', r["messages"][1]["content"])) for r in rows)
