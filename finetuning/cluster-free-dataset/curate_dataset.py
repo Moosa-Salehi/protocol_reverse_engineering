@@ -24,7 +24,7 @@ def main() -> None:
     except Exception as exc:
         raise SystemExit(f"Tokenizer unavailable: {exc}")
     excluded = {"raw.jsonl", "curated_1000.jsonl"}
-    rows = []; seen = set()
+    rows = []; seen = set(); seen_prompts = set()
     rejected = Counter()
     for path in sorted(a.data_root.glob("*.jsonl")):
         if path.name in excluded or path.name.startswith("curated_"): continue
@@ -65,7 +65,11 @@ def main() -> None:
                 short_score = 1 if payload_len < a.preferred_payload_length else 0
                 digest = hashlib.sha256((msgs[1]["content"] + "\0" + msgs[-1]["content"]).encode("utf-8")).hexdigest()
                 if digest in seen: rejected["duplicate_prompt_target"] += 1; continue
+                prompt_digest = hashlib.sha256((meta.get("task", "") + "\0" + msgs[1]["content"]).encode("utf-8")).hexdigest()
+                if prompt_digest in seen_prompts:
+                    rejected["duplicate_prompt"] += 1; continue
                 seen.add(digest)
+                seen_prompts.add(prompt_digest)
                 rows.append((short_score, semantic_score, prompt_tokens, target_tokens, total_tokens, row))
             except (KeyError, ValueError, IndexError, json.JSONDecodeError):
                 rejected["malformed"] += 1
