@@ -65,7 +65,16 @@ def main() -> None:
                 short_score = 1 if payload_len < a.preferred_payload_length else 0
                 digest = hashlib.sha256((msgs[1]["content"] + "\0" + msgs[-1]["content"]).encode("utf-8")).hexdigest()
                 if digest in seen: rejected["duplicate_prompt_target"] += 1; continue
-                prompt_digest = hashlib.sha256((meta.get("task", "") + "\0" + msgs[1]["content"]).encode("utf-8")).hexdigest()
+                canonical_prompt = msgs[1]["content"]
+                try:
+                    prefix, encoded = canonical_prompt.split("```json\n", 1)
+                    evidence_text, suffix = encoded.rsplit("\n```", 1)
+                    evidence = json.loads(evidence_text)
+                    for message in evidence.get("messages", []): message.pop("msg_id", None)
+                    canonical_prompt = prefix + "```json\n" + json.dumps(evidence, separators=(",", ":")) + "\n```" + suffix
+                except (ValueError, json.JSONDecodeError):
+                    pass
+                prompt_digest = hashlib.sha256((meta.get("task", "") + "\0" + canonical_prompt).encode("utf-8")).hexdigest()
                 if prompt_digest in seen_prompts:
                     rejected["duplicate_prompt"] += 1; continue
                 seen.add(digest)
