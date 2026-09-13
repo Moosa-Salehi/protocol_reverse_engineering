@@ -9,7 +9,8 @@ This directory trains one LoRA adapter for two explicitly tagged tasks:
 
 It does **not** train from Wireshark field names. PCAPs first pass through the normal `protocol_re` pipeline. Training records are then built from the same statistical evidence used at inference. Targets must come from reviewed protocol models or validator/evaluator-gated teacher output.
 
-Modbus and GOOSE should remain held-out protocols because this repository has truth files for them.
+Modbus and GOOSE are included in the final curated dataset. The final split is
+protocol-stratified so every protocol appears in train, validation, and test.
 
 ## Data preparation on Windows
 
@@ -104,7 +105,8 @@ Upload the prepared JSONL files rather than the full PCAP corpus. Concatenate th
 ```bash
 cat data/protocols/*.jsonl > data/raw.jsonl
 source .venv/bin/activate
-python dataset-generation/prepare_dataset.py data/raw.jsonl data/split
+python dataset-generation/prepare_dataset.py data/raw.jsonl data/split \
+  --validation-fraction 0.1 --test-fraction 0.1
 python training/train_unsloth.py \
   --train data/split/train.jsonl \
   --validation data/split/validation.jsonl \

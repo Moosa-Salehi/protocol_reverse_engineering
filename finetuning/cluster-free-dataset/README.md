@@ -45,5 +45,7 @@ On Windows, combine, validate, split, and summarize in one step:
 powershell -ExecutionPolicy Bypass -File .\finetuning\cluster-free-dataset\prepare_combined_windows.ps1
 ```
 
-Modbus and GOOSE remain excluded by default as holdout protocols. Use
-`-IncludeHoldout` only when preparing evaluation artifacts.
+All discovered protocol files, including Modbus and GOOSE, are included in the
+final curated dataset. The final splitter creates train, validation, and test
+sets with every protocol represented in each set. `-IncludeHoldout` is retained
+for command compatibility but is no longer required.

@@ -13,10 +13,15 @@ def main() -> None:
     parser.add_argument("input", type=Path)
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--validation-fraction", type=float, default=0.1)
+    parser.add_argument("--test-fraction", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     if not 0 < args.validation_fraction < 1:
         raise ValueError("--validation-fraction must be between 0 and 1")
+    if not 0 < args.test_fraction < 1:
+        raise ValueError("--test-fraction must be between 0 and 1")
+    if args.validation_fraction + args.test_fraction >= 1:
+        raise ValueError("validation and test fractions must sum to less than 1")
     unique = {}
     protocols = Counter()
     for line_number, line in enumerate(args.input.read_text(encoding="utf-8").splitlines(), 1):
@@ -42,32 +47,45 @@ def main() -> None:
     records = list(unique.values())
     if not records:
         raise ValueError("Input contains no valid records")
-    # Stratify by protocol/task so every usable stratum is represented in validation.
+    # Stratify by protocol. Every protocol must occur in all three partitions.
     buckets = {}
     for record in records:
         meta = record.get("metadata", {})
-        buckets.setdefault((meta.get("protocol", "unknown"), meta.get("task", "unknown")), []).append(record)
-    train, validation = [], []
-    for (protocol, task), bucket in buckets.items():
+        buckets.setdefault(meta.get("protocol", "unknown"), []).append(record)
+    train, validation, test = [], [], []
+    for protocol, bucket in buckets.items():
+        if len(bucket) < 3:
+            raise ValueError(f"Protocol {protocol!r} has {len(bucket)} records; at least 3 are required for train/validation/test")
         bucket.sort(key=lambda r: hashlib.sha256(json.dumps(r, sort_keys=True).encode()).hexdigest())
-        take = max(1, round(len(bucket) * args.validation_fraction)) if len(bucket) > 1 else 0
-        validation.extend(bucket[:take])
-        train.extend(bucket[take:])
-    if not validation and len(train) > 1:
-        validation.append(train.pop())
+        validation_take = max(1, round(len(bucket) * args.validation_fraction))
+        test_take = max(1, round(len(bucket) * args.test_fraction))
+        while validation_take + test_take >= len(bucket):
+            if validation_take >= test_take and validation_take > 1:
+                validation_take -= 1
+            elif test_take > 1:
+                test_take -= 1
+            else:
+                raise ValueError(f"Protocol {protocol!r} cannot be split into non-empty train/validation/test partitions")
+        validation.extend(bucket[:validation_take])
+        test.extend(bucket[validation_take:validation_take + test_take])
+        train.extend(bucket[validation_take + test_take:])
     if not train:
-        raise ValueError("Split produced no training records; reduce --validation-fraction")
+        raise ValueError("Split produced no training records; reduce validation/test fractions")
     tasks = {record.get("metadata", {}).get("task") for record in records}
-    for subset_name, subset in (("train", train), ("validation", validation)):
+    all_protocols = {record.get("metadata", {}).get("protocol", "unknown") for record in records}
+    for subset_name, subset in (("train", train), ("validation", validation), ("test", test)):
+        missing_protocols = all_protocols - {record.get("metadata", {}).get("protocol", "unknown") for record in subset}
+        if missing_protocols:
+            raise ValueError(f"{subset_name} split is missing protocol(s): {sorted(missing_protocols)}")
         missing = tasks - {record.get("metadata", {}).get("task") for record in subset}
         if missing:
             raise ValueError(f"{subset_name} split is missing task(s): {sorted(missing)}")
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    for name, subset in (("train", train), ("validation", validation)):
+    for name, subset in (("train", train), ("validation", validation), ("test", test)):
         with (args.output_dir / f"{name}.jsonl").open("w", encoding="utf-8") as handle:
             for record in subset:
                 handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-    summary = {"input": sum(protocols.values()), "deduplicated": len(records), "train": len(train), "validation": len(validation), "protocols": protocols, "validation_protocols": Counter(r.get("metadata", {}).get("protocol", "unknown") for r in validation), "validation_tasks": Counter(r.get("metadata", {}).get("task", "unknown") for r in validation)}
+    summary = {"input": sum(protocols.values()), "deduplicated": len(records), "train": len(train), "validation": len(validation), "test": len(test), "protocols": protocols, "validation_protocols": Counter(r.get("metadata", {}).get("protocol", "unknown") for r in validation), "test_protocols": Counter(r.get("metadata", {}).get("protocol", "unknown") for r in test), "validation_tasks": Counter(r.get("metadata", {}).get("task", "unknown") for r in validation), "test_tasks": Counter(r.get("metadata", {}).get("task", "unknown") for r in test)}
     (args.output_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
 

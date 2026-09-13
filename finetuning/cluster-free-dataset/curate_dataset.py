@@ -11,7 +11,7 @@ def main() -> None:
     p.add_argument("--tokenizer", required=True); p.add_argument("--count", type=int, default=1000)
     p.add_argument("--max-tokens", type=int, default=4096); p.add_argument("--max-boundaries", type=int, default=32)
     p.add_argument("--preferred-payload-length", type=int, default=50); p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--include-holdout", action="store_true")
+    p.add_argument("--include-holdout", action="store_true", help="Deprecated; all protocol files are included by default.")
     p.add_argument("--protocol-cap", type=int, default=100)
     p.add_argument("--min-protocol-records", type=int, default=10)
     p.add_argument("--max-role-occurrences", type=int, default=3)
@@ -24,7 +24,6 @@ def main() -> None:
     except Exception as exc:
         raise SystemExit(f"Tokenizer unavailable: {exc}")
     excluded = {"raw.jsonl", "curated_1000.jsonl"}
-    if not a.include_holdout: excluded |= {"modbus.jsonl", "goose.jsonl"}
     rows = []; seen = set()
     rejected = Counter()
     for path in sorted(a.data_root.glob("*.jsonl")):
