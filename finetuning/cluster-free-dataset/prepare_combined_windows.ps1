@@ -13,8 +13,13 @@ $combinedDir = Join-Path $DataRoot "combined"
 $raw = Join-Path $combinedDir "raw.jsonl"
 New-Item -ItemType Directory -Force -Path $combinedDir | Out-Null
 $excluded = @("combined.jsonl", "raw.jsonl", "dataset_summary.json")
-$files = Get-ChildItem -Path $DataRoot -Filter "*.jsonl" -File | Sort-Object Name | Where-Object {
-  $_.Name -notin $excluded
+$curatedFiles = @(Get-ChildItem -Path $DataRoot -Filter "curated_*.jsonl" -File | Sort-Object Name)
+if ($curatedFiles.Count -gt 0) {
+  $files = $curatedFiles
+} else {
+  $files = Get-ChildItem -Path $DataRoot -Filter "*.jsonl" -File | Sort-Object Name | Where-Object {
+    $_.Name -notin $excluded
+  }
 }
 if ($files.Count -eq 0) { throw "No protocol JSONL files found under $DataRoot" }
 Set-Content -Path $raw -Value $null
