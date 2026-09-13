@@ -3,6 +3,7 @@ param(
   [string]$DataRoot = "$PSScriptRoot\data",
   [string]$OutputRoot = "$PSScriptRoot\data\split",
   [string]$Tokenizer = "Qwen/Qwen2.5-Coder-7B-Instruct",
+  [string]$VmBundleRoot = "$PSScriptRoot\vm_bundle",
   [switch]$IncludeHoldout,
   [double]$ValidationFraction = 0.1,
   [double]$TestFraction = 0.1,
@@ -39,3 +40,28 @@ $summaryOut = Join-Path $DataRoot "combined\dataset_summary.json"
 & $Python $summary (Get-Item $raw).FullName --tokenizer $Tokenizer --output $summaryOut
 if ($LASTEXITCODE -ne 0) { throw "Dataset summary failed" }
 Write-Host "Prepared split at $OutputRoot and summary at $summaryOut"
+
+$finetuningRoot = Split-Path -Parent $PSScriptRoot
+$vmFinetuning = Join-Path $VmBundleRoot "finetuning"
+$vmData = Join-Path $vmFinetuning "data"
+$vmSplit = Join-Path $vmData "split"
+Remove-Item -Recurse -Force $VmBundleRoot -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $vmData, $vmSplit | Out-Null
+
+Copy-Item $raw (Join-Path $vmData "curated.jsonl") -Force
+Copy-Item $summaryOut (Join-Path $vmData "dataset_summary.json") -Force
+Copy-Item (Join-Path $OutputRoot "train.jsonl") $vmSplit -Force
+Copy-Item (Join-Path $OutputRoot "validation.jsonl") $vmSplit -Force
+Copy-Item (Join-Path $OutputRoot "test.jsonl") $vmSplit -Force
+Copy-Item (Join-Path $OutputRoot "summary.json") $vmSplit -Force
+Copy-Item (Join-Path $DataRoot "curated_1000_summary.json") $vmData -Force -ErrorAction SilentlyContinue
+Copy-Item (Join-Path $DataRoot "curated_1000_semantic_summary.json") $vmData -Force -ErrorAction SilentlyContinue
+
+foreach ($directory in @("dataset-generation", "inference", "training")) {
+  Copy-Item (Join-Path $finetuningRoot $directory) $vmFinetuning -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path (Join-Path $vmFinetuning "cluster-free-dataset") | Out-Null
+Copy-Item $validator (Join-Path $vmFinetuning "cluster-free-dataset\validate_dataset.py") -Force
+
+Write-Host "VM bundle ready at $vmFinetuning"
+Write-Host "Copy this finetuning directory to the Ubuntu VM."

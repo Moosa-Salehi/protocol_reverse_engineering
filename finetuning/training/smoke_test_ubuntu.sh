@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source .venv/bin/activate
+test -f data/split/test.jsonl || { echo "Missing preserved test split: data/split/test.jsonl"; exit 1; }
 python dataset-generation/make_smoke_dataset.py \
   --train data/split/train.jsonl \
   --validation data/split/validation.jsonl \

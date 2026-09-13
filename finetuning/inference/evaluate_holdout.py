@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate a causal LM on approved holdout chat JSONL records."""
+"""Evaluate a causal LM on an approved evaluation JSONL split."""
 from __future__ import annotations
 import argparse, hashlib, json
 from collections import defaultdict
@@ -12,7 +12,7 @@ def parse_args():
 
 def main():
     a=parse_args(); torch.manual_seed(a.seed); data_bytes=a.data.read_bytes(); rows=[json.loads(x) for x in data_bytes.decode("utf-8").splitlines() if x.strip()]
-    if not rows: raise ValueError("Holdout dataset is empty")
+    if not rows: raise ValueError("Evaluation dataset is empty")
     for index,row in enumerate(rows,1):
         roles=[m.get("role") for m in row.get("messages",[])]
         if roles != ["system","user","assistant"]: raise ValueError(f"Invalid chat roles at record {index}")
