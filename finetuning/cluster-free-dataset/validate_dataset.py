@@ -30,8 +30,13 @@ def main() -> None:
         # Boundary and semantic records may share evidence, but are distinct tasks.
         key = (row.get("metadata", {}).get("task"), row["messages"][1]["content"])
         prompts[key].add(row["messages"][2]["content"])
-    conflicts = sum(len(v) > 1 for v in prompts.values())
-    if conflicts: raise ValueError(f"{conflicts} prompts have conflicting targets")
+    conflicts = [(key, values) for key, values in prompts.items() if len(values) > 1]
+    if conflicts:
+        details = []
+        for (task, prompt), values in conflicts[:3]:
+            protocols = sorted({r.get("metadata", {}).get("protocol", "unknown") for r in rows if r.get("metadata", {}).get("task") == task and r["messages"][1]["content"] == prompt})
+            details.append(f"task={task!r}, protocols={protocols}, targets={sorted(values)}")
+        raise ValueError(f"{len(conflicts)} prompts have conflicting targets: {'; '.join(details)}")
     leaked = sum(bool(re.search(r'"protocol"\s*:', r["messages"][1]["content"])) for r in rows)
     if leaked: raise ValueError(f"{leaked} prompts contain protocol identity")
     print(json.dumps({"records": len(rows), "unique_prompts": len(prompts), "tasks": Counter(r["metadata"].get("task") for r in rows), "status": "passed"}, indent=2))
