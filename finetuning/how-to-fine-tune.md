@@ -187,19 +187,18 @@ python inference/merge_adapter.py \
   --output output/merged
 ```
 
-For GGUF inference, convert and quantize with `llama.cpp`:
+For GGUF inference, run the scripted pipeline (merge if needed, convert to
+F16 GGUF, quantize to Q4_K_M by default) from the bundle root on the VM:
 
 ```bash
-python /path/to/llama.cpp/convert_hf_to_gguf.py \
-  output/merged \
-  --outfile output/protocol-re-f16.gguf \
-  --outtype f16
-
-/path/to/llama.cpp/build/bin/llama-quantize \
-  output/protocol-re-f16.gguf \
-  output/protocol-re-Q4_K_M.gguf \
-  Q4_K_M
+bash inference/gguf_export_ubuntu.sh
 ```
+
+The script clones and builds `llama.cpp` on demand (requires `git` and
+`cmake`: `sudo apt install -y git cmake`) and writes GGUF files under
+`output/qwen25-coder-7b-protocol-re/gguf/`. It accepts the adapter and output
+directory as optional arguments and honors `BASE_MODEL`, `QUANT`,
+`LLAMA_CPP_DIR`, and `FORCE=1` overrides; see the script header for details.
 
 Preserve the dataset summaries, split summary, adapter, training configuration,
 environment capture, and all three test reports with the model.
