@@ -60,13 +60,21 @@ if [ ! -d "$LLAMA_CPP_DIR" ]; then
   command -v git >/dev/null 2>&1 || { echo "git not found - install with: sudo apt install -y git" >&2; exit 1; }
   git clone --depth 1 https://github.com/ggml-org/llama.cpp "$LLAMA_CPP_DIR"
 fi
-QUANTIZE_BIN="$LLAMA_CPP_DIR/build/bin/llama-quantize"
-if [ ! -x "$QUANTIZE_BIN" ]; then
+QUANTIZE_BIN_CANDIDATES=("$LLAMA_CPP_DIR/build/bin/llama-quantize" "$LLAMA_CPP_DIR/build/bin/quantize" "$LLAMA_CPP_DIR/build/bin/llama-quantize-v2")
+QUANTIZE_BIN=""
+for c in "${QUANTIZE_BIN_CANDIDATES[@]}"; do if [ -x "$c" ]; then QUANTIZE_BIN="$c"; break; fi; done
+if [ -z "$QUANTIZE_BIN" ]; then
   command -v cmake >/dev/null 2>&1 || { echo "cmake not found - install with: sudo apt install -y cmake" >&2; exit 1; }
   cmake -S "$LLAMA_CPP_DIR" -B "$LLAMA_CPP_DIR/build"
-  cmake --build "$LLAMA_CPP_DIR/build" --config Release -j "$(nproc)"
+  # Use most cores but cap to avoid OOM on 48GB RAM box; llama.cpp build is memory-hungry
+  JOBS=$(nproc); [ "$JOBS" -gt 12 ] && JOBS=12
+  cmake --build "$LLAMA_CPP_DIR/build" --config Release -j "$JOBS"
+  for c in "${QUANTIZE_BIN_CANDIDATES[@]}"; do if [ -x "$c" ]; then QUANTIZE_BIN="$c"; break; fi; done
 fi
-test -x "$QUANTIZE_BIN" || { echo "llama-quantize not found at $QUANTIZE_BIN (unexpected llama.cpp layout)" >&2; exit 1; }
+# fallback: search build tree
+if [ -z "$QUANTIZE_BIN" ]; then QUANTIZE_BIN=$(find "$LLAMA_CPP_DIR/build" -maxdepth 4 -type f -name "llama-quantize*" -executable 2>/dev/null | head -n1 || true); fi
+test -n "$QUANTIZE_BIN" && test -x "$QUANTIZE_BIN" || { echo "llama-quantize not found (searched $LLAMA_CPP_DIR/build). Try: ls $LLAMA_CPP_DIR/build/bin/" >&2; exit 1; }
+echo "Using quantize bin: $QUANTIZE_BIN"
 CONVERT_PY="$LLAMA_CPP_DIR/convert_hf_to_gguf.py"
 test -f "$CONVERT_PY" || { echo "Missing $CONVERT_PY (llama.cpp checkout incomplete)" >&2; exit 1; }
 

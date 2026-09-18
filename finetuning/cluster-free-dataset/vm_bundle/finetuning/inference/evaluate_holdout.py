@@ -19,7 +19,13 @@ def main():
         if row.get("metadata",{}).get("task") not in {"boundary_refinement","semantic_labeling"}: raise ValueError(f"Invalid task at record {index}")
         json.loads(row["messages"][-1]["content"])
     tok=AutoTokenizer.from_pretrained(a.adapter or a.model)
-    model=AutoModelForCausalLM.from_pretrained(a.model,torch_dtype="auto",device_map="auto")
+    # Quadro RTX 8000 is Turing (sm_75): no BF16. Force FP16 for stability.
+    # 48GB VRAM fits the full 7B model (~14GB) with headroom; keep device_map auto.
+    _bf16 = bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
+    _dtype = torch.bfloat16 if _bf16 else torch.float16
+    if torch.cuda.is_available():
+        print(f"Eval GPU: {torch.cuda.get_device_name(0)} BF16={_bf16} dtype={'bf16' if _bf16 else 'fp16'}")
+    model=AutoModelForCausalLM.from_pretrained(a.model,torch_dtype=_dtype,device_map="auto",low_cpu_mem_usage=True)
     if a.adapter:
         from peft import PeftModel
         model=PeftModel.from_pretrained(model,a.adapter)

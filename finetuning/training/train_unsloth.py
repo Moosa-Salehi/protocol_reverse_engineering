@@ -28,9 +28,31 @@ class ConfidenceWeightedSFTTrainer(SFTTrainer):
         return (weighted, outputs) if return_outputs else weighted
 
 def main() -> None:
-    p=argparse.ArgumentParser(); p.add_argument("--model",default="Qwen/Qwen2.5-Coder-7B-Instruct"); p.add_argument("--train",type=Path,required=True); p.add_argument("--validation",type=Path,required=True); p.add_argument("--output",type=Path,required=True); p.add_argument("--max-seq-length",type=int,default=4096); p.add_argument("--epochs",type=float,default=2); p.add_argument("--max-steps",type=int,default=-1,help="Positive value overrides epochs; intended for smoke tests"); p.add_argument("--learning-rate",type=float,default=1e-4); p.add_argument("--rank",type=int,default=16); p.add_argument("--gradient-accumulation",type=int,default=16)
+    p=argparse.ArgumentParser(description="QLoRA for Qwen2.5-Coder-7B - tuned for Quadro RTX 8000 48GB (Turing, FP16, no BF16).")
+    p.add_argument("--model",default="Qwen/Qwen2.5-Coder-7B-Instruct")
+    p.add_argument("--train",type=Path,required=True); p.add_argument("--validation",type=Path,required=True); p.add_argument("--output",type=Path,required=True)
+    p.add_argument("--max-seq-length",type=int,default=4096)
+    p.add_argument("--epochs",type=float,default=2); p.add_argument("--max-steps",type=int,default=-1,help="Positive value overrides epochs; intended for smoke tests")
+    p.add_argument("--learning-rate",type=float,default=1e-4)
+    p.add_argument("--rank",type=int,default=32,help="LoRA rank - 32 is optimal for 48GB (was 16 for 24GB)")
+    p.add_argument("--gradient-accumulation",type=int,default=8,help="Gradient accumulation steps (effective batch = per-device-batch * grad-acc)")
+    p.add_argument("--per-device-batch-size",type=int,default=2,help="Per-device train batch (2 fits comfortably in 48GB with 4bit+4096; was 1 for 24GB)")
+    p.add_argument("--per-device-eval-batch-size",type=int,default=2)
     a=p.parse_args(); a.output.mkdir(parents=True,exist_ok=True)
+    # VRAM sanity log
+    try:
+        import torch
+        if torch.cuda.is_available():
+            free, total = torch.cuda.mem_get_info(0)
+            print(f"GPU {torch.cuda.get_device_name(0)} - total {total/1024**3:.1f} GB, free {free/1024**3:.1f} GB, BF16={torch.cuda.is_bf16_supported()} (False expected on Quadro 8000)")
+            eff = a.per_device_batch_size * a.gradient_accumulation
+            print(f"Config: rank={a.rank} per-device={a.per_device_batch_size} grad_acc={a.gradient_accumulation} effective_batch={eff} seq_len={a.max_seq_length}")
+            if total < 40*1024**3:
+                print("WARNING: GPU <40GB - reduce --per-device-batch-size to 1 and --rank to 16")
+    except Exception as e:
+        print(f"VRAM check skipped: {e}")
     model,tok=FastLanguageModel.from_pretrained(model_name=a.model,max_seq_length=a.max_seq_length,load_in_4bit=True,dtype=None)
+    # 48GB allows larger rank without OOM - keep all target modules
     model=FastLanguageModel.get_peft_model(model,r=a.rank,lora_alpha=a.rank*2,lora_dropout=0.05,bias="none",target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"],use_gradient_checkpointing="unsloth",random_state=42)
     ds=load_dataset("json",data_files={"train":str(a.train),"validation":str(a.validation)})
     def fmt(x): return tok.apply_chat_template(x["messages"],tokenize=False,add_generation_prompt=False)
@@ -57,7 +79,8 @@ def main() -> None:
         raise RuntimeError(f"{len(oversized)} examples exceed {a.max_seq_length} tokens; no truncation was performed. See {report}")
     import torch
     bf16 = bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
-    config_kwargs=dict(output_dir=str(a.output),dataset_text_field="text",remove_unused_columns=False,num_train_epochs=a.epochs,max_steps=a.max_steps,per_device_train_batch_size=1,per_device_eval_batch_size=1,gradient_accumulation_steps=a.gradient_accumulation,learning_rate=a.learning_rate,warmup_ratio=0.03,logging_steps=1 if a.max_steps > 0 else 5,eval_strategy="steps" if a.max_steps > 0 else "epoch",eval_steps=1 if a.max_steps > 0 else None,save_strategy="steps" if a.max_steps > 0 else "epoch",save_steps=a.max_steps if a.max_steps > 0 else 500,save_total_limit=1,packing=False,gradient_checkpointing=True,fp16=not bf16,bf16=bf16,optim="adamw_8bit",report_to="none")
+    # Quadro RTX 8000 is Turing -> bf16 False -> fp16 True. This is correct.
+    config_kwargs=dict(output_dir=str(a.output),dataset_text_field="text",remove_unused_columns=False,num_train_epochs=a.epochs,max_steps=a.max_steps,per_device_train_batch_size=a.per_device_batch_size,per_device_eval_batch_size=a.per_device_eval_batch_size,gradient_accumulation_steps=a.gradient_accumulation,learning_rate=a.learning_rate,warmup_ratio=0.03,logging_steps=1 if a.max_steps > 0 else 5,eval_strategy="steps" if a.max_steps > 0 else "epoch",eval_steps=1 if a.max_steps > 0 else None,save_strategy="steps" if a.max_steps > 0 else "epoch",save_steps=a.max_steps if a.max_steps > 0 else 500,save_total_limit=1,packing=False,gradient_checkpointing=True,fp16=not bf16,bf16=bf16,optim="adamw_8bit",report_to="none")
     config_kwargs["max_length" if "max_length" in inspect.signature(SFTConfig).parameters else "max_seq_length"] = a.max_seq_length
     args=SFTConfig(**config_kwargs)
     trainer_kwargs=dict(model=model,train_dataset=ds["train"],eval_dataset=ds["validation"],args=args)

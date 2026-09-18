@@ -15,10 +15,17 @@ def main() -> None:
     parser.add_argument("--adapter", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16, device_map="cpu", low_cpu_mem_usage=True)
+    # Merge is CPU-bound (~14 GB fp16 weights + overhead). On 48GB RAM box keep CPU path
+    # explicitly to avoid accidentally placing 7B on the GPU and competing with training.
+    # float16 is correct for Turing Quadro 8000; bf16 would be wrong.
+    model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16, device_map="cpu", low_cpu_mem_usage=True, trust_remote_code=True)
     merged = PeftModel.from_pretrained(model, args.adapter).merge_and_unload()
     merged.save_pretrained(args.output, safe_serialization=True, max_shard_size="2GB")
-    AutoTokenizer.from_pretrained(args.adapter).save_pretrained(args.output)
+    # prefer adapter tokenizer (has chat template) but fall back to base model
+    try:
+        AutoTokenizer.from_pretrained(args.adapter, trust_remote_code=True).save_pretrained(args.output)
+    except Exception:
+        AutoTokenizer.from_pretrained(args.model, trust_remote_code=True).save_pretrained(args.output)
     print(f"Merged model written to {args.output}")
 
 
