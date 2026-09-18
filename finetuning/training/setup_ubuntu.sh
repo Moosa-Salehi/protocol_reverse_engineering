@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Quadro RTX 8000 (48 GB, Turing TU102, sm_75) aware setup for Ubuntu 24.04.
-# - picks python3.11 if present, else python3.12 / python3 (24.04 default is 3.12)
+# Ubuntu 24.04 (noble) ships python3.12 as system python. This setup targets
+# python3.12 explicitly. Verified against torch 2.6.0 / unsloth 2025.3.9 / trl 0.15.2
+# pip --dry-run succeeds on 3.12. Quadro 8000 (sm_75) -> FP16 (no BF16).
+# - prefers python3.12, falls back to 3.11 if you added deadsnakes PPA
 # - verifies nvidia-smi + ~80 GB free before creating the venv
 # - Quadro 8000 does NOT support BF16 -> training will use FP16 (handled in train_unsloth.py)
 
@@ -20,14 +22,14 @@ if [ "${FREE_GB:-0}" -lt 80 ]; then
   echo "If this is a cloud VM, expand the partition: sudo growpart /dev/sda 1 && sudo resize2fs /dev/sda1" >&2
 fi
 
-# pick python interpreter
-if command -v python3.11 >/dev/null 2>&1; then PYTHON=python3.11
-elif command -v python3.12 >/dev/null 2>&1; then PYTHON=python3.12
+# pick python interpreter - python3.12 first (24.04 native), then 3.11 fallback
+if command -v python3.12 >/dev/null 2>&1; then PYTHON=python3.12
+elif command -v python3.11 >/dev/null 2>&1; then PYTHON=python3.11
 elif command -v python3 >/dev/null 2>&1; then PYTHON=python3
 else echo "No python3 found" >&2; exit 1; fi
 echo "Using $PYTHON ($($PYTHON --version 2>&1))"
 if ! $PYTHON -m venv --help >/dev/null 2>&1; then
-  echo "python venv module missing - install: sudo apt install -y ${PYTHON}-venv python3-venv" >&2; exit 1
+  echo "python venv module missing - install: sudo apt install -y ${PYTHON}-venv python3.12-venv python3-venv" >&2; exit 1
 fi
 
 if [ -d .venv ]; then echo "Reusing existing .venv (rm -rf .venv to recreate)"; else $PYTHON -m venv .venv; fi

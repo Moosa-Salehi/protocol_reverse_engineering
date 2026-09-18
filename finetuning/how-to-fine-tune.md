@@ -102,7 +102,7 @@ Copy the entire `vm_bundle\finetuning` directory to the Ubuntu VM. Preserve
 Recommended for the default 7B QLoRA run:
 
 - Ubuntu 24.04
-- Python 3.11
+- Python 3.12 (Ubuntu 24.04 default; verified with torch 2.6.0 / unsloth 2025.3.9)
 - NVIDIA GPU with at least 16 GB VRAM; 24 GB provides more headroom
 - At least 32 GB system RAM
 - At least 50 GB free disk
@@ -111,7 +111,7 @@ From the transferred `finetuning` directory:
 
 ```bash
 sudo apt update
-sudo apt install -y python3.11 python3.11-venv build-essential
+sudo apt install -y python3.12 python3.12-venv build-essential git cmake
 bash training/setup_ubuntu.sh
 source .venv/bin/activate
 ```

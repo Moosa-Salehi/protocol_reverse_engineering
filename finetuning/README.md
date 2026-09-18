@@ -85,17 +85,17 @@ The builder creates whole-family, multi-task examples and includes explicit task
 Recommended VM:
 
 ```text
-RTX 3090 24 GB
-32 GB RAM
-Python 3.11
-150 GB disk
+Quadro RTX 8000 48 GB (or RTX 3090 24 GB minimum)
+48 GB RAM
+Python 3.12 (Ubuntu 24.04 default; verified with pinned stack)
+200 GB disk
 ```
 
-Install Python 3.11 on Ubuntu 24.04:
+Install Python 3.12 on Ubuntu 24.04:
 
 ```bash
 sudo apt update
-sudo apt install -y python3.11 python3.11-venv git git-lfs build-essential
+sudo apt install -y python3.12 python3.12-venv git git-lfs build-essential cmake
 cd finetuning
 bash training/setup_ubuntu.sh
 ```
