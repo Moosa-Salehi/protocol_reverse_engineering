@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Holdout evaluation for Qwen2.5-Coder-7B-Instruct
-# GPU: NVIDIA Quadro RTX 8000 48GB (Turing)
-# Evaluation precision: FP16
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
@@ -13,7 +9,6 @@ if [[ ! -f ".venv/bin/activate" ]]; then
     exit 1
 fi
 
-# shellcheck source=/dev/null
 source .venv/bin/activate
 
 DATA="${1:-data/split/test.jsonl}"
@@ -21,7 +16,6 @@ MODEL="${2:-Qwen/Qwen2.5-Coder-7B-Instruct}"
 ADAPTER="${3:-output/qwen25-coder-7b-protocol-re/adapter}"
 OUT_DIR="${4:-output/test}"
 
-# Use one consistent Hugging Face cache for both evaluations.
 export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
 export HF_HUB_CACHE="${HF_HUB_CACHE:-$HF_HOME/hub}"
 
@@ -34,8 +28,16 @@ echo "Output:     $OUT_DIR"
 echo "HF_HOME:    $HF_HOME"
 echo
 
-nvidia-smi 2>&1 | head -n 12
-df -h . | head -n 3
+echo "== GPU =="
+if ! nvidia-smi; then
+    echo "ERROR: nvidia-smi failed." >&2
+    exit 1
+fi
+
+echo
+echo "== Disk =="
+df -h .
+
 echo
 
 if [[ ! -f "$DATA" ]]; then
@@ -58,8 +60,14 @@ if [[ ! -s "$ADAPTER/adapter_model.safetensors" ]]; then
     exit 1
 fi
 
+if ! command -v python >/dev/null 2>&1; then
+    echo "ERROR: python not found inside .venv." >&2
+    exit 1
+fi
+
 mkdir -p "$OUT_DIR"
 
+echo
 echo "== STEP 1: Evaluate base model =="
 
 python inference/evaluate_holdout.py \
@@ -88,8 +96,8 @@ python inference/compare_holdout_reports.py \
 
 echo
 echo "== Holdout evaluation complete =="
-
 echo "Comparison written to: $OUT_DIR/comparison.json"
+
 ls -lh \
     "$OUT_DIR/base.json" \
     "$OUT_DIR/finetuned.json" \
