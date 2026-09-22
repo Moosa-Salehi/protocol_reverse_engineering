@@ -1,18 +1,96 @@
 #!/usr/bin/env bash
-set -euo pipefail
-# Tuned for Quadro RTX 8000 48GB - full 7B eval fits in FP16; pre-flight prints GPU/disk.
-if [ ! -f .venv/bin/activate ]; then echo "Missing .venv - run 'bash training/setup_ubuntu.sh' first." >&2; exit 1; fi
+set -Eeuo pipefail
+
+# Holdout evaluation for Qwen2.5-Coder-7B-Instruct
+# GPU: NVIDIA Quadro RTX 8000 48GB (Turing)
+# Evaluation precision: FP16
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+if [[ ! -f ".venv/bin/activate" ]]; then
+    echo "ERROR: Missing .venv - run 'bash training/setup_ubuntu.sh' first." >&2
+    exit 1
+fi
+
 # shellcheck source=/dev/null
 source .venv/bin/activate
-echo "== holdout pre-flight =="; nvidia-smi 2>&1 | head -n 12; df -h . | head -n 3; echo
-DATA=${1:-data/split/test.jsonl}
-MODEL=${2:-Qwen/Qwen2.5-Coder-7B-Instruct}
-ADAPTER=${3:-output/qwen25-coder-7b-protocol-re/adapter}
-OUT_DIR=${4:-output/test}
+
+DATA="${1:-data/split/test.jsonl}"
+MODEL="${2:-Qwen/Qwen2.5-Coder-7B-Instruct}"
+ADAPTER="${3:-output/qwen25-coder-7b-protocol-re/adapter}"
+OUT_DIR="${4:-output/test}"
+
+# Use one consistent Hugging Face cache for both evaluations.
+export HF_HOME="${HF_HOME:-$HOME/.cache/huggingface}"
+export HF_HUB_CACHE="${HF_HUB_CACHE:-$HF_HOME/hub}"
+
+echo "== Holdout pre-flight =="
+echo "Root:       $ROOT_DIR"
+echo "Data:       $DATA"
+echo "Model:      $MODEL"
+echo "Adapter:    $ADAPTER"
+echo "Output:     $OUT_DIR"
+echo "HF_HOME:    $HF_HOME"
+echo
+
+nvidia-smi 2>&1 | head -n 12
+df -h . | head -n 3
+echo
+
+if [[ ! -f "$DATA" ]]; then
+    echo "ERROR: Missing evaluation data: $DATA" >&2
+    exit 1
+fi
+
+if [[ ! -d "$ADAPTER" ]]; then
+    echo "ERROR: Missing adapter directory: $ADAPTER" >&2
+    exit 1
+fi
+
+if [[ ! -s "$ADAPTER/adapter_config.json" ]]; then
+    echo "ERROR: Missing or empty adapter_config.json" >&2
+    exit 1
+fi
+
+if [[ ! -s "$ADAPTER/adapter_model.safetensors" ]]; then
+    echo "ERROR: Missing or empty adapter_model.safetensors" >&2
+    exit 1
+fi
+
 mkdir -p "$OUT_DIR"
-test -f "$DATA" || { echo "Missing eval data: $DATA" >&2; exit 1; }
-python inference/evaluate_holdout.py --data "$DATA" --model "$MODEL" --output "$OUT_DIR/base.json"
-python inference/evaluate_holdout.py --data "$DATA" --model "$MODEL" --adapter "$ADAPTER" --output "$OUT_DIR/finetuned.json"
-python inference/compare_holdout_reports.py --base "$OUT_DIR/base.json" --finetuned "$OUT_DIR/finetuned.json" --output "$OUT_DIR/comparison.json"
-echo "Test comparison written to $OUT_DIR/comparison.json"
-ls -lh "$OUT_DIR"/{base,finetuned,comparison}.json
+
+echo "== STEP 1: Evaluate base model =="
+
+python inference/evaluate_holdout.py \
+    --data "$DATA" \
+    --model "$MODEL" \
+    --output "$OUT_DIR/base.json" \
+    --dtype fp16
+
+echo
+echo "== STEP 2: Evaluate fine-tuned model =="
+
+python inference/evaluate_holdout.py \
+    --data "$DATA" \
+    --model "$MODEL" \
+    --adapter "$ADAPTER" \
+    --output "$OUT_DIR/finetuned.json" \
+    --dtype fp16
+
+echo
+echo "== STEP 3: Compare reports =="
+
+python inference/compare_holdout_reports.py \
+    --base "$OUT_DIR/base.json" \
+    --finetuned "$OUT_DIR/finetuned.json" \
+    --output "$OUT_DIR/comparison.json"
+
+echo
+echo "== Holdout evaluation complete =="
+
+echo "Comparison written to: $OUT_DIR/comparison.json"
+ls -lh \
+    "$OUT_DIR/base.json" \
+    "$OUT_DIR/finetuned.json" \
+    "$OUT_DIR/comparison.json"

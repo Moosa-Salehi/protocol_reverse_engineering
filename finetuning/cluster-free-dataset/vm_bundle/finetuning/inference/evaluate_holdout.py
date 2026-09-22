@@ -1,62 +1,520 @@
 #!/usr/bin/env python3
 """Evaluate a causal LM on an approved evaluation JSONL split."""
+
 from __future__ import annotations
-import argparse, hashlib, json
+
+import argparse
+import hashlib
+import json
+import os
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+
+VALID_TASKS = {
+    "boundary_refinement",
+    "semantic_labeling",
+}
+
+
 def parse_args():
-    p=argparse.ArgumentParser(); p.add_argument("--data",type=Path,required=True); p.add_argument("--model",required=True); p.add_argument("--adapter",type=Path); p.add_argument("--output",type=Path,required=True); p.add_argument("--max-new-tokens",type=int,default=512); p.add_argument("--max-input-tokens",type=int,default=4096); p.add_argument("--seed",type=int,default=42); return p.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Evaluate a base model or a PEFT adapter on a JSONL holdout."
+    )
+
+    parser.add_argument(
+        "--data",
+        type=Path,
+        required=True,
+        help="Approved evaluation JSONL file.",
+    )
+    parser.add_argument(
+        "--model",
+        default="Qwen/Qwen2.5-Coder-7B-Instruct",
+        help="Base model name or local path.",
+    )
+    parser.add_argument(
+        "--adapter",
+        type=Path,
+        default=None,
+        help="Optional PEFT adapter directory.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="Output report JSON path.",
+    )
+    parser.add_argument(
+        "--max-new-tokens",
+        type=int,
+        default=512,
+    )
+    parser.add_argument(
+        "--max-input-tokens",
+        type=int,
+        default=4096,
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+    )
+    parser.add_argument(
+        "--dtype",
+        choices=("fp16", "fp32"),
+        default="fp16",
+        help="Evaluation precision. FP16 is recommended for RTX 8000.",
+    )
+
+    return parser.parse_args()
+
+
+def load_jsonl(path: Path):
+    if not path.is_file():
+        raise FileNotFoundError(f"Evaluation data not found: {path}")
+
+    data_bytes = path.read_bytes()
+
+    rows = [
+        json.loads(line)
+        for line in data_bytes.decode("utf-8").splitlines()
+        if line.strip()
+    ]
+
+    if not rows:
+        raise ValueError("Evaluation dataset is empty.")
+
+    return data_bytes, rows
+
+
+def validate_rows(rows):
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            raise ValueError(
+                f"Record {index} must be a JSON object."
+            )
+
+        messages = row.get("messages")
+
+        if not isinstance(messages, list):
+            raise ValueError(
+                f"Record {index}: messages must be a list."
+            )
+
+        roles = [
+            message.get("role")
+            for message in messages
+            if isinstance(message, dict)
+        ]
+
+        if len(roles) != len(messages):
+            raise ValueError(
+                f"Record {index}: each message must be an object."
+            )
+
+        if roles != ["system", "user", "assistant"]:
+            raise ValueError(
+                f"Record {index}: invalid chat roles: {roles}"
+            )
+
+        metadata = row.get("metadata", {})
+
+        if not isinstance(metadata, dict):
+            raise ValueError(
+                f"Record {index}: metadata must be an object."
+            )
+
+        task = metadata.get("task")
+
+        if task not in VALID_TASKS:
+            raise ValueError(
+                f"Record {index}: unsupported task {task!r}."
+            )
+
+        try:
+            target = json.loads(messages[-1]["content"])
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ValueError(
+                f"Record {index}: assistant target is not valid JSON."
+            ) from exc
+
+        if not isinstance(target, dict):
+            raise ValueError(
+                f"Record {index}: assistant target must be a JSON object."
+            )
+
+
+def normalize_dtype(dtype_name: str):
+    if dtype_name == "fp16":
+        return torch.float16
+
+    return torch.float32
+
+
+def load_model_and_tokenizer(args):
+    dtype = normalize_dtype(args.dtype)
+
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA is not available. This evaluation is configured for GPU."
+        )
+
+    print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    print(f"BF16 hardware support: {torch.cuda.is_bf16_supported()}")
+    print(f"Evaluation dtype: {args.dtype}")
+
+    if args.dtype == "fp16" and not torch.cuda.is_available():
+        raise RuntimeError("FP16 GPU evaluation requires CUDA.")
+
+    # Always load the tokenizer from the base model.
+    # The adapter directory may not contain a complete tokenizer.
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model,
+        use_fast=True,
+    )
+
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model,
+        torch_dtype=dtype,
+        device_map="auto",
+        low_cpu_mem_usage=True,
+    )
+
+    if args.adapter is not None:
+        if not args.adapter.is_dir():
+            raise FileNotFoundError(
+                f"Adapter directory not found: {args.adapter}"
+            )
+
+        from peft import PeftModel
+
+        model = PeftModel.from_pretrained(
+            model,
+            str(args.adapter),
+        )
+
+    model.eval()
+
+    return model, tokenizer
+
+
+def canonical(value: Any) -> str:
+    """Convert JSON-compatible values to stable hashable strings."""
+    return json.dumps(
+        value,
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
+def extract_semantic_roles(value):
+    if not isinstance(value, dict):
+        return set()
+
+    labels = value.get("semantic_labels", [])
+
+    if not isinstance(labels, list):
+        return set()
+
+    result = set()
+
+    for item in labels:
+        if not isinstance(item, dict):
+            continue
+
+        result.add(
+            canonical(
+                (
+                    item.get("field_index"),
+                    item.get("semantic_role"),
+                )
+            )
+        )
+
+    return result
+
+
+def extract_boundaries(value):
+    if not isinstance(value, dict):
+        return set()
+
+    boundaries = value.get("boundaries", [])
+
+    if not isinstance(boundaries, list):
+        return set()
+
+    return {
+        canonical(boundary)
+        for boundary in boundaries
+    }
+
+
+def extract_items(value, task):
+    if task == "semantic_labeling":
+        return extract_semantic_roles(value)
+
+    if task == "boundary_refinement":
+        return extract_boundaries(value)
+
+    return set()
+
+
+def new_stat():
+    return {
+        "count": 0,
+        "valid_json": 0,
+        "exact": 0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "parse_errors": 0,
+    }
+
+
+def calculate_metrics(stat):
+    count = stat["count"]
+
+    precision_denominator = stat["tp"] + stat["fp"]
+    recall_denominator = stat["tp"] + stat["fn"]
+    f1_denominator = (
+        2 * stat["tp"] + stat["fp"] + stat["fn"]
+    )
+
+    return {
+        "count": count,
+        "valid_json": stat["valid_json"],
+        "parse_errors": stat["parse_errors"],
+        "json_validity": (
+            stat["valid_json"] / count
+            if count
+            else 0.0
+        ),
+        "exact_match": (
+            stat["exact"] / count
+            if count
+            else 0.0
+        ),
+        "true_positive": stat["tp"],
+        "false_positive": stat["fp"],
+        "false_negative": stat["fn"],
+        "precision": (
+            stat["tp"] / precision_denominator
+            if precision_denominator
+            else 0.0
+        ),
+        "recall": (
+            stat["tp"] / recall_denominator
+            if recall_denominator
+            else 0.0
+        ),
+        "f1": (
+            2 * stat["tp"] / f1_denominator
+            if f1_denominator
+            else 0.0
+        ),
+    }
+
+
+def get_input_device(model):
+    """
+    Find the input embedding device.
+    This is safer than assuming model.device when device_map='auto'.
+    """
+    return model.get_input_embeddings().weight.device
+
 
 def main():
-    a=parse_args(); torch.manual_seed(a.seed); data_bytes=a.data.read_bytes(); rows=[json.loads(x) for x in data_bytes.decode("utf-8").splitlines() if x.strip()]
-    if not rows: raise ValueError("Evaluation dataset is empty")
-    for index,row in enumerate(rows,1):
-        roles=[m.get("role") for m in row.get("messages",[])]
-        if roles != ["system","user","assistant"]: raise ValueError(f"Invalid chat roles at record {index}")
-        if row.get("metadata",{}).get("task") not in {"boundary_refinement","semantic_labeling"}: raise ValueError(f"Invalid task at record {index}")
-        json.loads(row["messages"][-1]["content"])
-    tok=AutoTokenizer.from_pretrained(a.adapter or a.model)
-    # Quadro RTX 8000 is Turing (sm_75): no BF16. Force FP16 for stability.
-    # 48GB VRAM fits the full 7B model (~14GB) with headroom; keep device_map auto.
-    _bf16 = bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
-    _dtype = torch.bfloat16 if _bf16 else torch.float16
+    args = parse_args()
+
+    if args.max_new_tokens <= 0:
+        raise ValueError("--max-new-tokens must be positive.")
+
+    if args.max_input_tokens <= 0:
+        raise ValueError("--max-input-tokens must be positive.")
+
+    torch.manual_seed(args.seed)
+
     if torch.cuda.is_available():
-        print(f"Eval GPU: {torch.cuda.get_device_name(0)} BF16={_bf16} dtype={'bf16' if _bf16 else 'fp16'}")
-    model=AutoModelForCausalLM.from_pretrained(a.model,torch_dtype=_dtype,device_map="auto",low_cpu_mem_usage=True)
-    if a.adapter:
-        from peft import PeftModel
-        model=PeftModel.from_pretrained(model,a.adapter)
-    model.eval(); totals=defaultdict(lambda:{"count":0,"valid_json":0,"exact":0,"tp":0,"fp":0,"fn":0,"parse_errors":0})
-    predictions=[]
-    for row in rows:
-        meta=row.get("metadata",{}); protocol=meta.get("protocol","unknown"); task=meta.get("task","unknown"); family=str(meta.get("family_id","unknown"))
-        prompt=tok.apply_chat_template(row["messages"][:-1],tokenize=False,add_generation_prompt=True)
-        inputs=tok(prompt,return_tensors="pt",add_special_tokens=False).to(model.device)
-        if inputs["input_ids"].shape[1] > a.max_input_tokens: raise ValueError(f"Prompt exceeds {a.max_input_tokens} tokens for {protocol}/{family}/{task}")
-        with torch.no_grad(): out=model.generate(**inputs,max_new_tokens=a.max_new_tokens,do_sample=False,pad_token_id=tok.eos_token_id)
-        text=tok.decode(out[0][inputs["input_ids"].shape[1]:],skip_special_tokens=True).strip()
-        try: pred=json.loads(text); valid=True
-        except Exception: pred=None; valid=False
-        target=json.loads(row["messages"][-1]["content"]); exact=pred==target
-        if task=="semantic_labeling":
-            def roles(value):
-                return {(x.get("field_index"),x.get("semantic_role")) for x in value.get("semantic_labels",[])} if isinstance(value,dict) else set()
-            pset,tset=roles(pred),roles(target)
-        elif task=="boundary_refinement":
-            pset=set(pred.get("boundaries",[])) if isinstance(pred,dict) else set(); tset=set(target.get("boundaries",[]))
-        else: pset,tset=set(),set()
-        for key in (("overall",task),("protocol",protocol,task),("family",protocol,family,task)):
-            stat=totals[key]; stat["count"]+=1; stat["valid_json"]+=int(valid); stat["parse_errors"]+=int(not valid); stat["exact"]+=int(exact); stat["tp"]+=len(pset&tset); stat["fp"]+=len(pset-tset); stat["fn"]+=len(tset-pset)
-        predictions.append({"metadata":meta,"prediction":pred,"raw":text,"target":target})
-    report={}
-    for key,s in totals.items():
-        pden=s["tp"]+s["fp"]; rden=s["tp"]+s["fn"]; fden=2*s["tp"]+s["fp"]+s["fn"]
-        d={"count":s["count"],"valid_json":s["valid_json"],"parse_errors":s["parse_errors"],"json_validity":s["valid_json"]/s["count"],"exact_match":s["exact"]/s["count"],"true_positive":s["tp"],"false_positive":s["fp"],"false_negative":s["fn"],"precision":s["tp"]/pden if pden else 0.0,"recall":s["tp"]/rden if rden else 0.0,"f1":2*s["tp"]/fden if fden else 0.0}
-        report["/".join(key)]=d
-    generation={"seed":a.seed,"do_sample":False,"max_input_tokens":a.max_input_tokens,"max_new_tokens":a.max_new_tokens}
-    a.output.parent.mkdir(parents=True,exist_ok=True); a.output.write_text(json.dumps({"model":a.model,"adapter":str(a.adapter) if a.adapter else None,"dataset_sha256":hashlib.sha256(data_bytes).hexdigest(),"generation":generation,"records":len(rows),"metrics":report,"predictions":predictions},indent=2),encoding="utf-8")
-    print(json.dumps(report,indent=2))
-if __name__=="__main__": main()
+        torch.cuda.manual_seed_all(args.seed)
+
+    data_bytes, rows = load_jsonl(args.data)
+    validate_rows(rows)
+
+    print(f"Evaluation records: {len(rows)}")
+    print(f"Dataset: {args.data}")
+    print(f"Dataset SHA256: {hashlib.sha256(data_bytes).hexdigest()}")
+
+    model, tokenizer = load_model_and_tokenizer(args)
+
+    totals = defaultdict(new_stat)
+    predictions = []
+
+    input_device = get_input_device(model)
+
+    for index, row in enumerate(rows, start=1):
+        metadata = row.get("metadata", {})
+        protocol = metadata.get("protocol", "unknown")
+        task = metadata.get("task", "unknown")
+        family = str(metadata.get("family_id", "unknown"))
+
+        messages = row["messages"]
+        target = json.loads(messages[-1]["content"])
+
+        prompt = tokenizer.apply_chat_template(
+            messages[:-1],
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
+        inputs = tokenizer(
+            prompt,
+            return_tensors="pt",
+            add_special_tokens=False,
+        )
+
+        input_length = inputs["input_ids"].shape[1]
+
+        if input_length > args.max_input_tokens:
+            raise ValueError(
+                f"Record {index}: prompt length {input_length} exceeds "
+                f"--max-input-tokens={args.max_input_tokens} "
+                f"for {protocol}/{family}/{task}."
+            )
+
+        inputs = {
+            key: value.to(input_device)
+            for key, value in inputs.items()
+        }
+
+        with torch.inference_mode():
+            output = model.generate(
+                **inputs,
+                max_new_tokens=args.max_new_tokens,
+                do_sample=False,
+                pad_token_id=tokenizer.pad_token_id,
+                eos_token_id=tokenizer.eos_token_id,
+            )
+
+        generated_ids = output[0, input_length:]
+
+        raw_text = tokenizer.decode(
+            generated_ids,
+            skip_special_tokens=True,
+        ).strip()
+
+        try:
+            prediction = json.loads(raw_text)
+            valid_json = True
+        except (json.JSONDecodeError, TypeError):
+            prediction = None
+            valid_json = False
+
+        exact = prediction == target
+
+        predicted_items = extract_items(prediction, task)
+        target_items = extract_items(target, task)
+
+        true_positive = len(predicted_items & target_items)
+        false_positive = len(predicted_items - target_items)
+        false_negative = len(target_items - predicted_items)
+
+        keys = (
+            ("overall", task),
+            ("protocol", protocol, task),
+            ("family", protocol, family, task),
+        )
+
+        for key in keys:
+            stat = totals[key]
+
+            stat["count"] += 1
+            stat["valid_json"] += int(valid_json)
+            stat["parse_errors"] += int(not valid_json)
+            stat["exact"] += int(exact)
+            stat["tp"] += true_positive
+            stat["fp"] += false_positive
+            stat["fn"] += false_negative
+
+        predictions.append(
+            {
+                "record_index": index,
+                "metadata": metadata,
+                "prediction": prediction,
+                "raw": raw_text,
+                "target": target,
+                "valid_json": valid_json,
+                "exact_match": exact,
+            }
+        )
+
+        print(
+            f"[{index}/{len(rows)}] "
+            f"task={task} protocol={protocol} "
+            f"valid_json={valid_json} exact_match={exact}"
+        )
+
+    report = {
+        "/".join(key): calculate_metrics(stat)
+        for key, stat in totals.items()
+    }
+
+    generation = {
+        "seed": args.seed,
+        "do_sample": False,
+        "max_input_tokens": args.max_input_tokens,
+        "max_new_tokens": args.max_new_tokens,
+        "dtype": args.dtype,
+    }
+
+    result = {
+        "model": args.model,
+        "adapter": (
+            str(args.adapter)
+            if args.adapter is not None
+            else None
+        ),
+        "dataset_sha256": hashlib.sha256(data_bytes).hexdigest(),
+        "generation": generation,
+        "records": len(rows),
+        "metrics": report,
+        "predictions": predictions,
+    }
+
+    args.output.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    args.output.write_text(
+        json.dumps(
+            result,
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    print("\n== Evaluation metrics ==")
+    print(
+        json.dumps(
+            report,
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
+
+    print(f"\nReport saved: {args.output}")
+
+
+if __name__ == "__main__":
+    main()
