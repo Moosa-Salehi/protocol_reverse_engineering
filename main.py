@@ -224,6 +224,21 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         )
     families_for_model = families_json if args.llm_render_only else families_refined_json
 
+    # Forward the chosen LLM backend selection to stages 07b (and below, 11b).
+    if args.backend == "local-finetuned":
+        for step_name, step_args in pipeline:
+            if step_name in {"07b_refine_boundaries_llm", "11b_label_semantics_llm"}:
+                step_args.extend(
+                    [
+                        "--backend", "local-finetuned",
+                        "--local-base-url", args.local_base_url,
+                        "--local-model", args.local_model,
+                        "--local-max-samples", str(args.local_max_samples),
+                        "--local-min-support", str(args.local_min_support),
+                        "--local-timeout", str(args.local_timeout),
+                    ]
+                )
+
     pipeline.extend([
             (
                 "08_pair_requests_responses",
@@ -895,6 +910,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     llm_analysis_group.add_argument("--llm-boundary-confidence", type=float, default=0.6, help="Minimum confidence for LLM boundary merge suggestions (default: 0.6).")
     llm_analysis_group.add_argument("--llm-semantic-confidence", type=float, default=0.5, help="Minimum confidence for LLM semantic labels (default: 0.5).")
     llm_analysis_group.add_argument("--llm-relation-confidence", type=float, default=0.7, help="Minimum confidence for LLM relation validation (default: 0.7).")
+    llm_analysis_group.add_argument(
+        "--backend",
+        choices=["api", "local-finetuned"],
+        default="api",
+        help="LLM backend for stages 07b/11b: api (OpenAI-compatible endpoint from --llm-config) "
+        "or local-finetuned (llama.cpp server hosting the fine-tuned Qwen GGUF). Default: api.",
+    )
+    llm_analysis_group.add_argument("--local-base-url", default="http://127.0.0.1:8080", help="Base URL of the local inference server (--backend local-finetuned).")
+    llm_analysis_group.add_argument("--local-model", default="qwen25-coder-7b-protocol-re", help="Model name expected by the local server (--backend local-finetuned).")
+    llm_analysis_group.add_argument("--local-max-samples", type=int, default=5, help="Sample messages per family sent to the local model (--backend local-finetuned).")
+    llm_analysis_group.add_argument("--local-min-support", type=float, default=0.5, help="Consensus threshold for aggregating per-message predictions (default: 0.5).")
+    llm_analysis_group.add_argument("--local-timeout", type=float, default=300.0, help="Per-request timeout in seconds for the local server.")
 
     final_eval_group.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation.")
     return parser.parse_args(argv)
@@ -964,7 +991,10 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit(f"{RED}Error:{RESET} --max-response-families-per-request must be greater than 0.")
     if args.family_neural_batch_size <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --family-neural-batch-size must be greater than 0.")
-    if not args.llm_render_only and not args.use_user_provided_response and not args.llm_config.is_file():
+    if args.backend == "local-finetuned":
+        # The local backend needs no API key or llm_config file.
+        pass
+    elif not args.llm_render_only and not args.use_user_provided_response and not args.llm_config.is_file():
         raise SystemExit(f"{RED}Error:{RESET} LLM config file does not exist: {args.llm_config}")
     if args.llm_template:
         args.llm_template = args.llm_template.resolve()

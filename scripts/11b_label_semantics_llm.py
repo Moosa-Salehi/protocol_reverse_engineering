@@ -17,6 +17,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
 from protocol_re.llm.stage_semantics import apply_semantic_label_to_field, run_semantic_labeling_stage
 from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.llm.local_finetuned import (
+    LocalInferenceConfig,
+    run_local_semantic_labeling,
+)
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.utils.logging import setup_stage_logging
 from protocol_re.corpus.message_corpus import load_corpus_jsonl
@@ -73,6 +77,19 @@ def main() -> None:
         default="data/user_provided_LLM_responses",
         help="Directory for user-provided LLM response placeholders",
     )
+    parser.add_argument(
+        "--backend",
+        choices=["api", "local-finetuned"],
+        default="api",
+        help="api: OpenAI-compatible endpoint from --llm-config. "
+        "local-finetuned: llama.cpp server (llama-server) hosting the fine-tuned "
+        "Qwen adapter GGUF, queried per message in its training format.",
+    )
+    parser.add_argument("--local-base-url", default="http://127.0.0.1:8080", help="Base URL of the local inference server (--backend local-finetuned).")
+    parser.add_argument("--local-model", default="qwen25-coder-7b-protocol-re", help="Model name expected by the local server (--backend local-finetuned).")
+    parser.add_argument("--local-max-samples", type=int, default=5, help="Sample messages per family sent to the local model (--backend local-finetuned).")
+    parser.add_argument("--local-min-support", type=float, default=0.5, help="Consensus threshold for aggregating per-message predictions (0-1].")
+    parser.add_argument("--local-timeout", type=float, default=300.0, help="Per-request timeout in seconds for the local server.")
     parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing stage result responses instead of calling the LLM API")
     parser.add_argument("--use-user-provided-response", action="store_true", help="Load filled LLM responses from data/user_provided_LLM_responses before calling the API")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
@@ -150,9 +167,29 @@ def main() -> None:
             messages_by_family = index_messages_by_family(messages_by_id, assignments_payload, args.max_samples)
             logger.metric("families_with_sample_messages", len(messages_by_family), "families")
 
+    llm_config_dict: dict = {}
+    llm_config = None
+    local_llm: LocalInferenceConfig | None = None
     with logger.stage("setup_llm"):
         # Load LLM config
-        if not args.render_only and (not args.use_user_provided_response or Path(args.llm_config).is_file()):
+        if args.backend == "local-finetuned":
+            local_llm = LocalInferenceConfig(
+                base_url=args.local_base_url,
+                model=args.local_model,
+                temperature=0.0,
+                max_tokens=512,
+                timeout=args.local_timeout,
+                max_samples=args.local_max_samples,
+                min_support=args.local_min_support,
+            )
+            logger.info(
+                "Local fine-tuned backend configured: base_url=%s model=%s samples=%d support=%.2f",
+                local_llm.base_url,
+                local_llm.model,
+                local_llm.max_samples,
+                local_llm.min_support,
+            )
+        elif not args.render_only and (not args.use_user_provided_response or Path(args.llm_config).is_file()):
             logger.info(f"Loading LLM config from {args.llm_config}")
             llm_config_dict = load_llm_config(args.llm_config)
             api_key = os.environ.get("OPENAI_API_KEY")
@@ -246,6 +283,21 @@ def main() -> None:
                 if cached_response is not None:
                     print(f"[*] Reusing cached LLM response from {result_path}")
 
+        # Local backend replaces the whole prompt+call: it renders
+        # training-format per-message prompts and maps consensus labels onto
+        # the family's field_hypotheses.
+        llm_call = None
+        if local_llm is not None:
+            family_samples = messages_by_family.get(family_id, [])
+
+            def local_call(prompt: str, family_id: str = family_id, task: str = "semantic_labeling") -> str:
+                raw, _labels, _used = run_local_semantic_labeling(
+                    family_id, family_samples, fields, local_llm
+                )
+                return raw
+
+            llm_call = local_call
+
         # Run semantic labeling stage
         result = run_semantic_labeling_stage(
             family_id=family_id,
@@ -259,6 +311,7 @@ def main() -> None:
             messages=messages_by_family.get(family_id, []),
             family_features=family_features,
             segments=details.get("segments", []),
+            llm_call=llm_call,
         )
 
         stage_results.append((family_id, result))

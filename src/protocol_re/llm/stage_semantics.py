@@ -257,7 +257,7 @@ def run_semantic_labeling_stage(
     family_id: str,
     fields: List[Dict[str, Any]],
     config: StageConfig,
-    llm_config: LLMRequestConfig,
+    llm_config: Optional[LLMRequestConfig],
     cached_response: Optional[str] = None,
     field_statistics: Optional[Dict[str, Any]] = None,
     relations: Optional[List[Dict[str, Any]]] = None,
@@ -266,6 +266,7 @@ def run_semantic_labeling_stage(
     sample_values: Optional[List[List[Any]]] = None,
     family_features: Optional[Dict[str, Any]] = None,
     segments: Sequence[Dict[str, Any]] = (),
+    llm_call: Optional[Any] = None,
 ) -> StageResult:
     """
     Run semantic labeling stage for a single family.
@@ -316,11 +317,20 @@ def run_semantic_labeling_stage(
         if cached_response is not None:
             raw_response = cached_response
             response = json.loads(cached_response)
-        else:
+        elif llm_call is not None:
+            raw_response = llm_call(prompt=prompt, family_id=family_id, task="semantic_labeling")
+            response = {"choices": [{"message": {"content": raw_response}}]}
+        elif llm_config is not None:
             response, raw_response = call_openai_compatible_chat_with_raw(
                 prompt,
                 llm_config,
                 request_label=f"stage 11b semantic labeling for {family_id}",
+            )
+        else:
+            raise LLMAPIError(
+                "no LLM backend available: provide llm_config or llm_call",
+                category="configuration",
+                retryable=False,
             )
         response_json = extract_message_json(response)
 
