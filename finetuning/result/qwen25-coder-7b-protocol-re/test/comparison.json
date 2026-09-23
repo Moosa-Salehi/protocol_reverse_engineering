@@ -1,0 +1,1359 @@
+{
+  "base_model": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "finetuned_model": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter": "output/qwen25-coder-7b-protocol-re/adapter",
+  "dataset_sha256": "5a9d7ad3fc8955e61d6f9337c38c91c2cd8308193a4dcd7075e57a8163315167",
+  "records": 148,
+  "comparison": {
+    "family/bacnet/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/bacnet/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/cip/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.9206349206349206,
+        "delta": 0.9206349206349206
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9508196721311475,
+        "delta": 0.9508196721311475
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.9354838709677419,
+        "delta": 0.9354838709677419
+      }
+    },
+    "family/cip/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 0.8333333333333334,
+        "finetuned": 1.0,
+        "delta": 0.16666666666666663
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.8285714285714286,
+        "delta": 0.8285714285714286
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.90625,
+        "delta": 0.90625
+      }
+    },
+    "family/dnp3/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/dnp3/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/enip/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/enip/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/ethercat/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 0.42857142857142855,
+        "finetuned": 1.0,
+        "delta": 0.5714285714285714
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.0,
+        "delta": 0.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      }
+    },
+    "family/goose/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.875,
+        "delta": 0.875
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.967741935483871,
+        "delta": 0.967741935483871
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.967741935483871,
+        "delta": 0.967741935483871
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.967741935483871,
+        "delta": 0.967741935483871
+      }
+    },
+    "family/goose/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/hart_ip/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.7142857142857143,
+        "delta": 0.7142857142857143
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.9879518072289156,
+        "delta": 0.9879518072289156
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9647058823529412,
+        "delta": 0.9647058823529412
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.9761904761904762,
+        "delta": 0.9761904761904762
+      }
+    },
+    "family/hart_ip/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.0,
+        "delta": 0.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.6756756756756757,
+        "delta": 0.6756756756756757
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.8064516129032258,
+        "delta": 0.8064516129032258
+      }
+    },
+    "family/iec104/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/iec104/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/mms/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.3,
+        "delta": 0.3
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.8849557522123894,
+        "delta": 0.8849557522123894
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9433962264150944,
+        "delta": 0.9433962264150944
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.91324200913242,
+        "delta": 0.91324200913242
+      }
+    },
+    "family/mms/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/modbus/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.6385542168674698,
+        "delta": 0.6385542168674698
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.828125,
+        "delta": 0.828125
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.7210884353741497,
+        "delta": 0.7210884353741497
+      }
+    },
+    "family/modbus/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.8,
+        "delta": 0.8
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.88,
+        "delta": 0.88
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.9361702127659575,
+        "delta": 0.9361702127659575
+      }
+    },
+    "family/opcua/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 0.8571428571428571,
+        "finetuned": 1.0,
+        "delta": 0.1428571428571429
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.42857142857142855,
+        "delta": 0.42857142857142855
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.7697841726618705,
+        "delta": 0.7697841726618705
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.856,
+        "delta": 0.856
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.8106060606060606,
+        "delta": 0.8106060606060606
+      }
+    },
+    "family/powerlink/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "family/s7comm/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.42857142857142855,
+        "delta": 0.42857142857142855
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.7351351351351352,
+        "delta": 0.7351351351351352
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9251700680272109,
+        "delta": 0.9251700680272109
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.8192771084337349,
+        "delta": 0.8192771084337349
+      }
+    },
+    "family/s7comm/unknown/semantic_labeling": {
+      "json_validity": {
+        "base": 0.8,
+        "finetuned": 0.6,
+        "delta": -0.20000000000000007
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.0,
+        "delta": 0.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.75,
+        "delta": 0.75
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.6,
+        "delta": 0.6
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      }
+    },
+    "family/zigbee/unknown/boundary_refinement": {
+      "json_validity": {
+        "base": 0.8571428571428571,
+        "finetuned": 1.0,
+        "delta": 0.1428571428571429
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "overall/boundary_refinement": {
+      "json_validity": {
+        "base": 0.9423076923076923,
+        "finetuned": 1.0,
+        "delta": 0.05769230769230771
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.7019230769230769,
+        "delta": 0.7019230769230769
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.8936170212765957,
+        "delta": 0.8936170212765957
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9450694904037061,
+        "delta": 0.9450694904037061
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.9186233515599871,
+        "delta": 0.9186233515599871
+      }
+    },
+    "overall/semantic_labeling": {
+      "json_validity": {
+        "base": 0.9545454545454546,
+        "finetuned": 0.9545454545454546,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.6363636363636364,
+        "delta": 0.6363636363636364
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.8724489795918368,
+        "delta": 0.8724489795918368
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9095744680851063,
+        "delta": 0.9095744680851063
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.890625,
+        "delta": 0.890625
+      }
+    },
+    "protocol/bacnet/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/bacnet/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/cip/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.9206349206349206,
+        "delta": 0.9206349206349206
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9508196721311475,
+        "delta": 0.9508196721311475
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.9354838709677419,
+        "delta": 0.9354838709677419
+      }
+    },
+    "protocol/cip/semantic_labeling": {
+      "json_validity": {
+        "base": 0.8333333333333334,
+        "finetuned": 1.0,
+        "delta": 0.16666666666666663
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.8285714285714286,
+        "delta": 0.8285714285714286
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.90625,
+        "delta": 0.90625
+      }
+    },
+    "protocol/dnp3/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/dnp3/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/enip/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/enip/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/ethercat/boundary_refinement": {
+      "json_validity": {
+        "base": 0.42857142857142855,
+        "finetuned": 1.0,
+        "delta": 0.5714285714285714
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.0,
+        "delta": 0.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      }
+    },
+    "protocol/goose/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.875,
+        "delta": 0.875
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.967741935483871,
+        "delta": 0.967741935483871
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.967741935483871,
+        "delta": 0.967741935483871
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.967741935483871,
+        "delta": 0.967741935483871
+      }
+    },
+    "protocol/goose/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.5,
+        "delta": 0.5
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/hart_ip/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.7142857142857143,
+        "delta": 0.7142857142857143
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.9879518072289156,
+        "delta": 0.9879518072289156
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9647058823529412,
+        "delta": 0.9647058823529412
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.9761904761904762,
+        "delta": 0.9761904761904762
+      }
+    },
+    "protocol/hart_ip/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.0,
+        "delta": 0.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.6756756756756757,
+        "delta": 0.6756756756756757
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.8064516129032258,
+        "delta": 0.8064516129032258
+      }
+    },
+    "protocol/iec104/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/iec104/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/mms/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.3,
+        "delta": 0.3
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.8849557522123894,
+        "delta": 0.8849557522123894
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9433962264150944,
+        "delta": 0.9433962264150944
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.91324200913242,
+        "delta": 0.91324200913242
+      }
+    },
+    "protocol/mms/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/modbus/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.6385542168674698,
+        "delta": 0.6385542168674698
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.828125,
+        "delta": 0.828125
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.7210884353741497,
+        "delta": 0.7210884353741497
+      }
+    },
+    "protocol/modbus/semantic_labeling": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.8,
+        "delta": 0.8
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.88,
+        "delta": 0.88
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.9361702127659575,
+        "delta": 0.9361702127659575
+      }
+    },
+    "protocol/opcua/boundary_refinement": {
+      "json_validity": {
+        "base": 0.8571428571428571,
+        "finetuned": 1.0,
+        "delta": 0.1428571428571429
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.42857142857142855,
+        "delta": 0.42857142857142855
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.7697841726618705,
+        "delta": 0.7697841726618705
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.856,
+        "delta": 0.856
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.8106060606060606,
+        "delta": 0.8106060606060606
+      }
+    },
+    "protocol/powerlink/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    },
+    "protocol/s7comm/boundary_refinement": {
+      "json_validity": {
+        "base": 1.0,
+        "finetuned": 1.0,
+        "delta": 0.0
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.42857142857142855,
+        "delta": 0.42857142857142855
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.7351351351351352,
+        "delta": 0.7351351351351352
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.9251700680272109,
+        "delta": 0.9251700680272109
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.8192771084337349,
+        "delta": 0.8192771084337349
+      }
+    },
+    "protocol/s7comm/semantic_labeling": {
+      "json_validity": {
+        "base": 0.8,
+        "finetuned": 0.6,
+        "delta": -0.20000000000000007
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 0.0,
+        "delta": 0.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 0.75,
+        "delta": 0.75
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 0.6,
+        "delta": 0.6
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 0.6666666666666666,
+        "delta": 0.6666666666666666
+      }
+    },
+    "protocol/zigbee/boundary_refinement": {
+      "json_validity": {
+        "base": 0.8571428571428571,
+        "finetuned": 1.0,
+        "delta": 0.1428571428571429
+      },
+      "exact_match": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "precision": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "recall": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      },
+      "f1": {
+        "base": 0.0,
+        "finetuned": 1.0,
+        "delta": 1.0
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "platform": "Linux-6.8.0-86-generic-x86_64-with-glibc2.39",
+  "packages": {
+    "unsloth": "2025.3.9",
+    "torch": "2.6.0+cu124",
+    "transformers": "4.49.0",
+    "datasets": "3.3.2",
+    "accelerate": "1.4.0",
+    "peft": "0.14.0",
+    "bitsandbytes": "0.45.3",
+    "trl": "0.15.2",
+    "safetensors": "0.5.3"
+  },
+  "cuda": {
+    "available": true,
+    "version": "12.4",
+    "device": "Quadro RTX 8000",
+    "bf16_supported": false
+  }
+}
