@@ -245,3 +245,71 @@ def test_stage_boundaries_llm_call_response_bypasses_confidence_gate():
     )
     assert result.success
     assert result.validation_log[0]["applied"] is True or result.validation_log[0]["valid"] is True
+
+
+# ---------------------------------------------------------------------------
+# apply_boundary_list: padding to payload edges + per-edge application
+# ---------------------------------------------------------------------------
+
+from protocol_re.llm.stage_boundaries import apply_boundary_list  # noqa: E402
+
+
+def test_apply_boundary_list_pads_missing_payload_edges():
+    # Consensus vote dropped the final edge (6) but kept the interior merge at 1.
+    updated, log = apply_boundary_list([dict(f) for f in FIELDS], [0, 1])
+    assert log[0]["valid"] is True
+    assert log[0]["applied"] is True
+    assert sorted(log[0]["boundaries"]) == [0, 1, 6]
+    assert log[0]["padded_edges"] == [6]
+    # Original partition preserved: total length unchanged.
+    assert sum(f["length"] for f in updated) == 6
+    # 1-byte field kept, 2-byte + 3-byte merged into 5-byte.
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 1), (1, 5)]
+
+
+def test_apply_boundary_list_drops_unknown_interior_edges_per_edge():
+    # Edge 2 bisects the 2-byte field at start 1 — stage 07 never proposed it.
+    # It must be dropped without rejecting the valid merge edges [0, 1, 6].
+    updated, log = apply_boundary_list([dict(f) for f in FIELDS], [0, 1, 2, 6])
+    assert log[0]["valid"] is True
+    assert log[0]["applied"] is True
+    assert log[0]["dropped_edges"] == [2]
+    assert sorted(log[0]["boundaries"]) == [0, 1, 6]
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 1), (1, 5)]
+
+
+def test_apply_boundary_list_all_unknown_edges_leaves_fields_unchanged():
+    # Every interior edge is unknown -> only payload edges remain -> one
+    # merged payload span (per-edge semantics: surviving edges always apply).
+    updated, log = apply_boundary_list([dict(f) for f in FIELDS], [0, 2, 6])
+    assert log[0]["valid"] is True
+    assert log[0]["applied"] is True
+    assert log[0]["dropped_edges"] == [2]
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 6)]
+
+
+def test_apply_boundary_list_clips_out_of_range_edges_to_payload_end():
+    # Sampled messages can be longer than the family template: an edge past
+    # the payload end is clipped to the end rather than rejected.
+    updated, log = apply_boundary_list([dict(f) for f in FIELDS], [0, 1, 99])
+    assert log[0]["valid"] is True
+    assert log[0]["applied"] is True
+    assert log[0]["clipped_edges"] == {"99": 6}
+    assert sorted(log[0]["boundaries"]) == [0, 1, 6]
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 1), (1, 5)]
+
+
+def test_apply_boundary_list_rejects_negative_edges():
+    # Negative edges cannot be interpreted or clipped, so the request is rejected.
+    updated, log = apply_boundary_list([dict(f) for f in FIELDS], [0, 1, -1])
+    assert log[0]["valid"] is False
+    assert log[0]["applied"] is False
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 1), (1, 2), (3, 3)]
+
+
+def test_apply_boundary_list_exact_match_returns_original_fields():
+    # Request already equals the stage-07 partition: nothing to apply.
+    updated, log = apply_boundary_list([dict(f) for f in FIELDS], [0, 1, 3, 6])
+    assert log[0]["valid"] is True
+    assert log[0]["applied"] is False
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 1), (1, 2), (3, 3)]

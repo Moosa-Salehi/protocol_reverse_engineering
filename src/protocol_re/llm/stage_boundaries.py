@@ -212,7 +212,21 @@ def apply_boundary_list(
     fields: List[Dict[str, Any]],
     boundaries: List[Any],
 ) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-    """Merge existing adjacent fields to match a direct boundary list."""
+    """Merge existing adjacent fields to match a direct boundary list.
+
+    Consensus boundaries from the local model rarely line up perfectly with the
+    stage-07 field edges: the per-position vote can drop the final payload edge
+    (uneven payload lengths) and can propose interior edges that stage 07 never
+    considered. Rather than rejecting the whole candidate, this function
+
+    1. pads the requested edges to 0 and the family's final payload edge, and
+    2. applies the request per edge: edges shared with stage-07 field edges are
+       honored by merging/keeping spans; unknown interior edges are dropped so
+       the underlying field (whose edge they bisect) survives intact.
+
+    The result is always a partition of the original fields, so a single bad
+    edge can no longer throw away the good ones.
+    """
     if not fields:
         return [], []
     starts = [int(field.get("start", field.get("offset", 0)) or 0) for field in fields]
@@ -223,14 +237,24 @@ def apply_boundary_list(
         requested = sorted({int(value) for value in boundaries})
     except (TypeError, ValueError):
         return fields, [{"valid": False, "applied": False, "reason": "boundaries must contain integers"}]
-    if not requested or requested[0] != 0 or requested[-1] != final_end:
-        return fields, [{"valid": False, "applied": False, "reason": f"boundaries must start at 0 and end at {final_end}"}]
-    invalid = [value for value in requested if value not in existing_edges]
-    if invalid:
-        return fields, [{"valid": False, "applied": False, "reason": f"boundaries are not existing field edges: {invalid}"}]
+    if not requested:
+        return fields, [{"valid": False, "applied": False, "reason": "boundaries list is empty"}]
+    # Pad to the family payload edges instead of rejecting when the consensus
+    # vote dropped 0 or the final edge. Edges beyond the payload end (sampled
+    # messages can be longer than the family template) are clipped to the end;
+    # only negative edges cannot be interpreted and are fatal.
+    negative = [value for value in requested if value < 0]
+    if negative:
+        return fields, [{"valid": False, "applied": False, "reason": f"boundaries must be non-negative: {negative}"}]
+    clipped = [value for value in requested if value > final_end]
+    clamped = sorted({0, final_end, *(min(value, final_end) for value in requested)})
+    # Keep only edges stage 07 already proposed; unknown interior edges are
+    # dropped per edge so they cannot invalidate the rest of the request.
+    invalid = [value for value in clamped if value not in existing_edges]
+    kept = [value for value in clamped if value in existing_edges]
 
     updated = []
-    for start, end in zip(requested, requested[1:]):
+    for start, end in zip(kept, kept[1:]):
         members = [field for field, field_start, width in zip(fields, starts, widths)
                    if start <= field_start and field_start + width <= end]
         if not members:
@@ -239,7 +263,23 @@ def apply_boundary_list(
             updated.append(members[0].copy())
         else:
             updated.append({"start": start, "length": end - start, "field_type": "bytes", "confidence": min(float(field.get("confidence", 0.0) or 0.0) for field in members), "evidence": {"source": "llm_boundary_refinement", "merged_field_count": len(members)}})
-    return updated, [{"valid": True, "applied": updated != fields, "reason": "direct boundary list accepted", "boundaries": requested, "updated_fields": updated}]
+
+    log_entry: Dict[str, Any] = {
+        "valid": True,
+        "applied": updated != fields,
+        "reason": "direct boundary list accepted",
+        "boundaries": kept,
+        "updated_fields": updated,
+    }
+    if invalid:
+        log_entry["dropped_edges"] = invalid
+        log_entry["reason"] = f"accepted existing field edges {kept}; dropped unknown edges {invalid}"
+    padded = [edge for edge in (0, final_end) if edge not in requested]
+    if padded:
+        log_entry["padded_edges"] = padded
+    if clipped:
+        log_entry["clipped_edges"] = {str(edge): final_end for edge in clipped}
+    return updated, [log_entry]
 
 
 def run_boundary_refinement_stage(
