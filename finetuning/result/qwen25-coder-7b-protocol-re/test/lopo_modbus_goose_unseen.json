@@ -1,0 +1,407 @@
+{
+  "mode": "unseen-protocol-transfer",
+  "model": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter": "output/qwen25-coder-7b-protocol-re/adapter",
+  "eval_protocols": [
+    "modbus",
+    "goose"
+  ],
+  "generation": {
+    "seed": 42,
+    "do_sample": false,
+    "max_new_tokens": 512
+  },
+  "metrics": {
+    "overall": {
+      "count": 26,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.4298642533936652,
+      "recall": 0.5444126074498568,
+      "f1": 0.4804045512010114
+    },
+    "task/boundary_refinement": {
+      "count": 17,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.4567901234567901,
+      "recall": 0.592948717948718,
+      "f1": 0.5160390516039052
+    },
+    "task/semantic_labeling": {
+      "count": 9,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.13513513513513514,
+      "recall": 0.13513513513513514,
+      "f1": 0.13513513513513514
+    },
+    "protocol/goose": {
+      "count": 12,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.5017421602787456,
+      "recall": 0.5538461538461539,
+      "f1": 0.526508226691042
+    },
+    "protocol/modbus": {
+      "count": 14,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.2967741935483871,
+      "recall": 0.5168539325842697,
+      "f1": 0.3770491803278688
+    },
+    "protocol/goose/task/boundary_refinement": {
+      "count": 8,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.5384615384615384,
+      "recall": 0.5645161290322581,
+      "f1": 0.5511811023622047
+    },
+    "protocol/goose/task/semantic_labeling": {
+      "count": 4,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.14814814814814814,
+      "recall": 0.3333333333333333,
+      "f1": 0.20512820512820512
+    },
+    "protocol/modbus/task/boundary_refinement": {
+      "count": 9,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.3103448275862069,
+      "recall": 0.703125,
+      "f1": 0.430622009569378
+    },
+    "protocol/modbus/task/semantic_labeling": {
+      "count": 5,
+      "json_validity": 1.0,
+      "exact_match": 0.0,
+      "precision": 0.1,
+      "recall": 0.04,
+      "f1": 0.05714285714285714
+    },
+    "meta": {
+      "records_evaluated": 26,
+      "records_errored": 0,
+      "median_generation_seconds": 9.611
+    }
+  },
+  "predictions": [
+    {
+      "protocol": "modbus",
+      "task": "semantic_labeling",
+      "message_id": 12461,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 4,
+      "generation_seconds": 5.632,
+      "raw": "{\"semantic_labels\":[{\"offset\":4,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":6,\"width\":2,\"semantic_role\":\"address\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 620,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 5,
+      "false_positive": 0,
+      "false_negative": 2,
+      "generation_seconds": 1.921,
+      "raw": "{\"boundaries\":[0,2,4,6,11]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 12391,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 2,
+      "false_positive": 34,
+      "false_negative": 6,
+      "generation_seconds": 11.993,
+      "raw": "{\"boundaries\":[0,2,4,8,12,16,17,18,19,20,21,22,23,24,28,29,30,31,32,36,37,38,40,41,45,49,50,51,52,56,60,61,62,63,64,78]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 6342,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 5,
+      "false_positive": 0,
+      "false_negative": 2,
+      "generation_seconds": 1.924,
+      "raw": "{\"boundaries\":[0,2,4,6,10]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "semantic_labeling",
+      "message_id": 7767,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 0,
+      "false_positive": 2,
+      "false_negative": 5,
+      "generation_seconds": 4.661,
+      "raw": "{\"semantic_labels\":[{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":1,\"semantic_role\":\"status\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "semantic_labeling",
+      "message_id": 6514,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 0,
+      "false_positive": 2,
+      "false_negative": 5,
+      "generation_seconds": 4.661,
+      "raw": "{\"semantic_labels\":[{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":1,\"semantic_role\":\"status\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 174,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 5,
+      "false_positive": 0,
+      "false_negative": 2,
+      "generation_seconds": 1.822,
+      "raw": "{\"boundaries\":[0,2,4,6,9]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 369,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 6,
+      "false_positive": 24,
+      "false_negative": 1,
+      "generation_seconds": 9.595,
+      "raw": "{\"boundaries\":[0,1,2,4,5,6,7,9,10,11,13,17,18,20,22,24,25,27,29,31,43,45,47,49,50,51,53,55,56,57]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 12560,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 7,
+      "false_positive": 2,
+      "false_negative": 0,
+      "generation_seconds": 2.651,
+      "raw": "{\"boundaries\":[0,1,2,4,5,6,7,8,9]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 12372,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 5,
+      "false_positive": 40,
+      "false_negative": 2,
+      "generation_seconds": 14.948,
+      "raw": "{\"boundaries\":[0,2,4,8,12,16,17,18,19,20,21,22,23,24,25,26,27,28,30,34,38,42,46,50,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,70,74,78,82,86,89]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 178,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 5,
+      "false_positive": 0,
+      "false_negative": 2,
+      "generation_seconds": 1.816,
+      "raw": "{\"boundaries\":[0,2,4,6,9]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "semantic_labeling",
+      "message_id": 4145,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 0,
+      "false_positive": 2,
+      "false_negative": 5,
+      "generation_seconds": 4.67,
+      "raw": "{\"semantic_labels\":[{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":1,\"semantic_role\":\"status\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "semantic_labeling",
+      "message_id": 8567,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 0,
+      "false_positive": 2,
+      "false_negative": 5,
+      "generation_seconds": 4.681,
+      "raw": "{\"semantic_labels\":[{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":1,\"semantic_role\":\"status\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "modbus",
+      "task": "boundary_refinement",
+      "message_id": 5695,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 5,
+      "false_positive": 0,
+      "false_negative": 2,
+      "generation_seconds": 1.899,
+      "raw": "{\"boundaries\":[0,2,4,6,10]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "semantic_labeling",
+      "message_id": 18073,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 1,
+      "false_positive": 7,
+      "false_negative": 2,
+      "generation_seconds": 17.117,
+      "raw": "{\"semantic_labels\":[{\"offset\":1,\"width\":1,\"semantic_role\":\"status\",\"field_type\":\"bytes\"},{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":4,\"semantic_role\":\"timestamp\",\"field_type\":\"bytes\"},{\"offset\":28,\"width\":2,\"semantic_role\":\"flags\",\"field_type\":\"bytes\"},{\"offset\":30,\"width\":2,\"semantic_role\":\"quantity\",\"field_type\":\"bytes\"},{\"offset\":38,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":60,\"width\":1,\"semantic_role\":\"checksum\",\"field_type\":\"bytes\"},{\"offset\":61,\"width\":1,\"semantic_role\":\"sequence_number\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "semantic_labeling",
+      "message_id": 6467,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 1,
+      "false_positive": 5,
+      "false_negative": 2,
+      "generation_seconds": 13.155,
+      "raw": "{\"semantic_labels\":[{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":4,\"semantic_role\":\"status\",\"field_type\":\"bytes\"},{\"offset\":28,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":30,\"width\":2,\"semantic_role\":\"transaction_id\",\"field_type\":\"bytes\"},{\"offset\":42,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":44,\"width\":2,\"semantic_role\":\"flags\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 14902,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 19,
+      "false_positive": 15,
+      "false_negative": 12,
+      "generation_seconds": 11.136,
+      "raw": "{\"boundaries\":[0,2,3,4,6,8,10,12,14,16,18,20,22,24,25,26,28,30,32,36,37,41,45,49,50,54,55,56,57,58,59,60,62,64]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 7553,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 19,
+      "false_positive": 16,
+      "false_negative": 12,
+      "generation_seconds": 11.547,
+      "raw": "{\"boundaries\":[0,2,3,4,6,8,10,12,14,16,18,20,22,24,25,26,28,30,32,36,37,41,45,46,47,48,50,52,53,54,56,58,60,62,64]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 13754,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 24,
+      "false_positive": 20,
+      "false_negative": 7,
+      "generation_seconds": 14.187,
+      "raw": "{\"boundaries\":[0,1,2,3,4,6,8,9,14,15,16,17,18,19,20,21,22,23,25,30,32,33,34,35,37,40,42,43,44,45,46,47,48,49,50,51,53,55,57,58,59,60,61,63]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 14503,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 18,
+      "false_positive": 15,
+      "false_negative": 13,
+      "generation_seconds": 10.869,
+      "raw": "{\"boundaries\":[0,2,3,4,6,8,10,12,14,16,18,20,22,24,25,26,28,30,32,36,37,41,45,49,50,51,52,56,57,58,60,62,64]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "semantic_labeling",
+      "message_id": 13355,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 1,
+      "false_positive": 7,
+      "false_negative": 2,
+      "generation_seconds": 17.543,
+      "raw": "{\"semantic_labels\":[{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":4,\"semantic_role\":\"status\",\"field_type\":\"bytes\"},{\"offset\":28,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":30,\"width\":2,\"semantic_role\":\"transaction_id\",\"field_type\":\"bytes\"},{\"offset\":38,\"width\":2,\"semantic_role\":\"checksum\",\"field_type\":\"bytes\"},{\"offset\":40,\"width\":2,\"semantic_role\":\"flags\",\"field_type\":\"bytes\"},{\"offset\":58,\"width\":2,\"semantic_role\":\"error_code\",\"field_type\":\"bytes\"},{\"offset\":60,\"width\":2,\"semantic_role\":\"sequence_number\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "semantic_labeling",
+      "message_id": 17907,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 1,
+      "false_positive": 4,
+      "false_negative": 2,
+      "generation_seconds": 11.271,
+      "raw": "{\"semantic_labels\":[{\"offset\":1,\"width\":1,\"semantic_role\":\"status\",\"field_type\":\"bytes\"},{\"offset\":2,\"width\":2,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":8,\"width\":1,\"semantic_role\":\"length\",\"field_type\":\"bytes\"},{\"offset\":10,\"width\":2,\"semantic_role\":\"flags\",\"field_type\":\"bytes\"},{\"offset\":26,\"width\":4,\"semantic_role\":\"device_id\",\"field_type\":\"bytes\"}]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 8592,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 19,
+      "false_positive": 16,
+      "false_negative": 12,
+      "generation_seconds": 11.882,
+      "raw": "{\"boundaries\":[0,2,3,4,6,8,10,12,14,16,18,20,22,24,25,26,28,30,32,36,37,41,45,46,47,48,50,52,53,54,56,58,60,62,64]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 12755,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 13,
+      "false_positive": 15,
+      "false_negative": 18,
+      "generation_seconds": 9.627,
+      "raw": "{\"boundaries\":[0,2,3,4,6,8,10,12,14,16,18,20,22,24,25,27,29,31,47,48,50,52,54,56,58,60,62,64]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 13607,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 9,
+      "false_positive": 6,
+      "false_negative": 22,
+      "generation_seconds": 5.154,
+      "raw": "{\"boundaries\":[0,1,2,3,4,6,8,9,14,15,16,17,18,62,63]}"
+    },
+    {
+      "protocol": "goose",
+      "task": "boundary_refinement",
+      "message_id": 14434,
+      "valid_json": true,
+      "exact_match": false,
+      "true_positive": 19,
+      "false_positive": 17,
+      "false_negative": 12,
+      "generation_seconds": 12.141,
+      "raw": "{\"boundaries\":[0,2,3,4,6,8,10,12,14,16,18,20,22,24,25,26,28,30,32,36,37,41,45,46,47,48,49,50,51,52,56,57,58,60,62,64]}"
+    }
+  ]
+}
