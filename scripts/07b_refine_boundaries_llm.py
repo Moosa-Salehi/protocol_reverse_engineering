@@ -214,6 +214,14 @@ def main() -> None:
         refined_details = dict(details)
         fields = details.get("field_hypotheses", [])
 
+        # TLV/BER families are deterministic tag parses: their boundaries are
+        # exact, so LLM merge suggestions can only collapse real structure
+        # (observed: whole-message merges). Skip them entirely.
+        if details.get("tlv_metadata"):
+            print(f"[*] Skipping {family_id}: TLV/BER framing (deterministic parse, LLM refinement disabled)")
+            refined_families[family_id] = refined_details
+            continue
+
         if not fields:
             print(f"[*] Skipping {family_id}: no fields")
             refined_families[family_id] = refined_details

@@ -61,6 +61,7 @@ def infer_framing_hypotheses(
     min_messages: int = _FD.MIN_MESSAGES,
     detect_layers: bool = False,
     layer_min_confidence: float = _LD.MIN_CONFIDENCE,
+    enable_tlv: bool = False,
 ) -> Dict[str, Any]:
     """Infer protocol-agnostic frame/header layouts per family and globally.
 
@@ -88,6 +89,7 @@ def infer_framing_hypotheses(
             max_header_bytes=max_header_bytes,
             max_hypotheses=max_hypotheses_per_family,
             min_messages=min_messages,
+            enable_tlv=enable_tlv,
         )
 
         # A6: Add layer boundary detection if enabled
@@ -151,6 +153,7 @@ def infer_family_framing(
     max_header_bytes: int = _FD.MAX_HEADER_BYTES,
     max_hypotheses: int = _FD.MAX_HYPOTHESES_PER_FAMILY,
     min_messages: int = _FD.MIN_MESSAGES,
+    enable_tlv: bool = False,
 ) -> Dict[str, Any]:
     messages = [bytes(message) for message in messages if message]
     lengths = [len(message) for message in messages]
@@ -204,12 +207,36 @@ def infer_family_framing(
             )
         ]
 
-    return {
+    result = {
         "message_count": len(messages),
         "length_stats": {"min": min(lengths), "max": max(lengths), "distinct": len(set(lengths))},
         "layout_hypotheses": [layout.to_dict() for layout in layouts],
         "position_evidence": _compact_position_evidence(position_stats),
     }
+
+    # TLV/BER mode: when the family parses as a strict tag-length chain after a
+    # fixed header, the deterministic parse replaces the entropy layout as the
+    # primary hypothesis so the header/body boundary lands on real framing
+    # (e.g. GOOSE header = 8 bytes, not the entropy artefact 11).
+    if enable_tlv:
+        from protocol_re.inference.tlv import detect_tlv_framing
+
+        tlv_detection = detect_tlv_framing(messages)
+        if tlv_detection is not None:
+            result["tlv_framing"] = tlv_detection.summary()
+            result["layout_hypotheses"] = [
+                FramingLayoutHypothesis(
+                    family_id=family_id,
+                    header_start=0,
+                    header_end=tlv_detection.header_length,
+                    body_start=tlv_detection.header_length,
+                    body_end=None,
+                    confidence=0.95,
+                    field_regions=[],
+                    evidence={"mode": "tlv_ber", **tlv_detection.summary()},
+                ).to_dict()
+            ] + result["layout_hypotheses"]
+    return result
 
 
 def _fallback_result(family_id: str, messages: Sequence[bytes], reason: str) -> Dict[str, Any]:

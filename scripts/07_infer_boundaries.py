@@ -140,6 +140,17 @@ def main() -> None:
         default=20000,
         help="Max messages sampled per pool for hierarchical boundary inference.",
     )
+    parser.add_argument(
+        "--tlv-boundaries",
+        action="store_true",
+        default=False,
+        help=(
+            "Enable TLV/BER framing mode: families whose messages parse as a strict "
+            "tag-length-value chain after a fixed header get deterministic tag-derived "
+            "fields (with the framing module's TLV layout as the header/body boundary) "
+            "instead of entropy segmentation."
+        ),
+    )
 
     # Enhanced boundary detection options (A2) - now default
     parser.add_argument("--enhanced", action="store_true", help="(Deprecated: enhanced mode is now default)")
@@ -311,6 +322,41 @@ def main() -> None:
 
         for family_id, messages_hex in grouped.items():
             with logger.context(family_id=family_id, message_count=len(messages_hex)):
+                tlv_framing = (
+                    (framing_by_family.get(family_id) or {}).get("tlv_framing")
+                    if args.tlv_boundaries
+                    else None
+                )
+                if tlv_framing:
+                    from protocol_re.inference.tlv import TlvFramingDetection, derive_tlv_field_hypotheses
+
+                    detection = TlvFramingDetection(
+                        header_length=int(tlv_framing.get("header_length", 0)),
+                        parse_success_ratio=float(tlv_framing.get("parse_success_ratio", 0.0)),
+                        messages_parsed=int(tlv_framing.get("messages_parsed", 0)),
+                        tag_counts={int(key.replace("0x", ""), 16): value for key, value in (tlv_framing.get("tag_counts") or {}).items()},
+                        distinct_tags=int(tlv_framing.get("distinct_tags", 0)),
+                        sequence_count=int(tlv_framing.get("sequence_count", 0)),
+                        evidence=dict(tlv_framing.get("evidence") or {}),
+                    )
+                    hypotheses, segments, tlv_meta = derive_tlv_field_hypotheses(family_id, messages_hex, detection)
+                    logger.debug(
+                        f"Family {family_id}: TLV mode, {len(segments)} segments, {len(hypotheses)} fields",
+                        segments=len(segments),
+                        fields=len(hypotheses),
+                        tlv_mode=tlv_meta.get("mode"),
+                    )
+                    result[family_id] = {
+                        "message_count": len(messages_hex),
+                        "template": infer_template(messages_hex),
+                        "segments": [segment.to_dict() for segment in segments],
+                        "field_hypotheses": [hypothesis.to_dict() for hypothesis in hypotheses],
+                        "tlv_metadata": tlv_meta,
+                    }
+                    total_segments += len(segments)
+                    total_fields += len(hypotheses)
+                    progress.update()
+                    continue
                 if hierarchical:
                     fam_len = Counter(len(h) // 2 for h in messages_hex).most_common(1)[0][0]
                     body_bounds = body_boundaries_by_len.get(fam_len, {0, fam_len})

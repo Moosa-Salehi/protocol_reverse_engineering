@@ -234,6 +234,23 @@ def main() -> None:
         else:
             print(f"[+] Discriminator refinement skipped: {result.refinement.get('reason', 'unspecified')}")
 
+    if result.tlv_merge is not None:
+        if result.tlv_merge.get("applied"):
+            logger.decision(
+                decision="Applied TLV/BER family merge",
+                reason=f"tag-sequence identity (header={result.tlv_merge.get('header_length')}B, "
+                       f"tags={result.tlv_merge.get('distinct_tags')}, sequences={result.tlv_merge.get('sequence_count')})",
+                family_count_before=result.tlv_merge.get("family_count_before"),
+                family_count_after=result.tlv_merge.get("family_count_after"),
+            )
+            print(
+                f"[+] TLV family merge: {result.tlv_merge.get('family_count_before')} -> "
+                f"{result.tlv_merge.get('family_count_after')} families "
+                f"(header={result.tlv_merge.get('header_length')}B, tags={result.tlv_merge.get('distinct_tags')})"
+            )
+        else:
+            print(f"[+] TLV family merge skipped: {result.tlv_merge.get('reason', 'unspecified')}")
+
     if result.conformance is not None and result.conformance.get("applied"):
         dropped = result.conformance.get("nonconforming_message_count", 0)
         offsets = result.conformance.get("constant_offsets", {})
@@ -288,6 +305,7 @@ def main() -> None:
             "fallback_reason": result.fallback_reason,
             "discriminator_refinement": result.refinement,
             "conformance_filter": result.conformance,
+            "tlv_family_merge": result.tlv_merge,
             "tshark_filter": args.tshark_filter,
             "supervised_hdbscan_checkpoint": args.supervised_hdbscan_checkpoint,
             "supervised_hdbscan": supervised_hdbscan,

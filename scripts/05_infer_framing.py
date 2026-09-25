@@ -25,6 +25,7 @@ def main() -> None:
     parser.add_argument("--min-messages", type=int, default=3, help="Minimum messages needed for non-fallback family inference")
     parser.add_argument("--detect-layers", action="store_true", help="Enable multi-layer protocol detection (A6)")
     parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer boundary detection (default: 0.6)")
+    parser.add_argument("--tlv-detect", action="store_true", help="Enable TLV/BER self-describing framing detection per family")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -69,6 +70,7 @@ def main() -> None:
             min_messages=args.min_messages,
             detect_layers=args.detect_layers,
             layer_min_confidence=args.layer_min_confidence,
+            enable_tlv=args.tlv_detect,
         )
 
     fallback_counts = {}

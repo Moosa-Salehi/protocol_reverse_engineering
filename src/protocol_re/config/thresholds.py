@@ -597,6 +597,61 @@ class ConformanceFilter:
     LENGTH_FIELD_WIDTHS: tuple[int, ...] = (2,)
 
 
+class TlvFraming:
+    """Thresholds for TLV/BER self-describing framing detection
+    (:mod:`protocol_re.inference.tlv`).
+
+    Variable-offset, self-describing protocols (GOOSE/BER, SNMP/ASN.1,
+    DNS-style tag-length-value chains) defeat fixed-offset segmentation and
+    length-bucket clustering: the entropy layout lands mid-header and every
+    payload length becomes its own family. When the corpus parses as a strict
+    tag-length-value chain after a constant header prefix, the deterministic
+    parse replaces entropy boundaries and same-tag-sequence messages merge
+    into one family per message type.
+    """
+
+    # Minimum share of messages (per corpus / per family) that must parse as a
+    # TLV chain consuming the whole message for the mode to engage.
+    MIN_PARSE_SUCCESS_RATIO: float = 0.95
+
+    # Minimum number of distinct tags across the corpus for a TLV verdict:
+    # one tag alone cannot distinguish a self-describing body from a blob.
+    MIN_DISTINCT_TAGS: int = 2
+
+    # Maximum distinct tags tolerated. Beyond this the "tag" alphabet is
+    # likely just payload bytes, not a protocol vocabulary.
+    MAX_DISTINCT_TAGS: int = 64
+
+    # Bytes scanned for the constant header prefix before the TLV chain.
+    MAX_HEADER_SCAN: int = 32
+
+    # Maximum bytes walked into a message while parsing the TLV chain
+    # (safety bound against malformed/unterminated chains).
+    MAX_CHAIN_WALK: int = 4096
+
+    # BER long-form length encoding: the first length byte & 0x80 set means
+    # the low 7 bits count how many following bytes hold the length.
+    BER_LONG_FORM_MASK: int = 0x80
+
+    # Reject a length field that exceeds the remaining message bytes by more
+    # than this slack (absorbs captures with truncated/reassembled frames).
+    LENGTH_SLACK_BYTES: int = 0
+
+    # Family-merge support: two messages belong to the same TLV family when
+    # their tag sequences match AND their fixed-header byte patterns agree on
+    # all offsets that are constant across the corpus.
+    MIN_MESSAGES_FOR_TAG_VOCABULARY: int = 8
+
+    # Per-message tag-sequence sample cap used when deriving the corpus tag
+    # vocabulary and family signatures (deterministic: first N by msg_id).
+    SIGNATURE_SAMPLE_CAP: int = 2000
+
+    # A single tag-sequence family larger than this ratio of the corpus is
+    # still merged (one message type dominating is normal for GOOSE), but a
+    # chain whose every message has a *unique* sequence is treated as noise.
+    MAX_SEQUENCE_CARDINALITY_RATIO: float = 0.5
+
+
 class FamilyRefinement:
     """Thresholds for discriminator-aware family refinement
     (:func:`protocol_re.clustering.family_discovery.refine_families_by_discriminator`).

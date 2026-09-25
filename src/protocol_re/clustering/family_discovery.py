@@ -14,6 +14,7 @@ from protocol_re.clustering.hybrid_features import build_feature_matrix
 from protocol_re.clustering.latent_standardize import LatentStandardizer
 from protocol_re.clustering.structural_features import downweight_raw_byte_matrix
 from protocol_re.inference.discriminator_fields import detect_global_discriminator
+from protocol_re.inference.tlv import detect_tlv_framing, merge_families_by_tlv_signature
 from protocol_re.model.schema import FamilyAssignment, MessageRecord
 from protocol_re.utils.bytes import hex_to_bytes
 
@@ -54,6 +55,7 @@ class ClusteringResult:
     diagnostics: Dict[str, Any] | None = None
     refinement: Dict[str, Any] | None = None
     conformance: Dict[str, Any] | None = None
+    tlv_merge: Dict[str, Any] | None = None
 
 
 
@@ -426,6 +428,7 @@ def discover_families(
     # corpora where latent scale mismatch dominates, but it must be explicitly requested.
     refine_discriminator: bool = _FR.ENABLED,  # Post-clustering discriminator-aware family refinement.
     conformance_filter: bool = _CF.ENABLED,  # Drop messages that violate a constant framing invariant.
+    tlv_family_merge: bool = False,  # Merge families whose messages share a TLV/BER tag sequence.
 ) -> ClusteringResult:
     if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
         raise ValueError(f"Unsupported feature mode: {feature_mode}")
@@ -611,6 +614,21 @@ def discover_families(
     if refine_discriminator:
         assignments, refinement_meta = refine_families_by_discriminator(records, assignments)
 
+    # TLV/BER family merge: self-describing protocols encode their message type
+    # in the tag sequence, so clustering (which keys on payload distance) splits
+    # one type across length buckets. When the corpus parses as a strict TLV
+    # chain, re-key families so one tag sequence = one family. No-op when the
+    # corpus does not parse as TLV, so fixed-offset protocols are unaffected.
+    tlv_meta: Dict[str, Any] | None = None
+    if tlv_family_merge:
+        corpus_messages = [hex_to_bytes(record.payload_hex) for record in records if record.payload_hex]
+        tlv_detection = detect_tlv_framing(corpus_messages)
+        if tlv_detection is not None:
+            assignments, tlv_meta = merge_families_by_tlv_signature(records, assignments, tlv_detection)
+            tlv_meta["detection"] = tlv_detection.summary()
+        else:
+            tlv_meta = {"applied": False, "reason": "no_tlv_framing_detected"}
+
     diagnostics = build_family_diagnostics(
         records,
         assignments,
@@ -633,4 +651,5 @@ def discover_families(
         diagnostics=diagnostics,
         refinement=refinement_meta,
         conformance=conformance_meta,
+        tlv_merge=tlv_meta,
     )
