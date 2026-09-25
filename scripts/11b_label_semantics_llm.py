@@ -64,6 +64,7 @@ def main() -> None:
     parser.add_argument("output_json", help="Output families JSON with semantic labels")
     parser.add_argument("--relations-json", help="Relations JSON for semantic inference")
     parser.add_argument("--features-json", help="Family features JSON for field statistics")
+    parser.add_argument("--semantics-json", help="Stage-09 semantics summary JSON to merge consensus labels into (optional)")
     parser.add_argument("--messages-jsonl", help="Canonical message corpus JSONL for sample field values")
     parser.add_argument("--assignments-json", help="Family assignments JSON for sample field values")
     parser.add_argument("--max-samples", type=int, default=10, help="Maximum sample messages per family")
@@ -224,6 +225,7 @@ def main() -> None:
     # Process each family. Stage 07 emits a dict keyed by family_id; we label fields
     # in place and re-emit the same dict schema so downstream stages (12) consume it.
     labeled_families = {}
+    llm_semantics: dict = {}
     total_applied = 0
     total_rejected = 0
     stage_results: list[tuple[str, object]] = []
@@ -365,6 +367,45 @@ def main() -> None:
                 "stage": "semantic_labeling",
             }
 
+            # Mirror the consensus labels into the 09_semantics summary shape so
+            # stage 12 folds them into FamilySemanticSummary: that is what the
+            # evaluator and the HTML/MD "Semantic Labels" tables actually read.
+            # Labels carry source=llm_consensus; stage 12 prefers them over the
+            # heuristic labels at equal confidence.
+            semantic_label_entries = []
+            for log_entry in result.validation_log:
+                if not log_entry.get("applied", False):
+                    continue
+                label = log_entry.get("label", {})
+                field_index = label.get("field_index")
+                if field_index is None or field_index >= len(fields):
+                    continue
+                target_field = fields[field_index]
+                start = int(target_field.get("start", target_field.get("offset", 0)) or 0)
+                length = int(target_field.get("length", target_field.get("width", 0)) or 0)
+                encoding_type = label.get("encoding_type") or label.get("field_type")
+                semantic_label_entries.append({
+                    "start": start,
+                    "length": length,
+                    "label": label.get("semantic_role") or label.get("human_label") or "unknown",
+                    "field_type": encoding_type,
+                    "encoding_type": encoding_type,
+                    "confidence": label.get("confidence", 0.0),
+                    "evidence": {
+                        "source": "llm_consensus",
+                        "support": label.get("evidence", []),
+                        "backend": "local_finetuned",
+                    },
+                })
+            if semantic_label_entries:
+                llm_semantics[family_id] = {
+                    "family_id": family_id,
+                    "role": family_role or "unknown",
+                    "confidence": max(float(entry["confidence"]) for entry in semantic_label_entries),
+                    "field_labels": semantic_label_entries,
+                    "notes": [f"{len(semantic_label_entries)} consensus labels from the fine-tuned model (stage 11b)."],
+                }
+
         labeled_families[family_id] = labeled_details
 
     # Save labeled families, preserving the stage-07 dict schema
@@ -372,6 +413,31 @@ def main() -> None:
 
     with open(args.output_json, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2)
+
+    # Merge consensus labels into the stage-09 semantics summary so downstream
+    # stages (12, 16, 17, exports) see them without schema changes.
+    if llm_semantics:
+        semantics_path = Path(args.semantics_json) if args.semantics_json else None
+        if semantics_path and semantics_path.is_file():
+            with open(semantics_path, "r", encoding="utf-8") as f:
+                semantics_summary = json.load(f)
+            for family_id, llm_entry in llm_semantics.items():
+                base = semantics_summary.get(family_id)
+                if isinstance(base, dict) and isinstance(base.get("field_labels"), list):
+                    # Keep heuristic labels that do not collide with an LLM label
+                    # on the same (start, length) span; LLM labels win there.
+                    llm_spans = {(entry["start"], entry["length"]) for entry in llm_entry["field_labels"]}
+                    kept = [
+                        entry for entry in base.get("field_labels", [])
+                        if (int(entry.get("start", 0) or 0), int(entry.get("length", 0) or 0)) not in llm_spans
+                    ]
+                    base["field_labels"] = llm_entry["field_labels"] + kept
+                    base["notes"] = (base.get("notes", []) or []) + llm_entry["notes"]
+                else:
+                    semantics_summary[family_id] = llm_entry
+            with open(semantics_path, "w", encoding="utf-8") as f:
+                json.dump(semantics_summary, f, indent=2)
+            print(f"[+] Merged {len(llm_semantics)} families' consensus labels into {semantics_path}")
 
     print(f"\n[+] Wrote labeled families to {args.output_json}")
     print(f"[+] Total labels applied: {total_applied}")

@@ -664,6 +664,7 @@ def _ruler_labels(family: Dict[str, Any], fallback: Optional[List[Dict[str, Any]
                 "label": attributes.get("semantic_role") or attributes.get("label") or field.get("field_type") or "field",
                 "field_type": attributes.get("encoding_type") or attributes.get("encoding") or field.get("field_type") or "",
                 "confidence": attributes.get("semantic_confidence", field.get("confidence", 0.0)),
+                "source": attributes.get("semantic_source", ""),
             }
         )
     return labels or list(fallback or [])
@@ -823,16 +824,23 @@ def _byte_ruler(
 
     disc_entries = []
     disc_type_entries = []
+    llm_consensus_count = 0
     for lab in fields:
         start = int(lab.get("start", 0) or 0)
         length = max(1, int(lab.get("length", 1) or 1))
         name = str(lab.get("label") or lab.get("field_type") or "field")
         ftype = str(lab.get("field_type", "") or "")
         conf = lab.get("confidence")
+        is_llm = str(lab.get("source", "")) == "llm_consensus"
+        if is_llm:
+            llm_consensus_count += 1
         tip = f"{name} · bytes {start}..{start + length - 1} · {ftype or 'unknown type'}"
         if conf is not None:
             tip += f" · conf {_num(conf)}"
-        disc_entries.append({"start": start, "length": length, "label": name, "tip": tip})
+        if is_llm:
+            tip += " · label agreed by the fine-tuned model across sampled messages"
+        label_text = f"{name} ✦" if is_llm else name
+        disc_entries.append({"start": start, "length": length, "label": label_text, "tip": tip})
         if ftype:
             disc_type_entries.append(
                 {"start": start, "length": length, "label": ftype,
@@ -889,6 +897,7 @@ def _byte_ruler(
         '<span><i class="sw variable"></i>variable byte</span>'
         '<span><i class="sw field"></i>discovered field</span>'
         + ('<span><i class="sw gt"></i>ground-truth field</span>' if gt_entries else "")
+        + ('<span><i class="sw field"></i>✦ label agreed by the fine-tuned model (stage 11b consensus)</span>' if llm_consensus_count else "")
         + "</div>"
     )
 
@@ -1043,6 +1052,17 @@ def _family_card(
             )
     related = family.get("related_families", []) or []
     related_html = "".join(_pill(item, "related") for item in related[:8]) or '<span class="muted">No direct relation links</span>'
+    llm_label_count = sum(
+        1
+        for label in (semantic.get("field_labels") or [])
+        if isinstance(label, dict) and isinstance(label.get("evidence"), dict) and label["evidence"].get("source") == "llm_consensus"
+    )
+    llm_label_pill = (
+        f'<span class="gt-role" data-tip="Fields labeled by the fine-tuned model: per-message predictions aggregated by consensus in stage 11b.">'
+        f'LLM&nbsp;{_pill(f"{llm_label_count} labels", "related")}</span>'
+        if llm_label_count
+        else ""
+    )
     refinement_html = _family_refinement_blocks(str(family_id), llm_stage_results, family)
     if refinement_html:
         refinement_html = f"      {refinement_html}\n"
@@ -1051,7 +1071,7 @@ def _family_card(
       <header>
         <div>
           <h3>{_text(family_id)}</h3>
-          <p>{_pill(role, role_tone)} {gt_role_html} {_text(family.get('message_count', 0))} messages</p>
+          <p>{_pill(role, role_tone)} {gt_role_html} {llm_label_pill} {_text(family.get('message_count', 0))} messages</p>
           {gt_name_html}
         </div>
         <div class="confidence">

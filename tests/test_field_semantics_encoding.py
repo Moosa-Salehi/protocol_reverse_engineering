@@ -84,6 +84,69 @@ def test_stage12_fill_defaults_for_llm_merged_fields() -> None:
     assert hypothesis["start"] == 7 and hypothesis["length"] == 5
 
 
+def test_stage12_llm_consensus_labels_win_ties_and_lower_confidence() -> None:
+    """Stage 12 prefers llm_consensus labels over heuristic labels on the same
+    span (different evidence class); strict confidence decides otherwise."""
+    summary = {
+        "field_labels": [
+            {"start": 6, "length": 1, "label": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+            {"start": 6, "length": 1, "label": "unit_id", "confidence": 0.6, "evidence": {"source": "llm_consensus"}},
+            {"start": 0, "length": 2, "label": "transaction_id", "confidence": 0.85},
+            {"start": 0, "length": 2, "label": "transaction_id", "confidence": 0.6, "evidence": {"source": "llm_consensus"}},
+        ]
+    }
+    best = build_model._best_semantic_labels(summary)
+    # LLM label replaces the higher-confidence heuristic 'constant'.
+    assert best[(6, 1)]["label"] == "unit_id"
+    # Same-span heuristic 0.85 also loses to the LLM 0.6 (class precedence).
+    assert best[(0, 2)]["label"] == "transaction_id"
+    assert build_model._label_source(best[(0, 2)]) == "llm_consensus"
+
+
+def test_stage12_propagates_semantic_source_to_attributes() -> None:
+    label = {
+        "start": 6,
+        "length": 1,
+        "label": "unit_id",
+        "confidence": 0.6,
+        "evidence": {"source": "llm_consensus"},
+    }
+    field = {"family_id": "f", "start": 6, "length": 1, "field_type": "uint8", "confidence": 0.9}
+    merged = build_model._merge_semantic_label(field, label)
+    hypothesis = build_model._build_field_hypothesis(merged, family_id="f").to_dict()
+    assert hypothesis["attributes"]["semantic_role"] == "unit_id"
+    assert hypothesis["attributes"]["semantic_source"] == "llm_consensus"
+
+
+def test_markdown_tags_llm_consensus_labels() -> None:
+    from protocol_re.export.markdown import render_protocol_model_markdown
+
+    model = {
+        "protocol_name": "test",
+        "families": [
+            {
+                "family_id": "family_0",
+                "role": "unknown",
+                "message_count": 5,
+                "template": "",
+                "segments": [],
+                "field_hypotheses": [],
+                "semantic_summary": {
+                    "confidence": 0.6,
+                    "field_labels": [
+                        {"start": 6, "length": 1, "label": "unit_id", "confidence": 0.6, "evidence": {"source": "llm_consensus"}},
+                        {"start": 0, "length": 2, "label": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+                    ],
+                },
+            }
+        ],
+        "relations": [],
+    }
+    md = render_protocol_model_markdown(model)
+    assert "fine-tuned model consensus" in md
+    assert "label=`unit_id`" in md
+
+
 def test_prepare_evaluation_normalizes_legacy_role_field_type() -> None:
     protocol = {
         "families": [

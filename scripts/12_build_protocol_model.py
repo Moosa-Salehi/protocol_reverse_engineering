@@ -47,7 +47,21 @@ def _field_key(field: Dict[str, Any]) -> Tuple[int, int]:
     return (int(field.get("start", 0) or 0), int(field.get("length", 0) or 0))
 
 
+def _label_source(label: Dict[str, Any]) -> str:
+    evidence = label.get("evidence")
+    if isinstance(evidence, dict):
+        return str(evidence.get("source", ""))
+    return ""
+
+
 def _best_semantic_labels(semantic_summary: Dict[str, Any] | None) -> Dict[Tuple[int, int], Dict[str, Any]]:
+    """Pick the highest-confidence label per (start, length) span.
+
+    LLM consensus labels (source=llm_consensus) win ties against heuristic
+    labels because they are backed by per-message model agreement rather than
+    a statistical heuristic; a strictly higher-confidence heuristic label
+    still wins.
+    """
     if not semantic_summary:
         return {}
     best: Dict[Tuple[int, int], Dict[str, Any]] = {}
@@ -56,7 +70,24 @@ def _best_semantic_labels(semantic_summary: Dict[str, Any] | None) -> Dict[Tuple
             continue
         key = _field_key(label)
         previous = best.get(key)
-        if previous is None or float(label.get("confidence", 0.0) or 0.0) > float(previous.get("confidence", 0.0) or 0.0):
+        if previous is None:
+            best[key] = label
+            continue
+        confidence = float(label.get("confidence", 0.0) or 0.0)
+        previous_confidence = float(previous.get("confidence", 0.0) or 0.0)
+        candidate_is_llm = _label_source(label) == "llm_consensus"
+        previous_is_llm = _label_source(previous) == "llm_consensus"
+        # LLM consensus takes precedence over heuristic labels on the same span:
+        # it is a different evidence class (per-message model agreement), and the
+        # evaluation should measure the model's judgment, not hide it behind a
+        # statistical heuristic. 11b already rejected sub-threshold labels.
+        if candidate_is_llm and not previous_is_llm:
+            take = True
+        elif previous_is_llm and not candidate_is_llm:
+            take = False
+        else:
+            take = confidence > previous_confidence
+        if take:
             best[key] = label
     return best
 
@@ -79,6 +110,9 @@ def _merge_semantic_label(field: Dict[str, Any], semantic_label: Dict[str, Any] 
         attributes["semantic_confidence"] = semantic_label.get("confidence")
     if "semantic_evidence" not in attributes:
         attributes["semantic_evidence"] = semantic_label.get("evidence", {})
+    label_source = _label_source(semantic_label)
+    if label_source and "semantic_source" not in attributes:
+        attributes["semantic_source"] = label_source
     if original_field_type and "inferred_role_label" not in attributes:
         attributes["inferred_role_label"] = original_field_type
     if encoding_type:

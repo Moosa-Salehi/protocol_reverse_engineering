@@ -384,9 +384,11 @@ def render_protocol_model_markdown(
                 lines.append("#### Semantic Labels")
                 lines.append("")
                 for item in sorted(field_labels, key=lambda entry: (-float(entry.get("confidence", 0.0)), int(entry.get("start", 0))))[:10]:
+                    source = (item.get("evidence") or {}).get("source", "") if isinstance(item.get("evidence"), dict) else ""
+                    marker = " ✦ (fine-tuned model consensus)" if source == "llm_consensus" else ""
                     lines.append(
                         f"- bytes `{item['start']}`..`{item['start'] + item['length'] - 1}` | "
-                        f"label=`{item['label']}` confidence=`{item['confidence']}`"
+                        f"label=`{item['label']}` confidence=`{item['confidence']}`{marker}"
                     )
                 lines.append("")
             notes = semantic_summary.get("notes", [])

@@ -340,6 +340,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(messages_jsonl),
                     "--assignments-json",
                     _path(assignments_json),
+                    "--semantics-json",
+                    _path(semantics_json),
                     "--llm-config",
                     _path(args.llm_config),
                     "--min-confidence",
