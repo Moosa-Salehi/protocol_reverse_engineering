@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import threading
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Import structured logging
@@ -936,6 +939,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     llm_analysis_group.add_argument("--local-timeout", type=float, default=300.0, help="Per-request timeout in seconds for the local server.")
 
     final_eval_group.add_argument("--ground-truth-json", type=Path, help="Ground truth protocol JSON for final evaluation.")
+    final_eval_group.add_argument(
+        "--compare-no-llm",
+        action="store_true",
+        help="Run the pipeline with the LLM stages, then rebuild and evaluate the no-LLM baseline "
+        "(stages 12/16/17 on raw stage-07 families, relations held constant) and report the LLM "
+        "contribution: writes 15_evaluation_result.no-llm.json and a 15_evaluation_comparison.json "
+        "delta report under data/llm_comparison/. Requires --ground-truth-json.",
+    )
     return parser.parse_args(argv)
 
 
@@ -1016,6 +1027,14 @@ def validate_args(args: argparse.Namespace) -> None:
         args.ground_truth_json = args.ground_truth_json.resolve()
         if not args.ground_truth_json.is_file():
             raise SystemExit(f"{RED}Error:{RESET} ground truth JSON file does not exist: {args.ground_truth_json}")
+    if args.compare_no_llm and not args.ground_truth_json:
+        raise SystemExit(
+            f"{RED}Error:{RESET} --compare-no-llm requires --ground-truth-json (both variants must be scored against ground truth)"
+        )
+    if args.compare_no_llm and args.llm_render_only:
+        raise SystemExit(
+            f"{RED}Error:{RESET} --compare-no-llm is meaningless with --llm-render-only (the LLM stages do not run at all)"
+        )
 
     if args.use_existing_messages:
         if not messages_jsonl.is_file():
@@ -1051,6 +1070,156 @@ def output_paths(args: argparse.Namespace) -> list[Path]:
         args.output_dir / "protocol_report.html",
     ]
     return paths
+
+
+COMPARE_METRIC_KEYS = (
+    "message_type_matching",
+    "field_boundary",
+    "field_semantics",
+    "relations",
+)
+
+
+def _run_compare_step(name: str, cmd: list[str], logger: object) -> None:
+    """Run one compare-mode helper script, mirroring run_step's logging."""
+    logger.info("Compare step: %s", name, file_only=True)
+    print(f"{YELLOW}[compare] {name}{RESET}")
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(SRC_PATH)
+    result = subprocess.run(
+        [sys.executable, *cmd],
+        cwd=PROJECT_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        logger.error("Compare step failed: %s\nSTDOUT:\n%s\nSTDERR:\n%s", name, result.stdout.strip(), result.stderr.strip(), file_only=True)
+        raise SystemExit(
+            f"{RED}Error:{RESET} compare step {name} failed (exit {result.returncode}). "
+            "See the pipeline log for stdout/stderr."
+        )
+
+
+def _eval_summary(report_path: Path) -> dict:
+    with report_path.open(encoding="utf-8") as handle:
+        report = json.load(handle)
+    summary = {"overall_score": round(report["summary"]["overall_score"], 4), "verdict": report["summary"]["verdict"]}
+    for key in COMPARE_METRIC_KEYS:
+        metrics = report["metrics"][key]
+        summary[f"{key}.f1"] = round(metrics["f1_score"], 4)
+        summary[f"{key}.precision"] = round(metrics["precision"], 4)
+        summary[f"{key}.recall"] = round(metrics["recall"], 4)
+    return summary
+
+
+def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
+    """Evaluate the no-LLM baseline and write both 15_evaluation_result variants.
+
+    Reuses the run's own intermediate artifacts (stages 03-11 outputs, the
+    pass-through 13_llm_analysis.json) and reruns only 12/16/17 on the raw
+    stage-07 families, with relations held constant, so the only difference
+    versus the main evaluation is the LLM stages' contribution.
+    """
+    data_dir: Path = args.data_dir
+    compare_dir = data_dir / "llm_comparison"
+    compare_dir.mkdir(parents=True, exist_ok=True)
+
+    families_raw_json = data_dir / "05_families.json"
+    if not families_raw_json.is_file():
+        raise SystemExit(f"{RED}Error:{RESET} missing {families_raw_json}; run the pipeline first")
+    llm_analysis_json = data_dir / "13_llm_analysis.json"
+    if not llm_analysis_json.is_file():
+        raise SystemExit(f"{RED}Error:{RESET} missing {llm_analysis_json}; stage 15 must run before comparing")
+
+    no_llm_model_json = compare_dir / "10_protocol_model.no-llm.json"
+    no_llm_eval_input_json = compare_dir / "14_evaluation_model_data.no-llm.json"
+    no_llm_result_json = compare_dir / "15_evaluation_result.no-llm.json"
+    log_dir_arg = str(args.log_dir)
+
+    _run_compare_step(
+        "12_build_protocol_model (no-LLM)",
+        [
+            _script("12_build_protocol_model.py"),
+            _path(families_raw_json),
+            _path(no_llm_model_json),
+            "--features-json", _path(data_dir / "03_family_features.json"),
+            "--keywords-json", _path(data_dir / "07_keywords.json"),
+            "--relations-json", _path(data_dir / "08_relations_validated.json"),
+            "--semantics-json", _path(data_dir / "09_semantics.json"),
+            "--framing-json", _path(data_dir / "04_framing.json"),
+            "--log-dir", log_dir_arg,
+        ],
+        logger,
+    )
+    _run_compare_step(
+        "16_prepare_evaluation_data (no-LLM)",
+        [
+            _script("16_prepare_evaluation_data.py"),
+            _path(no_llm_model_json),
+            _path(data_dir / "11_evaluation.json"),
+            _path(llm_analysis_json),
+            _path(no_llm_eval_input_json),
+            "--log-dir", log_dir_arg,
+        ],
+        logger,
+    )
+    _run_compare_step(
+        "17_evaluate_protocol_spec (no-LLM)",
+        [
+            _script("17_evaluate_protocol_spec.py"),
+            _path(no_llm_eval_input_json),
+            _path(args.ground_truth_json),
+            _path(no_llm_result_json),
+            "--log-dir", log_dir_arg,
+        ],
+        logger,
+    )
+
+    full_result_json = data_dir / "15_evaluation_result.json"
+    if not full_result_json.is_file():
+        raise SystemExit(f"{RED}Error:{RESET} missing {full_result_json}; the ground-truth evaluation must run first")
+
+    full_summary = _eval_summary(full_result_json)
+    no_llm_summary = _eval_summary(no_llm_result_json)
+    comparison = {
+        "artifact_type": "llm_contribution_comparison",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "variants": {
+            "full_run (07b+10b+11b LLM stages)": {"report": str(full_result_json), **full_summary},
+            "no_llm (raw stage-07 families)": {"report": str(no_llm_result_json), **no_llm_summary},
+        },
+        "delta": {},
+    }
+    for key in ("overall_score", *(f"{metric}.f1" for metric in COMPARE_METRIC_KEYS)):
+        comparison["delta"][key] = round(full_summary[key] - no_llm_summary[key], 4)
+    llm_direction = "helped" if comparison["delta"]["overall_score"] > 0 else "hurt" if comparison["delta"]["overall_score"] < 0 else "neutral"
+    comparison["llm_contribution"] = (
+        f"LLM stages {llm_direction} the overall score by "
+        f"{comparison['delta']['overall_score']:+.4f} "
+        f"({full_summary['verdict']} vs {no_llm_summary['verdict']})"
+    )
+
+    # Also mirror the main-run result next to the baseline for a side-by-side view.
+    full_copy = compare_dir / "15_evaluation_result.full.json"
+    shutil.copyfile(full_result_json, full_copy)
+    comparison["variants"]["full_run (07b+10b+11b LLM stages)"]["report"] = str(full_copy)
+
+    comparison_path = compare_dir / "15_evaluation_comparison.json"
+    comparison_path.write_text(json.dumps(comparison, indent=2), encoding="utf-8")
+
+    print(f"\n{CYAN}=== LLM contribution comparison ==={RESET}")
+    header = f"{'metric':34s} {'full':>10s} {'no-llm':>10s} {'delta':>10s}"
+    print(header)
+    print("-" * len(header))
+    for key in ("overall_score", *(f"{metric}.f1" for metric in COMPARE_METRIC_KEYS)):
+        print(f"{key:34s} {full_summary[key]:>10.4f} {no_llm_summary[key]:>10.4f} {comparison['delta'][key]:>+10.4f}")
+    print(f"\n{comparison['llm_contribution']}")
+    print(f"{GREEN}Reports:{RESET}")
+    print(f"  - full run : {full_copy}")
+    print(f"  - no-LLM   : {no_llm_result_json}")
+    print(f"  - delta    : {comparison_path}")
+    logger.info("LLM contribution comparison written to %s", comparison_path, file_only=True)
 
 
 def main() -> None:
@@ -1103,6 +1272,12 @@ def main() -> None:
     print(f"{GREEN}Output files:{RESET}")
     for path in output_paths(args):
         print(f"  - {path}")
+
+    if args.compare_no_llm:
+        print(f"\n{CYAN}Running no-LLM baseline comparison...{RESET}")
+        compare_start = time.time()
+        run_no_llm_comparison(args, logger)
+        print(f"{GREEN}Comparison took:{RESET} {time.time() - compare_start:.2f}s")
 
     logger.info("Pipeline finished successfully")
     logger.metric("total_execution_time", elapsed, "seconds")

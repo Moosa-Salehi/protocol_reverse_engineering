@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import json
+import types
 from pathlib import Path
+
+import pytest
 
 import main as pipeline_main
 
@@ -116,3 +120,96 @@ def test_pipeline_forwards_local_backend_to_all_llm_stages(tmp_path: Path) -> No
     pipeline_api = dict(pipeline_main.build_pipeline(args_api))
     assert "--backend" not in pipeline_api["10b_validate_relations_llm"]
     assert "--render-only" not in pipeline_api["15_analyze_with_llm"]
+
+
+def test_compare_no_llm_keeps_llm_stages_in_pipeline(tmp_path: Path) -> None:
+    """Single-flag compare mode: the LLM stages run in the main pipeline; only
+    the post-run baseline is rebuilt from raw stage-07 families."""
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "01_messages.jsonl").write_text("", encoding="utf-8")
+    args = pipeline_main.parse_args(
+        [
+            "--use-existing-messages",
+            "--compare-no-llm",
+            "--ground-truth-json", "truth_files/modbus.json",
+            "--data-dir", str(data_dir),
+            "--output-dir", str(tmp_path / "output"),
+            "--log-dir", str(tmp_path / "logs"),
+        ]
+    )
+    pipeline_main.validate_args(args)
+    pipeline = dict(pipeline_main.build_pipeline(args))
+
+    assert "07b_refine_boundaries_llm" in pipeline
+    assert "10b_validate_relations_llm" in pipeline
+    assert "11b_label_semantics_llm" in pipeline
+    assert "--render-only" not in pipeline["15_analyze_with_llm"]
+
+
+def test_compare_no_llm_requires_ground_truth(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "01_messages.jsonl").write_text("", encoding="utf-8")
+    argv = [
+        "--use-existing-messages",
+        "--compare-no-llm",
+        "--data-dir", str(data_dir),
+        "--output-dir", str(tmp_path / "output"),
+        "--log-dir", str(tmp_path / "logs"),
+    ]
+    with pytest.raises(SystemExit):
+        pipeline_main.validate_args(pipeline_main.parse_args(argv))
+
+
+def test_run_no_llm_comparison_writes_variants(tmp_path: Path) -> None:
+    """Functional test of the compare path against the real modbus-small run
+    artifacts; writes both evaluation variants plus the delta report."""
+    source = Path("dol/finetuned-modbus-small/data")
+    required = [
+        source / "05_families.json",
+        source / "03_family_features.json",
+        source / "07_keywords.json",
+        source / "08_relations_validated.json",
+        source / "09_semantics.json",
+        source / "04_framing.json",
+        source / "11_evaluation.json",
+        source / "13_llm_analysis.json",
+        source / "15_evaluation_result.json",
+    ]
+    if not all(path.is_file() for path in required):
+        pytest.skip("modbus-small run artifacts not present")
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    for name in (
+        "05_families.json", "03_family_features.json", "07_keywords.json",
+        "08_relations_validated.json", "09_semantics.json", "04_framing.json",
+        "11_evaluation.json", "13_llm_analysis.json", "15_evaluation_result.json",
+    ):
+        (data_dir / name).write_text((source / name).read_text(encoding="utf-8"), encoding="utf-8")
+
+    args = types.SimpleNamespace(
+        data_dir=data_dir,
+        log_dir=tmp_path / "logs",
+        ground_truth_json=Path("truth_files/modbus.json"),
+    )
+    if not args.ground_truth_json.is_file():
+        pytest.skip("truth_files/modbus.json not present")
+
+    class _Logger:
+        def info(self, *a, **k): pass
+        def error(self, *a, **k): raise AssertionError(k.get("msg", a))
+
+    pipeline_main.run_no_llm_comparison(args, _Logger())
+
+    compare_dir = data_dir / "llm_comparison"
+    full = json.loads((compare_dir / "15_evaluation_result.full.json").read_text(encoding="utf-8"))
+    no_llm = json.loads((compare_dir / "15_evaluation_result.no-llm.json").read_text(encoding="utf-8"))
+    delta = json.loads((compare_dir / "15_evaluation_comparison.json").read_text(encoding="utf-8"))
+
+    # Summaries are rounded to 4 decimals, so the delta identity holds at that precision.
+    assert full["summary"]["overall_score"] == pytest.approx(no_llm["summary"]["overall_score"] + delta["delta"]["overall_score"], abs=1e-3)
+    assert delta["variants"]["full_run (07b+10b+11b LLM stages)"]["verdict"] == full["summary"]["verdict"]
+    assert delta["variants"]["no_llm (raw stage-07 families)"]["verdict"] == no_llm["summary"]["verdict"]
+    assert "llm_contribution" in delta
