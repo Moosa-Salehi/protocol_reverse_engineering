@@ -280,7 +280,34 @@ def _truth_discriminator_value(message_type: Dict[str, Any]) -> str | None:
     return None
 
 
-def _family_match_score(family: Dict[str, Any], message_type: Dict[str, Any]) -> float:
+def _truth_is_structural_tag(truth_types: Sequence[Dict[str, Any]]) -> bool:
+    """True when the truth types' constant at PDU offset 0 is shared framing
+    rather than a per-message-type discriminator.
+
+    Self-describing protocols (GOOSE/BER, SNMP/ASN.1) wrap every PDU in the
+    same constant tag — one constant value across all message types.  A
+    Modbus-style function code, by contrast, *varies* across the protocol's
+    message types.  The opcode gate therefore only engages when the protocol
+    exposes more than one distinct constant at PDU offset 0.
+    """
+    values = {
+        str(field.get("constant_value"))
+        for message_type in truth_types
+        for field in message_type.get("fields", []) or []
+        if field.get("constant_value") is not None
+        and field.get("start") is not None
+        and int(field.get("start", 0)) == 0
+        and _field_len(field) == 1
+    }
+    return len(values) <= 1
+
+
+def _family_match_score(
+    family: Dict[str, Any],
+    message_type: Dict[str, Any],
+    *,
+    structural_tag: bool = False,
+) -> float:
     p_tokens = _family_tokens(family)
     t_tokens = _truth_tokens(message_type)
     token_score = len(p_tokens & t_tokens) / len(p_tokens | t_tokens) if p_tokens or t_tokens else 0.0
@@ -301,9 +328,13 @@ def _family_match_score(family: Dict[str, Any], message_type: Dict[str, Any]) ->
     # so the family->truth bijection — and therefore relation credit — is no
     # longer an arbitrary tie-break.  When either side lacks a discriminator the
     # legacy structural score is used unchanged.
+    #
+    # A constant TLV/BER tag shared by every message type (GOOSE 0x61) is
+    # framing, not a discriminator: matching it would zero every structurally
+    # correct family.  Structural tags skip the gate.
     p_disc = _family_discriminator_value(family)
     t_disc = _truth_discriminator_value(message_type)
-    if p_disc is not None and t_disc is not None:
+    if p_disc is not None and t_disc is not None and not structural_tag:
         if p_disc != t_disc:
             return 0.0
         role_conflict = p_role in _DISCRIMINATOR_ROLES and t_role in _DISCRIMINATOR_ROLES and p_role != t_role
@@ -324,9 +355,11 @@ def _greedy_matches(candidates: Iterable[Tuple[str, str, float]], threshold: flo
     return selected
 
 
-def _message_type_matches(predicted: Sequence[Dict[str, Any]], truth: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _message_type_matches(
+    predicted: Sequence[Dict[str, Any]], truth: Sequence[Dict[str, Any]], *, structural_tag: bool = False
+) -> List[Dict[str, Any]]:
     candidates = [
-        (str(family.get("family_id")), str(message_type.get("message_type_id")), _family_match_score(family, message_type))
+        (str(family.get("family_id")), str(message_type.get("message_type_id")), _family_match_score(family, message_type, structural_tag=structural_tag))
         for family in predicted
         for message_type in truth
     ]
@@ -556,6 +589,14 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     # false negatives, and their relations are dropped too. Header types (no
     # discriminator) and PDU types without a constant opcode are always in scope, so
     # a single-device capture containing only FC 01-06 evaluates exactly as before.
+    #
+    # Structural-tag protocols are exempt: when the PDU types' constant at offset 0
+    # is shared framing (one tag value across the protocol, e.g. GOOSE 0x61) rather
+    # than a varying opcode, the constant cannot scope message types, so the
+    # exemption is decided against the *full* truth list, then applied after scope
+    # filtering. A capture that only exercises some FCs still scopes Modbus types
+    # exactly as before.
+    structural_tag = _truth_is_structural_tag(truth_types)
     present_discriminators = {_family_discriminator_value(family) for family in families}
     present_discriminators.discard(None)
     # Discriminators carried by a response-direction family. Used to scope echo
@@ -574,6 +615,10 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     def _truth_type_in_scope(message_type: Dict[str, Any]) -> bool:
         discriminator = _truth_discriminator_value(message_type)
         if discriminator is None:
+            return True
+        # Structural-tag protocol: the constant is shared framing, so it cannot
+        # correlate a type with a family the way a varying function code does.
+        if structural_tag:
             return True
         if discriminator not in present_discriminators:
             return False
@@ -602,7 +647,7 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     header_types = [mt for mt in truth_types if _truth_uses_absolute_offsets(mt)]
     pdu_types = [mt for mt in truth_types if not _truth_uses_absolute_offsets(mt)]
 
-    pdu_message_matches = _message_type_matches(families, pdu_types)
+    pdu_message_matches = _message_type_matches(families, pdu_types, structural_tag=structural_tag)
     header_message_matches = _header_type_matches(families, header_types)
     message_matches = pdu_message_matches + header_message_matches
 

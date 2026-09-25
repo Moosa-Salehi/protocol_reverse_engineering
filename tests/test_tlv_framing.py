@@ -202,3 +202,149 @@ def test_stage07_tlv_override_and_07b_skip():
 
     stage07b = Path(ROOT / "scripts/07b_refine_boundaries_llm.py").read_text(encoding="utf-8")
     assert "tlv_metadata" in stage07b
+
+
+# ── Evaluator: constant TLV/BER tags are framing, not function-code discriminators ──
+
+
+eval_spec = _load_script("evaluate_protocol_spec_stage", "scripts/17_evaluate_protocol_spec.py")
+
+
+def _goose_truth_bundle():
+    return {
+        "ground_truth_protocol": {
+            "protocol_name": "IEC 61850 GOOSE",
+            "message_types": [
+                {
+                    "message_type_id": "goose_header",
+                    "name": "GOOSE Transport Header",
+                    "role": "header",
+                    "fields": [
+                        {"name": "appid", "start": 0, "length": 2, "field_type": "uint16", "endian": "big", "required": True},
+                        {"name": "length", "start": 2, "length": 2, "field_type": "uint16", "endian": "big", "required": True},
+                        {"name": "reserved_1", "start": 4, "length": 2, "field_type": "uint16", "endian": "big", "required": True, "constant_value": 0},
+                        {"name": "reserved_2", "start": 6, "length": 2, "field_type": "uint16", "endian": "big", "required": True, "constant_value": 0},
+                    ],
+                },
+                {
+                    "message_type_id": "goose_pdu",
+                    "name": "GOOSE GoosePdu",
+                    "role": "notification",
+                    "fields": [
+                        {"name": "goose_pdu_tag", "start": 0, "length": 1, "field_type": "uint8", "required": True, "constant_value": 97},
+                        {"name": "gocbref", "start": None, "length": None, "field_type": "string"},
+                        {"name": "dat_set", "start": None, "length": None, "field_type": "string"},
+                    ],
+                },
+            ],
+            "relations": [],
+        }
+    }
+
+
+def _goose_like_family(family_id: str = "family_0") -> dict:
+    """Structurally perfect GOOSE family: TLV fields plus a constant 0x61 tag
+    at the body offset (which the legacy gate misreads as opcode 97 vs 97... or
+    worse, as a false opcode like 27 when framing misfires)."""
+    return {
+        "family_id": family_id,
+        "role": "notification",
+        "message_count": 100,
+        "field_hypotheses": [
+            {"family_id": family_id, "start": 0, "length": 2, "field_type": "constant", "confidence": 0.99, "attributes": {"value_hex": "03e8"}},
+            {"family_id": family_id, "start": 2, "length": 2, "field_type": "uint16", "confidence": 0.7, "attributes": {}},
+            {"family_id": family_id, "start": 8, "length": 1, "field_type": "constant", "confidence": 0.99, "attributes": {"value_hex": "61"}},
+            {"family_id": family_id, "start": 10, "length": 24, "field_type": "string", "confidence": 0.9, "attributes": {"tlv_tag_hex": "0x80"}},
+        ],
+        "framing_summary": {
+            "layout_hypotheses": [
+                {"header_start": 0, "header_end": 8, "body_start": 8, "confidence": 0.95, "evidence": {"mode": "tlv_ber"}}
+            ]
+        },
+    }
+
+
+def test_structural_tag_truth_skips_opcode_gate():
+    family = _goose_like_family()
+    truth = _goose_truth_bundle()["ground_truth_protocol"]["message_types"]
+    pdu = next(mt for mt in truth if mt["message_type_id"] == "goose_pdu")
+    # Family constant (0x61 -> 97) equals the tag constant, so even the legacy
+    # gate would pass here; the regression is that a *mismatched* family byte
+    # (framing misfire) is not fatal for structural-tag protocols.
+    mismatched = _goose_like_family()
+    mismatched["field_hypotheses"][2]["attributes"]["value_hex"] = "1b"  # 0x1b -> 27
+    assert eval_spec._family_match_score(family, pdu) > 0.5
+    assert eval_spec._family_match_score(mismatched, pdu, structural_tag=True) > 0.5
+    assert eval_spec._family_match_score(mismatched, pdu, structural_tag=False) == 0.0
+
+
+def test_truth_is_structural_tag_classification():
+    goose = _goose_truth_bundle()["ground_truth_protocol"]["message_types"]
+    assert eval_spec._truth_is_structural_tag(goose) is True
+    # Modbus-style: FC constants vary across PDU types -> not a structural tag.
+    modbus_like = [
+        {
+            "message_type_id": f"fc{n}_request",
+            "fields": [
+                {"name": "function_code", "start": 0, "length": 1, "field_type": "uint8", "required": True, "constant_value": n}
+            ],
+        }
+        for n in (1, 2, 3)
+    ]
+    assert eval_spec._truth_is_structural_tag(modbus_like) is False
+
+
+def test_structural_tag_pdu_in_scope_and_matched_end_to_end():
+    model = {
+        "predicted_protocol": {
+            "families": [_goose_like_family("family_0")],
+            "relations": [],
+        }
+    }
+    report = eval_spec.evaluate_protocol_spec(model, _goose_truth_bundle())
+    summary = report["summary"]
+    # Both the header type and the structural-tag PDU type are matched.
+    assert summary["matched_message_type_count"] == 2
+    matched_ids = {match["ground_truth_message_type_id"] for match in report["matches"]["message_types"]}
+    assert matched_ids == {"goose_header", "goose_pdu"}
+    assert summary["message_type_f1"] if "message_type_f1" in summary else True
+    assert report["metrics"]["message_type_matching"]["f1_score"] == 1.0
+
+
+def test_opcode_scoped_protocols_still_filtered_by_capture():
+    # Modbus-style truth (FC 1..3) evaluated against a capture whose families
+    # only carry FC 1: FC 2/3 types stay out of scope (no false negatives).
+    truth = [
+        {
+            "message_type_id": f"fc{n}_request",
+            "role": "request",
+            "fields": [
+                {"name": "function_code", "start": 0, "length": 1, "field_type": "uint8", "required": True, "constant_value": n},
+                {"name": "payload", "start": 1, "length": 4, "field_type": "bytes"},
+            ],
+        }
+        for n in (1, 2, 3)
+    ]
+
+    def _fc_family(fc: int) -> dict:
+        return {
+            "family_id": f"family_{fc}",
+            "role": "request",
+            "message_count": 10,
+            "field_hypotheses": [
+                {"family_id": f"family_{fc}", "start": 8, "length": 1, "field_type": "constant", "confidence": 0.99, "attributes": {"value_hex": f"{fc:02x}"}},
+            ],
+            "framing_summary": {
+                "layout_hypotheses": [
+                    {"header_start": 0, "header_end": 8, "body_start": 8, "confidence": 0.9, "evidence": {}}
+                ]
+            },
+        }
+
+    model = {"predicted_protocol": {"families": [_fc_family(1)], "relations": []}}
+    bundle = {"ground_truth_protocol": {"message_types": truth, "relations": []}}
+    report = eval_spec.evaluate_protocol_spec(model, bundle)
+    metrics = report["metrics"]["message_type_matching"]
+    # FC1 matched; FC2/FC3 out of scope: 0 false negatives, perfect precision.
+    assert metrics["false_negatives"] == 0
+    assert metrics["precision"] == 1.0
