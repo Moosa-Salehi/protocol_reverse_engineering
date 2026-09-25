@@ -222,12 +222,18 @@ def apply_relation_validation(
 def run_relation_validation_stage(
     relations: List[Dict[str, Any]],
     config: StageConfig,
-    llm_config: LLMRequestConfig,
+    llm_config: Optional[LLMRequestConfig],
     cached_response: Optional[str] = None,
     family_summaries: Optional[Dict[str, Dict[str, Any]]] = None,
+    llm_call: Optional[Any] = None,
 ) -> StageResult:
     """
     Run relation validation stage.
+
+    ``llm_call`` optionally replaces the OpenAI-compatible API call (same hook
+    pattern as the boundary/semantic stages); it is invoked as
+    ``llm_call(prompt=..., task="relation_validation")`` and must return a raw
+    response string.
 
     Args:
         relations: Inferred relations to validate
@@ -262,11 +268,33 @@ def run_relation_validation_stage(
         if cached_response is not None:
             raw_response = cached_response
             response = json.loads(cached_response)
-        else:
+        elif llm_call is not None:
+            raw_response = llm_call(prompt=prompt, task="relation_validation")
+            response = {"choices": [{"message": {"content": raw_response}}]}
+        elif llm_config is not None:
             response, raw_response = call_openai_compatible_chat_with_raw(
                 prompt,
                 llm_config,
                 request_label="stage 10b relation validation",
+            )
+        else:
+            # No backend configured (e.g. local-finetuned mode, where relation
+            # validation is not a trained task): abstain. An empty decision list
+            # routes every relation through the deterministic gate below.
+            raw_response = None
+            decisions = []
+            filtered_relations, validation_log = apply_relation_validation(
+                relations, decisions, config.min_confidence
+            )
+            return StageResult(
+                stage=LLMStage.RELATION_VALIDATION,
+                success=True,
+                suggestions=[],
+                applied_count=len(filtered_relations),
+                rejected_count=max(0, len(relations) - len(filtered_relations)),
+                validation_log=validation_log,
+                prompt=prompt,
+                response=raw_response,
             )
         response_json = extract_message_json(response)
 

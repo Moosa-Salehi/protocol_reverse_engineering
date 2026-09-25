@@ -26,6 +26,7 @@ from protocol_re.llm.local_finetuned import (  # noqa: E402
 from protocol_re.llm.multi_stage import LLMStage, StageConfig  # noqa: E402
 from protocol_re.llm.stage_boundaries import run_boundary_refinement_stage  # noqa: E402
 from protocol_re.llm.stage_semantics import run_semantic_labeling_stage  # noqa: E402
+from protocol_re.llm.stage_relations import run_relation_validation_stage  # noqa: E402
 from protocol_re.model.schema import MessageRecord  # noqa: E402
 
 
@@ -313,3 +314,60 @@ def test_apply_boundary_list_exact_match_returns_original_fields():
     assert log[0]["valid"] is True
     assert log[0]["applied"] is False
     assert [(f["start"], f["length"]) for f in updated] == [(0, 1), (1, 2), (3, 3)]
+
+
+# ---------------------------------------------------------------------------
+# Stage 10b in local-finetuned mode: abstain (deterministic gate only)
+# ---------------------------------------------------------------------------
+
+RELATIONS = [
+    {
+        "request_family_id": "family_0",
+        "response_family_id": "family_1",
+        "relation_confidence": 0.9,
+        "echo_fields": [{"request_offset": 0, "response_offset": 0}],
+        "pair_count": 42,
+        "edge_lift": 3.0,
+        "support_ratio": 0.5,
+        "temporal_order_consistency": 0.95,
+        "dominant_direction": "request->response",
+    }
+]
+
+
+def test_stage_relations_abstains_without_backend():
+    # No llm_config and no llm_call: the runner must abstain (success=True) and
+    # keep relations via the deterministic gate instead of raising.
+    result = run_relation_validation_stage(
+        relations=[dict(r) for r in RELATIONS],
+        config=StageConfig(stage=LLMStage.RELATION_VALIDATION, min_confidence=0.7),
+        llm_config=None,
+    )
+    assert result.success, result.error
+    assert result.applied_count == 1  # strong echo evidence passes the gate
+    assert result.suggestions == []
+
+
+def test_stage_relations_llm_call_hook():
+    raw = json.dumps(
+        {
+            "validated_relations": [
+                {
+                    "request_family_id": "family_0",
+                    "response_family_id": "family_1",
+                    "decision": "keep",
+                    "confidence": 0.9,
+                    "rationale": "echo confirmed",
+                }
+            ]
+        }
+    )
+    result = run_relation_validation_stage(
+        relations=[dict(r) for r in RELATIONS],
+        config=StageConfig(stage=LLMStage.RELATION_VALIDATION, min_confidence=0.7),
+        llm_config=None,
+        llm_call=lambda prompt, task: raw,
+    )
+    assert result.success, result.error
+    assert result.applied_count == 1
+    assert result.response == raw

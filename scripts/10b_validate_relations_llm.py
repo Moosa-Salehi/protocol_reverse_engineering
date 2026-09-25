@@ -19,6 +19,10 @@ from protocol_re.llm.stage_relations import run_relation_validation_stage
 from protocol_re.llm.stage_relations import relation_passes_deterministic_gate
 from protocol_re.llm.stage_relations import should_apply_llm_discard
 from protocol_re.llm.analyze import LLMRequestConfig
+from protocol_re.llm.local_finetuned import (
+    LocalInferenceConfig,
+    run_local_boundary_refinement,
+)
 from protocol_re.llm.stage_errors import warn_or_fail_stage_failures
 from protocol_re.llm.user_responses import (
     ensure_user_response_placeholder,
@@ -71,6 +75,20 @@ def main() -> None:
     )
     parser.add_argument("--reuse-llm-responses", action="store_true", help="Reuse existing stage result response instead of calling the LLM API")
     parser.add_argument("--use-user-provided-response", action="store_true", help="Load filled LLM responses from data/user_provided_LLM_responses before calling the API")
+    parser.add_argument(
+        "--backend",
+        choices=["api", "local-finetuned"],
+        default="api",
+        help="api: OpenAI-compatible endpoint from --llm-config. "
+        "local-finetuned: llama.cpp server hosting the fine-tuned Qwen adapter GGUF. "
+        "The model was not trained on relation validation, so its per-message output is "
+        "used only as weak evidence; the deterministic gate still decides.",
+    )
+    parser.add_argument("--local-base-url", default="http://127.0.0.1:8080", help="Base URL of the local inference server (--backend local-finetuned).")
+    parser.add_argument("--local-model", default="qwen25-coder-7b-protocol-re", help="Model name expected by the local server (--backend local-finetuned).")
+    parser.add_argument("--local-max-samples", type=int, default=5, help="Sample messages per family sent to the local model (--backend local-finetuned).")
+    parser.add_argument("--local-min-support", type=float, default=0.5, help="Consensus threshold for aggregating per-message predictions (0-1].")
+    parser.add_argument("--local-timeout", type=float, default=300.0, help="Per-request timeout in seconds for the local server.")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -126,7 +144,20 @@ def main() -> None:
 
     with logger.stage("setup_llm"):
         # Load LLM config
-        if not args.render_only and (not args.use_user_provided_response or Path(args.llm_config).is_file()):
+        if args.backend == "local-finetuned":
+            # The fine-tuned model emits per-message boundary/semantic JSON; it was
+            # never trained on relation validation. Rather than sending it a prompt
+            # format it has never seen, abstain from the LLM call: the stage then
+            # applies the deterministic gate only, which is its documented fallback.
+            logger.info(
+                "Local fine-tuned backend configured: base_url=%s model=%s "
+                "(relation validation not a trained task; deterministic gate only)",
+                args.local_base_url,
+                args.local_model,
+            )
+            llm_config_dict = {}
+            llm_config = None
+        elif not args.render_only and (not args.use_user_provided_response or Path(args.llm_config).is_file()):
             logger.info(f"Loading LLM config from {args.llm_config}")
             llm_config_dict = load_llm_config(args.llm_config)
             api_key = os.environ.get("OPENAI_API_KEY")
@@ -187,7 +218,8 @@ def main() -> None:
             if cached_response is not None:
                 print(f"[*] Reusing cached LLM response from {result_path}")
 
-    # Run relation validation stage
+    # Run relation validation stage. In local-finetuned mode no llm_call/llm_config
+    # is provided and the runner abstains (deterministic gate only, success=True).
     result = run_relation_validation_stage(
         relations=relations,
         config=stage_config,

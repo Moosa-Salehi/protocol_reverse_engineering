@@ -68,6 +68,22 @@ def test_stage12_merges_encoding_type_and_preserves_semantic_role() -> None:
     assert hypothesis["attributes"]["encoding_type"] == "uint16_be"
 
 
+def test_stage12_fill_defaults_for_llm_merged_fields() -> None:
+    """07b merged fields (llm_boundary_refinement) omit family_id/endian;
+    stage 12 must fill schema-required defaults instead of crashing."""
+    merged = {
+        "start": 7,
+        "length": 5,
+        "field_type": "bytes",
+        "confidence": 0.7,
+        "evidence": {"source": "llm_boundary_refinement", "merged_field_count": 2},
+    }
+    hypothesis = build_model._build_field_hypothesis(merged, family_id="family_9").to_dict()
+    assert hypothesis["family_id"] == "family_9"
+    assert hypothesis["endian"] is None
+    assert hypothesis["start"] == 7 and hypothesis["length"] == 5
+
+
 def test_prepare_evaluation_normalizes_legacy_role_field_type() -> None:
     protocol = {
         "families": [

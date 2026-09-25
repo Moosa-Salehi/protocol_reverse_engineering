@@ -15,7 +15,6 @@ def _instance_args(tmp_path: Path):
     args = pipeline_main.parse_args(
         [
             "--use-existing-messages",
-            "--llm-render-only",
             "--data-dir",
             str(data_dir),
             "--output-dir",
@@ -78,3 +77,42 @@ def test_pipeline_keeps_llm_placeholders_and_caches_in_instance_data_dir(tmp_pat
     assert _option_value(pipeline["09_infer_keywords"], "--salience-cache-path") == str(
         args.data_dir / "07_salience_cache.json"
     )
+
+
+def test_pipeline_forwards_local_backend_to_all_llm_stages(tmp_path: Path) -> None:
+    """Regression: the backend forwarding ran before 10b/11b were appended, so
+    those stages fell back to --llm-config (remote API) in local-finetuned mode."""
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "01_messages.jsonl").write_text("", encoding="utf-8")
+    args = pipeline_main.parse_args(
+        [
+            "--use-existing-messages",
+            "--backend", "local-finetuned",
+            "--local-base-url", "http://127.0.0.1:9999",
+            "--data-dir", str(data_dir),
+            "--output-dir", str(tmp_path / "output"),
+            "--log-dir", str(tmp_path / "logs"),
+        ]
+    )
+    pipeline_main.validate_args(args)
+
+    pipeline = dict(pipeline_main.build_pipeline(args))
+    for stage_name in ("07b_refine_boundaries_llm", "10b_validate_relations_llm", "11b_label_semantics_llm"):
+        command = pipeline[stage_name]
+        assert "--backend" in command and command[command.index("--backend") + 1] == "local-finetuned", stage_name
+        assert _option_value(command, "--local-base-url") == "http://127.0.0.1:9999"
+    # Synthesis needs a host-class LLM: must be forced to render-only locally.
+    assert "--render-only" in pipeline["15_analyze_with_llm"]
+    # API stages untouched when the default backend is selected.
+    args_api = pipeline_main.parse_args(
+        [
+            "--use-existing-messages",
+            "--data-dir", str(data_dir),
+            "--output-dir", str(tmp_path / "output2"),
+            "--log-dir", str(tmp_path / "logs2"),
+        ]
+    )
+    pipeline_api = dict(pipeline_main.build_pipeline(args_api))
+    assert "--backend" not in pipeline_api["10b_validate_relations_llm"]
+    assert "--render-only" not in pipeline_api["15_analyze_with_llm"]

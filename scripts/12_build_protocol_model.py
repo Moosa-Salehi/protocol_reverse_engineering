@@ -91,7 +91,7 @@ def _merge_semantic_label(field: Dict[str, Any], semantic_label: Dict[str, Any] 
     return payload
 
 
-def _build_field_hypothesis(field: dict) -> FieldHypothesis:
+def _build_field_hypothesis(field: dict, family_id: str = "unknown") -> FieldHypothesis:
     """Construct a FieldHypothesis while preserving upstream field extensions.
 
     LLM semantic labeling can annotate field hypotheses with top-level
@@ -108,6 +108,14 @@ def _build_field_hypothesis(field: dict) -> FieldHypothesis:
             attributes[key] = payload[key]
     if "encoding_type" in attributes and "encoding" not in attributes:
         attributes["encoding"] = attributes["encoding_type"]
+
+    # Fields written by LLM boundary refinement (stage 07b merged fields) carry
+    # only start/length/field_type/confidence/evidence. Fill the schema-required
+    # family_id and endian from context instead of crashing in the constructor.
+    if not payload.get("family_id"):
+        payload["family_id"] = family_id
+    if "endian" not in payload:
+        payload["endian"] = None
 
     valid = {f.name for f in dataclass_fields(FieldHypothesis)}
     extras = {key: value for key, value in payload.items() if key not in valid}
@@ -202,7 +210,7 @@ def main() -> None:
                 semantic_summary = semantics_payload.get(family_id)
                 semantic_labels = _best_semantic_labels(semantic_summary)
                 field_hypotheses = [
-                    _build_field_hypothesis(_merge_semantic_label(field, semantic_labels.get(_field_key(field))))
+                    _build_field_hypothesis(_merge_semantic_label(field, semantic_labels.get(_field_key(field))), family_id=family_id)
                     for field in details.get("field_hypotheses", [])
                 ]
                 related_families = []

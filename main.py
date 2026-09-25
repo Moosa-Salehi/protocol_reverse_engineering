@@ -224,21 +224,6 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         )
     families_for_model = families_json if args.llm_render_only else families_refined_json
 
-    # Forward the chosen LLM backend selection to stages 07b (and below, 11b).
-    if args.backend == "local-finetuned":
-        for step_name, step_args in pipeline:
-            if step_name in {"07b_refine_boundaries_llm", "11b_label_semantics_llm"}:
-                step_args.extend(
-                    [
-                        "--backend", "local-finetuned",
-                        "--local-base-url", args.local_base_url,
-                        "--local-model", args.local_model,
-                        "--local-max-samples", str(args.local_max_samples),
-                        "--local-min-support", str(args.local_min_support),
-                        "--local-timeout", str(args.local_timeout),
-                    ]
-                )
-
     pipeline.extend([
             (
                 "08_pair_requests_responses",
@@ -595,6 +580,33 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
     for _, step_args in pipeline:
         step_args.extend(["--log-dir", _path(log_dir)])
+
+    # Forward the chosen LLM backend selection to the per-message LLM stages.
+    # Runs after the full pipeline is assembled so 10b/11b (appended after 07b)
+    # receive the flags too; without this they fall back to --llm-config and
+    # hit the remote API even though the user selected the local backend.
+    # Stage 15 (protocol synthesis) is intentionally excluded: the fine-tuned
+    # model produces per-message task JSON, not long-form documentation.
+    if args.backend == "local-finetuned":
+        for step_name, step_args in pipeline:
+            if step_name in {"07b_refine_boundaries_llm", "10b_validate_relations_llm", "11b_label_semantics_llm"}:
+                step_args.extend(
+                    [
+                        "--backend", "local-finetuned",
+                        "--local-base-url", args.local_base_url,
+                        "--local-model", args.local_model,
+                        "--local-max-samples", str(args.local_max_samples),
+                        "--local-min-support", str(args.local_min_support),
+                        "--local-timeout", str(args.local_timeout),
+                    ]
+                )
+            elif step_name == "15_analyze_with_llm":
+                # Protocol synthesis needs a host-class LLM for long-form
+                # documentation; the fine-tuned model only emits per-message
+                # task JSON. Render the prompt and pass through without a
+                # doomed API call (15b/16 tolerate the pass-through artifact).
+                if "--render-only" not in step_args:
+                    step_args.append("--render-only")
 
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
