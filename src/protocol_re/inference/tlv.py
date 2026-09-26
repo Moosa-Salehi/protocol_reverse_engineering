@@ -256,7 +256,14 @@ def detect_tlv_framing(
         tag_counts, sequences, wrapper_ratio, parsed = _tree_stats(cleaned, header_length, sample_cap)
         scored.append((ratio, wrapper_ratio, len(tag_counts), header_length, tag_counts, sequences, parsed))
     # Prefer: full parse, wrapper descent, richer tag vocabulary, smallest header.
-    ratio, _wrapper_ratio, _tags, header_length, tag_counts, sequences, parsed = max(scored, key=lambda item: item[:4])
+    ratio, wrapper_ratio, _tags, header_length, tag_counts, sequences, parsed = max(scored, key=lambda item: item[:4])
+
+    # Wrapper-consistency gate: a real TLV protocol either always wraps the
+    # body in one constructed element or never does. A mid-range ratio means
+    # the parse only sometimes succeeds by coincidence (see
+    # TlvFraming.MIN_WRAPPER_RATIO for the Modbus example).
+    if _TF.MAX_WRAPPER_RATIO < wrapper_ratio < _TF.MIN_WRAPPER_RATIO:
+        return None
 
     distinct = len(tag_counts)
     if distinct < _TF.MIN_DISTINCT_TAGS or distinct > _TF.MAX_DISTINCT_TAGS:
@@ -274,7 +281,7 @@ def detect_tlv_framing(
         sequence_count=len(sequences),
         evidence={
             "candidate_header_lengths": sorted(header for header, _ in candidates),
-            "wrapper_ratio": round(_wrapper_ratio, 4),
+            "wrapper_ratio": round(wrapper_ratio, 4),
         },
     )
 

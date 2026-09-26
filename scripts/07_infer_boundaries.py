@@ -142,13 +142,14 @@ def main() -> None:
     )
     parser.add_argument(
         "--tlv-boundaries",
-        action="store_true",
-        default=False,
+        dest="tlv_boundaries",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         help=(
             "Enable TLV/BER framing mode: families whose messages parse as a strict "
             "tag-length-value chain after a fixed header get deterministic tag-derived "
             "fields (with the framing module's TLV layout as the header/body boundary) "
-            "instead of entropy segmentation."
+            "instead of entropy segmentation. No-op for non-TLV families. Default ON."
         ),
     )
 

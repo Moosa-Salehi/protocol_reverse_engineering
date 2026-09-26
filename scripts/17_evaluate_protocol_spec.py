@@ -27,6 +27,20 @@ def _f1(precision: float, recall: float) -> float:
 
 
 def _prf(tp: int, fp: int, fn: int) -> Dict[str, Any]:
+    if tp == 0 and fp == 0 and fn == 0:
+        # Perfect vacuous agreement: both the prediction and the truth agree
+        # the set is empty (e.g. a connectionless protocol like GOOSE has no
+        # request/response relations on either side). Scoring this 0.0 would
+        # punish protocols for a property they share with the ground truth.
+        return {
+            "true_positives": 0,
+            "false_positives": 0,
+            "false_negatives": 0,
+            "accuracy": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+        }
     precision = _ratio(tp, tp + fp)
     recall = _ratio(tp, tp + fn)
     return {

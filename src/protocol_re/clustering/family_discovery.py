@@ -428,7 +428,7 @@ def discover_families(
     # corpora where latent scale mismatch dominates, but it must be explicitly requested.
     refine_discriminator: bool = _FR.ENABLED,  # Post-clustering discriminator-aware family refinement.
     conformance_filter: bool = _CF.ENABLED,  # Drop messages that violate a constant framing invariant.
-    tlv_family_merge: bool = False,  # Merge families whose messages share a TLV/BER tag sequence.
+    tlv_family_merge: bool = True,  # Merge families whose messages share a TLV/BER tag sequence (no-op when the corpus does not parse as TLV).
 ) -> ClusteringResult:
     if feature_mode not in {"raw_bytes", "structural", "neural", "hybrid"}:
         raise ValueError(f"Unsupported feature mode: {feature_mode}")

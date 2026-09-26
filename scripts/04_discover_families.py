@@ -61,6 +61,16 @@ def main() -> None:
              "that slipped past a coarse capture filter without discarding rare-but-real message "
              "types. No-op when the corpus exposes no constant invariant. Default ON.",
     )
+    parser.add_argument(
+        "--tlv-family-merge",
+        dest="tlv_family_merge",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Merge families whose messages share a TLV/BER tag sequence: self-describing "
+             "protocols (GOOSE/BER, SNMP/ASN.1) encode their message type in the tags, so "
+             "distance clustering splits one type across length buckets. No-op when the "
+             "corpus does not parse as a strict TLV chain. Default ON.",
+    )
     parser.add_argument("--layer-aware", action="store_true", help="Enable layer-aware clustering (A6, experimental)")
     parser.add_argument("--framing-json", help="Framing JSON for layer detection (required with --layer-aware)")
     parser.add_argument("--layer-min-confidence", type=float, default=0.6, help="Minimum confidence for layer detection")
@@ -204,6 +214,7 @@ def main() -> None:
             layer_min_confidence=args.layer_min_confidence,
             refine_discriminator=args.refine_discriminator,
             conformance_filter=args.conformance_filter,
+            tlv_family_merge=args.tlv_family_merge,
         )
     family_count = len({assignment.family_id for assignment in result.assignments})
 

@@ -61,7 +61,7 @@ def infer_framing_hypotheses(
     min_messages: int = _FD.MIN_MESSAGES,
     detect_layers: bool = False,
     layer_min_confidence: float = _LD.MIN_CONFIDENCE,
-    enable_tlv: bool = False,
+    enable_tlv: bool = True,
 ) -> Dict[str, Any]:
     """Infer protocol-agnostic frame/header layouts per family and globally.
 
@@ -153,7 +153,7 @@ def infer_family_framing(
     max_header_bytes: int = _FD.MAX_HEADER_BYTES,
     max_hypotheses: int = _FD.MAX_HYPOTHESES_PER_FAMILY,
     min_messages: int = _FD.MIN_MESSAGES,
-    enable_tlv: bool = False,
+    enable_tlv: bool = True,
 ) -> Dict[str, Any]:
     messages = [bytes(message) for message in messages if message]
     lengths = [len(message) for message in messages]

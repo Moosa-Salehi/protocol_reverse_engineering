@@ -441,16 +441,18 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             )
             if args.tlv_family_merge:
                 step_args.append("--tlv-family-merge")
+            else:
+                step_args.append("--no-tlv-family-merge")
             break
 
     # TLV/BER mode: framing detection (05) tags TLV families; boundary inference (07)
     # consumes those tags for deterministic field derivation.
-    if args.tlv_boundaries:
+    if not args.tlv_boundaries:
         for step_name, step_args in pipeline:
             if step_name == "05_infer_framing":
-                step_args.append("--tlv-detect")
+                step_args.append("--no-tlv-detect")
             elif step_name == "07_infer_boundaries":
-                step_args.append("--tlv-boundaries")
+                step_args.append("--no-tlv-boundaries")
 
     # Add fusion method for hybrid mode
     if args.family_feature_mode == "hybrid":
@@ -800,12 +802,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     family_group.set_defaults(family_standardize_latent=False)
     family_group.add_argument(
         "--tlv-family-merge",
-        action="store_true",
-        default=False,
-        help="Enable TLV/BER family merge: when the corpus parses as a strict tag-length-value "
-             "chain after a fixed header (self-describing protocols like GOOSE/BER or SNMP/ASN.1), "
-             "re-key families so one tag sequence = one message type instead of one family per "
-             "length bucket. No-op when the corpus does not parse as TLV.",
+        dest="tlv_family_merge",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="TLV/BER family merge: when the corpus parses as a strict tag-length-value "
+             "chain after a fixed header (self-describing protocols like GOOSE/BER or "
+             "SNMP/ASN.1), re-key families so one tag sequence = one message type instead "
+             "of one family per length bucket. No-op when the corpus does not parse as "
+             "TLV. Default ON; disable with --no-tlv-family-merge.",
     )
     family_group.add_argument(
         "--no-family-refine-discriminator",
@@ -860,11 +864,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     boundary_group.add_argument(
         "--tlv-boundaries",
-        action="store_true",
-        default=False,
-        help="Enable TLV/BER framing mode: framing detection upgrades TLV families to a "
-             "deterministic header/body layout, stage 07 derives tag-based fields, and stage 07b "
-             "skips LLM boundary merges on TLV families (the parse is already exact).",
+        dest="tlv_boundaries",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="TLV/BER framing mode: framing detection upgrades TLV families to a "
+             "deterministic header/body layout, stage 07 derives tag-based fields, and "
+             "stage 07b skips LLM boundary merges on TLV families (the parse is already "
+             "exact). No-op when the corpus does not parse as TLV. Default ON; disable "
+             "with --no-tlv-boundaries.",
     )
     boundary_group.add_argument(
         "--boundary-max-fields",

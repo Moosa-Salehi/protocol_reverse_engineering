@@ -159,9 +159,11 @@ def test_header_field_runs_grouping():
 
 def test_framing_hook_prepends_tlv_layout():
     messages = [_goose_like() for _ in range(12)]
-    plain = infer_family_framing("family_x", messages)
+    by_default = infer_family_framing("family_x", messages)
     upgraded = infer_family_framing("family_x", messages, enable_tlv=True)
-    assert "tlv_framing" not in plain
+    disabled = infer_family_framing("family_x", messages, enable_tlv=False)
+    assert "tlv_framing" in by_default  # TLV detection is default-on
+    assert "tlv_framing" not in disabled
     assert upgraded["tlv_framing"]["header_length"] == 8
     best = upgraded["layout_hypotheses"][0]
     assert best["body_start"] == 8 and best["header_end"] == 8
@@ -309,6 +311,17 @@ def test_structural_tag_pdu_in_scope_and_matched_end_to_end():
     assert matched_ids == {"goose_header", "goose_pdu"}
     assert summary["message_type_f1"] if "message_type_f1" in summary else True
     assert report["metrics"]["message_type_matching"]["f1_score"] == 1.0
+    # GOOSE truth and prediction both carry zero relations: vacuous agreement
+    # scores as perfect (the 0/0 rule in _prf), not as a failure.
+    assert report["metrics"]["relations"]["f1_score"] == 1.0
+
+
+def test_prf_empty_sets_are_perfect_agreement():
+    assert eval_spec._prf(0, 0, 0)["f1_score"] == 1.0
+    # Real errors are unaffected by the 0/0 rule.
+    assert eval_spec._prf(0, 1, 0)["f1_score"] == 0.0
+    assert eval_spec._prf(0, 0, 2)["f1_score"] == 0.0
+    assert eval_spec._prf(1, 0, 0)["f1_score"] == 1.0
 
 
 def test_opcode_scoped_protocols_still_filtered_by_capture():

@@ -651,6 +651,16 @@ class TlvFraming:
     # chain whose every message has a *unique* sequence is treated as noise.
     MAX_SEQUENCE_CARDINALITY_RATIO: float = 0.5
 
+    # Wrapper-descent consistency: a genuine TLV protocol either always wraps
+    # the body in one constructed element (GOOSE 0x61, SNMP 0x30) or never
+    # does (flat tag chains). A mid-range wrapper ratio means the parse only
+    # succeeds by coincidence for part of the corpus (e.g. Modbus, whose MBAP
+    # length field parses as a fake tag-length pair and whose PDU behind it
+    # occasionally parses as a nested chain), so reject detections whose
+    # wrapper ratio falls strictly between these bounds.
+    MIN_WRAPPER_RATIO: float = 0.95
+    MAX_WRAPPER_RATIO: float = 0.05
+
 
 class FamilyRefinement:
     """Thresholds for discriminator-aware family refinement
