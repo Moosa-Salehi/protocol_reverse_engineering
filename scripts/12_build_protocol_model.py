@@ -60,7 +60,8 @@ def _best_semantic_labels(semantic_summary: Dict[str, Any] | None) -> Dict[Tuple
     LLM consensus labels (source=llm_consensus) win ties against heuristic
     labels because they are backed by per-message model agreement rather than
     a statistical heuristic; a strictly higher-confidence heuristic label
-    still wins.
+    still wins (e.g. a TLV-derived constant at 0.99 outranks a 0.6 LLM guess
+    of ``transaction_id`` on the same span).
     """
     if not semantic_summary:
         return {}
@@ -77,14 +78,14 @@ def _best_semantic_labels(semantic_summary: Dict[str, Any] | None) -> Dict[Tuple
         previous_confidence = float(previous.get("confidence", 0.0) or 0.0)
         candidate_is_llm = _label_source(label) == "llm_consensus"
         previous_is_llm = _label_source(previous) == "llm_consensus"
-        # LLM consensus takes precedence over heuristic labels on the same span:
-        # it is a different evidence class (per-message model agreement), and the
-        # evaluation should measure the model's judgment, not hide it behind a
-        # statistical heuristic. 11b already rejected sub-threshold labels.
-        if candidate_is_llm and not previous_is_llm:
-            take = True
-        elif previous_is_llm and not candidate_is_llm:
-            take = False
+        # LLM consensus wins ties against heuristic labels on the same span:
+        # it is a different evidence class (per-message model agreement), and
+        # the evaluation should measure the model's judgment where the heuristics
+        # are not strictly more certain. A strictly higher-confidence heuristic
+        # label (e.g. a TLV constant at 0.99) still outranks a low-confidence
+        # LLM guess; 11b already rejected sub-threshold LLM labels.
+        if candidate_is_llm != previous_is_llm:
+            take = confidence >= previous_confidence if candidate_is_llm else confidence > previous_confidence
         else:
             take = confidence > previous_confidence
         if take:

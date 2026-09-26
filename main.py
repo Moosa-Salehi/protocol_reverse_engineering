@@ -66,6 +66,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     relations_json = data_dir / "08_relations.json"
     relations_validated_json = data_dir / "08_relations_validated.json"
     semantics_json = data_dir / "09_semantics.json"
+    semantics_merged_json = data_dir / "09_semantics.merged.json"
     model_json = data_dir / "10_protocol_model.json"
     refined_model_json = data_dir / "10_protocol_model.refined.json"
     evaluation_json = data_dir / "11_evaluation.json"
@@ -342,6 +343,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(assignments_json),
                     "--semantics-json",
                     _path(semantics_json),
+                    "--merged-semantics-json",
+                    _path(semantics_merged_json),
                     "--llm-config",
                     _path(args.llm_config),
                     "--min-confidence",
@@ -370,7 +373,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     "--relations-json",
                     _path(relations_for_model),
                     "--semantics-json",
-                    _path(semantics_json),
+                    _path(semantics_merged_json if not args.llm_render_only else semantics_json),
                     "--framing-json",
                     _path(framing_json),
                 ],
@@ -1153,10 +1156,13 @@ def _eval_summary(report_path: Path) -> dict:
 def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
     """Evaluate the no-LLM baseline and write both 15_evaluation_result variants.
 
-    Reuses the run's own intermediate artifacts (stages 03-11 outputs, the
-    pass-through 13_llm_analysis.json) and reruns only 12/16/17 on the raw
-    stage-07 families, with relations held constant, so the only difference
-    versus the main evaluation is the LLM stages' contribution.
+    Reuses the run's own intermediate artifacts (stages 03-10 outputs, the
+    pass-through 13_llm_analysis.json) and reruns only 11/12/16/17 on the raw
+    stage-07 families with the raw stage-08 relations, so the baseline contains
+    no LLM-stage output at all. The heuristic stage-11 semantics are re-derived
+    into the comparison directory (never from the run's 09_semantics.json,
+    which stage 11b would have merged consensus labels into), so the only
+    difference versus the main evaluation is the LLM stages' contribution.
     """
     data_dir: Path = args.data_dir
     compare_dir = data_dir / "llm_comparison"
@@ -1172,8 +1178,26 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
     no_llm_model_json = compare_dir / "10_protocol_model.no-llm.json"
     no_llm_eval_input_json = compare_dir / "14_evaluation_model_data.no-llm.json"
     no_llm_result_json = compare_dir / "15_evaluation_result.no-llm.json"
+    no_llm_semantics_json = compare_dir / "09_semantics.no-llm.json"
     log_dir_arg = str(args.log_dir)
 
+    # Pristine heuristic baseline: rerun stage 11 on the raw families so the
+    # baseline semantics carry no LLM consensus labels (the run's
+    # 09_semantics.json is LLM-contaminated by stage 11b's in-place merge).
+    _run_compare_step(
+        "11_infer_semantics (no-LLM)",
+        [
+            _script("11_infer_semantics.py"),
+            _path(families_raw_json),
+            _path(data_dir / "08_relations.json"),
+            _path(no_llm_semantics_json),
+            "--framing-json", _path(data_dir / "04_framing.json"),
+            "--features-json", _path(data_dir / "03_family_features.json"),
+            "--keywords-json", _path(data_dir / "07_keywords.json"),
+            "--log-dir", log_dir_arg,
+        ],
+        logger,
+    )
     _run_compare_step(
         "12_build_protocol_model (no-LLM)",
         [
@@ -1182,8 +1206,8 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
             _path(no_llm_model_json),
             "--features-json", _path(data_dir / "03_family_features.json"),
             "--keywords-json", _path(data_dir / "07_keywords.json"),
-            "--relations-json", _path(data_dir / "08_relations_validated.json"),
-            "--semantics-json", _path(data_dir / "09_semantics.json"),
+            "--relations-json", _path(data_dir / "08_relations.json"),
+            "--semantics-json", _path(no_llm_semantics_json),
             "--framing-json", _path(data_dir / "04_framing.json"),
             "--log-dir", log_dir_arg,
         ],

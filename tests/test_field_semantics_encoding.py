@@ -85,8 +85,10 @@ def test_stage12_fill_defaults_for_llm_merged_fields() -> None:
 
 
 def test_stage12_llm_consensus_labels_win_ties_and_lower_confidence() -> None:
-    """Stage 12 prefers llm_consensus labels over heuristic labels on the same
-    span (different evidence class); strict confidence decides otherwise."""
+    """Stage 12 lets llm_consensus labels win *ties* against heuristic labels on
+    the same span (different evidence class), but a strictly higher-confidence
+    heuristic label (e.g. a TLV constant) keeps the span against a low-confidence
+    LLM guess; strict confidence decides otherwise."""
     summary = {
         "field_labels": [
             {"start": 6, "length": 1, "label": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
@@ -96,11 +98,28 @@ def test_stage12_llm_consensus_labels_win_ties_and_lower_confidence() -> None:
         ]
     }
     best = build_model._best_semantic_labels(summary)
-    # LLM label replaces the higher-confidence heuristic 'constant'.
-    assert best[(6, 1)]["label"] == "unit_id"
-    # Same-span heuristic 0.85 also loses to the LLM 0.6 (class precedence).
+    # Heuristic 0.99 beats LLM 0.6: strict class precedence is not a blank cheque.
+    assert best[(6, 1)]["label"] == "constant"
+    # Heuristic 0.85 beats LLM 0.6 (strictly higher confidence).
     assert best[(0, 2)]["label"] == "transaction_id"
-    assert build_model._label_source(best[(0, 2)]) == "llm_consensus"
+    assert build_model._label_source(best[(0, 2)]) == ""
+
+
+def test_stage12_llm_consensus_wins_ties_only() -> None:
+    """Tie confidence: the LLM label takes the span (class precedence on equal
+    certainty); above-equal heuristic confidence keeps the span."""
+    summary = {
+        "field_labels": [
+            {"start": 2, "length": 2, "label": "length", "confidence": 0.6, "evidence": {"heuristic": True}},
+            {"start": 2, "length": 2, "label": "length_field", "confidence": 0.6, "evidence": {"source": "llm_consensus"}},
+            {"start": 4, "length": 1, "label": "unit_id", "confidence": 0.5, "evidence": {"source": "llm_consensus"}},
+            {"start": 4, "length": 1, "label": "function_code", "confidence": 0.5},
+        ]
+    }
+    best = build_model._best_semantic_labels(summary)
+    assert best[(2, 2)]["label"] == "length_field"
+    assert build_model._label_source(best[(2, 2)]) == "llm_consensus"
+    assert best[(4, 1)]["label"] == "unit_id"
 
 
 def test_stage12_propagates_semantic_source_to_attributes() -> None:

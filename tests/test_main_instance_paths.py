@@ -170,6 +170,7 @@ def test_run_no_llm_comparison_writes_variants(tmp_path: Path) -> None:
         source / "05_families.json",
         source / "03_family_features.json",
         source / "07_keywords.json",
+        source / "08_relations.json",
         source / "08_relations_validated.json",
         source / "09_semantics.json",
         source / "04_framing.json",
@@ -184,8 +185,9 @@ def test_run_no_llm_comparison_writes_variants(tmp_path: Path) -> None:
     data_dir.mkdir()
     for name in (
         "05_families.json", "03_family_features.json", "07_keywords.json",
-        "08_relations_validated.json", "09_semantics.json", "04_framing.json",
-        "11_evaluation.json", "13_llm_analysis.json", "15_evaluation_result.json",
+        "08_relations.json", "08_relations_validated.json", "09_semantics.json",
+        "04_framing.json", "11_evaluation.json", "13_llm_analysis.json",
+        "15_evaluation_result.json",
     ):
         (data_dir / name).write_text((source / name).read_text(encoding="utf-8"), encoding="utf-8")
 

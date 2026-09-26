@@ -11,6 +11,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any, Dict
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -65,6 +66,9 @@ def main() -> None:
     parser.add_argument("--relations-json", help="Relations JSON for semantic inference")
     parser.add_argument("--features-json", help="Family features JSON for field statistics")
     parser.add_argument("--semantics-json", help="Stage-09 semantics summary JSON to merge consensus labels into (optional)")
+    parser.add_argument("--merged-semantics-json", help="Write the merged (LLM + heuristic) semantics summary here instead of "
+                                                         "mutating --semantics-json in place; keeps the heuristic-only file pristine "
+                                                         "for the no-LLM comparison baseline.")
     parser.add_argument("--messages-jsonl", help="Canonical message corpus JSONL for sample field values")
     parser.add_argument("--assignments-json", help="Family assignments JSON for sample field values")
     parser.add_argument("--max-samples", type=int, default=10, help="Maximum sample messages per family")
@@ -414,10 +418,32 @@ def main() -> None:
     with open(args.output_json, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2)
 
-    # Merge consensus labels into the stage-09 semantics summary so downstream
-    # stages (12, 16, 17, exports) see them without schema changes.
-    if llm_semantics:
-        semantics_path = Path(args.semantics_json) if args.semantics_json else None
+    # Merge consensus labels with the stage-09 heuristic labels so downstream
+    # stages (12, 16, 17, exports) see them without schema changes. Labels are
+    # combined, not deduplicated: stage 12 picks the best label per (start,
+    # length) span via its LLM-vs-heuristic precedence rule, so a high-confidence
+    # heuristic label (e.g. a TLV constant at 0.99) must survive here to be able
+    # to outrank a lower-confidence LLM guess on the same span.
+    merged_path = Path(args.merged_semantics_json) if args.merged_semantics_json else None
+    semantics_path = Path(args.semantics_json) if args.semantics_json else None
+    if llm_semantics and merged_path:
+        merged_summary: Dict[str, Any] = {}
+        if semantics_path and semantics_path.is_file():
+            with open(semantics_path, "r", encoding="utf-8") as f:
+                merged_summary = json.load(f)
+        for family_id, llm_entry in llm_semantics.items():
+            base = merged_summary.get(family_id)
+            if isinstance(base, dict) and isinstance(base.get("field_labels"), list):
+                base["field_labels"] = llm_entry["field_labels"] + base.get("field_labels", [])
+                base["notes"] = (base.get("notes", []) or []) + llm_entry["notes"]
+            else:
+                merged_summary[family_id] = llm_entry
+        with open(merged_path, "w", encoding="utf-8") as f:
+            json.dump(merged_summary, f, indent=2)
+        print(f"[+] Merged {len(llm_semantics)} families' consensus labels into {merged_path}")
+    elif llm_semantics:
+        # Legacy in-place mode (no --merged-semantics-json): overwrite the
+        # heuristic labels on LLM-covered spans.
         if semantics_path and semantics_path.is_file():
             with open(semantics_path, "r", encoding="utf-8") as f:
                 semantics_summary = json.load(f)
