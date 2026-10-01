@@ -16,6 +16,7 @@ from protocol_re.llm.local_finetuned import (  # noqa: E402
     LocalInferenceConfig,
     aggregate_boundaries,
     aggregate_semantics,
+    aggregate_semantics_tlv,
     extract_json_object,
     parse_boundary_prediction,
     parse_semantic_prediction,
@@ -136,6 +137,83 @@ def test_aggregate_semantics_majority_vote_and_confidence():
     assert result[0]["semantic_role"] == "function_code"
     assert result[0]["confidence"] == pytest.approx(2 / 3, abs=1e-3)
     assert result[0]["support"] == "2/3"
+
+
+def test_aggregate_semantics_tlv_votes_converge_by_tag_and_value_offset():
+    # TLV/BER body fields shift with message content, so the same logical field
+    # is voted on by (tag, offset-within-value) — stable across messages.
+    per_message = [
+        [{"tlv_tag": 128, "tlv_value_offset": 0, "width": 4, "semantic_role": "length", "field_type": "uint32"}],
+        [{"tlv_tag": 128, "tlv_value_offset": 0, "width": 4, "semantic_role": "length", "field_type": "uint32"}],
+        [{"tlv_tag": 128, "tlv_value_offset": 0, "width": 4, "semantic_role": "opcode", "field_type": "uint32"}],
+    ]
+    result = aggregate_semantics_tlv(per_message, min_support=0.5)
+    assert len(result) == 1
+    assert result[0]["tlv_tag"] == 128
+    assert result[0]["tlv_value_offset"] == 0
+    assert result[0]["semantic_role"] == "length"
+    assert result[0]["confidence"] == pytest.approx(2 / 3, abs=1e-3)
+    assert result[0]["support"] == "2/3"
+
+
+def test_aggregate_semantics_tlv_ignores_labels_without_tlv_keys():
+    per_message = [
+        [{"offset": 42, "width": 2, "semantic_role": "length", "field_type": "uint16"}],
+        [],
+    ]
+    assert aggregate_semantics_tlv(per_message, min_support=0.5) == []
+
+
+# 8-byte fixed header, then 80 04 <4B> | 81 04 <4B> | 82 02 <2B>
+_TLV_PAYLOAD = "0102030405060708" + "8004" + "01020304" + "8104" + "0a0b0c0d" + "8202" + "eeff"
+
+
+def test_run_local_semantic_labeling_tlv_winner_binds_by_tag(monkeypatch):
+    import protocol_re.llm.local_finetuned as local
+
+    # The model's absolute offset 10 lies inside element 0x80's value region
+    # (value_offset 10), so the consensus binds to the 0x80-tagged field.
+    def fake_call(prompt, base_url, model, api_key, temperature, max_tokens, timeout, retries=2, retry_delay=1.0, request_label=""):
+        return '{"semantic_labels": [{"offset": 10, "width": 4, "semantic_role": "length", "field_type": "uint32"}]}'
+
+    monkeypatch.setattr(local, "call_local_chat", fake_call)
+    fields = [
+        {"start": 10, "length": 4, "field_type": "bytes", "confidence": 0.9,
+         "attributes": {"tlv_tag": 128, "tlv_tag_hex": "0x80", "tlv_pdu_offset": "2"}},
+        {"start": 16, "length": 4, "field_type": "bytes", "confidence": 0.9,
+         "attributes": {"tlv_tag": 129, "tlv_tag_hex": "0x81", "tlv_pdu_offset": "8"}},
+    ]
+    messages = [make_message(msg_id=i, payload_hex=_TLV_PAYLOAD) for i in range(3)]
+    llm = LocalInferenceConfig(base_url="http://127.0.0.1:8080", max_samples=3)
+    raw, labels, used = run_local_semantic_labeling(
+        "family_0", messages, fields, llm, tlv_header_length=8
+    )
+    assert used == 3
+    assert len(labels) == 1
+    assert labels[0]["field_index"] == 0
+    assert labels[0]["semantic_role"] == "length"
+    assert any("tlv_tag=0x80" in item for item in labels[0]["evidence"])
+
+
+def test_run_local_semantic_labeling_tlv_header_labels_are_dropped(monkeypatch):
+    import protocol_re.llm.local_finetuned as local
+
+    # A label in the fixed header (offset 1 < header 8) falls outside every
+    # parsed element, so it cannot be re-keyed and is not voted.
+    def fake_call(prompt, base_url, model, api_key, temperature, max_tokens, timeout, retries=2, retry_delay=1.0, request_label=""):
+        return '{"semantic_labels": [{"offset": 1, "width": 2, "semantic_role": "transaction_id", "field_type": "uint16"}]}'
+
+    monkeypatch.setattr(local, "call_local_chat", fake_call)
+    fields = [
+        {"start": 10, "length": 4, "field_type": "bytes", "confidence": 0.9,
+         "attributes": {"tlv_tag": 128, "tlv_tag_hex": "0x80", "tlv_pdu_offset": "2"}},
+    ]
+    messages = [make_message(msg_id=i, payload_hex=_TLV_PAYLOAD) for i in range(3)]
+    llm = LocalInferenceConfig(base_url="http://127.0.0.1:8080", max_samples=3)
+    _raw, labels, _used = run_local_semantic_labeling(
+        "family_0", messages, fields, llm, tlv_header_length=8
+    )
+    assert labels == []
 
 
 # ---------------------------------------------------------------------------

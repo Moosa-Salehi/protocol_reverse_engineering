@@ -34,6 +34,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
 from protocol_re.model.schema import MessageRecord
+from protocol_re.utils.bytes import hex_to_bytes
+from protocol_re.inference.tlv import parse_tlv_tree
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are an expert Protocol Reverse Engineering Analyst. "
@@ -288,6 +290,82 @@ def aggregate_semantics(
     return aggregated
 
 
+def aggregate_semantics_tlv(
+    per_message: Sequence[Sequence[Dict[str, Any]]],
+    min_support: float,
+) -> List[Dict[str, Any]]:
+    """Majority-vote semantic labels keyed by TLV element position.
+
+    Per-message predictions are absolute-offset, but in TLV/BER messages body
+    fields shift with message content (and optional elements shift everything
+    after them), so the same logical field lands at different absolute offsets
+    in different messages and absolute votes scatter below the support bar.
+    Each label is therefore re-keyed to ``(tlv_tag, offset_within_value)`` of
+    the parsed element containing it (see ``_label_tlv_key``), which is stable
+    across messages regardless of shifting.
+
+    Input labels must carry ``tlv_tag`` and ``tlv_value_offset`` (produced by
+    :func:`_label_tlv_key`); labels without them are ignored.
+    """
+    votes: Counter[tuple[int, int, int, str]] = Counter()
+    field_types: Dict[tuple[int, int, int, str], str] = {}
+    for labels in per_message:
+        for label in labels:
+            tag = label.get("tlv_tag")
+            value_offset = label.get("tlv_value_offset")
+            if tag is None or value_offset is None:
+                continue
+            key = (int(tag), int(value_offset), label["width"], label["semantic_role"])
+            votes[key] += 1
+            field_types.setdefault(key, label["field_type"])
+    if not votes:
+        return []
+    total = sum(1 for labels in per_message if labels) or 1
+    threshold = max(1, int(min_support * total + 0.999))
+    aggregated: List[Dict[str, Any]] = []
+    for (tag, value_offset, width, role), count in sorted(votes.items()):
+        if count < threshold:
+            continue
+        aggregated.append(
+            {
+                "tlv_tag": tag,
+                "tlv_value_offset": value_offset,
+                "width": width,
+                "semantic_role": role,
+                "field_type": field_types[(tag, value_offset, width, role)],
+                "confidence": round(count / total, 3),
+                "support": f"{count}/{total}",
+            }
+        )
+    return aggregated
+
+
+def _label_tlv_key(
+    offset: int,
+    width: int,
+    payload: bytes,
+    header_length: int,
+) -> Optional[Dict[str, Any]]:
+    """Re-key an absolute-offset label to the parsed TLV element containing it.
+
+    Returns ``{"tlv_tag": int, "tlv_value_offset": int}`` when the label's
+    span lies inside one element's *value* region (labels covering element
+    tag/length header bytes are skipped — they are positions, not fields), or
+    ``None`` when the message does not parse as TLV or the label is outside
+    every element (e.g. in the fixed header).
+    """
+    view = parse_tlv_tree(payload, header_length)
+    if view is None:
+        return None
+    elements = list(view.elements)
+    if view.wrapper is not None:
+        elements.append(view.wrapper)
+    for element in elements:
+        if element.value_offset <= offset and offset + width <= element.value_offset + element.value_length:
+            return {"tlv_tag": element.tag, "tlv_value_offset": offset - element.value_offset}
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Family-level entry points
 # ---------------------------------------------------------------------------
@@ -380,11 +458,17 @@ def run_local_semantic_labeling(
     messages: Sequence[MessageRecord],
     fields: List[Dict[str, Any]],
     llm: LocalInferenceConfig,
+    tlv_header_length: Optional[int] = None,
 ) -> tuple[Optional[str], List[Dict[str, Any]], int]:
     """Run per-message semantic labeling and map consensus labels onto stage-07 fields.
 
     Returns (raw_response, labels_in_field_index_schema, samples_used).
     Labels carry evidence (support counts) so the stage validator accepts them.
+
+    When ``tlv_header_length`` is set (TLV/BER families from stage 07), body
+    labels vote in TLV-normalized coordinates (see ``aggregate_semantics``) and
+    a normalized winner is mapped onto the field hypothesis carrying the matching
+    ``tlv_tag`` attribute instead of matching absolute offsets.
     """
     samples = _sample_messages_diverse(messages, llm.max_samples, llm.consensus_sample_bytes)
     per_message: List[List[Dict[str, Any]]] = []
@@ -408,28 +492,81 @@ def run_local_semantic_labeling(
         per_message.append(labels)
         raw_parts.append({"msg_id": message.msg_id, "semantic_labels": labels, "raw": content})
 
-    aggregated = aggregate_semantics(per_message, llm.min_support)
+    # TLV/BER families: re-key per-message labels to (tag, offset-within-value)
+    # before voting — absolute offsets shift with message content, so absolute
+    # votes scatter below the support bar (see aggregate_semantics_tlv).
+    if tlv_header_length is not None and tlv_header_length > 0:
+        keyed: List[List[Dict[str, Any]]] = []
+        for message, labels in zip(samples, per_message):
+            payload = hex_to_bytes(message.payload_hex)
+            keyed_labels: List[Dict[str, Any]] = []
+            for label in labels:
+                tlv_key = _label_tlv_key(label["offset"], label["width"], payload, tlv_header_length)
+                if tlv_key is not None:
+                    keyed_labels.append({**label, **tlv_key})
+            keyed.append(keyed_labels)
+        aggregated = aggregate_semantics_tlv(keyed, llm.min_support)
 
-    # Map (offset, width) labels onto field_hypotheses indices for stage 11b.
-    field_index_schema: List[Dict[str, Any]] = []
-    for label in aggregated:
-        field_index = _match_field(fields, label["offset"], label["width"])
-        if field_index is None:
-            continue
-        field_index_schema.append(
-            {
-                "field_index": field_index,
-                "offset": label["offset"],
-                "width": label["width"],
-                "semantic_role": label["semantic_role"],
-                "field_type": label["field_type"],
-                "encoding_type": label["field_type"],
-                "confidence": label["confidence"],
-                "evidence": [f"consensus support {label['support']} across {len(samples)} sampled messages"],
-                "human_label": label["semantic_role"].replace("_", " "),
-                "alternative_roles": [],
-            }
-        )
+        # One TLV element = one stage-07 field hypothesis (attributes.tlv_tag),
+        # so a consensus label binds to the field carrying its tag regardless of
+        # where the label sits inside the element's value region.
+        field_index_by_tag: Dict[int, int] = {}
+        for index, field in enumerate(fields):
+            attributes = field.get("attributes") or {}
+            raw_tag = attributes.get("tlv_tag")
+            if raw_tag is None:
+                continue
+            try:
+                field_index_by_tag[int(raw_tag)] = index
+            except (TypeError, ValueError):
+                continue
+
+        field_index_schema: List[Dict[str, Any]] = []
+        for label in aggregated:
+            field_index = field_index_by_tag.get(label["tlv_tag"])
+            if field_index is None:
+                continue
+            field_index_schema.append(
+                {
+                    "field_index": field_index,
+                    "offset": label["tlv_value_offset"],
+                    "width": label["width"],
+                    "semantic_role": label["semantic_role"],
+                    "field_type": label["field_type"],
+                    "encoding_type": label["field_type"],
+                    "confidence": label["confidence"],
+                    "evidence": [
+                        f"consensus support {label['support']} across {len(samples)} sampled messages",
+                        f"tlv_tag=0x{label['tlv_tag']:02x}",
+                        f"tlv_value_offset={label['tlv_value_offset']}",
+                    ],
+                    "human_label": label["semantic_role"].replace("_", " "),
+                    "alternative_roles": [],
+                }
+            )
+    else:
+        aggregated = aggregate_semantics(per_message, llm.min_support)
+
+        # Map (offset, width) labels onto field_hypotheses indices for stage 11b.
+        field_index_schema: List[Dict[str, Any]] = []
+        for label in aggregated:
+            field_index = _match_field(fields, label["offset"], label["width"])
+            if field_index is None:
+                continue
+            field_index_schema.append(
+                {
+                    "field_index": field_index,
+                    "offset": label["offset"],
+                    "width": label["width"],
+                    "semantic_role": label["semantic_role"],
+                    "field_type": label["field_type"],
+                    "encoding_type": label["field_type"],
+                    "confidence": label["confidence"],
+                    "evidence": [f"consensus support {label['support']} across {len(samples)} sampled messages"],
+                    "human_label": label["semantic_role"].replace("_", " "),
+                    "alternative_roles": [],
+                }
+            )
     response = json.dumps(
         {
             "family_id": family_id,

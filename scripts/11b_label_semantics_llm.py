@@ -295,10 +295,21 @@ def main() -> None:
         llm_call = None
         if local_llm is not None:
             family_samples = messages_by_family.get(family_id, [])
+            # TLV/BER families (stage 07 tlv_metadata): body fields shift with
+            # message content, so per-message labels must vote in TLV-normalized
+            # (body-relative) coordinates or consensus can never form.
+            tlv_header_length = None
+            tlv_meta = details.get("tlv_metadata") or {}
+            if tlv_meta.get("mode") == "tlv_ber":
+                try:
+                    tlv_header_length = int(tlv_meta.get("header_length", 0))
+                except (TypeError, ValueError):
+                    tlv_header_length = None
 
             def local_call(prompt: str, family_id: str = family_id, task: str = "semantic_labeling") -> str:
                 raw, _labels, _used = run_local_semantic_labeling(
-                    family_id, family_samples, fields, local_llm
+                    family_id, family_samples, fields, local_llm,
+                    tlv_header_length=tlv_header_length,
                 )
                 return raw
 
