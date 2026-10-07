@@ -248,6 +248,8 @@ def test_run_local_boundary_refinement_end_to_end(monkeypatch):
     parsed = json.loads(raw)
     assert parsed["boundaries"] == [0, 1, 4, 6]
     assert parsed["backend"] == "local_finetuned"
+    # Reported confidence is the real vote share, not a constant.
+    assert parsed["confidence"] == 1.0
 
 
 def test_stage_boundaries_uses_llm_call(monkeypatch):
@@ -308,9 +310,9 @@ def test_stage_semantics_uses_llm_call(monkeypatch):
     assert labeled[0]["label"]["field_index"] == 0
 
 
-def test_stage_boundaries_llm_call_response_bypasses_confidence_gate():
-    # The aggregate response carries confidence 0.99 so the direct-boundary
-    # path is used regardless of --min-confidence.
+def test_stage_boundaries_llm_call_response_uses_direct_boundary_path():
+    # A "boundaries" response takes the direct-boundary path, which is gated
+    # per edge by stage-07 field confidence rather than by --min-confidence.
     raw = json.dumps({"family_id": "f", "boundaries": [0, 6], "confidence": 0.99})
     messages = [make_message(payload_hex="0103000a0002")]
     config = StageConfig(stage=LLMStage.BOUNDARY_REFINEMENT, min_confidence=0.99)
@@ -384,6 +386,40 @@ def test_apply_boundary_list_rejects_negative_edges():
     assert log[0]["valid"] is False
     assert log[0]["applied"] is False
     assert [(f["start"], f["length"]) for f in updated] == [(0, 1), (1, 2), (3, 3)]
+
+
+def test_apply_boundary_list_keeps_edges_of_high_confidence_fields():
+    # Modbus regression: the model's consensus omitted edge 7, which would fuse
+    # the unit-id and function-code bytes that stage 07 holds at 0.99.
+    fields = [
+        {"start": 0, "length": 2, "field_type": "counter_or_transaction_id", "confidence": 0.95},
+        {"start": 2, "length": 2, "field_type": "constant", "confidence": 0.99},
+        {"start": 4, "length": 2, "field_type": "constant", "confidence": 0.99},
+        {"start": 6, "length": 1, "field_type": "constant", "confidence": 0.99},
+        {"start": 7, "length": 1, "field_type": "constant", "confidence": 0.99},
+        {"start": 8, "length": 2, "field_type": "bytes", "confidence": 0.5},
+        {"start": 10, "length": 2, "field_type": "bytes", "confidence": 0.5},
+    ]
+    updated, log = apply_boundary_list([dict(f) for f in fields], [0, 2, 4, 6, 8, 12])
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 2), (2, 2), (4, 2), (6, 1), (7, 1), (8, 4)]
+    assert log[0]["protected_edges"] == [7]
+    # The two low-confidence fields are still merged as requested.
+    assert updated[-1]["evidence"]["merged_field_count"] == 2
+
+
+def test_apply_boundary_list_cannot_collapse_confident_fields_into_a_blob():
+    # GOOSE regression: a short consensus list collapsed ten parsed elements
+    # into one opaque field.
+    fields = [{"start": i * 4, "length": 4, "field_type": "bytes", "confidence": 0.95} for i in range(10)]
+    updated, log = apply_boundary_list([dict(f) for f in fields], [0, 40])
+    assert updated == fields
+    assert log[0]["applied"] is False
+
+
+def test_apply_boundary_list_protection_can_be_disabled():
+    fields = [{"start": 0, "length": 1, "confidence": 0.99}, {"start": 1, "length": 1, "confidence": 0.99}]
+    updated, _ = apply_boundary_list([dict(f) for f in fields], [0, 2], protect_confidence=None)
+    assert [(f["start"], f["length"]) for f in updated] == [(0, 2)]
 
 
 def test_apply_boundary_list_exact_match_returns_original_fields():

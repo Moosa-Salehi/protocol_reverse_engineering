@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from protocol_re.config.thresholds import FamilyRefinement
 from protocol_re.utils.logging import setup_stage_logging
 
 
@@ -32,7 +33,11 @@ def _prf(tp: int, fp: int, fn: int) -> Dict[str, Any]:
         # the set is empty (e.g. a connectionless protocol like GOOSE has no
         # request/response relations on either side). Scoring this 0.0 would
         # punish protocols for a property they share with the ground truth.
+        # The values stay numeric for report consumers, but the metric is
+        # flagged not applicable so it is left out of the overall score
+        # instead of contributing a free 1.0.
         return {
+            "applicable": False,
             "true_positives": 0,
             "false_positives": 0,
             "false_negatives": 0,
@@ -44,6 +49,7 @@ def _prf(tp: int, fp: int, fn: int) -> Dict[str, Any]:
     precision = _ratio(tp, tp + fp)
     recall = _ratio(tp, tp + fn)
     return {
+        "applicable": True,
         "true_positives": tp,
         "false_positives": fp,
         "false_negatives": fn,
@@ -134,6 +140,33 @@ def _field_len(field: Dict[str, Any]) -> int | None:
     if end is None:
         return None
     return int(end) - int(field.get("start", 0) or 0) + 1
+
+
+def _tag_value(value: Any) -> int | None:
+    """Parse a TLV tag given as an int, a decimal string, or a ``0x..`` string."""
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    token = str(value).strip().lower()
+    if not token:
+        return None
+    try:
+        return int(token, 16) if token.startswith("0x") else int(token)
+    except ValueError:
+        return None
+
+
+def _truth_tlv_tag(field: Dict[str, Any]) -> int | None:
+    """Tag of a truth field declared as a TLV element (``tlv_tag``), else None."""
+    return _tag_value(field.get("tlv_tag"))
+
+
+def _predicted_tlv_tag(field: Dict[str, Any]) -> int | None:
+    """Tag of a predicted TLV element field (stage-07 ``attributes.tlv_tag``)."""
+    attributes = _attributes(field)
+    tag = _tag_value(attributes.get("tlv_tag"))
+    return tag if tag is not None else _tag_value(attributes.get("tlv_tag_hex"))
 
 
 def _truth_uses_absolute_offsets(message_type: Dict[str, Any]) -> bool:
@@ -294,6 +327,68 @@ def _truth_discriminator_value(message_type: Dict[str, Any]) -> str | None:
     return None
 
 
+def _truth_header_length(truth_types: Sequence[Dict[str, Any]]) -> int:
+    """Byte length of the shared header described by the header-role truth types."""
+    end = 0
+    for message_type in truth_types:
+        if not _truth_uses_absolute_offsets(message_type):
+            continue
+        for field in message_type.get("fields", []) or []:
+            start, length = field.get("start"), field.get("length")
+            if start is None or length is None:
+                continue
+            end = max(end, int(start) + int(length))
+    return end
+
+
+def corpus_discriminator_scope(
+    messages_jsonl: str,
+    truth_types: Sequence[Dict[str, Any]],
+    min_support: int = FamilyRefinement.MIN_FAMILY_SIZE,
+) -> Dict[str, Any]:
+    """Discriminator values that actually occur in the captured traffic.
+
+    Reads the byte at PDU offset 0 (right after the truth header) of every
+    message. The result depends only on the corpus and the truth file, so every
+    pipeline variant evaluated on the same capture is scored against the same
+    set of truth types.
+
+    A value counts as present only with at least ``min_support`` messages — the
+    smallest group the pipeline can form a family from. Captures of opcode scans
+    carry one or two probes for every possible value; those are not recoverable
+    message types and must not pull their truth types into scope.
+    """
+    header_length = _truth_header_length(truth_types)
+    present_counts: Dict[str, int] = {}
+    response_counts: Dict[str, int] = {}
+    message_count = 0
+    with open(messages_jsonl, "r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            payload_hex = str(record.get("payload_hex") or "")
+            byte_hex = payload_hex[header_length * 2 : header_length * 2 + 2]
+            if len(byte_hex) != 2:
+                continue
+            message_count += 1
+            value = str(int(byte_hex, 16))
+            present_counts[value] = present_counts.get(value, 0) + 1
+            if _norm(record.get("direction")) == "server_to_client":
+                response_counts[value] = response_counts.get(value, 0) + 1
+    present = {value for value, count in present_counts.items() if count >= min_support}
+    response = {value for value, count in response_counts.items() if count >= min_support}
+    return {
+        "source": "corpus",
+        "header_length": header_length,
+        "message_count": message_count,
+        "min_support": min_support,
+        "present_discriminators": sorted(present, key=int),
+        "response_discriminators": sorted(response, key=int),
+    }
+
+
 def _truth_is_structural_tag(truth_types: Sequence[Dict[str, Any]]) -> bool:
     """True when the truth types' constant at PDU offset 0 is shared framing
     rather than a per-message-type discriminator.
@@ -402,10 +497,53 @@ def _field_matches(
         predicted_fields = _comparable_predicted_fields(family, truth_type)
         truth_fields = list(truth_type.get("fields", []) or [])
         offset_shift = 0 if _truth_uses_absolute_offsets(truth_type) else _family_body_offset(family)
+
+        # Tag-keyed pass. A truth field declared as a TLV element (``tlv_tag``)
+        # has no stable byte offset: its position shifts with the lengths of
+        # the elements before it. It is matched to the predicted element that
+        # carries the same tag; identifying the element *is* the boundary, so
+        # the boundary score is 1.0. Such fields never enter the positional
+        # pass, where a missing ``start`` would be misread as offset 0.
+        tag_matched_predicted: set[int] = set()
+        tag_keyed_truth: set[int] = set()
+        predicted_by_tag: Dict[int, int] = {}
+        for p_index, predicted in enumerate(predicted_fields):
+            tag = _predicted_tlv_tag(predicted)
+            if tag is not None:
+                predicted_by_tag.setdefault(tag, p_index)
+        for t_index, truth in enumerate(truth_fields):
+            tag = _truth_tlv_tag(truth)
+            if tag is None:
+                continue
+            tag_keyed_truth.add(t_index)
+            p_index = predicted_by_tag.get(tag)
+            if p_index is None or p_index in tag_matched_predicted:
+                continue
+            tag_matched_predicted.add(p_index)
+            predicted = predicted_fields[p_index]
+            ground_truth_ref = _field_ref(truth_id, truth, f"field_{t_index}")
+            ground_truth_ref["tlv_tag"] = tag
+            matches.append(
+                {
+                    "predicted": _predicted_field_ref(family_id, predicted, p_index),
+                    "ground_truth": ground_truth_ref,
+                    "boundary_score": 1.0,
+                    "semantic_score": _semantic_score(predicted, truth),
+                    "offset_shift": offset_shift,
+                    "match_key": "tlv_tag",
+                }
+            )
+
         candidates = []
         for p_index, predicted in enumerate(predicted_fields):
+            if p_index in tag_matched_predicted:
+                continue
             predicted_for_match = _comparison_field(predicted, offset_shift)
             for t_index, truth in enumerate(truth_fields):
+                # Tag-keyed fields are settled above; a field with no start and
+                # no tag has no position to compare against.
+                if t_index in tag_keyed_truth or truth.get("start") is None:
+                    continue
                 boundary = _interval_score(predicted_for_match, truth)
                 semantic = _semantic_score(predicted, truth)
                 score = max(boundary, (0.7 * boundary) + (0.3 * semantic))
@@ -586,7 +724,11 @@ def _header_field_matches(
     return matches
 
 
-def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict[str, Any]) -> Dict[str, Any]:
+def evaluate_protocol_spec(
+    model_data: Dict[str, Any],
+    ground_truth_bundle: Dict[str, Any],
+    corpus_scope: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
     predicted_protocol = model_data.get("predicted_protocol", {}) or {}
     ground_truth_protocol = (ground_truth_bundle.get("ground_truth_protocol") or ground_truth_bundle.get("predicted_protocol") or {})
     families = predicted_protocol.get("families", []) or []
@@ -596,7 +738,11 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
 
     # Corpus-conditioned truth scope. A PDU truth type is only in scope when its
     # discriminator (e.g. a Modbus function code) actually occurs in the captured
-    # traffic — i.e. some predicted family carries that opcode. This lets one truth
+    # traffic. With ``corpus_scope`` (see corpus_discriminator_scope) that is read
+    # from the messages themselves, so the scope cannot move with the prediction.
+    # Without it the legacy approximation applies — some predicted family carries
+    # that opcode — which lets a pipeline variant that loses a discriminator also
+    # drop the truth types it would have been penalised for. This lets one truth
     # file describe a whole protocol family (every Modbus function code, including
     # exception responses) without penalising recall on a capture that exercises
     # only a subset: types for absent opcodes are neither matched nor counted as
@@ -625,6 +771,9 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
         if _norm(family.get("role")) == "response"
     }
     response_discriminators.discard(None)
+    if corpus_scope is not None:
+        present_discriminators = set(corpus_scope.get("present_discriminators") or [])
+        response_discriminators = set(corpus_scope.get("response_discriminators") or [])
 
     def _truth_type_in_scope(message_type: Dict[str, Any]) -> bool:
         discriminator = _truth_discriminator_value(message_type)
@@ -703,17 +852,23 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
     semantic_metrics = _prf(semantic_tp, max(0, predicted_field_total - semantic_tp), max(0, truth_field_total - semantic_tp))
     relation_metrics = _prf(len(relation_matches), max(0, len(predicted_relations) - len(relation_matches)), max(0, len(truth_relations) - len(relation_matches)))
     
-    # Weighted overall score
+    # Weighted overall score. Metrics that are not applicable (nothing predicted
+    # and nothing expected, e.g. relations for a connectionless protocol) are
+    # left out and the remaining weights renormalised.
+    weighted = [
+        (message_metrics, 0.30),
+        (boundary_metrics, 0.30),
+        (semantic_metrics, 0.25),
+        (relation_metrics, 0.15),
+    ]
+    applicable_weight = sum(weight for metrics, weight in weighted if metrics["applicable"])
     overall = round(
-        message_metrics["f1_score"] * 0.30 +
-        boundary_metrics["f1_score"] * 0.30 +
-        semantic_metrics["f1_score"] * 0.25 +
-        relation_metrics["f1_score"] * 0.15,
-        6
-    )
+        sum(metrics["f1_score"] * weight for metrics, weight in weighted if metrics["applicable"]) / applicable_weight,
+        6,
+    ) if applicable_weight else 0.0
 
     matched_predicted_fields = {(item["predicted"]["owner_id"], item["predicted"]["start"], item["predicted"].get("length")) for item in field_matches}
-    matched_truth_fields = {(item["ground_truth"]["owner_id"], item["ground_truth"]["start"], item["ground_truth"].get("length")) for item in field_matches}
+    matched_truth_fields = {(item["ground_truth"]["owner_id"], item["ground_truth"]["field_name"], item["ground_truth"]["start"], item["ground_truth"].get("length")) for item in field_matches}
     unmatched_predicted_fields = []
     for family in families:
         family_id = str(family.get("family_id"))
@@ -733,7 +888,7 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
         truth_id = str(message_type.get("message_type_id"))
         for index, field in enumerate(message_type.get("fields", []) or []):
             ref = _field_ref(truth_id, field, f"field_{index}")
-            if (ref["owner_id"], ref["start"], ref.get("length")) not in matched_truth_fields:
+            if (ref["owner_id"], ref["field_name"], ref["start"], ref.get("length")) not in matched_truth_fields:
                 unmatched_truth_fields.append(ref)
 
     return {
@@ -746,6 +901,10 @@ def evaluate_protocol_spec(model_data: Dict[str, Any], ground_truth_bundle: Dict
             "predicted_family_count": len(families),
             "ground_truth_message_type_count": len(truth_types),
             "matched_message_type_count": len(message_matches),
+        },
+        "truth_scope": {
+            "source": "corpus" if corpus_scope is not None else "prediction",
+            "in_scope_message_type_ids": sorted(in_scope_truth_ids),
         },
         "metrics": {
             "message_type_matching": message_metrics,
@@ -778,8 +937,12 @@ def _score_summary(report: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def evaluate_protocol_spec_with_refinement(model_data: Dict[str, Any], ground_truth_bundle: Dict[str, Any]) -> Dict[str, Any]:
-    report = evaluate_protocol_spec(model_data, ground_truth_bundle)
+def evaluate_protocol_spec_with_refinement(
+    model_data: Dict[str, Any],
+    ground_truth_bundle: Dict[str, Any],
+    corpus_scope: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    report = evaluate_protocol_spec(model_data, ground_truth_bundle, corpus_scope)
     base_protocol = model_data.get("base_predicted_protocol")
     refined_protocol = model_data.get("refined_predicted_protocol")
     if not isinstance(base_protocol, dict) or not isinstance(refined_protocol, dict):
@@ -789,8 +952,8 @@ def evaluate_protocol_spec_with_refinement(model_data: Dict[str, Any], ground_tr
     base_data["predicted_protocol"] = base_protocol
     refined_data = dict(model_data)
     refined_data["predicted_protocol"] = refined_protocol
-    base_report = evaluate_protocol_spec(base_data, ground_truth_bundle)
-    refined_report = evaluate_protocol_spec(refined_data, ground_truth_bundle)
+    base_report = evaluate_protocol_spec(base_data, ground_truth_bundle, corpus_scope)
+    refined_report = evaluate_protocol_spec(refined_data, ground_truth_bundle, corpus_scope)
     base_score = float((base_report.get("summary") or {}).get("overall_score", 0.0) or 0.0)
     refined_score = float((refined_report.get("summary") or {}).get("overall_score", 0.0) or 0.0)
     report["refinement_comparison"] = {
@@ -806,6 +969,12 @@ def main() -> None:
     parser.add_argument("evaluation_model_data_json", help="Prepared model data from 16_prepare_evaluation_data.py")
     parser.add_argument("ground_truth_json", help="Ground truth JSON using evaluation_input.schema.json ground_truth_protocol shape")
     parser.add_argument("output_json", help="Output final evaluation report JSON")
+    parser.add_argument(
+        "--messages-jsonl",
+        default=None,
+        help="Message corpus (01_messages.jsonl). When given, truth types are scoped by the "
+             "discriminator values observed in the corpus instead of by the predicted families.",
+    )
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -822,7 +991,17 @@ def main() -> None:
         ground_truth = _load_json(args.ground_truth_json)
 
     with logger.stage("evaluate_protocol"):
-        report = evaluate_protocol_spec_with_refinement(evaluation_model_data, ground_truth)
+        corpus_scope = None
+        if args.messages_jsonl:
+            truth_protocol = ground_truth.get("ground_truth_protocol") or ground_truth.get("predicted_protocol") or {}
+            corpus_scope = corpus_discriminator_scope(args.messages_jsonl, truth_protocol.get("message_types", []) or [])
+            logger.info(
+                f"Truth scope from corpus: {len(corpus_scope['present_discriminators'])} discriminator values "
+                f"over {corpus_scope['message_count']} messages"
+            )
+        else:
+            logger.warning("No --messages-jsonl given: truth scope falls back to the predicted families")
+        report = evaluate_protocol_spec_with_refinement(evaluation_model_data, ground_truth, corpus_scope)
         report["inputs"] = {
             "predicted_protocol_file": args.evaluation_model_data_json,
             "ground_truth_protocol_file": args.ground_truth_json,

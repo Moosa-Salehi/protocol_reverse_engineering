@@ -265,6 +265,76 @@ def test_semantic_labeling_applies_concrete_type_and_human_label() -> None:
     assert updated[0]["attributes"]["inferred_role_label"] == "counter_or_transaction_id"
 
 
+def test_generic_bytes_label_does_not_replace_inferred_field_type():
+    fields = [{"start": 7, "length": 1, "field_type": "constant", "confidence": 0.99}]
+    labels = [
+        {
+            "field_index": 0,
+            "semantic_role": "function_code",
+            "field_type": "bytes",
+            "encoding_type": "bytes",
+            "confidence": 0.8,
+            "evidence": ["consensus support 4/5"],
+        }
+    ]
+
+    updated, log = apply_semantic_labels(fields, labels, min_confidence=0.5)
+
+    assert log[0]["applied"] is True
+    assert updated[0]["semantic_role"] == "function_code"
+    assert updated[0]["field_type"] == "constant"
+    assert "encoding_type" not in updated[0]
+
+
+def test_integer_label_wider_than_field_does_not_set_type():
+    fields = [{"start": 7, "length": 1, "field_type": "constant", "confidence": 0.99}]
+    labels = [
+        {
+            "field_index": 0,
+            "semantic_role": "function_code",
+            "encoding_type": "uint16_be",
+            "confidence": 0.8,
+            "evidence": ["x"],
+        }
+    ]
+
+    updated, _ = apply_semantic_labels(fields, labels, min_confidence=0.5)
+
+    assert updated[0]["field_type"] == "constant"
+
+
+def test_semantic_labels_are_checked_against_field_statistics():
+    fields = [
+        {"start": 0, "length": 2, "field_type": "constant", "confidence": 0.99},
+        {"start": 2, "length": 2, "field_type": "bytes", "confidence": 0.5},
+    ]
+    labels = [
+        {"field_index": 0, "semantic_role": "transaction_id", "confidence": 0.9, "evidence": ["x"]},
+        {"field_index": 1, "semantic_role": "reserved", "confidence": 0.9, "evidence": ["x"]},
+    ]
+    field_statistics = {
+        "field_0": {"cardinality": 1.0, "raw_evidence": {"unique_values": 1.0}},
+        "field_1": {"cardinality": 40, "raw_evidence": {}},
+    }
+
+    updated, log = apply_semantic_labels(fields, labels, min_confidence=0.5, field_statistics=field_statistics)
+
+    assert [entry["applied"] for entry in log] == [False, False]
+    assert "semantic_role" not in updated[0]
+    assert "semantic_role" not in updated[1]
+
+
+def test_sample_cardinality_alone_cannot_refute_a_transaction_id():
+    # Three sampled messages give cardinality 3, which says nothing about the family.
+    fields = [{"start": 0, "length": 2, "field_type": "bytes", "confidence": 0.5}]
+    labels = [{"field_index": 0, "semantic_role": "transaction_id", "confidence": 0.9, "evidence": ["x"]}]
+    field_statistics = {"field_0": {"cardinality": 3, "raw_evidence": {}}}
+
+    _, log = apply_semantic_labels(fields, labels, min_confidence=0.5, field_statistics=field_statistics)
+
+    assert log[0]["applied"] is True
+
+
 def test_evidence_backed_relation_remove_patch_is_accepted() -> None:
     model = {
         "protocol_name": "unknown-industrial-protocol",

@@ -563,6 +563,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(evaluation_model_data_json),
                     _path(args.ground_truth_json),
                     _path(final_evaluation_json),
+                    "--messages-jsonl", _path(messages_jsonl),
                 ],
             )
         )
@@ -1225,6 +1226,10 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
         ],
         logger,
     )
+    # Same corpus-derived truth scope as the main evaluation, so both variants
+    # are scored against the same truth types.
+    messages_jsonl = data_dir / "01_messages.jsonl"
+    messages_scope_args = ["--messages-jsonl", _path(messages_jsonl)] if messages_jsonl.is_file() else []
     _run_compare_step(
         "17_evaluate_protocol_spec (no-LLM)",
         [
@@ -1232,6 +1237,7 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
             _path(no_llm_eval_input_json),
             _path(args.ground_truth_json),
             _path(no_llm_result_json),
+            *messages_scope_args,
             "--log-dir", log_dir_arg,
         ],
         logger,

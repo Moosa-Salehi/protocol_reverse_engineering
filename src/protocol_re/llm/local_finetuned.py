@@ -257,6 +257,15 @@ def aggregate_boundaries(per_message: Sequence[List[int]], payload_len: int, min
     return edges
 
 
+def boundary_consensus(per_message: Sequence[List[int]], boundaries: Sequence[int]) -> float:
+    """Mean share of usable per-message predictions that voted for each edge."""
+    usable = [set(prediction) for prediction in per_message if prediction]
+    if not usable or not boundaries:
+        return 0.0
+    shares = [sum(1 for prediction in usable if edge in prediction) / len(usable) for edge in boundaries]
+    return round(sum(shares) / len(shares), 3)
+
+
 def aggregate_semantics(
     per_message: Sequence[Sequence[Dict[str, Any]]],
     min_support: float,
@@ -444,7 +453,7 @@ def run_local_boundary_refinement(
         {
             "family_id": family_id,
             "boundaries": boundaries,
-            "confidence": 0.99,  # bypass merge-suggestion confidence gating
+            "confidence": boundary_consensus(per_message, boundaries),
             "backend": "local_finetuned",
             "samples": raw_parts,
         },

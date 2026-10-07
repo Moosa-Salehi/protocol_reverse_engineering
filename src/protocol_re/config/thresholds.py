@@ -491,6 +491,24 @@ class LLMEvidence:
     MAX_PROMPT_HEX_CHARS: int = 100
 
 
+class LLMRefinement:
+    """Gates on LLM edits in :mod:`protocol_re.llm.stage_boundaries` and
+    :mod:`protocol_re.llm.stage_semantics`."""
+
+    # An LLM boundary list may not remove an edge next to a field stage 07 is at
+    # least this confident in. Measured on the Modbus corpus: without the gate
+    # the fine-tuned model fused the unit-id and function-code bytes (both
+    # 0.99) into one 2-byte field, costing 0.15 field-boundary F1.
+    MERGE_PROTECT_CONFIDENCE: float = 0.9
+
+    # A transaction/correlation id must take at least this many distinct values
+    # across the family; a discriminator/opcode at most MAX; a constant,
+    # reserved or padding field at most CONSTANT_MAX.
+    TRANSACTION_ID_MIN_CARDINALITY: int = 10
+    DISCRIMINATOR_MAX_CARDINALITY: int = 256
+    CONSTANT_MAX_CARDINALITY: int = 3
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Neural Model
 # ═══════════════════════════════════════════════════════════════════════════════

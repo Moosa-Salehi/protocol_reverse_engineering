@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `scripts/diagnostics/31_benchmark_message_boundaries.py`: per-message field-boundary
+  precision/recall/F1 against the tshark annotations for every protocol with a run under
+  `finetuning/windows_data/runs`, printed as one table. `--families-file` selects which
+  boundaries to score (e.g. `05_families_refined.json`).
+- Ground-truth fields may declare `tlv_tag` (e.g. `"0x81"`). The evaluator matches such a
+  field to the predicted element carrying the same tag instead of by byte offset, which is
+  undefined for variable-offset elements. `truth_files/goose.json` now tags its PDU fields.
+- Stage 17 `--messages-jsonl`: truth types are scoped by the discriminator values observed
+  in the corpus (at least `FamilyRefinement.MIN_FAMILY_SIZE` messages each) rather than by
+  the predicted families. `main.py` passes it for the main and the no-LLM evaluation, so
+  both are scored against the same truth types.
+- `LLMRefinement` thresholds in `config/thresholds.py`.
+
+### Changed
+- A metric with nothing predicted and nothing expected is reported with
+  `"applicable": false` and left out of the overall score; the remaining weights are
+  renormalised. Previously it contributed a full 1.0 (relations on GOOSE).
+- LLM boundary lists can no longer remove an edge of a field stage 07 holds at
+  `LLMRefinement.MERGE_PROTECT_CONFIDENCE` or above.
+- The local backend reports the real consensus share as its boundary confidence instead of
+  a constant 0.99.
+
+### Fixed
+- Variable-offset truth fields (`start: null`) were compared as if they sat at offset 0, so
+  correctly parsed TLV elements could never match.
+- Semantic labels were validated without field statistics, so the cardinality checks never
+  ran. They now use the statistics built for the prompt.
+- An LLM label of type `bytes`, or an integer type wider than the field, no longer replaces
+  the inferred field type.
+
 ## [1.1.0] - 2026-07-22
 
 ### Added

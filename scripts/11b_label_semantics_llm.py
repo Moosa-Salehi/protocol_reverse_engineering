@@ -16,7 +16,7 @@ from typing import Any, Dict
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from protocol_re.llm.multi_stage import StageConfig, LLMStage, load_cached_response
-from protocol_re.llm.stage_semantics import apply_semantic_label_to_field, run_semantic_labeling_stage
+from protocol_re.llm.stage_semantics import apply_semantic_label_to_field, run_semantic_labeling_stage, usable_encoding_type
 from protocol_re.llm.analyze import LLMRequestConfig
 from protocol_re.llm.local_finetuned import (
     LocalInferenceConfig,
@@ -398,7 +398,7 @@ def main() -> None:
                 target_field = fields[field_index]
                 start = int(target_field.get("start", target_field.get("offset", 0)) or 0)
                 length = int(target_field.get("length", target_field.get("width", 0)) or 0)
-                encoding_type = label.get("encoding_type") or label.get("field_type")
+                encoding_type = usable_encoding_type(label.get("encoding_type") or label.get("field_type"), length)
                 semantic_label_entries.append({
                     "start": start,
                     "length": length,

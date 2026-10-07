@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional, Sequence
 
+from protocol_re.config.thresholds import LLMRefinement
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
 from protocol_re.llm.analyze import LLMAPIError, LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
 from protocol_re.llm.stage_errors import LLM_API_ERROR_CATEGORY
@@ -28,6 +29,8 @@ CONCRETE_FIELD_TYPES = {
     "uint64_le",
     "bytes",
 }
+
+_INTEGER_WIDTHS = {"uint8": 1, "uint16": 2, "uint32": 4, "uint64": 8}
 
 
 def prepare_semantic_evidence(
@@ -155,33 +158,59 @@ def validate_semantic_label(
         field_key = f"field_{field_index}"
         field_stats = field_statistics.get(field_key, {})
 
-        # Basic sanity checks based on role
-        cardinality = field_stats.get("cardinality", 0)
-        offset = label.get("offset", 0)
-        width = label.get("width", 0)
+        # Basic sanity checks based on role. ``cardinality`` is the family-wide
+        # count when stage 07 recorded one, else the count over the sampled
+        # messages. A sample count only bounds the true cardinality from below,
+        # so it can refute "low cardinality" roles but not "high cardinality"
+        # ones.
+        cardinality = field_stats.get("cardinality")
+        family_wide = "unique_values" in (field_stats.get("raw_evidence") or {})
+        if cardinality is not None:
+            cardinality = float(cardinality)
 
-        # Discriminator/opcode should have low cardinality
-        if semantic_role in ("discriminator", "opcode", "function_code"):
-            if cardinality > 256:
-                return False, f"Discriminator has too high cardinality ({cardinality})"
+            # Discriminator/opcode should have low cardinality
+            if semantic_role in ("discriminator", "opcode", "function_code"):
+                if cardinality > LLMRefinement.DISCRIMINATOR_MAX_CARDINALITY:
+                    return False, f"Discriminator has too high cardinality ({cardinality:g})"
 
-        # Transaction ID should have high cardinality
-        if semantic_role in ("transaction_id", "correlation_id"):
-            if cardinality < 10:
-                return False, f"Transaction ID has too low cardinality ({cardinality})"
+            # Transaction ID should have high cardinality
+            if semantic_role in ("transaction_id", "correlation_id"):
+                if family_wide and cardinality < LLMRefinement.TRANSACTION_ID_MIN_CARDINALITY:
+                    return False, f"Transaction ID has too low cardinality ({cardinality:g})"
 
-        # Constant should have cardinality = 1
-        if semantic_role in ("constant", "reserved", "padding"):
-            if cardinality > 3:
-                return False, f"Constant field has too high cardinality ({cardinality})"
+            # Constant should have cardinality = 1
+            if semantic_role in ("constant", "reserved", "padding"):
+                if cardinality > LLMRefinement.CONSTANT_MAX_CARDINALITY:
+                    return False, f"Constant field has too high cardinality ({cardinality:g})"
 
     return True, "Valid semantic label"
+
+
+def usable_encoding_type(encoding_type: Any, field_length: Any) -> Optional[str]:
+    """Return an LLM-supplied encoding only when it adds information.
+
+    The generic ``bytes`` says nothing the field width does not already say,
+    and would replace a width-derived integer type downstream. A fixed-width
+    integer type that disagrees with the field width contradicts the boundary
+    the label was attached to. Both are dropped.
+    """
+    token = str(encoding_type or "").strip()
+    if not token or token == "bytes":
+        return None
+    for prefix, width in _INTEGER_WIDTHS.items():
+        if token.startswith(prefix):
+            try:
+                return token if int(field_length) == width else None
+            except (TypeError, ValueError):
+                return None
+    return token
 
 
 def apply_semantic_labels(
     fields: List[Dict[str, Any]],
     labels: List[Dict[str, Any]],
     min_confidence: float = 0.5,
+    field_statistics: Optional[Dict[str, Any]] = None,
 ) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
     Apply validated semantic labels to fields.
@@ -190,6 +219,8 @@ def apply_semantic_labels(
         fields: Current field definitions
         labels: LLM semantic label suggestions
         min_confidence: Minimum confidence threshold
+        field_statistics: Per-field statistics (``field_<index>`` keys) the
+            labels are checked against
 
     Returns:
         (updated_fields, validation_log) tuple
@@ -201,7 +232,7 @@ def apply_semantic_labels(
     sorted_labels = sorted(labels, key=lambda l: l.get("confidence", 0.0), reverse=True)
 
     for label in sorted_labels:
-        is_valid, reason = validate_semantic_label(label, fields, None, min_confidence)
+        is_valid, reason = validate_semantic_label(label, fields, field_statistics, min_confidence)
 
         log_entry = {
             "label": label,
@@ -232,7 +263,10 @@ def apply_semantic_label_to_field(field: Dict[str, Any], label: Dict[str, Any]) 
     attributes = dict(attributes)
     original_field_type = field.get("field_type")
     semantic_role = label["semantic_role"]
-    encoding_type = label.get("encoding_type") or label.get("field_type")
+    encoding_type = usable_encoding_type(
+        label.get("encoding_type") or label.get("field_type"),
+        field.get("length", field.get("width")),
+    )
     human_label = label.get("human_label") or label.get("label") or semantic_role
 
     field["semantic_role"] = semantic_role
@@ -339,7 +373,7 @@ def run_semantic_labeling_stage(
 
         # Validate and apply labels
         updated_fields, validation_log = apply_semantic_labels(
-            fields, labels, config.min_confidence
+            fields, labels, config.min_confidence, evidence.get("field_statistics")
         )
 
         applied_count = sum(1 for log in validation_log if log.get("applied", False))

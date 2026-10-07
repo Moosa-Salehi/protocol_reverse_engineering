@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+from protocol_re.config.thresholds import LLMRefinement
 from protocol_re.llm.multi_stage import StageConfig, StageResult, LLMStage, load_prompt_template
 from protocol_re.llm.analyze import LLMAPIError, LLMRequestConfig, call_openai_compatible_chat_with_raw, extract_message_json
 from protocol_re.llm.stage_errors import LLM_API_ERROR_CATEGORY
@@ -211,6 +212,7 @@ def apply_merge_suggestions(
 def apply_boundary_list(
     fields: List[Dict[str, Any]],
     boundaries: List[Any],
+    protect_confidence: Optional[float] = LLMRefinement.MERGE_PROTECT_CONFIDENCE,
 ) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Merge existing adjacent fields to match a direct boundary list.
 
@@ -223,6 +225,10 @@ def apply_boundary_list(
     2. applies the request per edge: edges shared with stage-07 field edges are
        honored by merging/keeping spans; unknown interior edges are dropped so
        the underlying field (whose edge they bisect) survives intact.
+    3. keeps every edge that touches a field stage 07 is confident in
+       (``confidence >= protect_confidence``), even when the request omits it:
+       the request can merge weak fields, not overrule strong statistical
+       evidence. ``protect_confidence=None`` disables this.
 
     The result is always a partition of the original fields, so a single bad
     edge can no longer throw away the good ones.
@@ -253,6 +259,15 @@ def apply_boundary_list(
     invalid = [value for value in clamped if value not in existing_edges]
     kept = [value for value in clamped if value in existing_edges]
 
+    protected: List[int] = []
+    if protect_confidence is not None:
+        confident_edges: set[int] = set()
+        for field, start, width in zip(fields, starts, widths):
+            if float(field.get("confidence", 0.0) or 0.0) >= protect_confidence:
+                confident_edges.update((start, start + width))
+        protected = sorted(confident_edges - set(kept))
+        kept = sorted({*kept, *protected})
+
     updated = []
     for start, end in zip(kept, kept[1:]):
         members = [field for field, field_start, width in zip(fields, starts, widths)
@@ -274,6 +289,9 @@ def apply_boundary_list(
     if invalid:
         log_entry["dropped_edges"] = invalid
         log_entry["reason"] = f"accepted existing field edges {kept}; dropped unknown edges {invalid}"
+    if protected:
+        log_entry["protected_edges"] = protected
+        log_entry["reason"] += f"; kept edges of high-confidence fields {protected}"
     padded = [edge for edge in (0, final_end) if edge not in requested]
     if padded:
         log_entry["padded_edges"] = padded

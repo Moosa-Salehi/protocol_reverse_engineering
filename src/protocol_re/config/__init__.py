@@ -15,6 +15,7 @@ from protocol_re.config.thresholds import (
     KeywordDetection,
     LayerDetection,
     LLMEvidence,
+    LLMRefinement,
     NeuralModel,
     RequestResponseRelations,
 )
@@ -29,6 +30,7 @@ __all__ = [
     "KeywordDetection",
     "LayerDetection",
     "LLMEvidence",
+    "LLMRefinement",
     "NeuralModel",
     "RequestResponseRelations",
 ]

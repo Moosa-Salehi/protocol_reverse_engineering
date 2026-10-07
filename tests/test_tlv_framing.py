@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -361,3 +364,103 @@ def test_opcode_scoped_protocols_still_filtered_by_capture():
     # FC1 matched; FC2/FC3 out of scope: 0 false negatives, perfect precision.
     assert metrics["false_negatives"] == 0
     assert metrics["precision"] == 1.0
+
+
+# ---------------------------------------------------------------------------
+# Evaluator: tag-keyed field matching, not-applicable metrics, corpus scope
+# ---------------------------------------------------------------------------
+
+def _tlv_model_and_truth():
+    family = {
+        "family_id": "family_0",
+        "role": "unknown",
+        "field_hypotheses": [
+            {"start": 0, "length": 2, "field_type": "uint16", "confidence": 0.99},
+            {"start": 2, "length": 1, "field_type": "uint8", "confidence": 0.99, "attributes": {"value_hex": "61"}},
+            # Elements sit wherever the preceding lengths put them.
+            {"start": 4, "length": 20, "field_type": "bytes", "confidence": 0.9, "attributes": {"tlv_tag": "128", "tlv_tag_hex": "0x80"}},
+            {"start": 24, "length": 4, "field_type": "uint16", "confidence": 0.9, "attributes": {"tlv_tag": "129", "tlv_tag_hex": "0x81"}},
+        ],
+        "framing_summary": {"layout_hypotheses": [{"header_start": 0, "header_end": 2, "body_start": 2, "confidence": 0.9, "evidence": {}}]},
+    }
+    truth = [
+        {"message_type_id": "hdr", "role": "header", "fields": [{"name": "appid", "start": 0, "length": 2, "field_type": "uint16"}]},
+        {
+            "message_type_id": "pdu",
+            "role": "notification",
+            "fields": [
+                {"name": "pdu_tag", "start": 0, "length": 1, "field_type": "uint8", "constant_value": 97},
+                {"name": "ref", "start": None, "length": None, "field_type": "string", "tlv_tag": "0x80"},
+                {"name": "ttl", "start": None, "length": 2, "field_type": "uint16", "tlv_tag": "0x81"},
+                {"name": "absent", "start": None, "length": 4, "field_type": "uint32", "tlv_tag": "0x85"},
+            ],
+        },
+    ]
+    model = {"predicted_protocol": {"families": [family], "relations": []}}
+    bundle = {"ground_truth_protocol": {"message_types": truth, "relations": []}}
+    return model, bundle
+
+
+def test_evaluator_matches_variable_offset_truth_fields_by_tlv_tag():
+    model, bundle = _tlv_model_and_truth()
+    report = eval_spec.evaluate_protocol_spec(model, bundle)
+    by_name = {item["ground_truth"]["field_name"]: item for item in report["matches"]["fields"]}
+    assert by_name["ref"]["match_key"] == "tlv_tag"
+    assert by_name["ref"]["predicted"]["start"] == 4
+    assert by_name["ttl"]["predicted"]["start"] == 24
+    assert by_name["ttl"]["boundary_score"] == 1.0
+    # A truth element nobody predicted stays a false negative, and is not
+    # confused with the matched fields that share its (missing) offset.
+    assert [item["field_name"] for item in report["unmatched"]["ground_truth_fields"]] == ["absent"]
+    assert report["metrics"]["field_boundary"]["false_negatives"] == 1
+
+
+def test_evaluator_leaves_empty_metrics_out_of_the_overall_score():
+    model, bundle = _tlv_model_and_truth()
+    report = eval_spec.evaluate_protocol_spec(model, bundle)
+    metrics = report["metrics"]
+    assert metrics["relations"]["applicable"] is False
+    expected = (
+        metrics["message_type_matching"]["f1_score"] * 0.30
+        + metrics["field_boundary"]["f1_score"] * 0.30
+        + metrics["field_semantics"]["f1_score"] * 0.25
+    ) / 0.85
+    assert report["summary"]["overall_score"] == pytest.approx(expected, abs=1e-5)
+
+
+def _write_corpus(path, rows):
+    with open(path, "w", encoding="utf-8") as handle:
+        for payload_hex, direction in rows:
+            handle.write(json.dumps({"payload_hex": payload_hex, "direction": direction}) + "\n")
+
+
+def test_corpus_scope_is_independent_of_the_prediction(tmp_path):
+    truth = [
+        {"message_type_id": "hdr", "role": "header", "fields": [{"name": "id", "start": 0, "length": 2, "field_type": "uint16"}]},
+        *[
+            {
+                "message_type_id": f"fc{n}",
+                "role": "request",
+                "fields": [{"name": "function_code", "start": 0, "length": 1, "field_type": "uint8", "constant_value": n}],
+            }
+            for n in (1, 2, 3)
+        ],
+    ]
+    corpus = tmp_path / "messages.jsonl"
+    # FC1 and FC2 are real traffic; FC3 is a single scan probe.
+    _write_corpus(corpus, [("000001", "client_to_server")] * 6 + [("000002", "server_to_client")] * 6 + [("000003", "client_to_server")])
+    scope = eval_spec.corpus_discriminator_scope(str(corpus), truth)
+    assert scope["header_length"] == 2
+    assert scope["present_discriminators"] == ["1", "2"]
+    assert scope["response_discriminators"] == ["2"]
+
+    bundle = {"ground_truth_protocol": {"message_types": truth, "relations": []}}
+    # A prediction that found nothing is still scored against FC1 and FC2.
+    empty = {"predicted_protocol": {"families": [], "relations": []}}
+    report = eval_spec.evaluate_protocol_spec(empty, bundle, scope)
+    assert report["truth_scope"]["source"] == "corpus"
+    assert report["truth_scope"]["in_scope_message_type_ids"] == ["fc1", "fc2", "hdr"]
+    assert report["metrics"]["message_type_matching"]["false_negatives"] == 3
+    # Without the corpus the same prediction scopes every opcode type away.
+    legacy = eval_spec.evaluate_protocol_spec(empty, bundle)
+    assert legacy["truth_scope"]["in_scope_message_type_ids"] == ["hdr"]
