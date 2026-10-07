@@ -38,6 +38,7 @@
         "message_type_matching": {"$ref": "#/$defs/prf_metrics"},
         "field_boundary": {"$ref": "#/$defs/prf_metrics"},
         "field_semantics": {"$ref": "#/$defs/prf_metrics"},
+        "field_roles": {"$ref": "#/$defs/prf_metrics"},
         "relations": {"$ref": "#/$defs/prf_metrics"}
       }
     },
@@ -67,6 +68,13 @@
         "ground_truth_message_types": {"type": "array", "items": {"type": "string"}},
         "predicted_fields": {"type": "array", "items": {"$ref": "#/$defs/field_ref"}},
         "ground_truth_fields": {"type": "array", "items": {"$ref": "#/$defs/field_ref"}}
+      }
+    },
+    "truth_scope": {
+      "type": "object",
+      "properties": {
+        "source": {"enum": ["corpus", "prediction"]},
+        "in_scope_message_type_ids": {"type": "array", "items": {"type": "string"}}
       }
     },
     "notes": {

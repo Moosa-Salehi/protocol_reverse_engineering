@@ -464,3 +464,84 @@ def test_corpus_scope_is_independent_of_the_prediction(tmp_path):
     # Without the corpus the same prediction scopes every opcode type away.
     legacy = eval_spec.evaluate_protocol_spec(empty, bundle)
     assert legacy["truth_scope"]["in_scope_message_type_ids"] == ["hdr"]
+
+
+def test_detect_tlv_framing_rejects_fixed_layouts_that_parse_by_coincidence():
+    # Modbus read responses, as captured: MBAP header, unit id, then
+    # "04 02 xx xx" (function code 4, byte count 2, one register) or
+    # "01 01 00" (function code 1, byte count 1, one coil byte). Both parse as
+    # a complete TLV chain in every message, with a length that never varies
+    # and a single value-carrying tag.
+    fc4 = [n.to_bytes(2, "big") + bytes([0, 0, 0, 5, 1, 4, 2]) + (n * 7 % 65536).to_bytes(2, "big") for n in range(1, 200)]
+    fc1 = [n.to_bytes(2, "big") + bytes([0, 0, 0, 4, 1, 1, 1, 0]) for n in range(1, 200)]
+    assert detect_tlv_framing(fc4) is None
+    assert detect_tlv_framing(fc1) is None
+    # A fixed 16-byte register block: its data bytes read as many different
+    # "tags" with constant lengths, so no tag sequence is shared.
+    block = [
+        n.to_bytes(2, "big") + bytes([0, 0, 0, 0x13, 1, 4, 0x10])
+        + bytes([0x5A, 0, 0, 0, 0, 0x28 + n % 5, 2, n % 251, n % 7, 0x79 + n % 4, 2, 0, n % 3, 0x82 + n % 2, 1, 3])
+        for n in range(1, 400)
+    ]
+    assert detect_tlv_framing(block) is None
+
+
+def test_detect_tlv_framing_accepts_single_tag_when_its_length_varies():
+    # One value-carrying tag is enough once its length moves with the message.
+    messages = [b"\xaa\xbb" + _ber(0x80, b"x" * (1 + n % 7)) + _ber(0x81, b"") for n in range(40)]
+    detection = detect_tlv_framing(messages)
+    assert detection is not None
+    assert detection.evidence["variable_length_tags"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Evaluator: field_roles
+# ---------------------------------------------------------------------------
+
+def _role_model(roles):
+    """One family with a 2-byte header and three 1-byte body fields carrying ``roles``."""
+    fields = [{"start": 0, "length": 2, "field_type": "uint16", "confidence": 0.9}]
+    for index, role in enumerate(roles):
+        field = {"start": 2 + index, "length": 1, "field_type": "uint8", "confidence": 0.9}
+        if role:
+            field["attributes"] = {"semantic_role": role}
+        fields.append(field)
+    family = {
+        "family_id": "family_0",
+        "role": "request",
+        "field_hypotheses": fields,
+        "framing_summary": {"layout_hypotheses": [{"header_start": 0, "header_end": 2, "body_start": 2, "confidence": 0.9, "evidence": {}}]},
+    }
+    return {"predicted_protocol": {"families": [family], "relations": []}}
+
+
+def _role_truth(with_roles=True):
+    names = [("function_code", "function_code"), ("byte_count", "byte_count"), ("unit", "unit_id")]
+    fields = []
+    for index, (name, role) in enumerate(names):
+        field = {"name": name, "start": index, "length": 1, "field_type": "uint8"}
+        if with_roles:
+            field["semantic_role"] = role
+        fields.append(field)
+    return {"ground_truth_protocol": {"message_types": [{"message_type_id": "req", "role": "request", "fields": fields}], "relations": []}}
+
+
+def test_field_roles_compares_role_classes_not_types():
+    # opcode is the same class as function_code; "constant" is a true but
+    # non-semantic description; the third field carries no role at all.
+    report = eval_spec.evaluate_protocol_spec(_role_model(["opcode", "constant", None]), _role_truth())
+    roles = report["metrics"]["field_roles"]
+    assert (roles["true_positives"], roles["false_positives"], roles["false_negatives"]) == (1, 1, 2)
+    # Every type is right, so the type-based metric cannot tell these apart.
+    assert report["metrics"]["field_semantics"]["true_positives"] == 3
+
+    better = eval_spec.evaluate_protocol_spec(_role_model(["function_code", "length", "device_id"]), _role_truth())
+    assert better["metrics"]["field_roles"]["f1_score"] == 1.0
+    assert better["metrics"]["field_semantics"] == report["metrics"]["field_semantics"]
+    # Reported separately: the overall score does not move with it.
+    assert better["summary"]["overall_score"] == report["summary"]["overall_score"]
+
+
+def test_field_roles_not_applicable_without_truth_roles():
+    report = eval_spec.evaluate_protocol_spec(_role_model(["opcode", "length", "unit_id"]), _role_truth(with_roles=False))
+    assert report["metrics"]["field_roles"]["applicable"] is False

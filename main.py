@@ -1117,6 +1117,7 @@ COMPARE_METRIC_KEYS = (
     "message_type_matching",
     "field_boundary",
     "field_semantics",
+    "field_roles",
     "relations",
 )
 
@@ -1147,7 +1148,9 @@ def _eval_summary(report_path: Path) -> dict:
         report = json.load(handle)
     summary = {"overall_score": round(report["summary"]["overall_score"], 4), "verdict": report["summary"]["verdict"]}
     for key in COMPARE_METRIC_KEYS:
-        metrics = report["metrics"][key]
+        metrics = report["metrics"].get(key)
+        if metrics is None:
+            continue  # report written before this metric existed
         summary[f"{key}.f1"] = round(metrics["f1_score"], 4)
         summary[f"{key}.precision"] = round(metrics["precision"], 4)
         summary[f"{key}.recall"] = round(metrics["recall"], 4)
@@ -1258,7 +1261,12 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
         },
         "delta": {},
     }
-    for key in ("overall_score", *(f"{metric}.f1" for metric in COMPARE_METRIC_KEYS)):
+    compared_keys = [
+        key
+        for key in ("overall_score", *(f"{metric}.f1" for metric in COMPARE_METRIC_KEYS))
+        if key in full_summary and key in no_llm_summary
+    ]
+    for key in compared_keys:
         comparison["delta"][key] = round(full_summary[key] - no_llm_summary[key], 4)
     llm_direction = "helped" if comparison["delta"]["overall_score"] > 0 else "hurt" if comparison["delta"]["overall_score"] < 0 else "neutral"
     comparison["llm_contribution"] = (
@@ -1279,7 +1287,7 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
     header = f"{'metric':34s} {'full':>10s} {'no-llm':>10s} {'delta':>10s}"
     print(header)
     print("-" * len(header))
-    for key in ("overall_score", *(f"{metric}.f1" for metric in COMPARE_METRIC_KEYS)):
+    for key in compared_keys:
         print(f"{key:34s} {full_summary[key]:>10.4f} {no_llm_summary[key]:>10.4f} {comparison['delta'][key]:>+10.4f}")
     print(f"\n{comparison['llm_contribution']}")
     print(f"{GREEN}Reports:{RESET}")

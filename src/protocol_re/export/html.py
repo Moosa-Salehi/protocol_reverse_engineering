@@ -1519,12 +1519,15 @@ def _truth_comparison_block(
         defs = [
             ("message_type_matching", "Msg types", "Did each ground-truth message type get a matching discovered family? F1 of the type-level matching."),
             ("field_boundary", "Field bounds", "Were field byte-offsets/lengths recovered correctly? F1 over field boundary matches."),
-            ("field_semantics", "Field meaning", "Were field roles/types labelled correctly (e.g. function_code, length)? F1 over semantic labels."),
+            ("field_semantics", "Field types", "Were field encodings recovered correctly (e.g. uint8, uint16, bytes)? F1 over matched fields."),
+            ("field_roles", "Field roles", "Were fields given the right role (e.g. function_code, length, transaction_id)? F1 over truth fields that declare a role. Not part of the overall score."),
             ("relations", "Relations", "Were request↔response relationships recovered? F1 over relation edges."),
         ]
         gauges = []
         for key, label, tip in defs:
             block = metrics.get(key, {}) or {}
+            if key == "field_roles" and (not block or block.get("applicable") is False):
+                continue  # older report, or a truth file that declares no roles
             f1 = block.get("f1_score", 0.0)
             extra = (
                 f"{tip}  |  precision {_num(block.get('precision', 0))}, "
@@ -1543,6 +1546,7 @@ def _truth_comparison_block(
             ("message_type_matching", "Message types"),
             ("field_boundary", "Field boundaries"),
             ("field_semantics", "Field semantics"),
+            ("field_roles", "Field roles"),
             ("relations", "Relations"),
         ]
         trows = []

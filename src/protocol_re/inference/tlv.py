@@ -199,10 +199,13 @@ def _parse_ratio(messages: Sequence[bytes], header_length: int, limit: int) -> f
 
 def _tree_stats(
     messages: Sequence[bytes], header_length: int, limit: int
-) -> Tuple[Counter[int], Counter[Tuple[int, ...]], float, int]:
-    """Tag/sequence statistics from tree parses, plus wrapper-descent ratio."""
+) -> Tuple[Counter[int], Counter[Tuple[int, ...]], float, int, int, int]:
+    """Tag/sequence statistics from tree parses, plus wrapper-descent ratio, the
+    number of tags whose value length varies across messages, and the number of
+    tags that carry a non-empty value."""
     tag_counts: Counter[int] = Counter()
     sequences: Counter[Tuple[int, ...]] = Counter()
+    value_lengths: Dict[int, set[int]] = {}
     parsed = 0
     wrapped = 0
     for payload in messages[:limit]:
@@ -213,9 +216,15 @@ def _tree_stats(
         if view.wrapper is not None:
             wrapped += 1
         tag_counts.update(element.tag for element in view.elements)
-        sequences.update(tuple(element.tag for element in view.elements))
+        # Count the sequence as one key (Counter.update on a tuple would count
+        # its individual tags instead).
+        sequences[tuple(element.tag for element in view.elements)] += 1
+        for element in view.elements:
+            value_lengths.setdefault(element.tag, set()).add(element.value_length)
     wrapper_ratio = wrapped / parsed if parsed else 0.0
-    return tag_counts, sequences, wrapper_ratio, parsed
+    variable_length_tags = sum(1 for lengths in value_lengths.values() if len(lengths) > 1)
+    value_tags = sum(1 for lengths in value_lengths.values() if max(lengths) > 0)
+    return tag_counts, sequences, wrapper_ratio, parsed, variable_length_tags, value_tags
 
 
 def detect_tlv_framing(
@@ -233,9 +242,11 @@ def detect_tlv_framing(
     too-small header turns header bytes into degenerate top-level elements and
     blocks the descent), then by tag-vocabulary richness, then smallest header.
     The verdict additionally requires a plausible tag alphabet
-    (``MIN_DISTINCT_TAGS``..``MAX_DISTINCT_TAGS``) and a non-degenerate sequence
+    (``MIN_DISTINCT_TAGS``..``MAX_DISTINCT_TAGS``), a non-degenerate sequence
     cardinality (a self-describing protocol repeats tag sequences; payload
-    bytes do not).
+    bytes do not), and proof that the parse is not a coincidence of a fixed
+    layout: a value length that varies, or enough distinct tags carrying
+    values (see ``TlvFraming.MIN_VARIABLE_LENGTH_TAGS``).
     """
     cleaned = [bytes(message) for message in messages if message]
     if len(cleaned) < _TF.MIN_MESSAGES_FOR_TAG_VOCABULARY:
@@ -251,12 +262,18 @@ def detect_tlv_framing(
     if not candidates:
         return None
 
-    scored: List[Tuple[float, float, int, int, Counter[int], Counter[Tuple[int, ...]], int]] = []
+    scored: List[Tuple[float, float, int, int, Counter[int], Counter[Tuple[int, ...]], int, int, int]] = []
     for header_length, ratio in candidates:
-        tag_counts, sequences, wrapper_ratio, parsed = _tree_stats(cleaned, header_length, sample_cap)
-        scored.append((ratio, wrapper_ratio, len(tag_counts), header_length, tag_counts, sequences, parsed))
+        tag_counts, sequences, wrapper_ratio, parsed, variable_length_tags, value_tags = _tree_stats(
+            cleaned, header_length, sample_cap
+        )
+        scored.append(
+            (ratio, wrapper_ratio, len(tag_counts), header_length, tag_counts, sequences, parsed, variable_length_tags, value_tags)
+        )
     # Prefer: full parse, wrapper descent, richer tag vocabulary, smallest header.
-    ratio, wrapper_ratio, _tags, header_length, tag_counts, sequences, parsed = max(scored, key=lambda item: item[:4])
+    ratio, wrapper_ratio, _tags, header_length, tag_counts, sequences, parsed, variable_length_tags, value_tags = max(
+        scored, key=lambda item: item[:4]
+    )
 
     # Wrapper-consistency gate: a real TLV protocol either always wraps the
     # body in one constructed element or never does. A mid-range ratio means
@@ -271,6 +288,13 @@ def detect_tlv_framing(
     max_sequences = max(1, int(_TF.MAX_SEQUENCE_CARDINALITY_RATIO * max(parsed, 1)))
     if len(sequences) > max_sequences:
         return None
+    dominant_sequence_share = sequences.most_common(1)[0][1] / parsed if parsed and sequences else 0.0
+    fixed_layout_proof = (
+        value_tags >= _TF.MIN_FIXED_LAYOUT_VALUE_TAGS
+        and dominant_sequence_share >= _TF.MIN_FIXED_LAYOUT_SEQUENCE_SHARE
+    )
+    if variable_length_tags < _TF.MIN_VARIABLE_LENGTH_TAGS and not fixed_layout_proof:
+        return None
 
     return TlvFramingDetection(
         header_length=header_length,
@@ -282,6 +306,9 @@ def detect_tlv_framing(
         evidence={
             "candidate_header_lengths": sorted(header for header, _ in candidates),
             "wrapper_ratio": round(wrapper_ratio, 4),
+            "variable_length_tags": variable_length_tags,
+            "value_tags": value_tags,
+            "dominant_sequence_share": round(dominant_sequence_share, 4),
         },
     )
 

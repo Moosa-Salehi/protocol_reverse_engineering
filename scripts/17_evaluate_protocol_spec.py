@@ -73,6 +73,42 @@ ROLE_TYPE_EQUIVALENTS = {
 }
 
 
+# Role classes for the field_roles metric. Predicted roles and the truth files'
+# ``semantic_role`` values are compared by class, so naming variants of one
+# idea (function_code / opcode) agree while a merely descriptive label
+# (``constant`` on a function-code byte) does not.
+ROLE_CLASSES = {
+    "transaction_id": {"transaction_id", "correlation_id", "counter_or_transaction_id"},
+    "length": {"length", "byte_count"},
+    "opcode": {"function_code", "opcode", "discriminator"},
+    "address": {"address", "address_like"},
+    "unit_id": {"unit_id", "device_id"},
+    "quantity": {"quantity", "count", "count_like"},
+    "status": {"status", "error_code"},
+    "constant": {"constant", "reserved", "padding"},
+    "payload": {"payload", "data", "value", "blob"},
+    "sequence_number": {"sequence_number", "counter"},
+    "timestamp": {"timestamp"},
+    "checksum": {"checksum", "crc"},
+    "flags": {"flags", "bitfield"},
+}
+_ROLE_CLASS_BY_TOKEN = {token: role_class for role_class, tokens in ROLE_CLASSES.items() for token in tokens}
+
+
+def _role_class(value: Any) -> str | None:
+    return _ROLE_CLASS_BY_TOKEN.get(_norm(value))
+
+
+def _truth_role_class(field: Dict[str, Any]) -> str | None:
+    """Role class of a truth field; None when the truth file leaves it unscored."""
+    return _role_class(field.get("semantic_role"))
+
+
+def _predicted_role_class(field: Dict[str, Any]) -> str | None:
+    """Role class the model assigned to a predicted field, if any."""
+    return _role_class(_attributes(field).get("semantic_role") or field.get("semantic_role"))
+
+
 def _attributes(field: Dict[str, Any]) -> Dict[str, Any]:
     attributes = field.get("attributes")
     return attributes if isinstance(attributes, dict) else {}
@@ -529,6 +565,8 @@ def _field_matches(
                     "ground_truth": ground_truth_ref,
                     "boundary_score": 1.0,
                     "semantic_score": _semantic_score(predicted, truth),
+                    "predicted_role": _predicted_role_class(predicted),
+                    "ground_truth_role": _truth_role_class(truth),
                     "offset_shift": offset_shift,
                     "match_key": "tlv_tag",
                 }
@@ -558,6 +596,8 @@ def _field_matches(
                     "ground_truth": _field_ref(truth_id, truth, f"field_{t_index}"),
                     "boundary_score": _interval_score(predicted_for_match, truth),
                     "semantic_score": _semantic_score(predicted, truth),
+                    "predicted_role": _predicted_role_class(predicted),
+                    "ground_truth_role": _truth_role_class(truth),
                     "offset_shift": offset_shift,
                 }
             )
@@ -718,6 +758,8 @@ def _header_field_matches(
                     "ground_truth": _field_ref(header_match["ground_truth_message_type_id"], truth, f"field_{t_index}"),
                     "boundary_score": _interval_score(predicted, truth),
                     "semantic_score": _semantic_score(predicted, truth),
+                    "predicted_role": _predicted_role_class(predicted),
+                    "ground_truth_role": _truth_role_class(truth),
                     "offset_shift": 0,
                 }
             )
@@ -825,21 +867,38 @@ def evaluate_protocol_spec(
         item["predicted_family_id"]: item["ground_truth_message_type_id"]
         for item in pdu_message_matches
     }
-    predicted_field_total = 0
+    scored_predicted_fields: List[Dict[str, Any]] = []
     for family in families:
         family_id = str(family.get("family_id"))
         truth_id = matched_truth_by_family.get(family_id)
         truth_type = truth_by_id.get(truth_id) if truth_id is not None else None
         if truth_type is None:
-            predicted_field_total += len(family.get("field_hypotheses", []) or [])
+            scored_predicted_fields.extend(family.get("field_hypotheses", []) or [])
         else:
-            predicted_field_total += len(_comparable_predicted_fields(family, truth_type))
+            scored_predicted_fields.extend(_comparable_predicted_fields(family, truth_type))
     for header_match in header_message_matches:
         carrier_id = header_match["predicted_family_id"]
         if carrier_id in matched_truth_by_family:
-            predicted_field_total += len(_header_region_fields(families_by_id.get(carrier_id) or {}))
+            scored_predicted_fields.extend(_header_region_fields(families_by_id.get(carrier_id) or {}))
+    predicted_field_total = len(scored_predicted_fields)
     truth_field_total = sum(len((message_type.get("fields", []) or [])) for message_type in truth_types)
     semantic_tp = sum(1 for item in field_matches if float(item.get("semantic_score", 0.0) or 0.0) >= 0.5)
+
+    # Role naming: of the truth fields that declare a ``semantic_role``, how
+    # many were located and given a role of the same class. A predicted field
+    # with no classifiable role makes no claim, so it is not a false positive.
+    predicted_role_total = sum(1 for field in scored_predicted_fields if _predicted_role_class(field))
+    truth_role_total = sum(
+        1
+        for message_type in truth_types
+        for field in message_type.get("fields", []) or []
+        if _truth_role_class(field)
+    )
+    role_tp = sum(
+        1
+        for item in field_matches
+        if item.get("ground_truth_role") and item.get("predicted_role") == item.get("ground_truth_role")
+    )
 
     matched_family_ids = {item["predicted_family_id"] for item in message_matches}
     matched_truth_ids = {item["ground_truth_message_type_id"] for item in message_matches}
@@ -850,6 +909,10 @@ def evaluate_protocol_spec(
     )
     boundary_metrics = _prf(len(field_matches), max(0, predicted_field_total - len(field_matches)), max(0, truth_field_total - len(field_matches)))
     semantic_metrics = _prf(semantic_tp, max(0, predicted_field_total - semantic_tp), max(0, truth_field_total - semantic_tp))
+    role_metrics = _prf(role_tp, max(0, predicted_role_total - role_tp), max(0, truth_role_total - role_tp))
+    if not truth_role_total:
+        # The truth file declares no roles: nothing to measure against.
+        role_metrics = {**_prf(0, 0, 0), "applicable": False}
     relation_metrics = _prf(len(relation_matches), max(0, len(predicted_relations) - len(relation_matches)), max(0, len(truth_relations) - len(relation_matches)))
     
     # Weighted overall score. Metrics that are not applicable (nothing predicted
@@ -910,6 +973,7 @@ def evaluate_protocol_spec(
             "message_type_matching": message_metrics,
             "field_boundary": boundary_metrics,
             "field_semantics": semantic_metrics,
+            "field_roles": role_metrics,
             "relations": relation_metrics,
         },
         "matches": {
@@ -926,6 +990,7 @@ def evaluate_protocol_spec(
         "notes": [
             "Message type matching uses protocol-agnostic token, role, and field-count similarity.",
             "Field boundary matching uses byte-range overlap; semantic matching compares normalized field labels/types.",
+            "field_roles compares role classes (ROLE_CLASSES) on truth fields that declare semantic_role; it is reported separately and is not part of overall_score.",
         ],
     }
 

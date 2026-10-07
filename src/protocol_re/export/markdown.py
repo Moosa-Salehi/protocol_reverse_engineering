@@ -217,6 +217,7 @@ def _final_evaluation_section(final_evaluation: Optional[Dict[str, object]]) -> 
         ("Message type matching", "message_type_matching"),
         ("Field boundary", "field_boundary"),
         ("Field semantics", "field_semantics"),
+        ("Field roles", "field_roles"),
         ("Relations", "relations"),
     ]:
         metric = metrics.get(key, {}) or {}

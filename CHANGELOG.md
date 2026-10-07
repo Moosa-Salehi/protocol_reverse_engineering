@@ -20,6 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the predicted families. `main.py` passes it for the main and the no-LLM evaluation, so
   both are scored against the same truth types.
 - `LLMRefinement` thresholds in `config/thresholds.py`.
+- `field_roles` evaluation metric: of the truth fields that declare a `semantic_role`, how
+  many were located and given a role of the same class (`ROLE_CLASSES` in stage 17, e.g.
+  `function_code`/`opcode`/`discriminator`). Reported next to the other metrics, in the
+  `--compare-no-llm` table and in the HTML/Markdown reports; it is not part of
+  `overall_score`. `truth_files/modbus.json` and `truth_files/goose.json` now declare roles
+  on the fields where the role is unambiguous.
+- TLV coincidence guard (`TlvFraming.MIN_VARIABLE_LENGTH_TAGS`,
+  `MIN_FIXED_LAYOUT_VALUE_TAGS`, `MIN_FIXED_LAYOUT_SEQUENCE_SHARE`): a TLV verdict needs a
+  value length that varies across messages, or a fixed layout with at least three
+  value-carrying tags in one shared tag sequence.
 
 ### Changed
 - A metric with nothing predicted and nothing expected is reported with
@@ -31,6 +41,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a constant 0.99.
 
 ### Fixed
+- TLV mode misfired on fixed-layout Modbus response families (`04 02 xx xx` parses as tag 4,
+  length 2), replacing correct boundaries with overlapping TLV fields: field-boundary F1
+  1.00 -> 0.94 on one corpus and 0.89 -> 0.52 on another. Both are restored.
+- TLV tag-sequence statistics counted individual tags instead of sequences, so
+  `sequence_count` equalled the tag count and the sequence-cardinality gate never applied.
+- Stage 11b did not write the merged semantics file when no LLM label was applied, and
+  stage 12 then failed.
 - Variable-offset truth fields (`start: null`) were compared as if they sat at offset 0, so
   correctly parsed TLV elements could never match.
 - Semantic labels were validated without field statistics, so the cardinality checks never

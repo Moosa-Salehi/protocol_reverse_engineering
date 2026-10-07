@@ -640,6 +640,26 @@ class TlvFraming:
     # likely just payload bytes, not a protocol vocabulary.
     MAX_DISTINCT_TAGS: int = 64
 
+    # Coincidence guard. A fixed layout whose bytes happen to line up parses
+    # as TLV in every message at once: a Modbus read response ``04 02 xx xx``
+    # reads as tag 4, length 2, and with the header length free to slide over
+    # 0..MAX_HEADER_SCAN some suffix nearly always parses. On the evaluated
+    # Modbus corpus this turned two response families into TLV and cost 0.06
+    # field-boundary F1. A verdict therefore needs one of two kinds of proof:
+    #   - at least MIN_VARIABLE_LENGTH_TAGS tags whose value length varies
+    #     across messages while every chain still ends exactly on the message
+    #     end, which a fixed layout cannot do; or
+    #   - a fixed layout with at least MIN_FIXED_LAYOUT_VALUE_TAGS distinct tags
+    #     carrying a non-empty value, in one tag sequence shared by at least
+    #     MIN_FIXED_LAYOUT_SEQUENCE_SHARE of the messages. Zero-length elements
+    #     do not count: any ``xx 00`` byte pair parses as one. The shared
+    #     sequence matters because with every length fixed the tags sit at
+    #     fixed offsets, so tags that differ between messages are data bytes
+    #     (seen on a 16-byte Modbus register block read as 20 different tags).
+    MIN_VARIABLE_LENGTH_TAGS: int = 1
+    MIN_FIXED_LAYOUT_VALUE_TAGS: int = 3
+    MIN_FIXED_LAYOUT_SEQUENCE_SHARE: float = 0.95
+
     # Bytes scanned for the constant header prefix before the TLV chain.
     MAX_HEADER_SCAN: int = 32
 
