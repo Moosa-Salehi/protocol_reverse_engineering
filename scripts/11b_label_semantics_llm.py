@@ -437,7 +437,9 @@ def main() -> None:
     # to outrank a lower-confidence LLM guess on the same span.
     merged_path = Path(args.merged_semantics_json) if args.merged_semantics_json else None
     semantics_path = Path(args.semantics_json) if args.semantics_json else None
-    if llm_semantics and merged_path:
+    # The merged file is always written when requested: stage 12 reads it even
+    # when no consensus label survived, in which case it equals the heuristics.
+    if merged_path:
         merged_summary: Dict[str, Any] = {}
         if semantics_path and semantics_path.is_file():
             with open(semantics_path, "r", encoding="utf-8") as f:
