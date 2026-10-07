@@ -228,6 +228,11 @@ class FramingDetection:
     # Minimum match ratio for a candidate length field.
     LENGTH_MATCH_RATIO: float = 0.65
 
+    # Messages sampled per family for the corpus-level check of length fields
+    # found in fixed-length families (see framing._verify_length_fields). Equal
+    # per-family sampling keeps one large family from carrying the vote.
+    LENGTH_VERIFY_SAMPLE_PER_FAMILY: int = 200
+
     # Counter / transaction-id field detection thresholds.
     COUNTER_UNIQUE_RATIO_MIN: float = 0.45
     COUNTER_SCORE_MIN: float = 0.62
@@ -413,6 +418,12 @@ class FieldSemantics:
     DISCRIMINATOR_FRAMING_BOOST: float = 0.1
     DISCRIMINATOR_KEYWORD_BOOST: float = 0.05
     DISCRIMINATOR_MAX_CONFIDENCE: float = 0.95
+    # Confidence for the field at the corpus-wide discriminator that family
+    # refinement keyed the families on. Inside one such family that byte is
+    # constant by construction, so the per-family statistics can only call it
+    # "constant" (0.99); the cross-family evidence that it is the type code is
+    # what made the families, and outranks that description.
+    GLOBAL_DISCRIMINATOR_CONFIDENCE: float = 1.0
     DISCRIMINATOR_FRAMING_BASE_CONFIDENCE: float = 0.7
     DISCRIMINATOR_KEYWORD_BASE_CONFIDENCE: float = 0.6
 
@@ -793,6 +804,27 @@ class FamilyRefinement:
     # 200K-message corpus.
     LOW_CARDINALITY_DOMINANCE_MIN: float = 0.60
     LATER_TYPE_MI_IMPROVEMENT_RATIO: float = 1.15
+
+    # Session-bound exclusion. A byte that takes several values across the corpus
+    # but stays fixed inside each long session identifies the endpoint the
+    # session talks to (a unit / node / device id), not the message type: a type
+    # code keeps changing as one session issues different commands. On the
+    # 200K-message multi-device capture the Unit-Id at offset 6 has
+    # H(value | session) / H(value) = 0.001 while the function code at offset 7
+    # has 0.57. The test needs no clustering labels, so it holds whatever the
+    # bootstrap families happen to track; it replaced a label-dependent floor
+    # that let the Unit-Id through once the bootstrap changed feature mode
+    # (message-type F1 0.97 -> 0.50 on that capture).
+    #   * Only sessions with at least SESSION_BOUND_MIN_MESSAGES messages count:
+    #     a two-message request/response session holds any echoed byte constant.
+    #   * Those sessions must cover SESSION_BOUND_MIN_COVERAGE of the messages
+    #     and number at least two, or the test does not apply.
+    #   * A session-bound candidate is dropped only while another candidate
+    #     remains, so a corpus where each session uses one command still
+    #     resolves.
+    SESSION_BOUND_MIN_MESSAGES: int = 16
+    SESSION_BOUND_MIN_COVERAGE: float = 0.5
+    SESSION_BOUND_MAX_ENTROPY_RATIO: float = 0.05
 
     # Cardinality window. Below MIN it is a constant (no discrimination); above
     # MAX it is an address / data / counter / transaction-id field, not a type

@@ -56,6 +56,7 @@ def summarize_semantics(
     framing_data: Optional[Dict[str, object]] = None,
     features_data: Optional[Dict[str, object]] = None,
     keywords_data: Optional[Dict[str, object]] = None,
+    global_discriminator: Optional[Tuple[int, int]] = None,
 ) -> Dict[str, object]:
     """
     Enhanced semantic labeling with protocol-agnostic inference.
@@ -66,6 +67,8 @@ def summarize_semantics(
         framing_data: Optional framing data from stage 05
         features_data: Optional feature data from stage 06
         keywords_data: Optional keyword/discriminator data from stage 09
+        global_discriminator: Optional (offset, width) of the corpus-wide type
+            code that stage 04 family refinement keyed the families on
 
     Returns:
         Dictionary mapping family_id to semantic summary
@@ -114,7 +117,7 @@ def summarize_semantics(
 
         # 1. Discriminator/opcode fields
         hypotheses.extend(infer_discriminator_fields(
-            fields, framing_summary, keyword_summary, feature_summary
+            fields, framing_summary, keyword_summary, feature_summary, global_discriminator
         ))
 
         # 2. Length fields

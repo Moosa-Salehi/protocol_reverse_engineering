@@ -320,6 +320,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(family_features_json),
                     "--keywords-json",
                     _path(keywords_json),
+                    "--assignments-json",
+                    _path(assignments_json),
                 ],
             ),
         ])
@@ -1188,6 +1190,8 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
     # Pristine heuristic baseline: rerun stage 11 on the raw families so the
     # baseline semantics carry no LLM consensus labels (the run's
     # 09_semantics.json is LLM-contaminated by stage 11b's in-place merge).
+    assignments_json = data_dir / "02_family_assignments.json"
+    assignments_args = ["--assignments-json", _path(assignments_json)] if assignments_json.is_file() else []
     _run_compare_step(
         "11_infer_semantics (no-LLM)",
         [
@@ -1198,6 +1202,7 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
             "--framing-json", _path(data_dir / "04_framing.json"),
             "--features-json", _path(data_dir / "03_family_features.json"),
             "--keywords-json", _path(data_dir / "07_keywords.json"),
+            *assignments_args,
             "--log-dir", log_dir_arg,
         ],
         logger,

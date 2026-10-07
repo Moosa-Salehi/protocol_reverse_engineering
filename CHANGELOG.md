@@ -31,6 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   value length that varies across messages, or a fixed layout with at least three
   value-carrying tags in one shared tag sequence.
 
+- Session-bound exclusion in discriminator detection (`FamilyRefinement.SESSION_BOUND_*`):
+  a candidate byte that varies across the corpus but is fixed inside each long session is
+  an endpoint identifier, not a type code, and is dropped while another candidate remains.
+- Stage 11 `--assignments-json`: the field at the corpus-wide discriminator that family
+  refinement keyed the families on is labelled as the opcode/discriminator in every family
+  (`FieldSemantics.GLOBAL_DISCRIMINATOR_CONFIDENCE`), instead of `constant`.
+- Framing length regions carry `distinct_lengths` and `verified` evidence.
+
 ### Changed
 - A metric with nothing predicted and nothing expected is reported with
   `"applicable": false` and left out of the overall score; the remaining weights are
@@ -41,6 +49,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a constant 0.99.
 
 ### Fixed
+- Family refinement keyed a multi-device Modbus capture on the Unit-Id (offset 6) instead
+  of the function code (offset 7) once the bootstrap used neural features, because the
+  selection floor depended on the bootstrap labels.
+- A constant byte in a fixed-length family was labelled `length` whenever its value
+  happened to equal a length expression for that one message size (the Modbus function
+  code 0x04 in an 11-byte family). Such matches now need confirmation on a sample pooled
+  across families.
+- Stage 12 arbitrates LLM and heuristic labels by confidence, but a label stage 11b had
+  already written onto the field was never replaced by the winner, so a weaker LLM label
+  overrode a stronger heuristic one. The winner now replaces it.
 - TLV mode misfired on fixed-layout Modbus response families (`04 02 xx xx` parses as tag 4,
   length 2), replacing correct boundaries with overlapping TLV fields: field-boundary F1
   1.00 -> 0.94 on one corpus and 0.89 -> 0.52 on another. Both are restored.

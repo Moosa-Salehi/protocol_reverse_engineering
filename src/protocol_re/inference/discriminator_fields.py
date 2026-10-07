@@ -185,14 +185,24 @@ def detect_global_discriminator(
     """
     messages: List[bytes] = []
     labels: List[str] = []
+    sessions: List[str] = []
     for record in records:
         family_id = family_by_msg_id.get(record.msg_id)
         if family_id is None or family_id == "noise":
             continue
         messages.append(hex_to_bytes(record.payload_hex))
         labels.append(family_id)
+        sessions.append(record.session_id)
     if len(messages) < 2 or len(set(labels)) < 2:
         return None
+
+    # Sessions long enough for a type code to vary inside them; the
+    # session-bound test (FamilyRefinement.SESSION_BOUND_*) is computed over
+    # these and applies only when they cover enough of the corpus.
+    session_sizes = Counter(sessions)
+    long_sessions = {session for session, size in session_sizes.items() if size >= _FR.SESSION_BOUND_MIN_MESSAGES}
+    long_session_coverage = sum(session_sizes[session] for session in long_sessions) / len(messages)
+    session_test_applies = len(long_sessions) >= 2 and long_session_coverage >= _FR.SESSION_BOUND_MIN_COVERAGE
 
     scan_widths = sorted({int(width) for width in widths if int(width) >= 1})
 
@@ -261,6 +271,17 @@ def detect_global_discriminator(
                 [labels[index] for index in indexes],
                 [message_lengths[index] for index in indexes],
             )
+            session_bound = False
+            if session_test_applies:
+                in_long = [(value, sessions[index]) for value, index in zip(values, indexes) if sessions[index] in long_sessions]
+                long_values = [value for value, _ in in_long]
+                value_entropy = entropy(long_values)
+                if value_entropy > 0:
+                    by_session: Dict[str, List[int]] = defaultdict(list)
+                    for value, session in in_long:
+                        by_session[session].append(value)
+                    within = sum(len(group) / len(in_long) * entropy(group) for group in by_session.values())
+                    session_bound = within / value_entropy <= _FR.SESSION_BOUND_MAX_ENTROPY_RATIO
             candidates.append(
                 {
                     "offset": offset,
@@ -272,10 +293,17 @@ def detect_global_discriminator(
                     "_type_mi": type_mi,
                     "_effective_cardinality": effective_cardinality,
                     "_stable_ratio": stable_ratio,
+                    "_session_bound": session_bound,
                 }
             )
     if not candidates:
         return None
+
+    # Endpoint identifiers are fixed per session; drop them while a candidate
+    # that varies within sessions remains.
+    free_candidates = [candidate for candidate in candidates if not candidate["_session_bound"]]
+    if free_candidates:
+        candidates = free_candidates
 
     # Prefer the narrowest window. A single-byte opcode must not be passed over for
     # a wider window that merely absorbs an adjacent data/length byte and so

@@ -111,6 +111,8 @@ def infer_framing_hypotheses(
             for region in best.get("field_regions", []) or []:
                 global_field_votes[str(region.get("field_type", "unknown"))] += 1
 
+    _verify_length_fields(family_results, family_messages, max_header_bytes)
+
     family_count = len(family_results)
     common_header_ends = [
         {"header_end": header_end, "family_count": count, "family_ratio": round(count / max(family_count, 1), 4)}
@@ -145,6 +147,40 @@ def infer_framing_hypotheses(
         },
         "families": family_results,
     }
+
+
+def _verify_length_fields(
+    family_results: Dict[str, Any],
+    family_messages: Dict[str, Sequence[str]],
+    scan_limit: int,
+) -> None:
+    """Mark each family's length regions ``verified`` or not, in place.
+
+    Inside a family whose messages all share one length, every constant byte
+    equals *some* length expression (in an 11-byte family a constant 0x04 at
+    offset 7 "is" the remaining length), so a match there is not evidence. Such
+    a region counts as verified only when the same offset, width, relation and
+    byte order also hold on a sample pooled across all families, where lengths
+    do vary. A region found in a family with varying lengths verifies itself.
+    """
+    pooled: List[bytes] = []
+    for _family_id, messages_hex in sorted(family_messages.items()):
+        usable = [item for item in messages_hex if item]
+        step = max(1, len(usable) // _FD.LENGTH_VERIFY_SAMPLE_PER_FAMILY)
+        pooled.extend(hex_to_bytes(item) for item in usable[::step][: _FD.LENGTH_VERIFY_SAMPLE_PER_FAMILY])
+    corpus_verified = {
+        (region.start, region.end, region.evidence.get("relation"), region.evidence.get("endian"))
+        for region in _length_fields(pooled, scan_limit)
+        if int(region.evidence.get("distinct_lengths", 0)) >= 2
+    }
+    for result in family_results.values():
+        for layout in result.get("layout_hypotheses", []) or []:
+            for region in layout.get("field_regions", []) or []:
+                if region.get("field_type") != "length":
+                    continue
+                evidence = region.setdefault("evidence", {})
+                key = (region.get("start"), region.get("end"), evidence.get("relation"), evidence.get("endian"))
+                evidence["verified"] = int(evidence.get("distinct_lengths", 0) or 0) >= 2 or key in corpus_verified
 
 
 def infer_family_framing(
@@ -336,10 +372,12 @@ def _length_fields(messages: Sequence[bytes], scan_limit: int) -> List[FramingFi
             end = start + width
             for endian in ("big", "little"):
                 usable = total_matches = suffix_matches = remaining_matches = 0
+                lengths_seen: set[int] = set()
                 for message in messages:
                     if len(message) < end:
                         continue
                     usable += 1
+                    lengths_seen.add(len(message))
                     value = safe_int_from_bytes(message[start:end], endian=endian)
                     if value == len(message):
                         total_matches += 1
@@ -364,7 +402,13 @@ def _length_fields(messages: Sequence[bytes], scan_limit: int) -> List[FramingFi
                             end=end,
                             field_type="length",
                             confidence=round(score, 4),
-                            evidence={"match_score": round(score, 4), "relation": relation, "endian": endian, "usable_messages": usable},
+                            evidence={
+                                "match_score": round(score, 4),
+                                "relation": relation,
+                                "endian": endian,
+                                "usable_messages": usable,
+                                "distinct_lengths": len(lengths_seen),
+                            },
                         )
                     )
     return regions

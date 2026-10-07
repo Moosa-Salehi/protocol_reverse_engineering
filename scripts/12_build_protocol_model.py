@@ -101,6 +101,17 @@ def _merge_semantic_label(field: Dict[str, Any], semantic_label: Dict[str, Any] 
     attributes = payload.get("attributes") if isinstance(payload.get("attributes"), dict) else {}
     attributes = dict(attributes)
 
+    # Stage 11b writes its label straight onto the field (top-level
+    # ``semantic_*`` keys mirrored into attributes). ``semantic_label`` is the
+    # winner of the confidence arbitration in _best_semantic_labels; when that
+    # winner is not the LLM's label, the LLM's copy must give way, or the
+    # arbitration would never take effect on a field the LLM touched.
+    if "semantic_role" in payload and _label_source(semantic_label) != "llm_consensus":
+        for key in ("semantic_role", "semantic_confidence", "semantic_evidence"):
+            payload.pop(key, None)
+            attributes.pop(key, None)
+        attributes.pop("label", None)
+
     role = semantic_label.get("label") or semantic_label.get("semantic_role")
     encoding_type = semantic_label.get("encoding_type") or semantic_label.get("field_type")
     original_field_type = payload.get("field_type")

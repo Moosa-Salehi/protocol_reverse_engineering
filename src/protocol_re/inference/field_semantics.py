@@ -45,9 +45,14 @@ def infer_discriminator_fields(
     framing_summary: Optional[Dict[str, Any]],
     keyword_summary: Optional[Dict[str, Any]],
     feature_summary: Optional[Dict[str, Any]],
+    global_discriminator: Optional[Tuple[int, int]] = None,
 ) -> List[SemanticHypothesis]:
     """
     Detect discriminator/opcode/message-type fields.
+
+    ``global_discriminator`` is the ``(offset, width)`` family refinement keyed
+    the families on, when it did; the field at that span is the type code in
+    every family even though it is constant inside each one.
 
     Characteristics:
     - Position: typically byte 0-2 (or after transaction ID)
@@ -87,6 +92,16 @@ def infer_discriminator_fields(
         length = field.get("length", 1)
         field_type = field.get("field_type", "")
         role = "opcode" if body_start is not None and start == body_start and length == 1 else "discriminator"
+        if global_discriminator is not None and (start, length) == tuple(global_discriminator):
+            hypotheses.append(SemanticHypothesis(
+                field_start=start,
+                field_length=length,
+                semantic_role=role,
+                confidence=_FS.GLOBAL_DISCRIMINATOR_CONFIDENCE,
+                evidence={"source": "family_refinement", "global_discriminator": True},
+                encoding_type=_infer_encoding_type(length, field.get("endian")),
+            ))
+            continue
         if _is_framed_body_operand(body_start, start, length):
             continue
 
@@ -234,6 +249,11 @@ def infer_length_fields(
         for layout in framing_summary.get("layout_hypotheses", []):
             for region in layout.get("field_regions", []):
                 if region.get("field_type") == "length":
+                    # A match seen only inside a fixed-length family, and not
+                    # confirmed across the corpus, is a coincidence of that
+                    # family's constants (framing._verify_length_fields).
+                    if region.get("evidence", {}).get("verified") is False:
+                        continue
                     key = (region["start"], region["end"] - region["start"])
                     framing_lengths[key] = {
                         "confidence": region.get("confidence", 0.0),

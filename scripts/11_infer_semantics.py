@@ -20,6 +20,8 @@ def main() -> None:
     parser.add_argument("--framing-json", help="Optional framing hypotheses from 05_infer_framing.py")
     parser.add_argument("--features-json", help="Optional family features from 06_extract_features.py")
     parser.add_argument("--keywords-json", help="Optional keyword/discriminator data from 09_infer_keywords.py")
+    parser.add_argument("--assignments-json", help="Optional family assignments from 04_discover_families.py; "
+                        "supplies the corpus-wide discriminator the families were keyed on")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -59,6 +61,14 @@ def main() -> None:
             with open(args.keywords_json, "r", encoding="utf-8") as handle:
                 keywords_data = json.load(handle)
 
+        global_discriminator = None
+        if args.assignments_json:
+            with open(args.assignments_json, "r", encoding="utf-8") as handle:
+                refinement = (json.load(handle).get("metadata") or {}).get("discriminator_refinement") or {}
+            if refinement.get("applied"):
+                global_discriminator = (int(refinement["offset"]), int(refinement["width"]))
+                logger.info(f"Corpus discriminator from family refinement: offset {global_discriminator[0]} width {global_discriminator[1]}")
+
     with logger.stage("infer_semantics"):
         semantics = summarize_semantics(
             family_data,
@@ -66,6 +76,7 @@ def main() -> None:
             framing_data=framing_data,
             features_data=features_data,
             keywords_data=keywords_data,
+            global_discriminator=global_discriminator,
         )
         logger.metric("families_with_semantics", len(semantics), "families")
 

@@ -1013,3 +1013,55 @@ def test_volatile_offsets_flags_saturated_txn_id() -> None:
     assert 1 in noisy
     assert 7 not in noisy
 
+
+
+def test_global_discriminator_outranks_per_family_constant() -> None:
+    from protocol_re.config.thresholds import FieldSemantics
+    from protocol_re.inference.field_semantics import infer_constant_fields, infer_discriminator_fields
+
+    # A function-code-pure family: the type byte at offset 7 is constant here.
+    fields = [
+        {"start": 6, "length": 1, "field_type": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+        {"start": 7, "length": 1, "field_type": "constant", "confidence": 0.99, "evidence": {"unique_values": 1.0}},
+    ]
+    framing = {"layout_hypotheses": [{"header_end": 7, "body_start": 7, "field_regions": []}]}
+
+    without = infer_discriminator_fields(fields, framing, None, None)
+    assert not [h for h in without if h.field_start == 7]
+
+    with_global = infer_discriminator_fields(fields, framing, None, None, global_discriminator=(7, 1))
+    (hypothesis,) = [h for h in with_global if h.field_start == 7]
+    assert hypothesis.semantic_role == "opcode"
+    assert hypothesis.evidence["source"] == "family_refinement"
+    constant = [h for h in infer_constant_fields(fields, None) if h.field_start == 7]
+    assert all(hypothesis.confidence > h.confidence for h in constant)
+    assert hypothesis.confidence == FieldSemantics.GLOBAL_DISCRIMINATOR_CONFIDENCE
+    # The neighbouring constant is left alone.
+    assert not [h for h in with_global if h.field_start == 6]
+
+
+def test_length_match_in_fixed_length_family_needs_corpus_confirmation() -> None:
+    from protocol_re.inference.field_semantics import infer_length_fields
+    from protocol_re.inference.framing import infer_framing_hypotheses
+
+    def frame(txn: int, body: bytes) -> str:
+        return (txn.to_bytes(2, "big") + b"\x00\x00" + (len(body) + 1).to_bytes(2, "big") + b"\x01" + body).hex()
+
+    # Family A: every message is 11 bytes and byte 7 is a constant 0x04, which
+    # equals the bytes remaining from offset 7. Family B varies in length.
+    family_a = [frame(n, bytes([4, 2, n % 256, 7])) for n in range(40)]
+    family_b = [frame(n, bytes([3]) + bytes(n % 5 + 1)) for n in range(40)]
+    result = infer_framing_hypotheses({"family_a": family_a, "family_b": family_b})
+
+    regions = {
+        (region["start"], region["end"]): region["evidence"]
+        for layout in result["families"]["family_a"]["layout_hypotheses"]
+        for region in layout["field_regions"]
+        if region["field_type"] == "length"
+    }
+    assert regions[(4, 6)]["verified"] is True   # real length field: holds across the corpus
+    assert regions[(7, 8)]["verified"] is False  # coincidence of this family's constants
+
+    fields = [{"start": 4, "length": 2, "field_type": "constant"}, {"start": 7, "length": 1, "field_type": "constant"}]
+    labelled = {h.field_start for h in infer_length_fields(fields, result["families"]["family_a"], None)}
+    assert labelled == {4}
