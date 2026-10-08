@@ -671,6 +671,16 @@ class TlvFraming:
     MIN_FIXED_LAYOUT_VALUE_TAGS: int = 3
     MIN_FIXED_LAYOUT_SEQUENCE_SHARE: float = 0.95
 
+    # Minimum number of elements in the most common tag sequence. A "chain" of
+    # one element is only a length-prefixed blob: a constant byte followed by a
+    # length field that covers the rest of the message (the Modbus MBAP
+    # protocol-id low byte plus its length field parse exactly so, with a
+    # length that genuinely varies). Fixed-offset framing already handles that
+    # shape; TLV mode earns its place only when elements follow one another.
+    # Across the 14-protocol benchmark every false verdict had a one-element
+    # chain, while GOOSE has 12 and 22 of 23 MMS families have 2 or more.
+    MIN_CHAIN_ELEMENTS: int = 2
+
     # Bytes scanned for the constant header prefix before the TLV chain.
     MAX_HEADER_SCAN: int = 32
 

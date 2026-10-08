@@ -545,3 +545,15 @@ def test_field_roles_compares_role_classes_not_types():
 def test_field_roles_not_applicable_without_truth_roles():
     report = eval_spec.evaluate_protocol_spec(_role_model(["opcode", "length", "unit_id"]), _role_truth(with_roles=False))
     assert report["metrics"]["field_roles"]["applicable"] is False
+
+
+def test_detect_tlv_framing_rejects_single_element_chains():
+    # A constant byte followed by a length field covering the rest of the
+    # message (Modbus: protocol-id low byte, then the MBAP length) parses as
+    # one TLV element whose length really varies. That is a length-prefixed
+    # message, not a tag-length-value chain.
+    def mbap(txn: int, body: bytes) -> bytes:
+        return txn.to_bytes(2, "big") + b"\x00\x00" + (len(body) + 1).to_bytes(2, "big") + b"\x01" + body
+
+    messages = [mbap(n, bytes([4, 2 * (1 + n % 4)]) + bytes((n * 37 + i) % 251 + 1 for i in range(2 * (1 + n % 4)))) for n in range(300)]
+    assert detect_tlv_framing(messages) is None

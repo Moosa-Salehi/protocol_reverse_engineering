@@ -288,7 +288,10 @@ def detect_tlv_framing(
     max_sequences = max(1, int(_TF.MAX_SEQUENCE_CARDINALITY_RATIO * max(parsed, 1)))
     if len(sequences) > max_sequences:
         return None
-    dominant_sequence_share = sequences.most_common(1)[0][1] / parsed if parsed and sequences else 0.0
+    dominant_sequence, dominant_count = sequences.most_common(1)[0] if sequences else ((), 0)
+    if len(dominant_sequence) < _TF.MIN_CHAIN_ELEMENTS:
+        return None
+    dominant_sequence_share = dominant_count / parsed if parsed else 0.0
     fixed_layout_proof = (
         value_tags >= _TF.MIN_FIXED_LAYOUT_VALUE_TAGS
         and dominant_sequence_share >= _TF.MIN_FIXED_LAYOUT_SEQUENCE_SHARE
