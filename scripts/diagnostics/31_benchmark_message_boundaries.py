@@ -7,7 +7,9 @@ so they need no hand-written truth file and are comparable across protocols and
 with published per-message boundary metrics.
 
 Only interior edges are scored: offset 0 and the payload end are trivially
-correct for every message.
+correct for every message. Annotations from the ``tshark-cache`` fallback are
+skipped by default: they hold only a few coarse layer spans (about one edge per
+100 bytes), so any real segmentation scores as false positives against them.
 
 Run from the project root:
     python scripts/diagnostics/31_benchmark_message_boundaries.py \
@@ -53,7 +55,15 @@ def _f1(tp: int, fp: int, fn: int) -> Dict[str, float]:
     return {"precision": round(precision, 4), "recall": round(recall, 4), "f1": round(f1, 4)}
 
 
-def score_protocol(data_dir: Path, annotations_path: Path, families_file: str) -> Dict[str, Any]:
+COARSE_REVIEWERS = frozenset({"tshark-cache"})
+
+
+def score_protocol(
+    data_dir: Path,
+    annotations_path: Path,
+    families_file: str,
+    include_coarse: bool = False,
+) -> Dict[str, Any]:
     with (data_dir / families_file).open("r", encoding="utf-8") as handle:
         family_edges = _family_edges(json.load(handle))
     with (data_dir / "02_family_assignments.json").open("r", encoding="utf-8") as handle:
@@ -61,8 +71,11 @@ def score_protocol(data_dir: Path, annotations_path: Path, families_file: str) -
     payload_len = {int(m["msg_id"]): int(m["payload_len"]) for m in _iter_jsonl(data_dir / "01_messages.jsonl")}
 
     tp = fp = fn = 0
-    scored = unassigned = exact = truth_edges = 0
+    scored = unassigned = exact = truth_edges = skipped_coarse = 0
     for annotation in _iter_jsonl(annotations_path):
+        if not include_coarse and annotation.get("reviewer") in COARSE_REVIEWERS:
+            skipped_coarse += 1
+            continue
         msg_id = int(annotation["msg_id"])
         length = payload_len.get(msg_id)
         if length is None or not annotation.get("boundaries"):
@@ -82,6 +95,7 @@ def score_protocol(data_dir: Path, annotations_path: Path, families_file: str) -
         "messages": scored,
         "families": len(family_edges),
         "unassigned_messages": unassigned,
+        "skipped_coarse_annotations": skipped_coarse,
         "mean_truth_edges": round(truth_edges / scored, 2) if scored else 0.0,
         "exact_match": round(exact / scored, 4) if scored else 0.0,
         **_f1(tp, fp, fn),
@@ -96,6 +110,8 @@ def main() -> None:
                         help="Directory holding <protocol>.jsonl per-message annotations")
     parser.add_argument("--families-file", default="05_families.json",
                         help="Families artifact to score, e.g. 05_families_refined.json for the LLM-refined boundaries")
+    parser.add_argument("--include-coarse", action="store_true",
+                        help="Also score against the coarse tshark-cache fallback annotations")
     parser.add_argument("--output-json", default=None, help="Optional path for the full report")
     args = parser.parse_args()
 
@@ -107,7 +123,7 @@ def main() -> None:
         if not annotations_path.is_file() or not all(path.is_file() for path in required):
             print(f"[*] Skipping {run_dir.name}: missing run artifacts or annotations")
             continue
-        report[run_dir.name] = score_protocol(data_dir, annotations_path, args.families_file)
+        report[run_dir.name] = score_protocol(data_dir, annotations_path, args.families_file, args.include_coarse)
 
     header = f"{'protocol':12s} {'messages':>8s} {'families':>8s} {'truth/msg':>9s} {'precision':>9s} {'recall':>7s} {'f1':>6s} {'exact':>6s}"
     print(header)

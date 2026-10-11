@@ -156,6 +156,9 @@ def main() -> None:
     # Enhanced boundary detection options (A2) - now default
     parser.add_argument("--enhanced", action="store_true", help="(Deprecated: enhanced mode is now default)")
     parser.add_argument("--max-fields", type=int, default=15, help="Maximum fields per family")
+    parser.add_argument("--max-fields-per-byte", type=float, default=None,
+                        help="Raise the field cap to this many fields per message byte when that exceeds --max-fields "
+                             "(default: BoundaryDetection.MAX_FIELDS_PER_BYTE)")
     parser.add_argument("--enable-merging", action="store_true", default=True, help="Enable segment merging")
     parser.add_argument("--no-merging", dest="enable_merging", action="store_false", help="Disable segment merging")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
@@ -284,6 +287,7 @@ def main() -> None:
                     all_hex[:cap],
                     score_threshold=args.score_threshold,
                     max_fields=args.max_fields,
+                    max_fields_per_byte=args.max_fields_per_byte,
                     enable_merging=args.enable_merging,
                     entropy_weight=args.entropy_weight,
                     merge_width_targets=merge_width_targets,
@@ -304,6 +308,7 @@ def main() -> None:
                     score_threshold=args.body_score_threshold,
                     framing_summary=body_framing,
                     max_fields=args.max_fields,
+                    max_fields_per_byte=args.max_fields_per_byte,
                     enable_merging=args.enable_merging,
                     entropy_weight=args.entropy_weight,
                     merge_width_targets=merge_width_targets,
@@ -394,6 +399,7 @@ def main() -> None:
                         family_features=feature_by_family.get(family_id),
                         framing_summary=framing_by_family.get(family_id),
                         max_fields=args.max_fields,
+                    max_fields_per_byte=args.max_fields_per_byte,
                         enable_merging=args.enable_merging,
                         entropy_weight=args.entropy_weight,
                         merge_width_targets=merge_width_targets,

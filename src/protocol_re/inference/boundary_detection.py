@@ -11,7 +11,7 @@ This module addresses over-segmentation by:
 from __future__ import annotations
 
 from collections import Counter
-from math import log2
+from math import ceil, log2
 from statistics import mean
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
@@ -23,6 +23,7 @@ from protocol_re.config.thresholds import BoundaryDetection as _BD
 # Re-export for backward compatibility
 MAX_BOUNDARY_DETECTION_LENGTH = _BD.MAX_BOUNDARY_DETECTION_LENGTH
 MAX_FIELDS_PER_FAMILY = _BD.MAX_FIELDS_PER_FAMILY
+MAX_FIELDS_PER_BYTE = _BD.MAX_FIELDS_PER_BYTE
 MIN_FIELD_WIDTH_DEFAULT = _BD.MIN_FIELD_WIDTH_DEFAULT
 SINGLE_BYTE_PENALTY = _BD.SINGLE_BYTE_PENALTY
 ENTROPY_WEIGHT_REDUCED = _BD.ENTROPY_WEIGHT_REDUCED
@@ -520,6 +521,7 @@ def infer_segments(
     boundary_confidence_weight: float = BOUNDARY_CONFIDENCE_WEIGHT_DEFAULT,
     isolate_body_opcode: bool = ISOLATE_BODY_OPCODE_DEFAULT,
     require_single_byte_operand: bool = False,
+    max_fields_per_byte: Optional[float] = None,
 ) -> List[Segment]:
     """
     Infer field segments with anti-fragmentation.
@@ -621,6 +623,10 @@ def infer_segments(
             for boundary in raw_boundaries
             if not _inside_length_candidate(boundary, length_candidates)
         ]
+
+    # Long messages may hold more fields than the flat cap allows.
+    per_byte = MAX_FIELDS_PER_BYTE if max_fields_per_byte is None else max_fields_per_byte
+    max_fields = max(max_fields, ceil(max_len * per_byte))
 
     # If too many boundaries, keep only the strongest
     if len(raw_boundaries) > max_fields + 1:

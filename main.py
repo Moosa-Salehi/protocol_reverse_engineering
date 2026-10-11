@@ -483,6 +483,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     for step_name, step_args in pipeline:
         if step_name == "07_infer_boundaries":
             step_args.extend(["--max-fields", str(args.boundary_max_fields)])
+            if args.boundary_max_fields_per_byte is not None:
+                step_args.extend(["--max-fields-per-byte", str(args.boundary_max_fields_per_byte)])
             step_args.extend(["--merge-width-targets", args.boundary_merge_width_targets])
             step_args.extend(["--length-match-threshold", str(args.boundary_length_match_threshold)])
             step_args.extend(["--boundary-confidence-weight", str(args.boundary_confidence_weight)])
@@ -884,6 +886,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
         default=15,
         help="Maximum fields per family (default: 15). Prevents excessive segmentation.",
+    )
+    boundary_group.add_argument(
+        "--boundary-max-fields-per-byte",
+        type=float,
+        default=None,
+        help="Raise the field cap to this many fields per message byte when that exceeds --boundary-max-fields "
+             "(e.g. 0.5). Finds more of the 1-2 byte fields in long messages, but splits arrays per element. "
+             "Default: BoundaryDetection.MAX_FIELDS_PER_BYTE (off).",
     )
     boundary_group.add_argument(
         "--no-boundary-merging",

@@ -38,8 +38,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   refinement keyed the families on is labelled as the opcode/discriminator in every family
   (`FieldSemantics.GLOBAL_DISCRIMINATOR_CONFIDENCE`), instead of `constant`.
 - Framing length regions carry `distinct_lengths` and `verified` evidence.
+- Length-scaled field cap, off by default: stage 07 `--max-fields-per-byte` /
+  `main.py --boundary-max-fields-per-byte` (`BoundaryDetection.MAX_FIELDS_PER_BYTE`).
+  At 0.5 it raises macro per-message boundary F1 over 14 protocols from 0.365 to 0.442,
+  but splits long arrays per element, which `truth_files/modbus.json` counts as one field
+  (200K multi-device capture: overall 0.749 -> 0.580).
+- `TlvFraming.MIN_CHAIN_ELEMENTS`: a TLV verdict needs at least two elements in the most
+  common tag sequence. A one-element chain is only a length-prefixed message (the Modbus
+  MBAP length field parsed that way).
 
 ### Changed
+- The per-message boundary benchmark skips `tshark-cache` fallback annotations by default
+  (`--include-coarse` restores them): they hold a few coarse layer spans, about one edge
+  per 100 bytes, and made up a fifth of the BACnet annotations.
 - A metric with nothing predicted and nothing expected is reported with
   `"applicable": false` and left out of the overall score; the remaining weights are
   renormalised. Previously it contributed a full 1.0 (relations on GOOSE).

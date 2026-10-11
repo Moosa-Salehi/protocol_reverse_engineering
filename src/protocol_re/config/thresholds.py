@@ -68,6 +68,17 @@ class BoundaryDetection:
     # Prevents over-segmentation / fragmentation.
     MAX_FIELDS_PER_FAMILY: int = 15
 
+    # Length-scaled field cap: the cap is raised to this many fields per message
+    # byte when that exceeds MAX_FIELDS_PER_FAMILY. 0 disables the scaling.
+    # Default OFF. Against per-message dissector annotations, 0.5 raised macro
+    # boundary F1 over 14 protocols from 0.365 to 0.442 (a flat cap of 15 cannot
+    # describe a 100-byte message of 1-2 byte fields). Against truth_files/modbus.json
+    # it cost the 200K multi-device capture 0.17 overall (field-boundary F1
+    # 0.76 -> 0.41): long register-array responses are split per register, which
+    # the dissector counts as fields and the truth file counts as one field.
+    # Enable per run with stage 07 --max-fields-per-byte.
+    MAX_FIELDS_PER_BYTE: float = 0.0
+
     # Default minimum field width (bytes). 1 = no minimum beyond single byte.
     MIN_FIELD_WIDTH_DEFAULT: int = 1
 
