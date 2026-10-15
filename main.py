@@ -485,6 +485,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             step_args.extend(["--max-fields", str(args.boundary_max_fields)])
             if args.boundary_max_fields_per_byte is not None:
                 step_args.extend(["--max-fields-per-byte", str(args.boundary_max_fields_per_byte)])
+            if args.boundary_periodic_arrays != "off":
+                step_args.extend(["--periodic-arrays", args.boundary_periodic_arrays])
             step_args.extend(["--merge-width-targets", args.boundary_merge_width_targets])
             step_args.extend(["--length-match-threshold", str(args.boundary_length_match_threshold)])
             step_args.extend(["--boundary-confidence-weight", str(args.boundary_confidence_weight)])
@@ -894,6 +896,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Raise the field cap to this many fields per message byte when that exceeds --boundary-max-fields "
              "(e.g. 0.5). Finds more of the 1-2 byte fields in long messages, but splits arrays per element. "
              "Default: BoundaryDetection.MAX_FIELDS_PER_BYTE (off).",
+    )
+    boundary_group.add_argument(
+        "--boundary-periodic-arrays",
+        choices=["off", "strict", "loose"],
+        default="off",
+        help="Stage 07: split detected arrays of fixed-width elements (register blocks, sample arrays) "
+             "every element width. 'strict' needs length/count-field evidence, 'loose' also accepts the "
+             "phase statistics alone on long regions. Splits arrays the truth files count as one field. "
+             "Default: off.",
     )
     boundary_group.add_argument(
         "--no-boundary-merging",

@@ -1,0 +1,181 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "powerlink",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "Ethernet POWERLINK (ASnd over UDP)",
+    "version": "EPSG DS 301",
+    "description": "Ethernet POWERLINK asynchronous SDO transfers carried over UDP 3819: ASnd header, SDO sequence layer and SDO command layer whose command id and response/abort flags select the message type. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "ASnd header fields use wire-absolute offsets 0..3; SDO types are relative to the sequence layer (offset 0 = wire offset 4).",
+    "message_types": [
+      {
+        "message_type_id": "powerlink_header",
+        "name": "POWERLINK ASnd header",
+        "role": "header",
+        "description": "Message type (0x06 = ASnd), destination node, source node and ASnd service id (0x05 = SDO). Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "message_type",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "dest",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "src",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "service_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          }
+        ],
+        "examples": [
+          "06 00 00 05"
+        ]
+      },
+      {
+        "message_type_id": "powerlink_sdo_sequence_layer",
+        "name": "powerlink sdo sequence layer",
+        "role": "control",
+        "description": "48 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "receive_sequence",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "send_sequence",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 01 00 00",
+          "01 01 00 00"
+        ]
+      },
+      {
+        "message_type_id": "powerlink_sdo_read_by_index_request",
+        "name": "powerlink sdo read by index request",
+        "role": "request",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "receive_sequence",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "send_sequence",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "data_2",
+            "start": 2,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "transaction_id",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "abort",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "command_id",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "segment_size",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "data_10",
+            "start": 10,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_index",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "data_subindex",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "data",
+            "start": 15,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "02 06 00 00 00 00 00 02 04 00 00 00 00 10 00 00",
+          "02 06 00 00 00 01 00 02 04 00 00 00 06 10 00 00"
+        ]
+      }
+    ],
+    "relations": []
+  }
+}

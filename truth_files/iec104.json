@@ -1,0 +1,2102 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "iec104",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "IEC 60870-5-104",
+    "version": "IEC 60870-5-104:2006",
+    "description": "IEC 60870-5-104 telecontrol over TCP/2404. Every APDU starts with the 6-byte APCI; I-format APDUs carry an ASDU whose first octet (type identification) selects the message type. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "APCI fields use wire-absolute offsets 0..5; ASDU types are relative to the ASDU (offset 0 = type identification = wire offset 6).",
+    "message_types": [
+      {
+        "message_type_id": "iec104_header",
+        "name": "IEC 104 APCI",
+        "role": "header",
+        "description": "Application Protocol Control Information: start byte 0x68, APDU length, four control octets (I-, S- or U-format). Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "start",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "apdulen",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "control_field",
+            "start": 2,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "68 04 43 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_s_format_ack",
+        "name": "iec104 s format ack",
+        "role": "control",
+        "description": "144 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "iec104_u_format_testfr_con",
+        "name": "iec104 u format testfr con",
+        "role": "control",
+        "description": "37 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "iec104_m_sp_na_1",
+        "name": "iec104 m sp na 1",
+        "role": "notification",
+        "description": "35 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 1
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "siq",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "01 01 14 00 01 00 17 00 00 00",
+          "01 90 14 00 01 00 1A 00 00 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_sc_na_1_request",
+        "name": "iec104 c sc na 1 request",
+        "role": "request",
+        "description": "34 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 45
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "sco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "2D 01 06 00 01 00 0A 00 00 01",
+          "2D 01 06 00 01 00 0A 00 00 81"
+        ]
+      },
+      {
+        "message_type_id": "iec104_u_format_testfr_act",
+        "name": "iec104 u format testfr act",
+        "role": "control",
+        "description": "32 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_sc_na_1_response",
+        "name": "iec104 c sc na 1 response",
+        "role": "response",
+        "description": "31 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 45
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "sco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "2D 01 47 00 01 00 0A 00 00 01",
+          "2D 01 47 00 01 00 0A 00 00 81"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_se_tc_1_response",
+        "name": "iec104 c se tc 1 response",
+        "role": "response",
+        "description": "29 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 63
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "float",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 14,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3F 01 07 00 01 00 70 17 00 42 60 E5 3B 00 A8 DE 35 0D 02 0B 13",
+          "3F 01 0A 00 01 00 70 17 00 42 60 E5 3B 00 A8 DE 35 0D 02 0B 13 68 19 BC"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_se_nc_1_response",
+        "name": "iec104 c se nc 1 response",
+        "role": "response",
+        "description": "24 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 50
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "float",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "32 01 07 00 01 00 70 17 00 C3 F5 9D C2 00",
+          "32 01 0A 00 01 00 70 17 00 C3 F5 9D C2 00 68 19 2E 00 08 00 24 01 03 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type64_response",
+        "name": "iec104 type64 response",
+        "role": "response",
+        "description": "24 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 64
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "bitstring",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "cp56time",
+            "start": 13,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "40 01 07 00 01 00 58 1B 00 00 00 00 00 10 27 38 0D 02 0B 13",
+          "40 01 0A 00 01 00 58 1B 00 00 00 00 00 10 27 38 0D 02 0B 13 68 19 22 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_u_format_startdt_con",
+        "name": "iec104 u format startdt con",
+        "role": "control",
+        "description": "21 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "iec104_type62_response",
+        "name": "iec104 type62 response",
+        "role": "response",
+        "description": "20 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 62
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "scalval",
+            "start": 9,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 12,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          },
+          {
+            "name": "data",
+            "start": 19,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "3E 01 07 00 01 00 88 13 00 00 00 00 D8 59 34 0D 02 0B 13",
+          "3E 01 0A 00 01 00 88 13 00 00 00 00 D8 59 34 0D 02 0B 13 68 17 80 00 2C"
+        ]
+      },
+      {
+        "message_type_id": "iec104_u_format_startdt_act",
+        "name": "iec104 u format startdt act",
+        "role": "control",
+        "description": "19 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_se_nc_1_request",
+        "name": "iec104 c se nc 1 request",
+        "role": "request",
+        "description": "16 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 50
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "float",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "32 01 06 00 01 00 70 17 00 C3 F5 9D C2 00",
+          "32 01 06 00 01 00 70 17 00 00 00 C4 C2 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type61_response",
+        "name": "iec104 type61 response",
+        "role": "response",
+        "description": "15 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 61
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "normval",
+            "start": 9,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 12,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3D 01 07 00 01 00 A0 0F 00 0A 00 00 70 17 33 0D 02 0B 13",
+          "3D 01 0A 00 01 00 A0 0F 00 0A 00 00 70 17 33 0D 02 0B 13 68 17 56 00 1E"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_se_tc_1_request",
+        "name": "iec104 c se tc 1 request",
+        "role": "request",
+        "description": "15 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 63
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "float",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 14,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3F 01 06 00 01 00 70 17 00 42 60 E5 3B 00 A8 DE 35 0D 02 0B 13",
+          "3F 01 06 00 01 00 70 17 00 E1 7A 28 42 00 B8 0B 36 0D 02 0B 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_rd_na_1_request",
+        "name": "iec104 c rd na 1 request",
+        "role": "request",
+        "description": "12 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 102
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          }
+        ],
+        "examples": [
+          "66 01 05 00 00 00 0A 00 00",
+          "66 01 05 00 00 00 0A 00 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_dc_ta_1_response",
+        "name": "iec104 c dc ta 1 response",
+        "role": "response",
+        "description": "12 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 59
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "dco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 10,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3B 01 6F 00 01 00 01 00 00 01 B0 36 12 0C 02 0B 13",
+          "3B 01 6F 00 01 00 01 00 00 00 80 3E 12 0C 02 0B 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type60_response",
+        "name": "iec104 type60 response",
+        "role": "response",
+        "description": "12 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 60
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "rco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 10,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3C 01 47 00 01 00 B8 0B 00 00 B8 0B 31 0D 02 0B 13",
+          "3C 01 07 00 01 00 B8 0B 00 01 58 1B 31 0D 02 0B 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_sc_ta_1_response",
+        "name": "iec104 c sc ta 1 response",
+        "role": "response",
+        "description": "11 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 58
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "sco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 10,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3A 01 07 00 03 00 95 11 00 81 08 00 17 13 0D 08 09",
+          "3A 01 07 00 03 00 95 11 00 01 08 00 17 13 0D 08 09"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_dc_na_1_response",
+        "name": "iec104 c dc na 1 response",
+        "role": "response",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 46
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "dco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "2E 01 6E 04 03 00 98 08 00 81",
+          "2E 01 07 00 01 00 D0 07 00 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type62_request",
+        "name": "iec104 type62 request",
+        "role": "request",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 62
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "scalval",
+            "start": 9,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 12,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3E 01 06 00 01 00 88 13 00 00 00 00 D8 59 34 0D 02 0B 13",
+          "3E 01 06 00 01 00 88 13 00 0C 00 00 78 69 34 0D 02 0B 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_ic_na_1_request",
+        "name": "iec104 c ic na 1 request",
+        "role": "request",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 100
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "qoi",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "64 01 06 00 01 00 00 00 00 14",
+          "64 01 06 00 01 00 00 00 00 14"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type21",
+        "name": "iec104 type21",
+        "role": "notification",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 21
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "normval",
+            "start": 9,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "15 01 03 00 01 00 7A 03 00 40 01",
+          "15 01 03 00 01 00 7A 03 00 43 01"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type112_response",
+        "name": "iec104 type112 response",
+        "role": "response",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 112
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "float",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "qpm",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "70 01 07 00 01 00 C2 01 00 D7 A3 35 42 01",
+          "70 01 07 00 01 00 C2 01 00 33 33 3F 42 01"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type64_request",
+        "name": "iec104 type64 request",
+        "role": "request",
+        "description": "8 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 64
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "bitstring",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "cp56time",
+            "start": 13,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "40 01 06 00 01 00 58 1B 00 00 00 00 00 10 27 38 0D 02 0B 13",
+          "40 01 06 00 01 00 58 1B 00 05 00 00 00 98 3A 38 0D 02 0B 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_m_me_tf_1",
+        "name": "iec104 m me tf 1",
+        "role": "notification",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 36
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "float",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "qds",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 14,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "24 01 03 00 01 00 58 02 00 79 E9 F6 42 00 58 1B 01 10 01 0A 13",
+          "24 01 03 00 01 00 58 02 00 00 00 C4 C2 00 20 CB 1F 10 1E 09 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_dc_ta_1_request",
+        "name": "iec104 c dc ta 1 request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 59
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "dco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 10,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3B 01 06 00 01 00 01 00 00 01 B0 36 12 0C 02 0B 13",
+          "3B 01 06 00 01 00 01 00 00 00 80 3E 12 0C 02 0B 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_dc_na_1_request",
+        "name": "iec104 c dc na 1 request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 46
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "dco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "2E 01 06 00 01 00 D0 07 00 00",
+          "2E 01 06 00 01 00 D0 07 00 01"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type61_request",
+        "name": "iec104 type61 request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 61
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "normval",
+            "start": 9,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "qos",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 12,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3D 01 06 00 01 00 A0 0F 00 0A 00 00 70 17 33 0D 02 0B 13",
+          "3D 01 06 00 01 00 A0 0F 00 0E 00 00 C8 32 33 0D 02 0B 13"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_rd_na_1_response",
+        "name": "iec104 c rd na 1 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 102
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          }
+        ],
+        "examples": [
+          "66 01 6E 00 00 00 0A 00 00",
+          "66 01 6E 00 00 00 0A 00 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_c_ic_na_1_response",
+        "name": "iec104 c ic na 1 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 100
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "qoi",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "64 01 07 00 01 00 00 00 00 14",
+          "64 01 07 00 01 00 00 00 00 14"
+        ]
+      },
+      {
+        "message_type_id": "iec104_m_bo_na_1",
+        "name": "iec104 m bo na 1",
+        "role": "notification",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 7
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "bitstring",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "qds",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "07 01 03 00 01 00 26 02 00 01 00 00 00 00",
+          "07 01 03 00 01 00 26 02 00 02 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "iec104_type60_request",
+        "name": "iec104 type60 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "type_identification",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 60
+          },
+          {
+            "name": "numix",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "causetx",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "oa",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "addr",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ioa",
+            "start": 6,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "rco",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cp56time",
+            "start": 10,
+            "length": 7,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "3C 01 06 00 01 00 B8 0B 00 00 B8 0B 31 0D 02 0B 13",
+          "3C 01 06 00 01 00 B8 0B 00 01 58 1B 31 0D 02 0B 13"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "iec104_c_dc_na_1_request",
+        "response_message_type_id": "iec104_c_dc_na_1_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_c_dc_ta_1_request",
+        "response_message_type_id": "iec104_c_dc_ta_1_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_c_ic_na_1_request",
+        "response_message_type_id": "iec104_c_ic_na_1_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_c_rd_na_1_request",
+        "response_message_type_id": "iec104_c_rd_na_1_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_c_sc_na_1_request",
+        "response_message_type_id": "iec104_c_sc_na_1_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_c_se_nc_1_request",
+        "response_message_type_id": "iec104_c_se_nc_1_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_c_se_tc_1_request",
+        "response_message_type_id": "iec104_c_se_tc_1_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_type60_request",
+        "response_message_type_id": "iec104_type60_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_type61_request",
+        "response_message_type_id": "iec104_type61_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_type62_request",
+        "response_message_type_id": "iec104_type62_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_type64_request",
+        "response_message_type_id": "iec104_type64_response",
+        "relation_type": "request_response",
+        "description": "The command (activation) is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "iec104_u_format_startdt_act",
+        "response_message_type_id": "iec104_u_format_startdt_con",
+        "relation_type": "request_response",
+        "description": "U-format startdt_act is confirmed by startdt_con."
+      },
+      {
+        "request_message_type_id": "iec104_u_format_testfr_act",
+        "response_message_type_id": "iec104_u_format_testfr_con",
+        "relation_type": "request_response",
+        "description": "U-format testfr_act is confirmed by testfr_con."
+      }
+    ]
+  }
+}

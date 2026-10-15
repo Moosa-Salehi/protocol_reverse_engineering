@@ -122,6 +122,59 @@ class BoundaryDetection:
     OPCODE_MAX_CARDINALITY_RATIO: float = 0.05
 
 
+class PeriodicArrays:
+    """Thresholds for :mod:`protocol_re.inference.periodic_arrays`.
+
+    Label-free detection of arrays of fixed-width elements (register blocks,
+    sample arrays, repeated datagram words) inside runs of varying bytes. The
+    rule is OFF by default (stage 07 ``--periodic-arrays``). With mode "loose"
+    over 13 non-Modbus protocols it raised per-message boundary F1 from 0.323 to
+    0.382 and the truth-file overall score from 0.300 to 0.314 (field-boundary
+    F1 0.165 -> 0.191), with no change on the Modbus and GOOSE truth corpora
+    (no region detected). The values below were set on the 14-protocol
+    benchmark (dol/periodic-array-experiments); R2_MIN is the sensitive one
+    (0.2 loses the EtherCAT detection).
+    """
+
+    # Candidate element widths (bytes).
+    PERIODS: tuple[int, ...] = (2, 4, 8)
+
+    # A region must hold at least this many elements to be tested.
+    MIN_REPEATS: int = 4
+
+    # Messages per family used for the per-offset statistics.
+    SAMPLE_CAP: int = 2000
+
+    # Offsets reached by fewer than this share of the family's messages (and
+    # at least 3) end the varying runs.
+    MIN_OFFSET_COVERAGE: float = 0.05
+
+    # Phase test: adjusted R^2 of grouping the per-offset statistics by
+    # offset mod p, its permutation p-value, and the split-half correlation of
+    # the phase profile (even- vs odd-numbered elements).
+    R2_MIN: float = 0.1
+    MAX_PVALUE: float = 0.01
+    MIN_SPLIT_HALF: float = 0.5
+    PERMUTATIONS: int = 300
+
+    # Periods nest (p=8 fits anything p=4 fits): the smallest significant
+    # period explaining this share of the best R^2 is the element width.
+    R2_RATIO: float = 0.7
+
+    # "loose" mode also accepts statistics alone (no cross-length evidence)
+    # when the region holds this many elements and replicates this well.
+    STATS_ONLY_SPLIT_HALF: float = 0.8
+    STATS_ONLY_REPEATS: int = 8
+
+    # Cross-length evidence: a count / byte-count field must match the bytes
+    # to the message end in this share of the messages.
+    COUNT_FIELD_MATCH: float = 0.95
+
+    # Share of message lengths kept when computing the gcd of length
+    # differences (rare outlier lengths are dropped).
+    LENGTH_SHARE: float = 0.95
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Request-Response Pairing
 # ═══════════════════════════════════════════════════════════════════════════════

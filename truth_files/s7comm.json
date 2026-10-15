@@ -1,0 +1,2531 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "s7comm",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "S7comm",
+    "version": "S7comm (ISO-on-TCP)",
+    "description": "Siemens S7comm over ISO-on-TCP (TCP/102). After TPKT/COTP, the S7 header (protocol id 0x32, ROSCTR, PDU reference, parameter and data lengths) is followed by the parameter block whose function code selects the message type. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "TPKT/COTP fields use wire-absolute offsets 0..6; S7 types are relative to the S7 header (offset 0 = protocol id 0x32 = wire offset 7).",
+    "message_types": [
+      {
+        "message_type_id": "s7comm_header",
+        "name": "TPKT/COTP header",
+        "role": "header",
+        "description": "TPKT (RFC 1006) and COTP data TPDU header carried on TCP port 102: version, reserved, length, COTP length indicator, PDU type, TPDU number / EOT. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "reserved",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "reserved"
+          },
+          {
+            "name": "tpkt_length",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "cotp_length_indicator",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "cotp_pdu_type",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "cotp_tpdu_number",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          }
+        ],
+        "examples": [
+          "03 00 00 19 02 F0 80"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_ack_data_read_var",
+        "name": "s7comm ack data read var",
+        "role": "response",
+        "description": "96 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_errcls",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "header_errcod",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "param_func",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "data_returncode",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "data",
+            "start": 18,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "32 03 00 00 00 00 00 02 00 08 00 00 04 01 FF 04 00 20 00 01 00 02",
+          "32 03 00 00 00 00 00 02 00 08 00 00 04 01 FF 04 00 20 00 01 00 02"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_job_read_var",
+        "name": "s7comm job read var",
+        "role": "request",
+        "description": "76 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_transp_size",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "param_item_length",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "param_item_db",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "param_item_area",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "param_item_address",
+            "start": 21,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "data",
+            "start": 24,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "32 01 00 00 01 AE 00 52 00 00 04 05 12 0E B2 FF 00 00 00 52 EA 2D B0 D9",
+          "32 01 00 00 01 D8 00 52 00 00 04 05 12 0E B2 FF 00 00 00 52 EA 2D B0 D9"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_cpu_functions_sub1_response",
+        "name": "s7comm userdata cpu functions sub1 response",
+        "role": "response",
+        "description": "47 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "param_userdata_dataunitref",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_userdata_lastdataunit",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_errcod",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "data_userdata_szl_id",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "data_userdata_szl_index",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "data_userdata_szl_id_partlist_len",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "data_userdata_szl_id_partlist_cnt",
+            "start": 32,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "big"
+          },
+          {
+            "name": "data",
+            "start": 34,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 03 00 00 0C 00 34 00 01 12 08 12 84 01 06 00 00 00 00 FF 09",
+          "32 07 00 00 04 00 00 0C 00 34 00 01 12 08 12 84 01 07 00 00 00 00 FF 09"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_cpu_functions_sub1_request",
+        "name": "s7comm userdata cpu functions sub1 request",
+        "role": "request",
+        "description": "23 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "data_returncode",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "data_userdata_szl_id",
+            "start": 22,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "data_userdata_szl_index",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 5E 00 00 08 00 08 00 01 12 04 11 44 01 00 FF 09 00 04 00 1C",
+          "32 07 00 00 7B 0C 00 0C 00 04 00 01 12 08 12 44 01 02 00 00 00 00 0A 00"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_ack_data_setup_communication",
+        "name": "s7comm ack data setup communication",
+        "role": "response",
+        "description": "22 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_errcls",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "header_errcod",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "param_func",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_setup_reserved1",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_maxamq_calling",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "param_maxamq_called",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "param_pdu_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "32 03 00 00 FF FF 00 08 00 00 00 00 F0 00 00 04 00 04 01 E0",
+          "32 03 00 00 00 01 00 08 00 00 00 00 F0 00 00 01 00 03 00 F0"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_job_setup_communication",
+        "name": "s7comm job setup communication",
+        "role": "request",
+        "description": "19 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_setup_reserved1",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_maxamq_calling",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "param_maxamq_called",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "param_pdu_length",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "32 01 00 00 FF FF 00 08 00 00 F0 00 00 04 00 04 03 C0",
+          "32 01 00 00 00 01 00 08 00 00 F0 00 00 01 00 03 00 F0"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_job_write_var",
+        "name": "s7comm job write var",
+        "role": "request",
+        "description": "15 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_transp_size",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "param_item_length",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "param_item_db",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "param_item_area",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "param_item_address",
+            "start": 21,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "data_returncode",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "data",
+            "start": 28,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "32 01 00 00 02 06 00 12 00 05 05 01 12 0E B2 FF 00 00 00 52 78 04 1F 0F",
+          "32 01 00 00 00 01 00 26 00 11 05 03 12 0A 10 01 00 01 03 E8 84 00 00 07"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_ack_data_write_var",
+        "name": "s7comm ack data write var",
+        "role": "response",
+        "description": "14 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_errcls",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "header_errcod",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "param_func",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "data",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "32 03 00 00 02 02 00 02 00 01 00 00 05 01 FF",
+          "32 03 00 00 02 09 00 02 00 01 00 00 05 01 FF"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_block_functions_sub1_response",
+        "name": "s7comm userdata block functions sub1 response",
+        "role": "response",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "param_userdata_dataunitref",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_userdata_lastdataunit",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_errcod",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_blocktype",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_count",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_blocktype",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_count",
+            "start": 32,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_blocktype",
+            "start": 34,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_count",
+            "start": 36,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_blocktype",
+            "start": 38,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_count",
+            "start": 40,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_blocktype",
+            "start": 42,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_count",
+            "start": 44,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_blocktype",
+            "start": 46,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_count",
+            "start": 48,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_blocktype",
+            "start": 50,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_count",
+            "start": 52,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 07 00 00 0C 00 20 00 01 12 08 12 83 01 01 00 00 00 00 FF 09",
+          "32 07 00 00 08 00 00 0C 00 20 00 01 12 08 12 83 01 01 00 00 00 00 FF 09"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_block_functions_sub2_response",
+        "name": "s7comm userdata block functions sub2 response",
+        "role": "response",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "param_userdata_dataunitref",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_userdata_lastdataunit",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_errcod",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_block_num",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "blockinfo_flags",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "blockinfo_block_lang",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 09 00 00 0C 00 08 00 01 12 08 12 83 02 01 00 00 00 00 FF 09",
+          "32 07 00 00 05 00 00 0C 00 08 00 01 12 08 12 83 02 01 00 00 00 00 FF 09"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_cpu_functions_sub2_response",
+        "name": "s7comm userdata cpu functions sub2 response",
+        "role": "response",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "param_userdata_dataunitref",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_userdata_lastdataunit",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_errcod",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "cpu_msg_res_result",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "cpu_msg_res_reserved1",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 17 00 00 0C 00 06 00 01 12 08 12 84 02 03 00 00 00 00 FF 09",
+          "32 07 00 00 00 01 00 0C 00 09 00 01 12 08 12 84 02 02 00 00 00 00 FF 09"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_job_download_block",
+        "name": "s7comm job download block",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_blockcontrol_functionstatus",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "opcode"
+          },
+          {
+            "name": "data_blockcontrol_unknown1",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "big"
+          },
+          {
+            "name": "data_blockcontrol_unknown1",
+            "start": 14,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "flags",
+            "endian": "big"
+          },
+          {
+            "name": "param_blockcontrol_filename_len",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data_blockcontrol_file_identifier",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_blockcontrol_block_type",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "opcode",
+            "endian": "big"
+          },
+          {
+            "name": "data_blockcontrol_block_number",
+            "start": 22,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_blockcontrol_dest_filesys",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          }
+        ],
+        "examples": [
+          "32 01 00 00 00 D0 00 12 00 00 1B 00 00 00 00 00 00 00 09 5F 30 41 30 30",
+          "32 01 00 00 F3 01 00 12 00 00 1B 00 00 00 00 00 00 00 09 50 5F 42 45 53"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_mode_transition_sub8_response",
+        "name": "s7comm userdata mode transition sub8 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "param_userdata_dataunitref",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_userdata_lastdataunit",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_errcod",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "data",
+            "start": 26,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 68 03 00 0C 00 04 00 01 12 08 12 81 08 02 00 00 00 00 0A 00",
+          "32 07 00 00 00 00 00 0C 00 12 00 01 12 08 12 01 08 02 00 00 00 00 FF 09"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_mode_transition_sub2_response",
+        "name": "s7comm userdata mode transition sub2 response",
+        "role": "response",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "param_userdata_dataunitref",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_userdata_lastdataunit",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_errcod",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "tis_parametersize",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "tis_datasize",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tis_res_param1",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "tis_res_param2",
+            "start": 32,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "varstat_item_count",
+            "start": 34,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 37,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 38,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "resp_data",
+            "start": 40,
+            "length": 6,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_returncode",
+            "start": 46,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 47,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 48,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "resp_data",
+            "start": 50,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_fillbyte",
+            "start": 51,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 6C 03 00 0C 00 04 00 01 12 08 12 81 02 02 00 00 00 00 0A 00",
+          "32 07 00 00 00 00 00 0C 00 1E 00 01 12 08 12 01 02 02 00 00 00 00 FF 09"
+        ]
+      },
+      {
+        "message_type_id": "s7comm_userdata_time_functions_sub1_response",
+        "name": "s7comm userdata time functions sub1 response",
+        "role": "response",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "header_protid",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "header_rosctr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "header_redid",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "big"
+          },
+          {
+            "name": "header_pduref",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "transaction_id",
+            "endian": "big"
+          },
+          {
+            "name": "header_parlg",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "header_datlg",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "param_func",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_itemcount",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          },
+          {
+            "name": "param_item_varspec",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_item_varspec_length",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "param_item_syntaxid",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "param_userdata_funcgroup",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_subfunc",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "param_userdata_seq_num",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "param_userdata_dataunitref",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_userdata_lastdataunit",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "param_errcod",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "data_returncode",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_transportsize",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_length",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "data_ts_reserved",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "data_ts_year1",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_ts_year2",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_ts_month",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_ts_day",
+            "start": 30,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_ts_hour",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_ts_minute",
+            "start": 32,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_ts_second",
+            "start": 33,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_ts_weekday",
+            "start": 34,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "32 07 00 00 07 00 00 0C 00 0E 00 01 12 08 12 87 01 01 00 00 00 00 FF 09",
+          "32 07 00 00 0A 00 00 0C 00 0E 00 01 12 08 12 87 01 01 00 00 00 00 FF 09"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "s7comm_job_read_var",
+        "response_message_type_id": "s7comm_ack_data_read_var",
+        "relation_type": "request_response",
+        "description": "A job is answered by ack-data with the same PDU reference."
+      },
+      {
+        "request_message_type_id": "s7comm_job_setup_communication",
+        "response_message_type_id": "s7comm_ack_data_setup_communication",
+        "relation_type": "request_response",
+        "description": "A job is answered by ack-data with the same PDU reference."
+      },
+      {
+        "request_message_type_id": "s7comm_job_write_var",
+        "response_message_type_id": "s7comm_ack_data_write_var",
+        "relation_type": "request_response",
+        "description": "A job is answered by ack-data with the same PDU reference."
+      },
+      {
+        "request_message_type_id": "s7comm_userdata_cpu_functions_sub1_request",
+        "response_message_type_id": "s7comm_userdata_cpu_functions_sub1_response",
+        "relation_type": "request_response",
+        "description": "The userdata request is answered by the matching response."
+      }
+    ]
+  }
+}

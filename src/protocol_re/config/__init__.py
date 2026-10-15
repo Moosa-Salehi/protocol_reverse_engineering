@@ -17,6 +17,7 @@ from protocol_re.config.thresholds import (
     LLMEvidence,
     LLMRefinement,
     NeuralModel,
+    PeriodicArrays,
     RequestResponseRelations,
 )
 
@@ -32,5 +33,6 @@ __all__ = [
     "LLMEvidence",
     "LLMRefinement",
     "NeuralModel",
+    "PeriodicArrays",
     "RequestResponseRelations",
 ]

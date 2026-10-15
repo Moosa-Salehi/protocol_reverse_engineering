@@ -1,0 +1,1966 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "hart_ip",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "HART-IP",
+    "version": "HCF_SPEC-085",
+    "description": "HART-IP (TCP/UDP 5094). The 8-byte header is followed by the message body; pass-through messages carry a HART PDU whose command selects the type. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "Header fields use wire-absolute offsets 0..7; body types are relative to the body (offset 0 = wire offset 8).",
+    "message_types": [
+      {
+        "message_type_id": "hart_ip_header",
+        "name": "HART-IP header",
+        "role": "header",
+        "description": "Version, message type, message id, status, sequence number and message length. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "message_type",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "message_id",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "status",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "sequence_number",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "big"
+          },
+          {
+            "name": "msg_length",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "01 00 00 00 00 02 00 0D"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd9_publish",
+        "name": "hart ip pass through cmd9 publish",
+        "role": "notification",
+        "description": "18 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "ext_device_status",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot0_device_var",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "slot0_device_var_classification",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "slot0_units",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "slot0_device_var_value",
+            "start": 14,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "slot0_device_var_status",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot1_device_var",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "slot1_device_var_classify",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "slot1_units",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "slot1_device_var_value",
+            "start": 22,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "slot1_device_var_status",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot2_device_var",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "slot2_device_var_classify",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "slot2_units",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "slot2_device_var_value",
+            "start": 30,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "slot2_device_var_status",
+            "start": 34,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot0_data_timestamp",
+            "start": 35,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 39,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "81 40 FD 95 26 6F 09 1F 00 10 01 00 00 4B 46 38 6E 3D C0 01 00 27 42 A7",
+          "81 C0 FD 95 26 6F 09 1F 00 10 01 00 00 4B 46 38 6E 3D C0 01 00 27 42 A7"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_keep_alive_request",
+        "name": "hart ip keep alive request",
+        "role": "request",
+        "description": "13 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_keep_alive_response",
+        "name": "hart ip keep alive response",
+        "role": "response",
+        "description": "13 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_session_initiate_request",
+        "name": "hart ip session initiate request",
+        "role": "request",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "master_type",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "opcode"
+          },
+          {
+            "name": "inactivity_close_timer",
+            "start": 1,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "01 00 00 75 30",
+          "01 00 00 75 30"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_session_initiate_response",
+        "name": "hart ip session initiate response",
+        "role": "response",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "master_type",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "opcode"
+          },
+          {
+            "name": "inactivity_close_timer",
+            "start": 1,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "01 00 00 EA 60",
+          "01 00 00 EA 60"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd20_request",
+        "name": "hart ip pass through cmd20 request",
+        "role": "request",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 14 00 2C",
+          "82 26 4E 00 00 D2 14 00 2C"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd20_response",
+        "name": "hart ip pass through cmd20 response",
+        "role": "response",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "tag",
+            "start": 10,
+            "length": 32,
+            "field_type": "bytes"
+          },
+          {
+            "name": "checksum",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 14 22 00 D0 77 69 68 61 72 74 67 77 00 00 00 00 00 00",
+          "86 26 4E 00 00 D2 14 22 00 D0 77 69 68 61 72 74 67 77 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd0_request",
+        "name": "hart ip pass through cmd0 request",
+        "role": "request",
+        "description": "8 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "short_addr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 00 00 38",
+          "02 00 00 00 02"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd0_response",
+        "name": "hart ip pass through cmd0 response",
+        "role": "response",
+        "description": "8 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "short_addr",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "expansion_code",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "expanded_device_type",
+            "start": 7,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "opcode",
+            "endian": "big"
+          },
+          {
+            "name": "req_min_preambles",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "hart_univ_rev",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "device_rev",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "software_rev",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "hardrev_and_physical_signal",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "flags",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "device_id",
+            "start": 15,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "rsp_min_preambles",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "device_variables",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "configure_change",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "ext_device_status",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "manufacturer_id",
+            "start": 23,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "private_label",
+            "start": 25,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "device_profile",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "checksum",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 00 18 00 D0 FE 26 4E 05 07 04 01 0E 0C 00 00 D2 05 02",
+          "06 00 00 18 00 D0 FE 26 4E 05 07 04 01 0E 0C 00 00 D2 05 02 00 02 D0 00"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd1_request",
+        "name": "hart ip pass through cmd1 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 01 00 39",
+          "82 26 4E 00 00 D2 01 00 39"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd1_response",
+        "name": "hart ip pass through cmd1 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "pv_units",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "pv",
+            "start": 11,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 01 07 00 D0 FB 00 00 00 00 11",
+          "86 26 4E 00 00 D2 01 07 00 D0 FB 00 00 00 00 11"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd2_request",
+        "name": "hart ip pass through cmd2 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 02 00 3A",
+          "82 26 4E 00 00 D2 02 00 3A"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd2_response",
+        "name": "hart ip pass through cmd2 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "pv_loop_current",
+            "start": 10,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "pv_percent_range",
+            "start": 14,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 02 0A 00 D0 7F A0 00 00 00 00 00 00 3B",
+          "86 26 4E 00 00 D2 02 0A 00 D0 7F A0 00 00 00 00 00 00 3B"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd3_request",
+        "name": "hart ip pass through cmd3 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 03 00 3B",
+          "82 26 4E 00 00 D2 03 00 3B"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd3_response",
+        "name": "hart ip pass through cmd3 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "pv_loop_current",
+            "start": 10,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "pv_units",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "pv",
+            "start": 15,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "sv_units",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "sv",
+            "start": 20,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "tv_units",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "tv",
+            "start": 25,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "qv_units",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "qv",
+            "start": 30,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 34,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 03 1A 00 D0 7F A0 00 00 FB 00 00 00 00 FB 00 00 00 00",
+          "86 26 4E 00 00 D2 03 1A 00 D0 7F A0 00 00 FB 00 00 00 00 FB 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd9_request",
+        "name": "hart ip pass through cmd9 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "payload",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 09 04 00 01 02 03 35",
+          "82 26 4E 00 00 D2 09 04 00 01 02 03 35"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd9_response",
+        "name": "hart ip pass through cmd9 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "ext_device_status",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot0_device_var",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "slot0_device_var_classification",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "slot0_units",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "slot0_device_var_value",
+            "start": 14,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "slot0_device_var_status",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot1_device_var",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "slot1_device_var_classify",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "slot1_units",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "slot1_device_var_value",
+            "start": 22,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "slot1_device_var_status",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot2_device_var",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "slot2_device_var_classify",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "slot2_units",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "slot2_device_var_value",
+            "start": 30,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "slot2_device_var_status",
+            "start": 34,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot3_device_var",
+            "start": 35,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "slot3_device_var_classify",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "slot3_units",
+            "start": 37,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "slot3_device_var_value",
+            "start": 38,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "slot3_device_var_status",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "slot0_data_timestamp",
+            "start": 43,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 47,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 09 27 00 D0 02 00 00 FB 00 00 00 00 10 01 00 FB 00 00",
+          "86 26 4E 00 00 D2 09 27 00 D0 02 00 00 FB 00 00 00 00 10 01 00 FB 00 00"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd12_request",
+        "name": "hart ip pass through cmd12 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 0C 00 34",
+          "82 26 4E 00 00 D2 0C 00 34"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd12_response",
+        "name": "hart ip pass through cmd12 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "message",
+            "start": 10,
+            "length": 24,
+            "field_type": "bytes"
+          },
+          {
+            "name": "checksum",
+            "start": 34,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 0C 1A 00 D0 00 10 83 10 51 87 20 92 8B 30 D3 8F BE 08",
+          "86 26 4E 00 00 D2 0C 1A 00 D0 00 10 83 10 51 87 20 92 8B 30 D3 8F BE 08"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd13_request",
+        "name": "hart ip pass through cmd13 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 0D 00 35",
+          "82 26 4E 00 00 D2 0D 00 35"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd13_response",
+        "name": "hart ip pass through cmd13 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "tag",
+            "start": 10,
+            "length": 6,
+            "field_type": "bytes"
+          },
+          {
+            "name": "descriptor",
+            "start": 16,
+            "length": 12,
+            "field_type": "bytes"
+          },
+          {
+            "name": "day",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "month",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "year",
+            "start": 30,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "checksum",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 0D 17 00 D0 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+          "86 26 4E 00 00 D2 0D 17 00 D0 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd48_request",
+        "name": "hart ip pass through cmd48 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "checksum",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "82 26 4E 00 00 D2 30 00 08",
+          "82 26 4E 00 00 D2 30 00 08"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd48_response",
+        "name": "hart ip pass through cmd48 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_sp_status",
+            "start": 10,
+            "length": 6,
+            "field_type": "bytes",
+            "semantic_role": "status"
+          },
+          {
+            "name": "ext_device_status",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_op_mode",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "standardized_status_0",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "standardized_status_1",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "analog_channel_saturated",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "standardized_status_2",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "standardized_status_3",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "checksum",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 26 4E 00 00 D2 30 0F 00 D0 10 04 07 00 00 00 02 00 00 00 00 00 00 C2",
+          "86 26 4E 00 00 D2 30 0F 00 D0 10 04 07 00 00 00 02 00 00 00 00 00 00 C2"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_session_close_request",
+        "name": "hart ip session close request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_session_close_response",
+        "name": "hart ip session close response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd54_request",
+        "name": "hart ip pass through cmd54 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "data",
+            "start": 8,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "82 B9 FD 95 26 6F 36 01 00 2D",
+          "82 B9 FD 95 26 6F 36 01 00 2D"
+        ]
+      },
+      {
+        "message_type_id": "hart_ip_pass_through_cmd54_response",
+        "name": "hart ip pass through cmd54 response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "delimiter",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "long_address",
+            "start": 1,
+            "length": 5,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "command",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "length",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "byte_count"
+          },
+          {
+            "name": "response_code",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "device_status",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "checksum",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "86 F9 FD 95 26 6F 36 1E 00 00 00 65 43 21 4B 46 BB 80 00 00 00 00 00 4E",
+          "86 F9 FD 95 26 6F 36 1E 00 00 00 65 43 21 4B 46 BB 80 00 00 00 00 00 4E"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "hart_ip_keep_alive_request",
+        "response_message_type_id": "hart_ip_keep_alive_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd0_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd0_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd12_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd12_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd13_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd13_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd1_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd1_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd20_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd20_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd2_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd2_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd3_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd3_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd48_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd48_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd54_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd54_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_pass_through_cmd9_request",
+        "response_message_type_id": "hart_ip_pass_through_cmd9_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_session_close_request",
+        "response_message_type_id": "hart_ip_session_close_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "hart_ip_session_initiate_request",
+        "response_message_type_id": "hart_ip_session_initiate_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      }
+    ]
+  }
+}

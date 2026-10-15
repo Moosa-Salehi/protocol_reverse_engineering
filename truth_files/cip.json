@@ -1,0 +1,2307 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "cip",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "CIP over EtherNet/IP",
+    "version": "CIP Vol. 1/2",
+    "description": "CIP explicit messages carried in EtherNet/IP SendRRData / SendUnitData; the CIP service code (with the reply bit) selects the message type. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "Encapsulation header fields use wire-absolute offsets 0..23; CIP message types are relative to offset 24 (interface handle, timeout, common packet format items, then the CIP message).",
+    "message_types": [
+      {
+        "message_type_id": "cip_header",
+        "name": "EtherNet/IP encapsulation header",
+        "role": "header",
+        "description": "Command, length, session handle, status, sender context and options. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "command",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "length",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "session_handle",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "status",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "status",
+            "endian": "little"
+          },
+          {
+            "name": "sender_context",
+            "start": 12,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "options",
+            "start": 20,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "flags",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "70 00 3A 00 09 A6 18 3F 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_read_tag_response",
+        "name": "cip send unit data read tag response",
+        "role": "response",
+        "description": "31 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "genstat",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "addstat_size",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 26,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 02 00 A1 00 04 00 BF 5A 0F 01 B1 00 09 00 29 3F CC 00",
+          "00 00 00 00 00 00 02 00 A1 00 04 00 D2 40 8C 19 B1 00 09 00 71 A4 CC 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_multiple_service_packet_request",
+        "name": "cip send unit data multiple service packet request",
+        "role": "request",
+        "description": "29 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "instance",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "msp_num_services",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "msp_offset",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 32,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 01 00 02 00 A1 00 04 00 01 0B 7C 00 B1 00 A6 00 89 07 0A 02",
+          "00 00 00 00 0A 00 02 00 A1 00 04 00 0D 1B 8B 00 B1 00 18 00 3B 97 0A 02"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_multiple_service_packet_response",
+        "name": "cip send unit data multiple service packet response",
+        "role": "response",
+        "description": "29 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "genstat",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "addstat_size",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "msp_num_services",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "msp_offset",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "msp_offset",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 32,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 02 00 A1 00 04 00 28 00 FE 80 B1 00 F9 00 89 07 8A 00",
+          "00 00 00 00 00 00 02 00 A1 00 04 00 C9 F1 00 80 B1 00 BC 00 A3 19 8A 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_read_tag_request",
+        "name": "cip send unit data read tag request",
+        "role": "request",
+        "description": "27 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_segment_size",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 26,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 02 00 A1 00 04 00 B8 82 E3 4B B1 00 14 00 26 3F 4C 07",
+          "00 00 00 00 01 00 02 00 A1 00 04 00 01 6B 07 00 B1 00 0C 00 4C 1C 4C 04"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_rr_data_unconnected_send_request",
+        "name": "cip send rr data unconnected send request",
+        "role": "request",
+        "description": "26 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "srrd_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "instance",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "cm_priority",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cm_timeout_tick",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "timestamp"
+          },
+          {
+            "name": "cm_msg_req_size",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 30,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 31,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 0A 00 02 00 00 00 00 00 B2 00 14 00 52 02 20 06 24 01 06 9A",
+          "00 00 00 00 0A 00 02 00 00 00 00 00 B2 00 14 00 52 02 20 06 24 01 06 9A"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_get_attribute_list_request",
+        "name": "cip send unit data get attribute list request",
+        "role": "request",
+        "description": "18 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_27",
+            "start": 27,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "instance",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 30,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 01 00 02 00 A1 00 04 00 01 0B 7C 00 B1 00 0C 00 26 04 03 02",
+          "00 00 00 00 01 00 02 00 A1 00 04 00 01 6B 07 00 B1 00 0C 00 EE 1B 03 02"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_get_attribute_list_response",
+        "name": "cip send unit data get attribute list response",
+        "role": "response",
+        "description": "17 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "genstat",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "addstat_size",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "getlist_attr_count",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "attribute",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "getlist_attr_status",
+            "start": 30,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "data_31",
+            "start": 31,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data",
+            "start": 32,
+            "length": 12,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 02 00 A1 00 04 00 28 00 FE 80 B1 00 10 00 26 04 83 00",
+          "00 00 00 00 00 00 02 00 A1 00 04 00 4C 00 FE 80 B1 00 10 00 EE 1B 83 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_rr_data_get_attributes_all_response",
+        "name": "cip send rr data get attributes all response",
+        "role": "response",
+        "description": "13 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "srrd_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data_17",
+            "start": 17,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "genstat",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "addstat_size",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 20,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 0A 00 02 00 00 00 00 00 B2 00 1E 00 81 00 00 00 01 00 0C 00",
+          "00 00 00 00 05 00 02 00 00 00 00 00 B2 00 2E 00 81 00 00 00 01 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_execute_pccc_request",
+        "name": "cip send unit data execute pccc request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "instance",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "pccc_req_id_len",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "pccc_cip_vend_id",
+            "start": 29,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "pccc_cip_serial_num",
+            "start": 31,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "pccc_cmd_code",
+            "start": 35,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "opcode"
+          },
+          {
+            "name": "pccc_gs_status",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "pccc_tns_code",
+            "start": 37,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "pccc_fnc_code_0f",
+            "start": 39,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "data",
+            "start": 40,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 01 00 02 00 A1 00 04 00 AC 6F A5 09 B1 00 26 00 D8 E2 4B 02",
+          "00 00 00 00 01 00 02 00 A1 00 04 00 0D 8D 84 6F B1 00 19 00 03 00 4B 02"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_execute_pccc_response",
+        "name": "cip send unit data execute pccc response",
+        "role": "response",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "genstat",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "addstat_size",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 26,
+            "length": 29,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 02 00 A1 00 04 00 01 00 FE 80 B1 00 23 00 D9 E2 CB 00",
+          "00 00 00 00 00 00 02 00 A1 00 04 00 01 00 FE 80 B1 00 23 00 DA E2 CB 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_rr_data_forward_open_request",
+        "name": "cip send rr data forward open request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "srrd_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "instance",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "cm_priority",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cm_timeout_tick",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "timestamp"
+          },
+          {
+            "name": "connid",
+            "start": 24,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 28,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cm_conn_serial_num",
+            "start": 32,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "cm_vendor",
+            "start": 34,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "cm_orig_serial_num",
+            "start": 36,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "cm_timeout_multiplier",
+            "start": 40,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "timestamp"
+          },
+          {
+            "name": "reserved",
+            "start": 41,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "cm_otrpi",
+            "start": 44,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "cm_fwo_f_v",
+            "start": 48,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "cm_torpi",
+            "start": 50,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "cm_fwo_f_v",
+            "start": 54,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "cm_fwo_dir",
+            "start": 56,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "cm_connpath_size",
+            "start": 57,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 58,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 20 00 02 00 00 00 00 00 B2 00 30 00 54 02 20 06 24 01 07 F9",
+          "00 00 00 00 00 00 02 00 00 00 00 00 B2 00 3C 00 54 02 20 06 24 01 05 9B"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_rr_data_get_attribute_single_response",
+        "name": "cip send rr data get attribute single response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "srrd_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data_17",
+            "start": 17,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "genstat",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "addstat_size",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 20,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 05 00 02 00 00 00 00 00 B2 00 12 00 8E 00 00 00 01 65 6E 67",
+          "00 00 00 00 05 00 02 00 00 00 00 00 B2 00 06 00 8E 00 00 00 01 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_rr_data_get_attributes_all_request",
+        "name": "cip send rr data get attributes all request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "srrd_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "instance",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 0A 00 02 00 00 00 00 00 B2 00 0A 00 01 04 21 00 01 00 25 00",
+          "00 00 00 00 05 00 02 00 00 00 00 00 B2 00 06 00 01 02 20 F5 24 01"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_write_tag_response",
+        "name": "cip send unit data write tag response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "genstat",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "addstat_size",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 02 00 A1 00 04 00 B3 5A E1 FF B1 00 06 00 94 F8 CD 00",
+          "00 00 00 00 00 00 02 00 A1 00 04 00 2D 70 E1 FF B1 00 06 00 20 31 CD 00"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_rr_data_get_attribute_single_request",
+        "name": "cip send rr data get attribute single request",
+        "role": "request",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "srrd_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "class",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "instance",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "path_segment",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "attribute",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 05 00 02 00 00 00 00 00 B2 00 0C 00 0E 05 21 00 37 00 25 00",
+          "00 00 00 00 05 00 02 00 00 00 00 00 B2 00 08 00 0E 03 20 F5 24 00 30 01"
+        ]
+      },
+      {
+        "message_type_id": "cip_send_unit_data_write_tag_request",
+        "name": "cip send unit data write tag request",
+        "role": "request",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "sud_iface",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "timeout",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_itemcount",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 10,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "connid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_typeid",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "cpf_length",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "service",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "request_path_size",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "path_segment",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_segment_size",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "symbol",
+            "start": 26,
+            "length": 15,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_41",
+            "start": 41,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data",
+            "start": 42,
+            "length": 10,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 02 00 A1 00 04 00 58 6A B2 FF B1 00 20 00 7A 26 4D 09",
+          "00 00 00 00 00 00 02 00 A1 00 04 00 04 70 9B FF B1 00 1E 00 94 F8 4D 08"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "cip_send_rr_data_get_attribute_single_request",
+        "response_message_type_id": "cip_send_rr_data_get_attribute_single_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "cip_send_rr_data_get_attributes_all_request",
+        "response_message_type_id": "cip_send_rr_data_get_attributes_all_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "cip_send_unit_data_execute_pccc_request",
+        "response_message_type_id": "cip_send_unit_data_execute_pccc_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "cip_send_unit_data_get_attribute_list_request",
+        "response_message_type_id": "cip_send_unit_data_get_attribute_list_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "cip_send_unit_data_multiple_service_packet_request",
+        "response_message_type_id": "cip_send_unit_data_multiple_service_packet_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "cip_send_unit_data_read_tag_request",
+        "response_message_type_id": "cip_send_unit_data_read_tag_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "cip_send_unit_data_write_tag_request",
+        "response_message_type_id": "cip_send_unit_data_write_tag_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      }
+    ]
+  }
+}

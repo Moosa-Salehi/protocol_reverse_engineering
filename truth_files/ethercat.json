@@ -1,0 +1,1656 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "ethercat",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "EtherCAT",
+    "version": "ETG.1000",
+    "description": "EtherCAT frames (EtherType 0x88A4) of datagrams sent by the master and returned by the slaves; the first datagram command selects the message type. Datagram data is the addressed slave memory / process image and is one bytes field. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "The 2-byte frame header uses wire-absolute offsets; datagram types are relative to the first datagram (offset 0 = command = wire offset 2).",
+    "message_types": [
+      {
+        "message_type_id": "ethercat_header",
+        "name": "EtherCAT frame header",
+        "role": "header",
+        "description": "11-bit frame length, reserved bit and 4-bit type (1 = datagrams). Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "frame_header",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "0E 10"
+        ]
+      },
+      {
+        "message_type_id": "ethercat_fpwr_frame",
+        "name": "ethercat fpwr frame",
+        "role": "request",
+        "description": "486 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "command",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 5
+          },
+          {
+            "name": "index",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_10",
+            "start": 10,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 14,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 22,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 26,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "05 82 00 10 02 05 04 80 00 00 00 01 08 00 00 00 05 83 03 10 02 05 04 80",
+          "05 82 00 10 02 05 04 80 04 00 00 01 08 00 01 00 05 83 03 10 02 05 04 80"
+        ]
+      },
+      {
+        "message_type_id": "ethercat_fprd_frame",
+        "name": "ethercat fprd frame",
+        "role": "request",
+        "description": "344 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "command",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 4
+          },
+          {
+            "name": "index",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_10",
+            "start": 10,
+            "length": 10,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 32,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "04 6C 01 10 00 00 0A 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 6D",
+          "04 6C 01 10 00 00 0A 80 04 00 01 01 0C 00 02 04 04 00 00 00 01 00 04 6D"
+        ]
+      },
+      {
+        "message_type_id": "ethercat_lrd_frame",
+        "name": "ethercat lrd frame",
+        "role": "request",
+        "description": "62 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "command",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 10
+          },
+          {
+            "name": "index",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "lad",
+            "start": 2,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 11,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 15,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 17,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 19,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 25,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 29,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 31,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 33,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 35,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_37",
+            "start": 37,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 39,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 43,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 45,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 47,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 49,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_51",
+            "start": 51,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 53,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 55,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 56,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 57,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 59,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 61,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 63,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_65",
+            "start": 65,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 67,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 69,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 70,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 71,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 73,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 75,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 77,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_79",
+            "start": 79,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 81,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 83,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 84,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 85,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 87,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 89,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 91,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_93",
+            "start": 93,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 95,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "0A 2F 00 10 01 00 01 80 00 00 00 00 00 07 30 00 00 30 01 02 80 00 00 00",
+          "0A 2F 00 10 01 00 01 80 04 00 00 01 00 07 30 05 00 30 01 02 80 04 00 0C"
+        ]
+      },
+      {
+        "message_type_id": "ethercat_lwr_frame",
+        "name": "ethercat lwr frame",
+        "role": "request",
+        "description": "62 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "command",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 11
+          },
+          {
+            "name": "index",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "lad",
+            "start": 2,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 11,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 15,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 17,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 19,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 25,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 29,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 31,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 33,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 35,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_37",
+            "start": 37,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 39,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 43,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 45,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 47,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 49,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_51",
+            "start": 51,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 53,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 55,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 56,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 57,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 59,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 61,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 63,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_65",
+            "start": 65,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 67,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 69,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 70,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 71,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 73,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 75,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 77,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_79",
+            "start": 79,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 81,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 83,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 84,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 85,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 87,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 89,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 91,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_93",
+            "start": 93,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 95,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "0B 36 00 20 01 00 01 80 00 00 01 00 00 07 37 00 00 30 01 02 80 00 00 00",
+          "0B 36 00 20 01 00 01 80 04 00 01 01 00 07 37 05 00 30 01 02 80 04 00 0C"
+        ]
+      },
+      {
+        "message_type_id": "ethercat_bwr_frame",
+        "name": "ethercat bwr frame",
+        "role": "request",
+        "description": "18 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "command",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 8
+          },
+          {
+            "name": "index",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 10,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "08 03 00 00 20 01 02 80 00 00 11 00 00 00 07 04 00 00 30 01 02 80 00 00",
+          "08 03 05 00 20 01 02 80 04 00 11 00 05 00 07 04 05 00 30 01 02 80 04 00"
+        ]
+      },
+      {
+        "message_type_id": "ethercat_apwr_frame",
+        "name": "ethercat apwr frame",
+        "role": "request",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "command",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code",
+            "constant_value": 2
+          },
+          {
+            "name": "index",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 8,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_10",
+            "start": 10,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 16,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 22,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_24",
+            "start": 24,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 32,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 34,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 36,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_38",
+            "start": 38,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 40,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 43,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 44,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 46,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 48,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 50,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_52",
+            "start": 52,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 54,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 56,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 57,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 58,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 60,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 62,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 64,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_66",
+            "start": 66,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 68,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 70,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 71,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 72,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 74,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 76,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 78,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_80",
+            "start": 80,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 82,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          },
+          {
+            "name": "command",
+            "start": 84,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "index",
+            "start": 85,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "address_position",
+            "start": 86,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "address_offset",
+            "start": 88,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "datagram_length",
+            "start": 90,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "irq",
+            "start": 92,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data_94",
+            "start": 94,
+            "length": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "working_counter",
+            "start": 96,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "counter",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "02 49 FF FF 10 00 02 80 00 00 01 10 00 00 07 4A 00 00 30 01 02 80 00 00",
+          "02 49 04 00 10 00 02 80 04 00 01 10 01 00 07 4A 05 00 30 01 02 80 04 00"
+        ]
+      }
+    ],
+    "relations": []
+  }
+}

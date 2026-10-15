@@ -17,6 +17,7 @@ from protocol_re.inference.boundary_detection import (
     infer_segments,
     infer_template,
 )
+from protocol_re.inference.periodic_arrays import MODES as PERIODIC_MODES, detect_array_regions
 from protocol_re.model.schema import Segment
 from protocol_re.utils.logging import setup_stage_logging, ProgressTracker
 
@@ -58,6 +59,21 @@ def _segments_from_boundaries(positions) -> list:
         for start, end in zip(ordered, ordered[1:])
         if end > start
     ]
+
+
+def _split_segments_at(segments, edges) -> list:
+    """Cut segments at the given offsets, keeping each piece's kind and evidence."""
+    out = []
+    for segment in segments:
+        cuts = sorted(edge for edge in edges if segment.start < edge < segment.end)
+        if not cuts:
+            out.append(segment)
+            continue
+        bounds = [segment.start] + cuts + [segment.end]
+        for start, end in zip(bounds, bounds[1:]):
+            evidence = dict(segment.evidence or {}, periodic_array_split=True)
+            out.append(Segment(start=start, end=end, kind=segment.kind, confidence=segment.confidence, evidence=evidence))
+    return out
 
 
 def _regularize_fixed_operand_tail(
@@ -161,6 +177,17 @@ def main() -> None:
                              "(default: BoundaryDetection.MAX_FIELDS_PER_BYTE)")
     parser.add_argument("--enable-merging", action="store_true", default=True, help="Enable segment merging")
     parser.add_argument("--no-merging", dest="enable_merging", action="store_false", help="Disable segment merging")
+    parser.add_argument(
+        "--periodic-arrays",
+        choices=PERIODIC_MODES,
+        default="off",
+        help=(
+            "Split detected arrays of fixed-width elements (register blocks, sample arrays) inside "
+            "varying regions every element width (protocol_re.inference.periodic_arrays). 'strict' "
+            "needs cross-length evidence (length gcd or a count field); 'loose' also accepts the "
+            "phase statistics alone on long regions. Skipped for TLV families. Default off."
+        ),
+    )
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
 
     args = parser.parse_args()
@@ -261,6 +288,7 @@ def main() -> None:
     result = {}
     total_segments = 0
     total_fields = 0
+    total_array_regions = 0
 
     # Hierarchical pools: infer transport-header structure on all messages (where
     # message length varies) and body structure per message length (where the
@@ -408,6 +436,14 @@ def main() -> None:
                         boundary_confidence_weight=args.boundary_confidence_weight,
                         isolate_body_opcode=args.isolate_body_opcode,
                     )
+                array_regions = []
+                if args.periodic_arrays != "off":
+                    array_regions = detect_array_regions([bytes.fromhex(h) for h in messages_hex], args.periodic_arrays)
+                    if array_regions and segments:
+                        span_end = max(segment.end for segment in segments)
+                        edges = {edge for region in array_regions for edge in region.edges if 0 < edge < span_end}
+                        segments = _split_segments_at(segments, edges)
+                        total_array_regions += len(array_regions)
                 hypotheses = infer_field_hypotheses(family_id, messages_hex, segments)
                 template = infer_template(messages_hex)
 
@@ -426,6 +462,8 @@ def main() -> None:
                     "segments": [segment.to_dict() for segment in segments],
                     "field_hypotheses": [hypothesis.to_dict() for hypothesis in hypotheses],
                 }
+                if array_regions:
+                    result[family_id]["periodic_arrays"] = [region.to_dict() for region in array_regions]
 
             progress.update()
 
@@ -433,6 +471,9 @@ def main() -> None:
 
     logger.metric("total_segments", total_segments, "segments")
     logger.metric("total_fields", total_fields, "fields")
+    if args.periodic_arrays != "off":
+        logger.metric("periodic_array_regions", total_array_regions, "regions")
+        print(f"[+] Periodic arrays ({args.periodic_arrays}): {total_array_regions} array regions split")
     logger.metric("avg_segments_per_family", total_segments / len(grouped) if grouped else 0, "segments/family")
     logger.metric("avg_fields_per_family", total_fields / len(grouped) if grouped else 0, "fields/family")
 

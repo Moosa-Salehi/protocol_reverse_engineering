@@ -1,0 +1,3676 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "bacnet",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "BACnet/IP",
+    "version": "ANSI/ASHRAE 135",
+    "description": "BACnet/IP (UDP 47808): BVLC header, NPDU (version, control and optional network addresses) and APDU; the APDU type and service choice select the message type. Tag-encoded service parameters have no fixed offsets and are one bytes field. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "BVLC fields use wire-absolute offsets 0..3; the other types are relative to the NPDU (offset 0 = NPDU version = wire offset 4).",
+    "message_types": [
+      {
+        "message_type_id": "bacnet_header",
+        "name": "BACnet Virtual Link Control",
+        "role": "header",
+        "description": "BVLC type 0x81, BVLC function and BVLC length. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "bvlc_type",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "bvlc_function",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "bvlc_length",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "81 0A 00 16"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_read_property_multiple_ack",
+        "name": "bacnet read property multiple ack",
+        "role": "response",
+        "description": "2796 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "data",
+            "start": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 3C CD 00 10 0E 0C 00 C0 09 17 1E 29 55 4E 91 00 4F 1F 0C 00 C0 09",
+          "01 00 38 EF 01 10 0E 4F 1F 0C 00 C0 09 04 1E 29 4D 4E 75 0C 00 53 57 49"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_read_property_multiple_request",
+        "name": "bacnet read property multiple request",
+        "role": "request",
+        "description": "2258 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "max_adpu_size",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "invoke_id",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 7,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 16,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 25,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 30,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 32,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 33,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 34,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 38,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 39,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 40,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 43,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 47,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 48,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 49,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 50,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 51,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 52,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 56,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 57,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 58,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 59,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 60,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 61,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 65,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 66,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 67,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 68,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 69,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 70,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 74,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 75,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 76,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 77,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 78,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 79,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 83,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 84,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 85,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 86,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 87,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 88,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 92,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 93,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 94,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 95,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 96,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 97,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 101,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 102,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 103,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 104,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 105,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 106,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 110,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 111,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 112,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 113,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 114,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 115,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 119,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 120,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 121,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 122,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 123,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 124,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 128,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 129,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 130,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 131,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 132,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 133,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 137,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 138,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 139,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 140,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 141,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 142,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 146,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 147,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 148,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 149,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 150,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 151,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 155,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 156,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 157,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 158,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          }
+        ],
+        "examples": [
+          "01 04 02 03 2D 0E 0C 00 00 09 10 1E 09 55 1F 0C 00 00 09 11 1E 09 55 1F",
+          "01 04 02 03 32 0E 0C 00 00 08 9B 1E 09 4D 1F 0C 00 00 08 9C 1E 09 4D 1F"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_read_property_request",
+        "name": "bacnet read property request",
+        "role": "request",
+        "description": "2110 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 5,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 24 47 19 01 7F FF 02 70 81 0C 0C 02 00 A4 EE 19 0C",
+          "01 24 47 19 01 7F FF 02 70 7E 0C 0C 00 C0 00 02 19 55"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_read_property_ack",
+        "name": "bacnet read property ack",
+        "role": "response",
+        "description": "1928 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "snet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "slen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 5,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 08 47 19 01 7F 30 41 0C 0C 01 40 00 07 19 55 3E 91 01 3F",
+          "01 08 47 19 01 7F 30 C8 0C 0C 01 40 00 07 19 4D 3E 75 05 00 42 56 2D 37"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_segment_ack",
+        "name": "bacnet segment ack",
+        "role": "response",
+        "description": "1102 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "sequence_number",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "window_size",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "quantity"
+          }
+        ],
+        "examples": [
+          "01 00 40 B4 00 01",
+          "01 00 40 DC 00 01"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_i_am",
+        "name": "bacnet i am",
+        "role": "notification",
+        "description": "959 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 5,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 28 FF FF 00 47 19 01 7F FD 10 00 C4 02 00 A4 EE 21 32 91 03 21 2A",
+          "01 28 FF FF 00 47 19 01 7F FD 10 00 C4 02 00 A4 EE 21 32 91 03 21 2A"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_atomic_read_file_ack",
+        "name": "bacnet atomic read file ack",
+        "role": "response",
+        "description": "758 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag_array",
+            "start": 5,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_8",
+            "start": 8,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_13",
+            "start": 13,
+            "length": 30,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 43,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          }
+        ],
+        "examples": [
+          "01 20 00 0D 01 3D FF 30 2D 06 11 0E 31 00 60 0F",
+          "01 00 30 33 06 11 0E 31 00 60 0F"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_atomic_read_file_request",
+        "name": "bacnet atomic read file request",
+        "role": "request",
+        "description": "730 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "max_adpu_size",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "invoke_id",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 7,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_13",
+            "start": 13,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_17",
+            "start": 17,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          }
+        ],
+        "examples": [
+          "01 0C 00 0D 01 3D 02 03 2D 06 C4 02 80 00 00 0E 31 00 22 01 B8 0F",
+          "01 04 02 03 33 06 C4 02 80 00 00 0E 31 00 22 01 B8 0F"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_who_is",
+        "name": "bacnet who is",
+        "role": "notification",
+        "description": "617 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "hopc",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "type",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "unconfirmed_service",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "data",
+            "start": 8,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 20 FF FF 00 FF 10 08 0A A4 EE 1A A4 EE",
+          "01 20 FF FF 00 FF 10 08 0A A4 EE 1A A4 EE"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_write_property_request",
+        "name": "bacnet write property request",
+        "role": "request",
+        "description": "289 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 24 47 19 01 7F FF 02 03 35 0F 0C 01 40 00 05 19 55 3E 91 00 3F 49 0A",
+          "01 04 02 05 E3 0F 0C 00 00 08 FE 19 55 3E 44 42 C8 00 00 3F 49 0A"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_atomic_write_file_ack",
+        "name": "bacnet atomic write file ack",
+        "role": "response",
+        "description": "262 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 30 34 07 09 00",
+          "01 00 30 01 07 09 00"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_atomic_write_file_request",
+        "name": "bacnet atomic write file request",
+        "role": "request",
+        "description": "252 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 04 02 03 34 07 C4 02 80 00 00 0E 31 00 60 0F",
+          "01 04 00 03 01 07 C4 02 80 00 00 0E 31 00 65 FE 01 CC 2F 2A 2A 2A 2A 2A"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_write_property_ack",
+        "name": "bacnet write property ack",
+        "role": "response",
+        "description": "221 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 20 86 0F",
+          "01 08 65 91 01 19 20 01 0F"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_who_has",
+        "name": "bacnet who has",
+        "role": "notification",
+        "description": "208 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "fwd_ip",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "big"
+          },
+          {
+            "name": "fwd_port",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "version",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 8,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 10 07 09 85 19 85 2C 02 00 00 85",
+          "01 20 FF FF 00 FF 10 07 2C 02 00 00 85"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_read_property_error",
+        "name": "bacnet read property error",
+        "role": "response",
+        "description": "192 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "snet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "slen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "sadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "type",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_10",
+            "start": 10,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 12,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 08 47 19 01 7F 50 99 0C 91 02 91 20",
+          "01 08 47 19 01 7F 50 B0 0C 91 02 91 20"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_unconfirmed_cov_notification",
+        "name": "bacnet unconfirmed cov notification",
+        "role": "notification",
+        "description": "120 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "snet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "slen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "sadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "type",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "unconfirmed_service",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_9",
+            "start": 9,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 11,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 16,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_21",
+            "start": 21,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_27",
+            "start": 27,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 29,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 30,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 32,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "unused_bits",
+            "start": 33,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "bit",
+            "start": 34,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "tag",
+            "start": 35,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          }
+        ],
+        "examples": [
+          "01 08 21 99 01 7E 10 02 09 63 1C 02 01 4F F1 2C 01 00 00 02 39 16 4E 09",
+          "01 08 21 99 01 7E 10 02 09 63 1C 02 01 4F F1 2C 01 00 00 01 39 16 4E 09"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_abort",
+        "name": "bacnet abort",
+        "role": "response",
+        "description": "64 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 71 07 04",
+          "01 00 71 F8 04"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_write_property_error",
+        "name": "bacnet write property error",
+        "role": "response",
+        "description": "54 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 08 00 0D 01 3D 50 01 0F 91 01 91 1F",
+          "01 20 00 06 06 00 11 43 76 21 89 FF 50 A9 0F 91 02 91 28"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_confirmed_cov_notification_ack",
+        "name": "bacnet confirmed cov notification ack",
+        "role": "response",
+        "description": "46 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "dadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "hopc",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "type",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          }
+        ],
+        "examples": [
+          "01 00 20 6B 01",
+          "01 00 20 9D 01"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_unconfirmed_event_notification",
+        "name": "bacnet unconfirmed event notification",
+        "role": "notification",
+        "description": "41 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "snet",
+            "start": 5,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "slen",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "sadr_mstp",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "hopc",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "type",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "unconfirmed_service",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_13",
+            "start": 13,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 15,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 19,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 20,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag_array",
+            "start": 24,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_27",
+            "start": 27,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_32",
+            "start": 32,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag_array",
+            "start": 36,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_39",
+            "start": 39,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 40,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_41",
+            "start": 41,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_43",
+            "start": 43,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 44,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_45",
+            "start": 45,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 46,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_47",
+            "start": 47,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 48,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_49",
+            "start": 49,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 50,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_51",
+            "start": 51,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag_array",
+            "start": 52,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data",
+            "start": 56,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 10 03 0A 30 39 1C 02 00 26 3A 2C 00 C0 00 07 3E 2E A4 6D 0A 1C 03",
+          "01 20 FF FF 00 FF 10 03 0A 30 39 1C 02 00 26 3A 2C 00 C0 00 10 3E 2E A4"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_confirmed_cov_notification_request",
+        "name": "bacnet confirmed cov notification request",
+        "role": "request",
+        "description": "40 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "snet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "slen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "sadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "type",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "max_adpu_size",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "invoke_id",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_11",
+            "start": 11,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 13,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 18,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 22,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_23",
+            "start": 23,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 28,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_29",
+            "start": 29,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 30,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 32,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 33,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 34,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "unused_bits",
+            "start": 35,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "bit",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "tag",
+            "start": 37,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "tag",
+            "start": 38,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          }
+        ],
+        "examples": [
+          "01 04 02 05 7A 01 0A 02 58 1C 02 00 1B EF 2C 00 00 00 04 39 BB 4E 09 55",
+          "01 08 21 99 01 52 00 03 10 01 09 01 1C 02 01 4F F1 2C 00 C0 00 65 3A 01"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_confirmed_private_transfer_ack",
+        "name": "bacnet confirmed private transfer ack",
+        "role": "response",
+        "description": "39 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "vendor_identifier",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "tag",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 8,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 30 1E 12 09 07 1A 01 FF 2E 00 00 00 38 00 00 00 38 00 08 27 EA 01",
+          "01 00 30 E1 12 09 07 1A 01 FF 2E 00 00 00 72 00 00 00 38 00 08 28 16 01"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_reject",
+        "name": "bacnet reject",
+        "role": "response",
+        "description": "30 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "snet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "slen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "sadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "type",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "reject_reason",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "01 08 47 19 01 7F 60 3F 09",
+          "01 08 47 19 01 7F 60 E4 09"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_confirmed_private_transfer_request",
+        "name": "bacnet confirmed private transfer request",
+        "role": "request",
+        "description": "25 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 04 02 05 8A 12 09 12 19 CC 2E 65 FE 01 F2 2A 20 4E 45 54 57 4F 52 4B",
+          "01 04 02 05 54 12 09 07 1A 01 FF 2E 00 00 00 7D 00 00 00 36 00 00 00 91"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_i_have",
+        "name": "bacnet i have",
+        "role": "notification",
+        "description": "24 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 08 00 03 01 85 10 01 C4 02 00 00 85 C4 02 00 00 85 75 08 00 53 59 4E",
+          "01 08 00 0D 01 3D 10 01 C4 02 00 00 3D C4 02 00 00 3D 75 08 00 53 59 4E"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_confirmed_event_notification_request",
+        "name": "bacnet confirmed event notification request",
+        "role": "request",
+        "description": "24 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 2,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 04 00 00 67 02 09 7B 1C 02 0F E2 68 2C 00 2D C6 D0 3E 0C 02 0C 31 00",
+          "01 04 00 00 68 02 09 7B 1C 02 0F E2 68 2C 00 2D C6 D0 3E 0C 02 0C 31 00"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_read_range_ack",
+        "name": "bacnet read range ack",
+        "role": "response",
+        "description": "23 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 6,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "tag",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "unused_bits",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "bit",
+            "start": 14,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "tag",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_16",
+            "start": 16,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag_array",
+            "start": 17,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_20",
+            "start": 20,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_25",
+            "start": 25,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag_array",
+            "start": 29,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data",
+            "start": 32,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 0C 03 22 01 05 3C 03 01 01 1A 0E A4 6A 0A 03 02 B4 13 13 16 5A 0F 1E",
+          "01 0C 03 22 01 05 3C 1D 02 01 1A 2C 42 63 D5 AA 1F 2A 04 00 0E A4 6A 0A"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_subscribe_cov_request",
+        "name": "bacnet subscribe cov request",
+        "role": "request",
+        "description": "17 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "dadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "data",
+            "start": 6,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 04 00 00 0A 05 09 7B 1C 00 C0 00 00 29 00 3A 02 58",
+          "01 24 21 99 01 7E FF 00 05 02 05 09 63 1C 00 C0 00 66 29 01 39 1E"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_unconfirmed_private_transfer",
+        "name": "bacnet unconfirmed private transfer",
+        "role": "notification",
+        "description": "14 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "unconfirmed_service",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "vendor_identifier",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "tag",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_7",
+            "start": 7,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag_array",
+            "start": 8,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data_11",
+            "start": 11,
+            "length": 20,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          }
+        ],
+        "examples": [
+          "01 00 10 04 09 08 19 01 2E 0C 02 00 27 10 19 00 29 00 3E 0C 04 40 00 03",
+          "01 00 10 04 09 08 19 01 2E 0C 02 00 27 10 19 00 29 00 3E 0C 04 40 00 03"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_subscribe_cov_ack",
+        "name": "bacnet subscribe cov ack",
+        "role": "response",
+        "description": "14 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "snet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "slen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "sadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "type",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          }
+        ],
+        "examples": [
+          "01 08 21 99 01 52 20 58 05",
+          "01 08 21 99 01 3F 20 03 05"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_read_range_request",
+        "name": "bacnet read range request",
+        "role": "request",
+        "description": "14 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "max_adpu_size",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "invoke_id",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "objecttype",
+            "start": 7,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "tag",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "property_identifier",
+            "start": 12,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          }
+        ],
+        "examples": [
+          "01 04 00 05 96 1A 0C 06 40 00 01 19 83",
+          "01 04 00 03 DF 1A 0C 05 00 00 66 19 83 3E 21 01 32 01 2C 3F"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_reinitialize_device_request",
+        "name": "bacnet reinitialize device request",
+        "role": "request",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "max_adpu_size",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "invoke_id",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 7,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 0C 00 0D 01 3D 02 03 35 14 09 00 1D 06 00 4A 65 73 75 73",
+          "01 04 00 03 01 14 09 00 1D 09 00 66 69 6C 69 73 74 65 72"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_confirmed_event_notification_ack",
+        "name": "bacnet confirmed event notification ack",
+        "role": "response",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "dadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "hopc",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "type",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          }
+        ],
+        "examples": [
+          "01 00 20 77 02",
+          "01 00 20 78 02"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_reinitialize_device_error",
+        "name": "bacnet reinitialize device error",
+        "role": "response",
+        "description": "9 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_6",
+            "start": 6,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 8,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 08 00 0D 01 3D 50 01 14 91 05 91 1A",
+          "01 20 00 0D 01 3D FF 50 34 14 91 05 91 1A"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_device_communication_control_request",
+        "name": "bacnet device communication control request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "dadr_mstp",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "hopc",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "type",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "max_adpu_size",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "invoke_id",
+            "start": 9,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 11,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_12",
+            "start": 12,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 13,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 14,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 24 00 03 01 6C FF 02 03 87 11 19 00 2D 09 00 66 69 6C 69 73 74 65 72",
+          "01 24 00 0D 01 3D FF 00 03 01 11 19 00 2D 09 00 66 69 6C 69 73 74 65 72"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_time_synchronization",
+        "name": "bacnet time synchronization",
+        "role": "notification",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "dnet",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "dlen",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          },
+          {
+            "name": "data",
+            "start": 5,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 28 FF FF 00 00 0D 01 3D FE 10 06 A4 6A 09 17 FF B4 17 15 0D 00",
+          "01 20 FF FF 00 FF 10 06 A4 6A 02 15 02 B4 10 2F 19 00"
+        ]
+      },
+      {
+        "message_type_id": "bacnet_confirmed_event_notification_error",
+        "name": "bacnet confirmed event notification error",
+        "role": "response",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "control",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "invoke_id",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "transaction_id"
+          },
+          {
+            "name": "confirmed_service",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "tag",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data_6",
+            "start": 6,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "tag",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 8,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 50 67 02 91 05 91 00",
+          "01 00 50 68 02 91 05 91 00"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "bacnet_atomic_read_file_request",
+        "response_message_type_id": "bacnet_atomic_read_file_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_atomic_write_file_request",
+        "response_message_type_id": "bacnet_atomic_write_file_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_confirmed_cov_notification_request",
+        "response_message_type_id": "bacnet_confirmed_cov_notification_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_confirmed_event_notification_request",
+        "response_message_type_id": "bacnet_confirmed_event_notification_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_confirmed_private_transfer_request",
+        "response_message_type_id": "bacnet_confirmed_private_transfer_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_read_property_multiple_request",
+        "response_message_type_id": "bacnet_read_property_multiple_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_read_property_request",
+        "response_message_type_id": "bacnet_read_property_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_read_range_request",
+        "response_message_type_id": "bacnet_read_range_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_subscribe_cov_request",
+        "response_message_type_id": "bacnet_subscribe_cov_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "bacnet_write_property_request",
+        "response_message_type_id": "bacnet_write_property_ack",
+        "relation_type": "request_response",
+        "description": "The confirmed service request is answered by the matching response."
+      }
+    ]
+  }
+}

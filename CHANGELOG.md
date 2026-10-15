@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Periodic-array boundaries (`protocol_re.inference.periodic_arrays`, `PeriodicArrays`
+  thresholds): stage 07 `--periodic-arrays {off,strict,loose}` / `main.py
+  --boundary-periodic-arrays` detects arrays of fixed-width elements inside varying regions
+  (phase statistics repeating every 2/4/8 bytes, plus length-gcd or count-field evidence)
+  and splits them per element. Default off. With `loose` over the 13 non-Modbus benchmark
+  protocols: per-message boundary F1 0.323 -> 0.382, truth-file overall 0.300 -> 0.314; no
+  region is detected on the Modbus and GOOSE truth corpora (scores unchanged).
+- Truth files for bacnet, cip, dnp3, enip, ethercat, hart_ip, iec104, mms, opcua,
+  powerlink, s7comm and zigbee, derived from the tshark dissection of the benchmark
+  captures (`dol/truth-file-derivation/scripts/build_truth.py`): fixed-offset fields per
+  message type, arrays and variable-position content as one bytes field.
 - `scripts/diagnostics/31_benchmark_message_boundaries.py`: per-message field-boundary
   precision/recall/F1 against the tshark annotations for every protocol with a run under
   `finetuning/windows_data/runs`, printed as one table. `--families-file` selects which

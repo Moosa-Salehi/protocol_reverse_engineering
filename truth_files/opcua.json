@@ -1,0 +1,2882 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "opcua",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "OPC UA binary (UA TCP)",
+    "version": "OPC 10000-6",
+    "description": "OPC UA binary protocol over TCP 4840: UA TCP message header, then the secure-conversation headers and the encoded service request/response whose node id selects the message type. Encrypted message bodies are one bytes field. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "Message header fields use wire-absolute offsets 0..7; the other types are relative to offset 8.",
+    "message_types": [
+      {
+        "message_type_id": "opcua_header",
+        "name": "UA TCP message header",
+        "role": "header",
+        "description": "Three-byte ASCII message type (HEL, ACK, ERR, OPN, CLO, MSG), chunk type and message size. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "message_type",
+            "start": 0,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "chunk",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "message_size",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "48 45 4C 46 44 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "opcua_encrypted_message_request",
+        "name": "opcua encrypted message request",
+        "role": "request",
+        "description": "83 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 17,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 26 6D 01 00 00 00 26 48 E6 29 B3 A0 7E 94 8F 5F 83 B5 5F 4E 31 AC",
+          "00 00 26 6D 01 00 00 00 82 89 E7 EC DA 0B 78 AD 52 F3 9E 2D DD 25 15 54"
+        ]
+      },
+      {
+        "message_type_id": "opcua_encrypted_message_response",
+        "name": "opcua encrypted message response",
+        "role": "response",
+        "description": "75 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "data",
+            "start": 17,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 26 6D 01 00 00 00 62 8C 82 EA 5C B2 72 6D 53 6A 95 4B 90 E3 E7 E1",
+          "00 00 26 6D 01 00 00 00 F7 02 28 A6 59 98 14 26 FD AA E6 8D CF D2 E9 38"
+        ]
+      },
+      {
+        "message_type_id": "opcua_acknowledge",
+        "name": "opcua acknowledge",
+        "role": "response",
+        "description": "20 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "ver",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "rbs",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "sbs",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "mms",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "mcc",
+            "start": 16,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "quantity",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 01 00 00 00 01 00 00 00 0A 00 0A 00 00 00",
+          "00 00 00 00 00 00 01 00 00 00 01 00 00 00 0A 00 0A 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "opcua_open_secure_channel_request",
+        "name": "opcua open secure channel request",
+        "role": "request",
+        "description": "20 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "data_4",
+            "start": 4,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "spu",
+            "start": 8,
+            "length": 47,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "scert",
+            "start": 55,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "rcthumb",
+            "start": 59,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 63,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 67,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 71,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 72,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 73,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 75,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 76,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "timestamp",
+            "start": 77,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 85,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 89,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 93,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 97,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 101,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 102,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 103,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "clientprotocolversion",
+            "start": 104,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "constant",
+            "endian": "little"
+          },
+          {
+            "name": "securitytokenrequesttype",
+            "start": 108,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "messagesecuritymode",
+            "start": 112,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 116,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 2F 00 00 00 68 74 74 70 3A 2F 2F 6F 70 63 66 6F 75 6E 64 61",
+          "00 00 00 00 39 00 00 00 68 74 74 70 3A 2F 2F 6F 70 63 66 6F 75 6E 64 61"
+        ]
+      },
+      {
+        "message_type_id": "opcua_hello",
+        "name": "opcua hello",
+        "role": "request",
+        "description": "19 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "ver",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "rbs",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "sbs",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "mms",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "mcc",
+            "start": 16,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "quantity",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 20,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 00 00 01 00 00 00 01 00 00 00 00 01 88 13 00 00 24 00 00 00",
+          "00 00 00 00 00 00 01 00 00 00 01 00 00 00 00 01 88 13 00 00 24 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "opcua_open_secure_channel_response",
+        "name": "opcua open secure channel response",
+        "role": "response",
+        "description": "19 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "data_4",
+            "start": 4,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "spu",
+            "start": 8,
+            "length": 47,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "scert",
+            "start": 55,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "rcthumb",
+            "start": 59,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 63,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 67,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 71,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 72,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 73,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 75,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 83,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "serviceresult",
+            "start": 87,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "diag_mask",
+            "start": 91,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 92,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 96,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 97,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 98,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "serverprotocolversion",
+            "start": 99,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "constant",
+            "endian": "little"
+          },
+          {
+            "name": "channelid",
+            "start": 103,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 107,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "createdat",
+            "start": 111,
+            "length": 8,
+            "field_type": "uint64",
+            "endian": "little"
+          },
+          {
+            "name": "revisedlifetime",
+            "start": 119,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 123,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 25 6D 2F 00 00 00 68 74 74 70 3A 2F 2F 6F 70 63 66 6F 75 6E 64 61",
+          "00 00 26 6D 39 00 00 00 68 74 74 70 3A 2F 2F 6F 70 63 66 6F 75 6E 64 61"
+        ]
+      },
+      {
+        "message_type_id": "opcua_close_secure_channel_request",
+        "name": "opcua close secure channel request",
+        "role": "request",
+        "description": "16 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "timestamp",
+            "start": 22,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 30,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 34,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 38,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 42,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 46,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 47,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 48,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "data",
+            "start": 49,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 25 6D 01 00 00 00 03 00 00 00 03 00 00 00 01 00 C4 01 00 00 25 7F",
+          "00 00 26 6D 01 00 00 00 9D 92 91 13 9C 38 5D 47 43 E2 C8 7B C4 B7 A8 44"
+        ]
+      },
+      {
+        "message_type_id": "opcua_publish_request",
+        "name": "opcua publish request",
+        "role": "request",
+        "description": "11 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_guid",
+            "start": 23,
+            "length": 16,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "timestamp",
+            "start": 39,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 47,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 51,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 55,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 59,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 63,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 64,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 65,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 66,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "0A 00 00 00 0A 00 00 00 09 00 00 00 09 00 00 00 01 00 3A 03 04 01 00 70",
+          "0A 00 00 00 0A 00 00 00 0A 00 00 00 0A 00 00 00 01 00 3A 03 04 01 00 70"
+        ]
+      },
+      {
+        "message_type_id": "opcua_publish_response",
+        "name": "opcua publish response",
+        "role": "response",
+        "description": "11 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 20,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 28,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "serviceresult",
+            "start": 32,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "diag_mask",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 37,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 43,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "subscriptionid",
+            "start": 44,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 48,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "morenotifications",
+            "start": 52,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "sequencenumber",
+            "start": 53,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "publishtime",
+            "start": 57,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "variant_arraysize_array",
+            "start": 65,
+            "length": 12,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "0A 00 00 00 0A 00 00 00 09 00 00 00 09 00 00 00 01 00 3D 03 08 53 84 EE",
+          "0A 00 00 00 0A 00 00 00 0D 00 00 00 0A 00 00 00 01 00 3D 03 A0 67 B4 EE"
+        ]
+      },
+      {
+        "message_type_id": "opcua_get_endpoints_request",
+        "name": "opcua get endpoints request",
+        "role": "request",
+        "description": "8 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "timestamp",
+            "start": 22,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 30,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 34,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 38,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 42,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 46,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 47,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 48,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "data",
+            "start": 49,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 25 6D 01 00 00 00 02 00 00 00 02 00 00 00 01 00 AC 01 00 00 6B 7A",
+          "00 00 05 87 01 00 00 00 00 04 00 00 03 00 00 00 01 00 AC 01 00 00 42 80"
+        ]
+      },
+      {
+        "message_type_id": "opcua_get_endpoints_response",
+        "name": "opcua get endpoints response",
+        "role": "response",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 20,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 28,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "serviceresult",
+            "start": 32,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "diag_mask",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 37,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 43,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 44,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 48,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 25 6D 01 00 00 00 00 04 00 00 02 00 00 00 01 00 AF 01 0E 7C B5 88",
+          "00 00 05 87 01 00 00 00 00 04 00 00 03 00 00 00 01 00 AF 01 9A 82 57 4D"
+        ]
+      },
+      {
+        "message_type_id": "opcua_create_session_request",
+        "name": "opcua create session request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 21,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "timestamp",
+            "start": 22,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 30,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 34,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 38,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 42,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 46,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 47,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 48,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "data",
+            "start": 49,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 DE 83 01 00 00 00 00 04 00 00 02 00 00 00 01 00 CD 01 00 00 D0 10",
+          "00 00 DF 83 01 00 00 00 00 04 00 00 02 00 00 00 01 00 CD 01 00 00 CA 1C"
+        ]
+      },
+      {
+        "message_type_id": "opcua_create_session_response",
+        "name": "opcua create session response",
+        "role": "response",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 20,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 28,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "serviceresult",
+            "start": 32,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "diag_mask",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 37,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 43,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 44,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "data",
+            "start": 45,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 DE 83 01 00 00 00 00 04 00 00 02 00 00 00 01 00 D0 01 6E A9 02 1E",
+          "00 00 DF 83 01 00 00 00 00 04 00 00 02 00 00 00 01 00 D0 01 58 A7 22 52"
+        ]
+      },
+      {
+        "message_type_id": "opcua_activate_session_request",
+        "name": "opcua activate session request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 23,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 27,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 35,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 39,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 43,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 47,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 51,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 52,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 53,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "data",
+            "start": 54,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 DE 83 01 00 00 00 01 04 00 00 03 00 00 00 01 00 D3 01 02 00 00 00",
+          "00 00 DF 83 01 00 00 00 01 04 00 00 03 00 00 00 01 00 D3 01 02 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "opcua_activate_session_response",
+        "name": "opcua activate session response",
+        "role": "response",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 20,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 28,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "serviceresult",
+            "start": 32,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "diag_mask",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 37,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 43,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "data_44",
+            "start": 44,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "servernonce",
+            "start": 48,
+            "length": 32,
+            "field_type": "bytes"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 80,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 84,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 88,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 DE 83 01 00 00 00 01 04 00 00 03 00 00 00 01 00 D6 01 E4 EC 02 1E",
+          "00 00 DF 83 01 00 00 00 01 04 00 00 03 00 00 00 01 00 D6 01 E6 E6 22 52"
+        ]
+      },
+      {
+        "message_type_id": "opcua_read_request",
+        "name": "opcua read request",
+        "role": "request",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 23,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 27,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 35,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 39,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 43,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 47,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 51,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 52,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 53,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "maxage",
+            "start": 54,
+            "length": 8,
+            "field_type": "uint64",
+            "endian": "little"
+          },
+          {
+            "name": "timestampstoreturn",
+            "start": 62,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 66,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 70,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 71,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 72,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "attributeid",
+            "start": 74,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "indexrange",
+            "start": 78,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "qualname_id",
+            "start": 82,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "qualname_name",
+            "start": 84,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 88,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 DE 83 01 00 00 00 02 04 00 00 04 00 00 00 01 00 77 02 02 00 00 00",
+          "00 00 DE 83 01 00 00 00 03 04 00 00 05 00 00 00 01 00 77 02 02 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "opcua_close_session_request",
+        "name": "opcua close session request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 23,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 27,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 35,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 39,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 43,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 47,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 51,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 52,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 53,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "deletesubscriptions",
+            "start": 54,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "data",
+            "start": 55,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 DE 83 01 00 00 00 04 04 00 00 06 00 00 00 01 00 D9 01 02 00 00 00",
+          "00 00 DF 83 01 00 00 00 04 04 00 00 06 00 00 00 01 00 D9 01 02 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "opcua_browse_request",
+        "name": "opcua browse request",
+        "role": "request",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 20,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 23,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 27,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 35,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "returndiag",
+            "start": 39,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "auditentryid",
+            "start": 43,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "timeouthint",
+            "start": 47,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 51,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 52,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 53,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 54,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 55,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "timestamp",
+            "start": 56,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "viewversion",
+            "start": 64,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "constant",
+            "endian": "little"
+          },
+          {
+            "name": "requestedmaxreferencespernode",
+            "start": 68,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 72,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 76,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 77,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "browsedirection",
+            "start": 78,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 82,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 83,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "includesubtypes",
+            "start": 84,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "nodeclassmask_all",
+            "start": 85,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "resultmask_all",
+            "start": 89,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "status",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 93,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "0A 00 00 00 0A 00 00 00 05 00 00 00 05 00 00 00 01 00 0F 02 04 01 00 70",
+          "0A 00 00 00 0A 00 00 00 06 00 00 00 06 00 00 00 01 00 0F 02 04 01 00 70"
+        ]
+      },
+      {
+        "message_type_id": "opcua_browse_response",
+        "name": "opcua browse response",
+        "role": "response",
+        "description": "5 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "scid",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "tokenid",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "seq",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "rqid",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "servicenodeid_encodingmask",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "servicenodeid_nsid",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "servicenodeid_numeric",
+            "start": 18,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "timestamp",
+            "start": 20,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "requesthandle",
+            "start": 28,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          },
+          {
+            "name": "serviceresult",
+            "start": 32,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "opcode",
+            "endian": "little"
+          },
+          {
+            "name": "diag_mask",
+            "start": 36,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 37,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 41,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 42,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "extobj_mask",
+            "start": 43,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 44,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "statuscode",
+            "start": 48,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "status",
+            "endian": "little"
+          },
+          {
+            "name": "continuationpoint",
+            "start": 52,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "variant_arraysize",
+            "start": 56,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_encodingmask",
+            "start": 60,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 61,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 63,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "isforward",
+            "start": 67,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "expandednodeid_mask",
+            "start": 68,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "nodeid_nsindex",
+            "start": 69,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "nodeid_numeric",
+            "start": 71,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "qualname_id",
+            "start": 75,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 77,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "0A 00 00 00 0A 00 00 00 05 00 00 00 05 00 00 00 01 00 12 02 FA 95 27 EE",
+          "0A 00 00 00 0A 00 00 00 06 00 00 00 06 00 00 00 01 00 12 02 7C C0 2F EE"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "opcua_activate_session_request",
+        "response_message_type_id": "opcua_activate_session_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "opcua_browse_request",
+        "response_message_type_id": "opcua_browse_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "opcua_create_session_request",
+        "response_message_type_id": "opcua_create_session_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "opcua_encrypted_message_request",
+        "response_message_type_id": "opcua_encrypted_message_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "opcua_get_endpoints_request",
+        "response_message_type_id": "opcua_get_endpoints_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "opcua_open_secure_channel_request",
+        "response_message_type_id": "opcua_open_secure_channel_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "opcua_publish_request",
+        "response_message_type_id": "opcua_publish_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      }
+    ]
+  }
+}

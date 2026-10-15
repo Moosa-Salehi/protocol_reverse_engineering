@@ -1,0 +1,417 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "zigbee",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "ZigBee (ZEP encapsulated)",
+    "version": "ZigBee PRO / ZEP v2",
+    "description": "ZigBee frames carried in ZEP over UDP 17754: ZEP header, IEEE 802.15.4 MAC header, ZigBee NWK header and APS frame; the NWK and APS frame types select the message type. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "ZEP fields use wire-absolute offsets 0..31; the other types are relative to the 802.15.4 frame (offset 0 = MAC frame control = wire offset 32).",
+    "message_types": [
+      {
+        "message_type_id": "zigbee_header",
+        "name": "ZEP header",
+        "role": "header",
+        "description": "ZigBee Encapsulation Protocol v2 data header (UDP 17754): preamble \"EX\", version, type, channel, device id, LQI mode, LQI, timestamp, sequence number, reserved bytes and the length of the encapsulated 802.15.4 frame. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "protocol_id",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "constant",
+            "endian": "little"
+          },
+          {
+            "name": "version",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "type",
+            "start": 3,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "channel_id",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "unit_id"
+          },
+          {
+            "name": "device_id",
+            "start": 5,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          },
+          {
+            "name": "lqi_mode",
+            "start": 7,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "lqi",
+            "start": 8,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "time",
+            "start": 9,
+            "length": 8,
+            "field_type": "uint64",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "zep_sequence_number",
+            "start": 17,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "sequence_number",
+            "endian": "little"
+          },
+          {
+            "name": "reserved",
+            "start": 21,
+            "length": 10,
+            "field_type": "bytes",
+            "semantic_role": "reserved"
+          },
+          {
+            "name": "length",
+            "start": 31,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "length"
+          }
+        ],
+        "examples": [
+          "45 58 02 01 0B FF FE 00 9D 00 00 00 00 00 00 00 00 00 00 07 4C 00 00 00 00 00 00 00 00 00 00 1C"
+        ]
+      },
+      {
+        "message_type_id": "zigbee_aps_data",
+        "name": "zigbee aps data",
+        "role": "request",
+        "description": "252 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "fcf",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "mac_sequence_number",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "dst_pan",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "dst16",
+            "start": 5,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "src16",
+            "start": 7,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "fcf",
+            "start": 9,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "dst",
+            "start": 11,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "src",
+            "start": 13,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "radius",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "nwk_sequence_number",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "type",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "dst",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "cluster",
+            "start": 19,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "profile",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "constant",
+            "endian": "little"
+          },
+          {
+            "name": "src",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "counter",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "ms",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "fcs",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          },
+          {
+            "name": "fcs",
+            "start": 27,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "61 88 AE AD 53 4A B8 89 A0 48 00 4A B8 89 A0 1E 28 40 C8 EE 9F 03 C0 C8",
+          "61 88 B0 AD 53 4A B8 89 A0 48 00 4A B8 89 A0 1E 2A 40 C8 EE 9F 03 C0 C8"
+        ]
+      },
+      {
+        "message_type_id": "zigbee_aps_ack",
+        "name": "zigbee aps ack",
+        "role": "response",
+        "description": "250 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "fcf",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "mac_sequence_number",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "dst_pan",
+            "start": 3,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "dst16",
+            "start": 5,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "src16",
+            "start": 7,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "fcf",
+            "start": 9,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "dst",
+            "start": 11,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "src",
+            "start": 13,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "radius",
+            "start": 15,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "nwk_sequence_number",
+            "start": 16,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "sequence_number"
+          },
+          {
+            "name": "type",
+            "start": 17,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "dst",
+            "start": 18,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "cluster",
+            "start": 19,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "profile",
+            "start": 21,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "constant",
+            "endian": "little"
+          },
+          {
+            "name": "src",
+            "start": 23,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "address"
+          },
+          {
+            "name": "counter",
+            "start": 24,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "counter"
+          },
+          {
+            "name": "fcs",
+            "start": 25,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          },
+          {
+            "name": "fcs",
+            "start": 26,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "checksum"
+          }
+        ],
+        "examples": [
+          "61 88 AF AD 53 4A B8 89 A0 48 00 4A B8 89 A0 1E 29 02 C8 EE 1F 03 C0 C8",
+          "61 88 B1 AD 53 4A B8 89 A0 48 00 4A B8 89 A0 1E 2B 02 C8 EE 1F 03 C0 C8"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "zigbee_aps_data",
+        "response_message_type_id": "zigbee_aps_ack",
+        "relation_type": "request_response",
+        "description": "An APS data frame with acknowledge request is answered by an APS acknowledgement."
+      }
+    ]
+  }
+}
