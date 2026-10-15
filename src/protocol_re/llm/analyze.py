@@ -123,6 +123,12 @@ class LLMRequestConfig:
     # Some OpenAI-compatible gateways sit behind Cloudflare, which rejects urllib's
     # default "Python-urllib/x.y" agent with HTTP 403 (error code 1010).
     user_agent: str = "protocol-re/0.1"
+    # Stream the reply (server-sent events). Gateways such as Cloudflare close a
+    # connection that waits ~100 s for its first byte (HTTP 524); long reasoning
+    # replies only survive if tokens keep arriving.
+    stream: bool = False
+    # Optional "reasoning_effort" for reasoning models that accept it (low/medium/high).
+    reasoning_effort: Optional[str] = None
     logger: Optional[Any] = None
 
 
@@ -206,6 +212,10 @@ def _classify_http_error(status_code: int, body: str) -> tuple[str, bool, str]:
         for token in ("context_length", "maximum context", "context window", "too many tokens", "token limit")
     ):
         return "context_limit_reached", False, "Context limit reached"
+    if status_code == 524:
+        # The gateway gave up waiting; the same prompt takes as long again, and the
+        # upstream may already have billed the tokens, so retrying does not help.
+        return "gateway_timeout", False, "Gateway timeout (HTTP 524); enable streaming"
     if status_code in (408, 409) or status_code >= 500:
         return "temporary_api_error", True, f"Temporary API HTTP {status_code}"
     return "api_error", False, f"LLM API HTTP {status_code}"
@@ -276,6 +286,11 @@ def call_openai_compatible_chat_with_raw(
         "temperature": config.temperature,
         "max_tokens": config.max_tokens,
     }
+    if config.reasoning_effort:
+        payload["reasoning_effort"] = config.reasoning_effort
+    if config.stream:
+        payload["stream"] = True
+        payload["stream_options"] = {"include_usage": True}
     data = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
         _chat_completions_url(config.base_url),
@@ -310,8 +325,12 @@ def call_openai_compatible_chat_with_raw(
             started_at = time.monotonic()
             try:
                 with urllib.request.urlopen(request, timeout=config.timeout) as response:
-                    body = response.read().decode("utf-8")
-                    parsed = json.loads(body)
+                    if config.stream:
+                        parsed = _collect_stream(response)
+                        body = json.dumps(parsed, ensure_ascii=False)
+                    else:
+                        body = response.read().decode("utf-8")
+                        parsed = json.loads(body)
                     elapsed = time.monotonic() - started_at
                     _emit(
                         config,
@@ -383,6 +402,40 @@ def call_openai_compatible_chat_with_raw(
         category="unknown_error",
         retryable=False,
     )
+
+
+def _collect_stream(response: Any) -> Dict[str, Any]:
+    """Assemble server-sent chat-completion chunks into one non-streaming response."""
+    content: list[str] = []
+    reasoning: list[str] = []
+    result: Dict[str, Any] = {"object": "chat.completion"}
+    finish_reason = None
+    for raw_line in response:
+        line = raw_line.decode("utf-8").strip()
+        if not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if data == "[DONE]":
+            break
+        chunk = json.loads(data)
+        for key in ("id", "created", "model"):
+            if key in chunk:
+                result[key] = chunk[key]
+        if chunk.get("usage"):
+            result["usage"] = chunk["usage"]
+        for choice in chunk.get("choices") or []:
+            delta = choice.get("delta") or {}
+            if delta.get("content"):
+                content.append(delta["content"])
+            if delta.get("reasoning_content"):
+                reasoning.append(delta["reasoning_content"])
+            if choice.get("finish_reason"):
+                finish_reason = choice["finish_reason"]
+    message: Dict[str, Any] = {"role": "assistant", "content": "".join(content) or None}
+    if reasoning:
+        message["reasoning_content"] = "".join(reasoning)
+    result["choices"] = [{"index": 0, "finish_reason": finish_reason, "message": message}]
+    return result
 
 
 def call_openai_compatible_chat(
