@@ -69,15 +69,14 @@ def test_stage07_split_keeps_segment_kind() -> None:
     assert pieces[1].evidence["periodic_array_split"] is True
 
 
-def test_pipeline_forwards_periodic_arrays_only_when_enabled(tmp_path: Path) -> None:
+def test_pipeline_defaults_to_loose_periodic_arrays(tmp_path: Path) -> None:
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     (data_dir / "01_messages.jsonl").write_text("", encoding="utf-8")
     base = ["--use-existing-messages", "--data-dir", str(data_dir), "--output-dir", str(tmp_path / "out"), "--log-dir", str(tmp_path / "log")]
 
-    default = dict(pipeline_main.build_pipeline(pipeline_main.parse_args(base)))
-    assert "--periodic-arrays" not in default["07_infer_boundaries"]
+    default = dict(pipeline_main.build_pipeline(pipeline_main.parse_args(base)))["07_infer_boundaries"]
+    assert default[default.index("--periodic-arrays") + 1] == "loose"
 
-    enabled = dict(pipeline_main.build_pipeline(pipeline_main.parse_args(base + ["--boundary-periodic-arrays", "loose"])))
-    stage07 = enabled["07_infer_boundaries"]
-    assert stage07[stage07.index("--periodic-arrays") + 1] == "loose"
+    disabled = dict(pipeline_main.build_pipeline(pipeline_main.parse_args(base + ["--boundary-periodic-arrays", "off"])))["07_infer_boundaries"]
+    assert disabled[disabled.index("--periodic-arrays") + 1] == "off"

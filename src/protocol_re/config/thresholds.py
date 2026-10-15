@@ -126,8 +126,8 @@ class PeriodicArrays:
     """Thresholds for :mod:`protocol_re.inference.periodic_arrays`.
 
     Label-free detection of arrays of fixed-width elements (register blocks,
-    sample arrays, repeated datagram words) inside runs of varying bytes. The
-    rule is OFF by default (stage 07 ``--periodic-arrays``). With mode "loose"
+    sample arrays, repeated datagram words) inside runs of varying bytes. Stage 07
+    ``--periodic-arrays`` defaults to "loose" ("off" disables it). With "loose"
     over 13 non-Modbus protocols it raised per-message boundary F1 from 0.323 to
     0.382 and the truth-file overall score from 0.300 to 0.314 (field-boundary
     F1 0.165 -> 0.191), with no change on the Modbus and GOOSE truth corpora

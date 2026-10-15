@@ -180,12 +180,12 @@ def main() -> None:
     parser.add_argument(
         "--periodic-arrays",
         choices=PERIODIC_MODES,
-        default="off",
+        default="loose",
         help=(
             "Split detected arrays of fixed-width elements (register blocks, sample arrays) inside "
             "varying regions every element width (protocol_re.inference.periodic_arrays). 'strict' "
             "needs cross-length evidence (length gcd or a count field); 'loose' also accepts the "
-            "phase statistics alone on long regions. Skipped for TLV families. Default off."
+            "phase statistics alone on long regions. Skipped for TLV families. Default loose; off disables it."
         ),
     )
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")

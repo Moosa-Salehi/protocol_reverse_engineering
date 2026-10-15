@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   thresholds): stage 07 `--periodic-arrays {off,strict,loose}` / `main.py
   --boundary-periodic-arrays` detects arrays of fixed-width elements inside varying regions
   (phase statistics repeating every 2/4/8 bytes, plus length-gcd or count-field evidence)
-  and splits them per element. Default off. With `loose` over the 13 non-Modbus benchmark
+  and splits them per element. Default `loose` (`off` disables it). With `loose` over the 13 non-Modbus benchmark
   protocols: per-message boundary F1 0.323 -> 0.382, truth-file overall 0.300 -> 0.314; no
   region is detected on the Modbus and GOOSE truth corpora (scores unchanged).
 - Truth files for bacnet, cip, dnp3, enip, ethercat, hart_ip, iec104, mms, opcua,
