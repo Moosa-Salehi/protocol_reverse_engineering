@@ -120,6 +120,9 @@ class LLMRequestConfig:
     retry_delay_seconds: float = 1.0
     max_retry_delay_seconds: float = 10.0
     request_interval_seconds: float = 1.0
+    # Some OpenAI-compatible gateways sit behind Cloudflare, which rejects urllib's
+    # default "Python-urllib/x.y" agent with HTTP 403 (error code 1010).
+    user_agent: str = "protocol-re/0.1"
     logger: Optional[Any] = None
 
 
@@ -280,6 +283,7 @@ def call_openai_compatible_chat_with_raw(
         headers={
             "Authorization": f"Bearer {config.api_key}",
             "Content-Type": "application/json",
+            "User-Agent": config.user_agent,
         },
         method="POST",
     )
