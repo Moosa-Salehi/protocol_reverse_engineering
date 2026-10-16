@@ -595,3 +595,131 @@ def derive_tlv_field_hypotheses(
         "distinct_tags": len(values_by_tag),
     }
     return hypotheses, segments, metadata
+
+
+# ---------------------------------------------------------------------------
+# Per-message layout
+# ---------------------------------------------------------------------------
+#
+# The fixed field hypotheses above describe a TLV family with one edge list,
+# which cannot follow elements whose offsets shift with every variable-length
+# value. The functions below find where a full-depth BER chain starts in a
+# family and give each message its own edges from its own parse. Stage 07
+# stores the result as the family's ``message_layout``; per-message consumers
+# (the boundary benchmark) apply it, everything else keeps using the fixed
+# hypotheses.
+
+MESSAGE_LAYOUT_KIND = "tlv_ber"
+MESSAGE_LAYOUT_CONVENTION = "tag+length|value"
+
+
+def parse_ber_elements(
+    payload: bytes,
+    start: int,
+    end: Optional[int] = None,
+    *,
+    depth: int = 0,
+) -> Optional[List[Tuple[int, int, int, bool]]]:
+    """Parse ``payload[start:end]`` as BER elements that cover it exactly.
+
+    Returns ``(tag_offset, value_offset, value_end, constructed)`` tuples in wire
+    order, nested elements following their parent, or ``None`` if the range is
+    not an exact chain. Unlike :func:`parse_tlv_message` this accepts
+    multi-byte tag numbers and descends every constructed element whose value
+    parses (a constructed element whose value does not parse is kept as one
+    primitive element).
+    """
+    end = len(payload) if end is None else end
+    elements: List[Tuple[int, int, int, bool]] = []
+    pos = start
+    while pos < end:
+        tag_offset = pos
+        pos += 1
+        if payload[tag_offset] & 0x1F == 0x1F:  # high tag number: base-128 continuation bytes
+            while pos < end and payload[pos] & 0x80 and pos - tag_offset < _TF.MESSAGE_LAYOUT_MAX_TAG_BYTES:
+                pos += 1
+            pos += 1
+        if pos >= end:
+            return None
+        first = payload[pos]
+        if first < 0x80:
+            length, pos = first, pos + 1
+        else:
+            count = first & 0x7F
+            if count == 0 or count > 4 or pos + 1 + count > end:  # indefinite or absurd length
+                return None
+            length, pos = int.from_bytes(payload[pos + 1 : pos + 1 + count], "big"), pos + 1 + count
+        if pos + length > end:
+            return None
+        constructed = bool(payload[tag_offset] & 0x20) and length > 0
+        children = None
+        if constructed and depth < _TF.MESSAGE_LAYOUT_MAX_DEPTH:
+            children = parse_ber_elements(payload, pos, pos + length, depth=depth + 1)
+        elements.append((tag_offset, pos, pos + length, children is not None))
+        if children:
+            elements.extend(children)
+        pos += length
+    return elements
+
+
+def message_tlv_edges(payload: bytes, chain_start: int) -> Optional[List[int]]:
+    """Field edges of one message from its BER chain starting at ``chain_start``.
+
+    Every element starts a field and its value starts another (tag and length
+    form one header field). Returns sorted offsets including ``chain_start``
+    and the message end, or ``None`` when the message does not parse.
+    """
+    elements = parse_ber_elements(payload, chain_start)
+    if elements is None:
+        return None
+    edges = {chain_start, len(payload)}
+    for tag_offset, value_offset, value_end, _constructed in elements:
+        edges.update((tag_offset, value_offset, value_end))
+    return sorted(edges)
+
+
+def detect_tlv_message_layout(messages: Sequence[bytes]) -> Optional[Dict[str, Any]]:
+    """Smallest start offset from which the family's messages parse as BER chains.
+
+    See ``TlvFraming.MESSAGE_LAYOUT_*`` for the acceptance conditions. Returns
+    the ``message_layout`` descriptor stored by stage 07, or ``None``.
+    """
+    sample = [bytes(m) for m in messages if m][: _TF.MESSAGE_LAYOUT_SAMPLE]
+    if not sample:
+        return None
+    upper = min(_TF.MESSAGE_LAYOUT_MAX_START, min(len(m) for m in sample) - 2)
+    for start in range(0, max(upper, 0)):
+        parsed = 0
+        for payload in sample:
+            if len(payload) - start < _TF.MESSAGE_LAYOUT_MIN_TAIL:
+                continue
+            elements = parse_ber_elements(payload, start)
+            if (
+                elements is not None
+                and sum(value_end > value_offset for _t, value_offset, value_end, _c in elements) >= _TF.MESSAGE_LAYOUT_MIN_ELEMENTS
+                and len({payload[tag_offset] for tag_offset, _v, _e, _c in elements}) >= _TF.MESSAGE_LAYOUT_MIN_TAGS
+            ):
+                parsed += 1
+        share = parsed / len(sample)
+        if share >= _TF.MESSAGE_LAYOUT_MIN_PARSE_SHARE:
+            return {
+                "kind": MESSAGE_LAYOUT_KIND,
+                "chain_start": start,
+                "edge_convention": MESSAGE_LAYOUT_CONVENTION,
+                "parse_share": round(share, 4),
+                "messages_checked": len(sample),
+            }
+    return None
+
+
+def message_layout_edges(payload: bytes, family_edges: Sequence[int], layout: Optional[Dict[str, Any]]) -> List[int]:
+    """Edges for one message: the family's fixed edges before the chain start plus
+    the message's own TLV edges; the fixed edges alone when there is no layout or
+    the message does not parse."""
+    if not layout or layout.get("kind") != MESSAGE_LAYOUT_KIND:
+        return sorted(set(family_edges))
+    start = int(layout["chain_start"])
+    own = message_tlv_edges(payload, start)
+    if own is None:
+        return sorted(set(family_edges))
+    return sorted({edge for edge in family_edges if edge < start} | set(own))

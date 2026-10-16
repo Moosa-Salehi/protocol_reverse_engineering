@@ -769,6 +769,34 @@ class TlvFraming:
     # vocabulary and family signatures (deterministic: first N by msg_id).
     SIGNATURE_SAMPLE_CAP: int = 2000
 
+    # Per-message layout. Fixed field hypotheses cannot describe a TLV body: every
+    # variable-length element shifts the offsets of all later elements, so no
+    # single edge list fits more than one message length (on the 14-protocol
+    # benchmark the best possible fixed edge list scores GOOSE 0.39 boundary F1).
+    # Stage 07 therefore also records, per family, where a full-depth BER chain
+    # starts; edges are then taken per message from that message's own parse.
+    # A family qualifies when at least MESSAGE_LAYOUT_MIN_PARSE_SHARE of its first
+    # MESSAGE_LAYOUT_SAMPLE messages parse exactly to their end from one start
+    # offset (scanned 0..MESSAGE_LAYOUT_MAX_START), with at least
+    # MESSAGE_LAYOUT_MIN_ELEMENTS elements carrying a non-empty value, at least
+    # MESSAGE_LAYOUT_MIN_TAGS distinct tags and MESSAGE_LAYOUT_MIN_TAIL bytes after
+    # the start. Without the non-empty and distinct-tag conditions the Modbus MBAP
+    # header parses by chance (00 00 | 00 06 | <6 bytes>). Edge convention: a new
+    # field at every element start and at its value start (tag + length form one
+    # header field, as Wireshark's BER dissector reports them); constructed
+    # elements are descended. On the benchmark this raised GOOSE from 0.32 to 0.68
+    # and MMS from 0.57 to 0.66 per-message boundary F1 and fired on no other
+    # protocol (dol/per-message-segmentation, dol/tlv-integration-check).
+    MESSAGE_LAYOUT_MIN_PARSE_SHARE: float = 0.9
+    MESSAGE_LAYOUT_MIN_ELEMENTS: int = 3
+    MESSAGE_LAYOUT_MIN_TAGS: int = 2
+    MESSAGE_LAYOUT_MIN_TAIL: int = 8
+    MESSAGE_LAYOUT_MAX_START: int = 64
+    MESSAGE_LAYOUT_SAMPLE: int = 300
+    # Nesting depth for constructed elements and the widest tag number accepted.
+    MESSAGE_LAYOUT_MAX_DEPTH: int = 8
+    MESSAGE_LAYOUT_MAX_TAG_BYTES: int = 4
+
     # A single tag-sequence family larger than this ratio of the corpus is
     # still merged (one message type dominating is normal for GOOSE), but a
     # chain whose every message has a *unique* sequence is treated as noise.

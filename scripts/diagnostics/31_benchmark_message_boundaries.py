@@ -7,7 +7,10 @@ so they need no hand-written truth file and are comparable across protocols and
 with published per-message boundary metrics.
 
 Only interior edges are scored: offset 0 and the payload end are trivially
-correct for every message. Annotations from the ``tshark-cache`` fallback are
+correct for every message. A family carrying a ``message_layout`` (stage 07's
+per-message TLV chain) is scored per message: the fixed edges before the chain
+start plus that message's own TLV edges (``--no-message-layouts`` scores the
+fixed edges only). Annotations from the ``tshark-cache`` fallback are
 skipped by default: they hold only a few coarse layer spans (about one edge per
 100 bytes), so any real segmentation scores as false positives against them.
 
@@ -22,10 +25,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Set
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from protocol_re.inference.tlv import message_layout_edges  # noqa: E402
 
 
 def _iter_jsonl(path: Path) -> Iterator[Dict[str, Any]]:
@@ -63,12 +70,23 @@ def score_protocol(
     annotations_path: Path,
     families_file: str,
     include_coarse: bool = False,
+    use_message_layouts: bool = True,
 ) -> Dict[str, Any]:
     with (data_dir / families_file).open("r", encoding="utf-8") as handle:
-        family_edges = _family_edges(json.load(handle))
+        families = json.load(handle)
+    family_edges = _family_edges(families)
+    layouts = {
+        str(family_id): details["message_layout"]
+        for family_id, details in families.items()
+        if use_message_layouts and isinstance(details, dict) and details.get("message_layout")
+    }
     with (data_dir / "02_family_assignments.json").open("r", encoding="utf-8") as handle:
         assignments = {int(item["msg_id"]): str(item["family_id"]) for item in json.load(handle)["assignments"]}
-    payload_len = {int(m["msg_id"]): int(m["payload_len"]) for m in _iter_jsonl(data_dir / "01_messages.jsonl")}
+    payload_len, payloads = {}, {}
+    for m in _iter_jsonl(data_dir / "01_messages.jsonl"):
+        payload_len[int(m["msg_id"])] = int(m["payload_len"])
+        if layouts and str(assignments.get(int(m["msg_id"]))) in layouts:
+            payloads[int(m["msg_id"])] = bytes.fromhex(m["payload_hex"])
 
     tp = fp = fn = 0
     scored = unassigned = exact = truth_edges = skipped_coarse = 0
@@ -84,7 +102,10 @@ def score_protocol(
         family_id = assignments.get(msg_id)
         if family_id is None:
             unassigned += 1
-        predicted = {edge for edge in family_edges.get(family_id or "", []) if 0 < edge < length}
+        edges = family_edges.get(family_id or "", [])
+        if family_id in layouts and msg_id in payloads:
+            edges = message_layout_edges(payloads[msg_id], edges, layouts[family_id])
+        predicted = {edge for edge in edges if 0 < edge < length}
         scored += 1
         truth_edges += len(truth)
         tp += len(predicted & truth)
@@ -94,6 +115,7 @@ def score_protocol(
     return {
         "messages": scored,
         "families": len(family_edges),
+        "message_layout_families": len(layouts),
         "unassigned_messages": unassigned,
         "skipped_coarse_annotations": skipped_coarse,
         "mean_truth_edges": round(truth_edges / scored, 2) if scored else 0.0,
@@ -112,6 +134,8 @@ def main() -> None:
                         help="Families artifact to score, e.g. 05_families_refined.json for the LLM-refined boundaries")
     parser.add_argument("--include-coarse", action="store_true",
                         help="Also score against the coarse tshark-cache fallback annotations")
+    parser.add_argument("--no-message-layouts", action="store_true",
+                        help="Ignore families' per-message TLV layouts and score the fixed edges only")
     parser.add_argument("--output-json", default=None, help="Optional path for the full report")
     args = parser.parse_args()
 
@@ -123,7 +147,8 @@ def main() -> None:
         if not annotations_path.is_file() or not all(path.is_file() for path in required):
             print(f"[*] Skipping {run_dir.name}: missing run artifacts or annotations")
             continue
-        report[run_dir.name] = score_protocol(data_dir, annotations_path, args.families_file, args.include_coarse)
+        report[run_dir.name] = score_protocol(data_dir, annotations_path, args.families_file, args.include_coarse,
+                                              use_message_layouts=not args.no_message_layouts)
 
     header = f"{'protocol':12s} {'messages':>8s} {'families':>8s} {'truth/msg':>9s} {'precision':>9s} {'recall':>7s} {'f1':>6s} {'exact':>6s}"
     print(header)

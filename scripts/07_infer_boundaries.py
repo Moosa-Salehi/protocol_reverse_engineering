@@ -162,7 +162,8 @@ def main() -> None:
         action=argparse.BooleanOptionalAction,
         default=True,
         help=(
-            "Enable TLV/BER framing mode: families whose messages parse as a strict "
+            "Enable TLV/BER framing mode (also records a per-message TLV layout per family, "
+            "see TlvFraming.MESSAGE_LAYOUT_*): families whose messages parse as a strict "
             "tag-length-value chain after a fixed header get deterministic tag-derived "
             "fields (with the framing module's TLV layout as the header/body boundary) "
             "instead of entropy segmentation. No-op for non-TLV families. Default ON."
@@ -476,6 +477,25 @@ def main() -> None:
         print(f"[+] Periodic arrays ({args.periodic_arrays}): {total_array_regions} array regions split")
     logger.metric("avg_segments_per_family", total_segments / len(grouped) if grouped else 0, "segments/family")
     logger.metric("avg_fields_per_family", total_fields / len(grouped) if grouped else 0, "fields/family")
+
+    # Per-message TLV layout: fixed field hypotheses cannot follow a BER body whose
+    # element offsets shift with every variable-length value, so record where the
+    # chain starts and let per-message consumers take each message's own parse
+    # (see TlvFraming.MESSAGE_LAYOUT_*). The fixed hypotheses above are unchanged.
+    if args.tlv_boundaries:
+        from protocol_re.inference.tlv import detect_tlv_message_layout
+
+        with logger.stage("tlv_message_layouts"):
+            layouts = 0
+            for family_id, messages_hex in grouped.items():
+                if family_id not in result:
+                    continue
+                layout = detect_tlv_message_layout([bytes.fromhex(h) for h in messages_hex if h])
+                if layout:
+                    result[family_id]["message_layout"] = layout
+                    layouts += 1
+            logger.metric("tlv_message_layouts", layouts, "families")
+            print(f"[+] TLV message layouts: {layouts} families")
 
     with logger.stage("write_output"):
         with open(args.output_json, "w", encoding="utf-8") as handle:

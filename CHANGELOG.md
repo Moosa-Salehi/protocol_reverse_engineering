@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Per-message TLV layout (`detect_tlv_message_layout`, `message_tlv_edges`, `message_layout_edges`
+  in `protocol_re.inference.tlv`; `TlvFraming.MESSAGE_LAYOUT_*`). A family's fixed field list
+  cannot follow a BER body whose element offsets shift with every variable-length value, so
+  stage 07 (under `--tlv-boundaries`, default on) also records `message_layout`: the offset where
+  a full-depth BER chain starts (constructed elements descended, multi-byte tags accepted).
+  Per-message consumers take each message's own parse: edges at every element start and value
+  start (tag + length as one header field). `field_hypotheses` are unchanged, so truth-file
+  evaluations are unaffected. `31_benchmark_message_boundaries.py` applies the layouts
+  (`--no-message-layouts` scores fixed edges only). On the 14-protocol benchmark, current stage-07
+  defaults: macro per-message boundary F1 0.435 -> 0.485 (MMS 0.319 -> 0.652, GOOSE 0.301 -> 0.669;
+  no other protocol detected). Experiments: `dol/per-message-segmentation`, `dol/tlv-integration-check`.
 - Periodic-array boundaries (`protocol_re.inference.periodic_arrays`, `PeriodicArrays`
   thresholds): stage 07 `--periodic-arrays {off,strict,loose}` / `main.py
   --boundary-periodic-arrays` detects arrays of fixed-width elements inside varying regions

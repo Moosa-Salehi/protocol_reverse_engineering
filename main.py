@@ -877,10 +877,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="TLV/BER framing mode: framing detection upgrades TLV families to a "
-             "deterministic header/body layout, stage 07 derives tag-based fields, and "
-             "stage 07b skips LLM boundary merges on TLV families (the parse is already "
-             "exact). No-op when the corpus does not parse as TLV. Default ON; disable "
-             "with --no-tlv-boundaries.",
+             "deterministic header/body layout, stage 07 derives tag-based fields and "
+             "records a per-message TLV layout (each message's own BER parse gives its "
+             "edges), and stage 07b skips LLM boundary merges on TLV families (the parse "
+             "is already exact). No-op when the corpus does not parse as TLV. Default ON; "
+             "disable with --no-tlv-boundaries.",
     )
     boundary_group.add_argument(
         "--boundary-max-fields",
