@@ -512,11 +512,15 @@ def layout_agreement(pred: Dict[int, Set[int]], mids: Sequence[int], payload: Di
     return sum(f) / max(1, len(f))
 
 
-def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]], payload: Dict[int, bytes]
-                   ) -> Tuple[Dict[int, str], Dict[str, Any]]:
+def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]], payload: Dict[int, bytes],
+                   labels: Optional[Dict[int, Sequence[int]]] = None) -> Tuple[Dict[int, str], Dict[str, Any]]:
     """New family id per moved message: a family whose messages disagree on their layout (and is not BER-structured)
     is split by layout signature (edges below SIG_BYTES); a signature becomes a sub-family `<family>_L<k>` when it
-    holds >= SPLIT_MIN_SHARE of the family (and >= SPLIT_MIN_SIZE messages), at most SPLIT_MAX per family."""
+    holds >= SPLIT_MIN_SHARE of the family (and >= SPLIT_MIN_SIZE messages), at most SPLIT_MAX per family.
+
+    With ``labels``, the labelled messages decide whether a family really mixes layouts: it is split only when its
+    labelled messages show >= SPLIT_LABELLED_LAYOUTS distinct layouts (each seen >= SPLIT_LABELLED_SUPPORT times),
+    and only predicted signatures equal to one of those verified layouts become sub-families."""
     fams: Dict[str, List[int]] = defaultdict(list)
     for m, f in family_of.items():
         if f not in (None, 'noise'):
@@ -534,7 +538,16 @@ def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]
             skipped['ber'] += 1
             continue
         min_size = max(_FS.SPLIT_MIN_SIZE, int(_FS.SPLIT_MIN_SHARE * len(rows)))
-        keep = [s for s, c in Counter(sig.values()).most_common(_FS.SPLIT_MAX) if c >= min_size]
+        verified = None
+        if labels is not None:
+            lab = Counter(tuple(sorted(e for e in labels[m] if 0 < e < min(len(payload[m]), _FS.SIG_BYTES)))
+                          for m in rows if m in labels)
+            verified = {s for s, c in lab.items() if c >= _FS.SPLIT_LABELLED_SUPPORT}
+            if len(verified) < _FS.SPLIT_LABELLED_LAYOUTS:
+                skipped['labels_show_one_layout'] += 1
+                continue
+        keep = [s for s, c in Counter(sig.values()).most_common(_FS.SPLIT_MAX)
+                if c >= min_size and (verified is None or s in verified)]
         if len(keep) <= 1:
             continue
         label = {s: f'{fam}_L{k}' for k, s in enumerate(keep)}
@@ -578,12 +591,14 @@ def apply_to_families(families: Dict[str, Any], family_of: Dict[int, Optional[st
                       payload_len: Dict[int, int]) -> Dict[str, Any]:
     """Replace every family's fields with the majority of its messages' predicted edges (in place). Families with
     TLV-tagged element fields keep that chain (matched by tag downstream); only the prefix before it is rebuilt."""
-    votes, reach, maxlen = defaultdict(Counter), defaultdict(Counter), defaultdict(int)
+    votes, reach, lengths = defaultdict(Counter), defaultdict(Counter), defaultdict(list)
     for m, edges in pred.items():
         fam, n = family_of.get(m), payload_len.get(m)
         if fam is None or n is None:
             continue
-        votes[fam].update(e for e in edges if 0 < e < n); reach[fam].update(range(1, n)); maxlen[fam] = max(maxlen[fam], n)
+        votes[fam].update(e for e in edges if 0 < e < n); reach[fam].update(range(1, n)); lengths[fam].append(n)
+    # fields end at the family's median length: a few long outliers must not add a tail most messages never reach
+    maxlen = {fam: int(np.median(ls)) for fam, ls in lengths.items()}
     touched = changed = kept_tlv = 0
     for fam, det in families.items():
         if fam not in votes or not isinstance(det, dict):

@@ -1041,3 +1041,8 @@ class FewShotBoundaries:
     # ... and at least this many messages; at most SPLIT_MAX sub-families per family.
     SPLIT_MIN_SIZE: int = 5
     SPLIT_MAX: int = 8
+    # With labelled messages: a family is split only when its labelled messages show at least this many
+    # distinct layouts (signatures), each seen at least SPLIT_LABELLED_SUPPORT times; only those verified
+    # layouts become sub-families.
+    SPLIT_LABELLED_LAYOUTS: int = 2
+    SPLIT_LABELLED_SUPPORT: int = 2

@@ -40,6 +40,8 @@ def main() -> None:
                         help="Leave this protocol's rows out of the training set (evaluation on a benchmark protocol)")
     parser.add_argument("--split", dest="split", action=argparse.BooleanOptionalAction, default=True,
                         help="Split families whose messages disagree on their layout (default on)")
+    parser.add_argument("--split-verify", dest="split_verify", action=argparse.BooleanOptionalAction, default=True,
+                        help="Split a family only into layouts its labelled messages show (default on)")
     parser.add_argument("--log-dir", default="logs")
     args = parser.parse_args()
     logger = setup_stage_logging("04b_fewshot_boundaries", Path(args.log_dir))
@@ -87,7 +89,7 @@ def main() -> None:
     split = {"moved_messages": 0, "sub_families": 0, "skipped": {}}
     if args.split:
         with logger.stage("split_families"):
-            moved, split = fsb.split_families(family_of, pred, payload)
+            moved, split = fsb.split_families(family_of, pred, payload, labels=labels if args.split_verify else None)
             if moved:
                 shutil.copy(args.assignments_json, args.assignments_json.with_name("02_family_assignments.pre-fewshot-split.json"))
                 for a in doc["assignments"]:
