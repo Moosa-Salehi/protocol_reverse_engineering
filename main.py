@@ -639,6 +639,39 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 if "--render-only" not in step_args:
                     step_args.append("--render-only")
 
+    # Few-shot boundaries: a few labelled messages adapt the learned boundary model to this protocol.
+    # 04b predicts per-message edges right after family discovery (and splits families whose messages
+    # disagree on their layout); 07c writes the predicted edges into the families after stage 07.
+    if args.fewshot_labels:
+        fewshot_json = data_dir / "04b_fewshot_edges.json"
+        for index, (name, _) in enumerate(pipeline):
+            if name == "04_discover_families":
+                step_args = [
+                    _script("04b_fewshot_boundaries.py"),
+                    _path(messages_jsonl),
+                    _path(assignments_json),
+                    _path(args.fewshot_labels),
+                    _path(fewshot_json),
+                    "--training-set",
+                    _path(args.fewshot_training_set),
+                ]
+                for protocol in args.fewshot_exclude_protocol or []:
+                    step_args.extend(["--exclude-protocol", protocol])
+                if not args.fewshot_split:
+                    step_args.append("--no-split")
+                pipeline.insert(index + 1, ("04b_fewshot_boundaries", step_args))
+                break
+        for index, (name, _) in enumerate(pipeline):
+            if name == "07_infer_boundaries":
+                pipeline.insert(index + 1, ("07c_apply_fewshot_edges", [
+                    _script("07c_apply_fewshot_edges.py"),
+                    _path(messages_jsonl),
+                    _path(assignments_json),
+                    _path(fewshot_json),
+                    _path(families_json),
+                ]))
+                break
+
     if args.stop_after:
         for index, (name, _) in enumerate(pipeline):
             if name == args.stop_after:
@@ -897,6 +930,33 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
              "EtherCAT), move the body start to c. Default ON; disable with --no-stacked-header-anchor.",
     )
     boundary_group.add_argument(
+        "--fewshot-labels",
+        type=Path,
+        default=None,
+        help="JSONL of a few labelled messages of this capture ({msg_id or payload_hex, boundaries}); enables "
+             "few-shot boundaries (stage 04b predicts per-message edges and splits mixed families, 07c writes "
+             "them into the families). scripts/select_fewshot_messages.py lists which messages to label.",
+    )
+    boundary_group.add_argument(
+        "--fewshot-training-set",
+        type=Path,
+        default=Path("assets/pre_trained/fewshot_boundary_training.npz"),
+        help="Multi-protocol training rows for few-shot boundaries (scripts/diagnostics/32_build_fewshot_training_set.py).",
+    )
+    boundary_group.add_argument(
+        "--fewshot-exclude-protocol",
+        action="append",
+        default=None,
+        help="Leave this protocol's rows out of the few-shot training set (when evaluating on that protocol). Repeatable.",
+    )
+    boundary_group.add_argument(
+        "--fewshot-split",
+        dest="fewshot_split",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="With --fewshot-labels: split families whose messages disagree on their predicted layout (default on).",
+    )
+    boundary_group.add_argument(
         "--boundary-max-fields",
         type=int,
         default=15,
@@ -1067,6 +1127,14 @@ def validate_args(args: argparse.Namespace) -> None:
     else:
         args.pcap_dir = args.data_dir / "pcaps"
     args.llm_config = _resolve_under_project(args.llm_config)
+    if args.fewshot_labels:
+        args.fewshot_labels = _resolve_under_project(args.fewshot_labels)
+        args.fewshot_training_set = _resolve_under_project(args.fewshot_training_set)
+        if not args.fewshot_labels.is_file():
+            raise SystemExit(f"--fewshot-labels not found: {args.fewshot_labels}")
+        if not args.fewshot_training_set.is_file():
+            raise SystemExit(f"--fewshot-training-set not found: {args.fewshot_training_set} "
+                             "(build it with scripts/diagnostics/32_build_fewshot_training_set.py)")
     args.family_neural_model_path = _resolve_under_project(args.family_neural_model_path)
     if args.family_supervised_hdbscan_checkpoint:
         args.family_supervised_hdbscan_checkpoint = _resolve_under_project(args.family_supervised_hdbscan_checkpoint)

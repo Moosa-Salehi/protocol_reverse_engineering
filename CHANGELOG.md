@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Few-shot field boundaries (`protocol_re.inference.fewshot_boundaries`, `FewShotBoundaries` thresholds;
+  stages `04b_fewshot_boundaries` and `07c_apply_fewshot_edges`; `main.py --fewshot-labels` plus
+  `--fewshot-training-set`, `--fewshot-exclude-protocol`, `--[no-]fewshot-split`; off unless labels are given).
+  From a few labelled messages of the capture (boundaries in the truth-file convention), a learned boundary model
+  trained on the shipped multi-protocol rows (`assets/pre_trained/fewshot_boundary_training.npz`, built by
+  `scripts/diagnostics/32_build_fewshot_training_set.py`) is adapted to the protocol; every message gets edges
+  from the model plus byte alignment with its most similar labelled message, with string / embedded-BER /
+  CRC-16-block post-processing chosen by leave-one-out on the labels. Families whose messages disagree on their
+  layout are split after stage 04 (signatures holding >= 10% of a family; BER families and homogeneous families
+  are kept), and after stage 07 each family's fields become the majority of its messages' edges (TLV-tagged
+  chains kept). `scripts/select_fewshot_messages.py` lists which messages to label. Validated through main.py on
+  the 14 benchmark protocols with 50 labelled messages each and the protocol's own rows left out: truth-file
+  overall 0.347 -> 0.503 (+0.155, 95% CI [+0.079, +0.235], 11 up / 2 down: Modbus 0.804 -> 0.756,
+  EtherNet/IP 0.309 -> 0.288). Experiments: `dol/accuracy-push` (LOG.md).
 - Stacked-header anchor in stage 05 (`framing._counted_region_start`, `_anchor_stacked_headers`;
   `FramingDetection.STACKED_HEADER_MIN_OVERSHOOT` / `COUNTED_LENGTH_*`; `05_infer_framing.py
   --[no-]stacked-header-anchor`, `main.py --[no-]stacked-header-anchor`, default on). A length field

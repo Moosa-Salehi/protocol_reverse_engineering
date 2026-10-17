@@ -1013,3 +1013,31 @@ class FamilyRefinement:
     # Families smaller than this after re-keying are folded into the nearest
     # sibling (same discriminator value + role, closest length bucket).
     MIN_FAMILY_SIZE: int = 5
+
+
+class FewShotBoundaries:
+    """Thresholds for :mod:`protocol_re.inference.fewshot_boundaries` (few labelled messages -> boundaries).
+
+    Validated in dol/accuracy-push (LOG.md): 50 labelled messages per protocol, truth-file convention labels,
+    14 benchmark protocols, leave-one-protocol-out.
+    """
+
+    # Messages with one exact length form their own group when there are at least this many
+    # (the rest of the family is one remainder group).
+    MIN_GROUP: int = 20
+    # Messages used for a group's feature statistics.
+    GROUP_CAP: int = 1000
+    # Total weight of the target's labelled rows, in units of one training protocol.
+    BETA: float = 3.0
+
+    # --- Family split by predicted layout (after stage 04) ---
+    # Layout signature = predicted edges below this offset.
+    SIG_BYTES: int = 32
+    # Families whose messages already agree with the family-majority layout (mean F1) are not split.
+    SPLIT_AGREE: float = 0.97
+    # A signature becomes a sub-family when it holds this share of the family's messages (chosen
+    # leave-one-protocol-out from 5/10/20%: every fold picked 10%) ...
+    SPLIT_MIN_SHARE: float = 0.10
+    # ... and at least this many messages; at most SPLIT_MAX sub-families per family.
+    SPLIT_MIN_SIZE: int = 5
+    SPLIT_MAX: int = 8
