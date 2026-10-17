@@ -297,6 +297,27 @@ class FramingDetection:
     # per-family sampling keeps one large family from carrying the vote.
     LENGTH_VERIFY_SAMPLE_PER_FAMILY: int = 200
 
+    # --- Stacked-header anchor (framing._counted_region_start) ---
+    # A length field whose value counts the bytes from offset c to the end marks
+    # where the counted body begins. Stacked headers (several datagram or item
+    # headers back to back, as in EtherCAT or EtherNet/IP + CIP) look like one
+    # long stable header to the entropy score, which then overshoots c. When a
+    # family's best body start lies at least STACKED_HEADER_MIN_OVERSHOOT bytes
+    # past c, a hypothesis with body start c is put first.
+    STACKED_HEADER_MIN_OVERSHOOT: int = 4
+    # The relation must hold for this share of the pooled sample (mixed-in
+    # traffic such as TLS sessions lowers it) ...
+    COUNTED_LENGTH_MIN_SHARE: float = 0.5
+    # ... and for this share of a family's own messages before that family's
+    # body start is moved.
+    COUNTED_LENGTH_FAMILY_SHARE: float = 0.8
+    # ... over at least this many distinct message lengths.
+    COUNTED_LENGTH_MIN_DISTINCT: int = 3
+    # Length fields are searched at offsets below this value ...
+    COUNTED_LENGTH_MAX_OFFSET: int = 16
+    # ... with these value masks (None = whole field; 11/12-bit length sub-fields).
+    COUNTED_LENGTH_MASKS: tuple = (None, 0x7FF, 0xFFF)
+
     # Counter / transaction-id field detection thresholds.
     COUNTER_UNIQUE_RATIO_MIN: float = 0.45
     COUNTER_SCORE_MIN: float = 0.62

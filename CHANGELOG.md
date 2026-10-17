@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Stacked-header anchor in stage 05 (`framing._counted_region_start`, `_anchor_stacked_headers`;
+  `FramingDetection.STACKED_HEADER_MIN_OVERSHOOT` / `COUNTED_LENGTH_*`; `05_infer_framing.py
+  --[no-]stacked-header-anchor`, `main.py --[no-]stacked-header-anchor`, default on). A length field
+  (1/2/4 bytes, optionally an 11/12-bit sub-field) whose value counts the bytes from offset c marks
+  where the counted body begins; when a family's entropy layout puts the body start 4+ bytes past c
+  (several stable datagram/item headers back to back) and the family's own messages satisfy the
+  relation, a body-start-c hypothesis is put first. EtherCAT 30 -> 2 and CIP 32 -> 24 (both the
+  truth-file header lengths). Truth files, current defaults, 14 protocols: overall 0.347 -> 0.357
+  (EtherCAT 0.310 -> 0.369, DNP3 0.334 -> 0.398, IEC 104 0.068 -> 0.082, CIP 0.346 -> 0.333,
+  9 unchanged). Experiments: `dol/accuracy-push` (LOG.md).
 - Per-message TLV layout (`detect_tlv_message_layout`, `message_tlv_edges`, `message_layout_edges`
   in `protocol_re.inference.tlv`; `TlvFraming.MESSAGE_LAYOUT_*`). A family's fixed field list
   cannot follow a BER body whose element offsets shift with every variable-length value, so

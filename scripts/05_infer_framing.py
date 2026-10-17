@@ -28,6 +28,9 @@ def main() -> None:
     parser.add_argument("--tlv-detect", dest="tlv_detect", action=argparse.BooleanOptionalAction, default=True,
                         help="Enable TLV/BER self-describing framing detection per family. No-op when "
                              "a family's messages do not parse as a strict TLV chain. Default ON.")
+    parser.add_argument("--stacked-header-anchor", dest="stacked_header_anchor", action=argparse.BooleanOptionalAction, default=True,
+                        help="Move a family's body start back to where a protocol-level length field starts counting, "
+                             "when the entropy layout overshoots it (stacked headers such as EtherCAT datagrams). Default: on.")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
@@ -73,6 +76,7 @@ def main() -> None:
             detect_layers=args.detect_layers,
             layer_min_confidence=args.layer_min_confidence,
             enable_tlv=args.tlv_detect,
+            stacked_header_anchor=args.stacked_header_anchor,
         )
 
     fallback_counts = {}

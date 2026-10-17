@@ -62,6 +62,7 @@ def infer_framing_hypotheses(
     detect_layers: bool = False,
     layer_min_confidence: float = _LD.MIN_CONFIDENCE,
     enable_tlv: bool = True,
+    stacked_header_anchor: bool = True,
 ) -> Dict[str, Any]:
     """Infer protocol-agnostic frame/header layouts per family and globally.
 
@@ -72,6 +73,9 @@ def infer_framing_hypotheses(
         min_messages: Minimum messages needed for non-fallback family inference
         detect_layers: Enable multi-layer protocol detection (A6)
         layer_min_confidence: Minimum confidence for layer boundary detection
+        stacked_header_anchor: Move a family's body start back to the start of the
+            region a protocol-level length field counts, when the entropy layout
+            overshoots it (see _counted_region_start)
 
     Returns:
         Dictionary with framing hypotheses and optional layer information
@@ -112,6 +116,11 @@ def infer_framing_hypotheses(
                 global_field_votes[str(region.get("field_type", "unknown"))] += 1
 
     _verify_length_fields(family_results, family_messages, max_header_bytes)
+    counted_start = None
+    if stacked_header_anchor:
+        counted_start = _counted_region_start(family_messages)
+        if counted_start is not None:
+            _anchor_stacked_headers(family_results, family_messages, counted_start)
 
     family_count = len(family_results)
     common_header_ends = [
@@ -125,6 +134,7 @@ def infer_framing_hypotheses(
         "max_header_bytes": max_header_bytes,
         "max_hypotheses_per_family": max_hypotheses_per_family,
         "min_messages": min_messages,
+        "counted_region_start": counted_start,
     }
 
     # A6: Add layer detection metadata
@@ -181,6 +191,111 @@ def _verify_length_fields(
                 evidence = region.setdefault("evidence", {})
                 key = (region.get("start"), region.get("end"), evidence.get("relation"), evidence.get("endian"))
                 evidence["verified"] = int(evidence.get("distinct_lengths", 0) or 0) >= 2 or key in corpus_verified
+
+
+def _counted_region_start(family_messages: Dict[str, Sequence[str]]) -> Optional[Dict[str, Any]]:
+    """Protocol-level start of the region a length field counts.
+
+    Searches a sample pooled across families (equal share per family) for a
+    1/2/4-byte field, optionally masked to an 11/12-bit length sub-field, whose
+    value equals ``len(message) - c`` for one constant ``c`` at or after the
+    field's end. Returns ``{"start": c, ...}`` for the earliest such field, or
+    None. ``c`` is where the counted body begins (EtherCAT: the 11-bit length in
+    the 2-byte frame header counts from offset 2; EtherNet/IP: the length at
+    offset 2 counts from offset 24).
+    """
+    pooled: List[bytes] = []
+    for _family_id, messages_hex in sorted(family_messages.items()):
+        usable = [item for item in messages_hex if item]
+        step = max(1, len(usable) // _FD.LENGTH_VERIFY_SAMPLE_PER_FAMILY)
+        pooled.extend(hex_to_bytes(item) for item in usable[::step][: _FD.LENGTH_VERIFY_SAMPLE_PER_FAMILY])
+    if len({len(message) for message in pooled}) < _FD.COUNTED_LENGTH_MIN_DISTINCT:
+        return None
+    for start in range(0, _FD.COUNTED_LENGTH_MAX_OFFSET):
+        for width in (1, 2, 4):
+            end = start + width
+            for endian in ("big", "little"):
+                for mask in _FD.COUNTED_LENGTH_MASKS:
+                    if mask is not None and mask >= 256 ** width:
+                        continue
+                    offsets: Counter[int] = Counter()
+                    usable = 0
+                    for message in pooled:
+                        if len(message) < end:
+                            continue
+                        usable += 1
+                        value = safe_int_from_bytes(message[start:end], endian=endian)
+                        offsets[len(message) - (value & mask if mask is not None else value)] += 1
+                    if not usable:
+                        continue
+                    counted_from, matches = offsets.most_common(1)[0]
+                    lengths = {len(message) for message in pooled if len(message) >= end and len(message) - counted_from >= 0}
+                    if (
+                        matches >= _FD.COUNTED_LENGTH_MIN_SHARE * usable
+                        and end <= counted_from <= _FD.MAX_HEADER_BYTES
+                        and len(lengths) >= _FD.COUNTED_LENGTH_MIN_DISTINCT
+                    ):
+                        return {
+                            "start": counted_from,
+                            "field_start": start,
+                            "field_end": end,
+                            "endian": endian,
+                            "mask": mask,
+                            "match_share": round(matches / usable, 4),
+                        }
+    return None
+
+
+def _counted_relation_share(messages: Sequence[bytes], evidence: Dict[str, Any]) -> float:
+    """Share of messages for which the protocol-level length relation holds."""
+    start, end, mask = evidence["field_start"], evidence["field_end"], evidence["mask"]
+    usable = hits = 0
+    for message in messages:
+        if len(message) < end:
+            continue
+        usable += 1
+        value = safe_int_from_bytes(message[start:end], endian=evidence["endian"])
+        hits += (len(message) - (value & mask if mask is not None else value)) == evidence["start"]
+    return hits / usable if usable else 0.0
+
+
+def _anchor_stacked_headers(
+    family_results: Dict[str, Any],
+    family_messages: Dict[str, Sequence[str]],
+    evidence: Dict[str, Any],
+) -> None:
+    """Put a body-start-``c`` hypothesis first in every family whose best layout
+    overshoots ``c`` (the counted-region start) by at least
+    STACKED_HEADER_MIN_OVERSHOOT bytes and whose own messages satisfy the length
+    relation (COUNTED_LENGTH_FAMILY_SHARE). TLV-mode layouts (deterministic BER
+    parse) are left alone."""
+    counted_start = int(evidence["start"])
+    for family_id, result in family_results.items():
+        layouts = result.get("layout_hypotheses") or []
+        if not layouts:
+            continue
+        messages = [hex_to_bytes(item) for item in family_messages.get(family_id, []) if item]
+        if _counted_relation_share(messages, evidence) < _FD.COUNTED_LENGTH_FAMILY_SHARE:
+            continue
+        best = layouts[0]
+        if (best.get("evidence") or {}).get("mode") == "tlv_ber":
+            continue
+        body_start = int(best.get("body_start", 0) or 0)
+        if body_start - counted_start < _FD.STACKED_HEADER_MIN_OVERSHOOT:
+            continue
+        anchored = dict(best)
+        anchored["header_end"] = counted_start
+        anchored["body_start"] = counted_start
+        anchored["field_regions"] = [
+            region for region in best.get("field_regions", []) or [] if int(region.get("end", 0) or 0) <= counted_start
+        ]
+        anchored["evidence"] = {
+            **(best.get("evidence") or {}),
+            "mode": "counted_length_anchor",
+            "previous_body_start": body_start,
+            "counted_length": evidence,
+        }
+        result["layout_hypotheses"] = [anchored] + layouts
 
 
 def infer_family_framing(

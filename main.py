@@ -458,6 +458,10 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_args.append("--no-tlv-detect")
             elif step_name == "07_infer_boundaries":
                 step_args.append("--no-tlv-boundaries")
+    if not args.stacked_header_anchor:
+        for step_name, step_args in pipeline:
+            if step_name == "05_infer_framing":
+                step_args.append("--no-stacked-header-anchor")
 
     # Add fusion method for hybrid mode
     if args.family_feature_mode == "hybrid":
@@ -882,6 +886,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
              "edges), and stage 07b skips LLM boundary merges on TLV families (the parse "
              "is already exact). No-op when the corpus does not parse as TLV. Default ON; "
              "disable with --no-tlv-boundaries.",
+    )
+    boundary_group.add_argument(
+        "--stacked-header-anchor",
+        dest="stacked_header_anchor",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Stage 05: when a protocol-level length field counts the bytes from offset c and a family's "
+             "entropy layout puts the body start 4+ bytes past c (stacked datagram/item headers, e.g. "
+             "EtherCAT), move the body start to c. Default ON; disable with --no-stacked-header-anchor.",
     )
     boundary_group.add_argument(
         "--boundary-max-fields",
