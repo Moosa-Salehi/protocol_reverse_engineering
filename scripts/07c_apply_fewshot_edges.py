@@ -25,6 +25,8 @@ def main() -> None:
     parser.add_argument("assignments_json", type=Path)
     parser.add_argument("fewshot_json", type=Path)
     parser.add_argument("families_json", type=Path)
+    parser.add_argument("--gate", action="store_true",
+                        help="Keep stage-07 fields; predicted edges only split fields of >= 3 bytes and extend past the last field")
     args = parser.parse_args()
     edges = {int(m): set(e) for m, e in json.loads(args.fewshot_json.read_text(encoding="utf-8"))["edges"].items()}
     family_of = {int(a["msg_id"]): a["family_id"] for a in json.loads(args.assignments_json.read_text(encoding="utf-8"))["assignments"]}
@@ -35,7 +37,10 @@ def main() -> None:
             payload_len[int(m["msg_id"])] = int(m["payload_len"])
     families = json.loads(args.families_json.read_text(encoding="utf-8"))
     shutil.copy(args.families_json, args.families_json.with_name("05_families.pre-fewshot.json"))
-    summary = fsb.apply_to_families(families, family_of, edges, payload_len)
+    if args.gate:
+        summary = fsb.apply_gated(families, family_of, edges, payload_len)
+    else:
+        summary = fsb.apply_to_families(families, family_of, edges, payload_len)
     args.families_json.write_text(json.dumps(families, indent=2), encoding="utf-8")
     print(f"[+] few-shot edges applied: {summary}")
 

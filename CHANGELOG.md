@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Zero-shot learned boundaries (`main.py --zeroshot-boundaries`, no labels): stage 04b runs the generic model
+  trained on the shipped protocols at the threshold chosen leave-one-protocol-out (stored in the training set),
+  with the label-free structural post-processors (`--zeroshot-posts`, default strings,ber,crc), and 07c gates
+  the result with stage 07 (`--zeroshot-gate`, default on: stage-07 fields kept, predicted edges only split fields
+  of >= 3 bytes and extend past the last field). Optional `--zeroshot-shared-layers` carries edges over from known
+  protocols that share a lower layer (reference pool `assets/pre_trained/fewshot_reference_messages.jsonl.gz`).
+  Truth files, 14 protocols, protocol left out: overall 0.357 (current defaults) -> 0.415, +0.068 vs the
+  pre-anchor baseline [+0.030, +0.118], 12 up / 0 down; with shared layers 0.418 (11 up / 0 down).
+
 - Few-shot field boundaries (`protocol_re.inference.fewshot_boundaries`, `FewShotBoundaries` thresholds;
   stages `04b_fewshot_boundaries` and `07c_apply_fewshot_edges`; `main.py --fewshot-labels` plus
   `--fewshot-training-set`, `--fewshot-exclude-protocol`, `--[no-]fewshot-split`; off unless labels are given).
@@ -94,6 +103,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MBAP length field parsed that way).
 
 ### Changed
+- Few-shot boundaries: the family split is verified by the labelled messages (a family is split only into
+  layouts its labels show, `--[no-]fewshot-split-verify`, `--fewshot-split-support`), and rebuilt fields end at
+  the family's median length. Truth files: 12 up / 0 down (Modbus 0.756 -> 0.816, EtherNet/IP 0.288 -> 0.343),
+  overall +0.142 vs +0.155 before.
 - The per-message boundary benchmark skips `tshark-cache` fallback annotations by default
   (`--include-coarse` restores them): they hold a few coarse layer spans, about one edge
   per 100 bytes, and made up a fifth of the BACnet annotations.

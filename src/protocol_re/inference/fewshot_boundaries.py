@@ -189,7 +189,8 @@ def build_rows(order, family_of, payload, body_start_of, labels):
 
 # ---------------------------------------------------------------- training set (shipped rows)
 
-def save_training_set(path, per_protocol: Dict[str, List[Dict[str, Any]]]) -> None:
+def save_training_set(path, per_protocol: Dict[str, List[Dict[str, Any]]],
+                      zs_thresholds: Optional[Dict[str, float]] = None) -> None:
     X, y, proto, weight = [], [], [], []
     names = sorted(per_protocol)
     for k, p in enumerate(names):
@@ -199,8 +200,11 @@ def save_training_set(path, per_protocol: Dict[str, List[Dict[str, Any]]]) -> No
             X.append(g['X']); y.append(g['y'])
             proto.append(np.full(len(g['offs']), k, dtype=np.int16))
             weight.append(np.full(len(g['offs']), g['nann'] / tot, dtype=np.float32))
+    extra = {}
+    if zs_thresholds:
+        extra = {'zs_threshold_protocols': np.array(list(zs_thresholds)), 'zs_thresholds': np.array(list(zs_thresholds.values()))}
     np.savez_compressed(path, X=np.vstack(X).astype(np.float32), y=np.concatenate(y), proto=np.concatenate(proto),
-                        weight=np.concatenate(weight), protocols=np.array(names))
+                        weight=np.concatenate(weight), protocols=np.array(names), **extra)
 
 
 def load_training_set(path, exclude: Iterable[str] = ()):
@@ -513,7 +517,8 @@ def layout_agreement(pred: Dict[int, Set[int]], mids: Sequence[int], payload: Di
 
 
 def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]], payload: Dict[int, bytes],
-                   labels: Optional[Dict[int, Sequence[int]]] = None) -> Tuple[Dict[int, str], Dict[str, Any]]:
+                   labels: Optional[Dict[int, Sequence[int]]] = None,
+                   support: Optional[int] = None) -> Tuple[Dict[int, str], Dict[str, Any]]:
     """New family id per moved message: a family whose messages disagree on their layout (and is not BER-structured)
     is split by layout signature (edges below SIG_BYTES); a signature becomes a sub-family `<family>_L<k>` when it
     holds >= SPLIT_MIN_SHARE of the family (and >= SPLIT_MIN_SIZE messages), at most SPLIT_MAX per family.
@@ -542,7 +547,7 @@ def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]
         if labels is not None:
             lab = Counter(tuple(sorted(e for e in labels[m] if 0 < e < min(len(payload[m]), _FS.SIG_BYTES)))
                           for m in rows if m in labels)
-            verified = {s for s, c in lab.items() if c >= _FS.SPLIT_LABELLED_SUPPORT}
+            verified = {s for s, c in lab.items() if c >= (support or _FS.SPLIT_LABELLED_SUPPORT)}
             if len(verified) < _FS.SPLIT_LABELLED_LAYOUTS:
                 skipped['labels_show_one_layout'] += 1
                 continue
@@ -618,3 +623,175 @@ def apply_to_families(families: Dict[str, Any], family_of: Dict[int, Optional[st
             families[fam], k = rebuild_fields(det, edges, maxlen[fam])
         changed += k; touched += 1
     return {'families_rebuilt': touched, 'tlv_chains_kept': kept_tlv, 'field_changes': changed}
+
+
+# ---------------------------------------------------------------- zero-shot mode (no labels)
+
+TH_GRID = tuple(np.round(np.arange(0.05, 0.71, 0.05), 2))
+
+
+def zeroshot_thresholds(per_protocol: Dict[str, List[Dict[str, Any]]]) -> Dict[str, float]:
+    """Leave-one-protocol-out threshold choice for zero-shot use: for every protocol p, the threshold that maximises
+    the mean (over the other protocols q) of q's offset-level F1 under a model trained without q; key '*' is the
+    choice over all protocols (for captures of unknown protocols)."""
+    names = sorted(per_protocol)
+    f1 = {}
+    for q in names:
+        tmp = {p: per_protocol[p] for p in names if p != q}
+        X, y, w = _stack_rows(tmp)
+        model = hgb().fit(X, y, sample_weight=w)
+        gs = [g for g in per_protocol[q] if g['y'] is not None and g['nann']]
+        tp = np.zeros(len(TH_GRID)); fp = np.zeros(len(TH_GRID)); fn = np.zeros(len(TH_GRID))
+        for g in gs:
+            s = model.predict_proba(g['X'])[:, 1]
+            for k, t in enumerate(TH_GRID):
+                pr = s >= t
+                tp[k] += g['nann'] * (pr & g['y']).sum(); fp[k] += g['nann'] * (pr & ~g['y']).sum(); fn[k] += g['nann'] * (~pr & g['y']).sum()
+        f1[q] = 2 * tp / np.maximum(1, 2 * tp + fp + fn)
+    out = {p: float(TH_GRID[int(np.argmax(np.mean([f1[q] for q in names if q != p], axis=0)))]) for p in names}
+    out['*'] = float(TH_GRID[int(np.argmax(np.mean([f1[q] for q in names], axis=0)))])
+    return out
+
+
+def _stack_rows(per_protocol):
+    X, y, w = [], [], []
+    for p, groups in per_protocol.items():
+        gs = [g for g in groups if g['y'] is not None and g['nann']]
+        tot = sum(g['nann'] * len(g['offs']) for g in gs)
+        for g in gs:
+            X.append(g['X']); y.append(g['y']); w.append(np.full(len(g['offs']), g['nann'] / tot))
+    w = np.concatenate(w)
+    return np.vstack(X), np.concatenate(y), w * len(w) / w.sum()
+
+
+def load_zeroshot_threshold(path, exclude: Iterable[str] = ()) -> float:
+    d = np.load(path, allow_pickle=False)
+    names = [str(x) for x in d['zs_threshold_protocols']]
+    values = [float(x) for x in d['zs_thresholds']]
+    table = dict(zip(names, values))
+    excl = [p for p in exclude if p in table]
+    return table[excl[0]] if excl else table['*']
+
+
+def save_reference_messages(path, per_protocol_messages: Dict[str, List[Tuple[bytes, Sequence[int]]]]) -> None:
+    import gzip
+    import json
+    with gzip.open(path, 'wt', encoding='utf-8') as fh:
+        for p, rows in sorted(per_protocol_messages.items()):
+            for b, edges in rows:
+                fh.write(json.dumps({'protocol': p, 'payload_hex': b.hex(), 'boundaries': [int(e) for e in edges]}) + '\n')
+
+
+def load_reference_messages(path, exclude: Iterable[str] = ()):
+    import gzip
+    import json
+    excl = set(exclude)
+    out = []
+    with gzip.open(path, 'rt', encoding='utf-8') as fh:
+        for line in fh:
+            r = json.loads(line)
+            if r['protocol'] not in excl:
+                out.append((r['protocol'], bytes.fromhex(r['payload_hex']), r['boundaries']))
+    return out
+
+
+def shared_layer_edges(b: bytes, reference, min_block: int = _FS.SHARED_MIN_BLOCK, min_ratio: float = _FS.SHARED_MIN_RATIO):
+    """Edges carried over from the most similar reference message of a known protocol, inside matching blocks of
+    >= min_block bytes (a shared lower layer such as TPKT/COTP or an EtherNet/IP encapsulation), and the mask of the
+    positions those blocks cover. Nothing when the best similarity is below min_ratio."""
+    best = (0.0, None)
+    sm = difflib.SequenceMatcher(None, autojunk=False)
+    sm.set_seq2(b[:128])
+    for k, (_p, a, _e) in enumerate(reference):
+        sm.set_seq1(a[:128])
+        if sm.real_quick_ratio() <= best[0] or sm.quick_ratio() <= best[0]:
+            continue
+        r = sm.ratio()
+        if r > best[0]:
+            best = (r, k)
+    cov = np.zeros(len(b) + 1, dtype=bool)
+    if best[1] is None or best[0] < min_ratio:
+        return set(), cov, None
+    _p, a, ea = reference[best[1]]
+    out = set()
+    for i, j, n in difflib.SequenceMatcher(None, a, b, autojunk=False).get_matching_blocks():
+        if n >= min_block:
+            cov[j + 1:j + n] = True
+            out.update(j + (e - i) for e in ea if i < e < i + n)
+    return out, cov, _p
+
+
+def predict_edges_zeroshot(order, family_of, payload, body_start_of, training_set, exclude=(),
+                           posts: Sequence[str] = ('strings', 'ber', 'crc'), reference=None
+                           ) -> Tuple[Dict[int, Set[int]], Dict[str, Any]]:
+    """Per-message edges without labels: the generic model trained on all shipped protocols, at the threshold chosen
+    leave-one-protocol-out, then the label-free structural post-processors; optionally edges carried over from
+    known protocols that share a lower layer (reference messages)."""
+    groups = build_rows(order, family_of, payload, body_start_of, {})
+    X, y, w, n_protocols = load_training_set(training_set, exclude)
+    model = hgb().fit(X, y, sample_weight=w)
+    t = load_zeroshot_threshold(training_set, exclude)
+    pred: Dict[int, Set[int]] = {}
+    donors: Counter = Counter()
+    for g in groups:
+        s = model.predict_proba(g['X'])[:, 1]
+        e = {o for o, v in zip(g['offs'], s) if v >= t}
+        shared = None
+        if reference:
+            rep = g['mids'][0]
+            ce, cov, donor = shared_layer_edges(payload[rep], reference)
+            if cov.any():
+                shared = (len(payload[rep]), ce, cov)
+                donors[donor] += 1
+        for m in g['mids']:
+            em = set(e)
+            if shared and len(payload[m]) == shared[0]:
+                em = {x for x in em if not (x < len(shared[2]) and shared[2][x])} | {x for x in shared[1] if x < len(payload[m])}
+            pred[m] = em
+    funcs = dict(POSTS)
+    for m in pred:
+        for name in posts:
+            pred[m] = funcs[name](payload[m], pred[m])
+    return pred, {'mode': 'zeroshot', 'groups': len(groups), 'threshold': t, 'posts': list(posts),
+                  'training_protocols': n_protocols, 'shared_layer_donors': dict(donors)}
+
+
+def apply_gated(families: Dict[str, Any], family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]],
+                payload_len: Dict[int, int], min_width: int = 3) -> Dict[str, Any]:
+    """Zero-shot combination with stage 07 (in place): stage-07 fields and edges are kept; the family-majority
+    predicted edges only split stage-07 fields of >= min_width bytes and add fields past the last stage-07 field
+    (up to the family's median length). TLV-tagged chains are left alone."""
+    votes, reach, lengths = defaultdict(Counter), defaultdict(Counter), defaultdict(list)
+    for m, edges in pred.items():
+        fam, n = family_of.get(m), payload_len.get(m)
+        if fam is None or n is None:
+            continue
+        votes[fam].update(e for e in edges if 0 < e < n); reach[fam].update(range(1, n)); lengths[fam].append(n)
+    touched = added = 0
+    for fam, det in families.items():
+        if fam not in votes or not isinstance(det, dict):
+            continue
+        hyps = sorted(det.get('field_hypotheses', []) or [], key=lambda h: int(h.get('start', 0) or 0))
+        if not hyps or any((h.get('attributes') or {}).get('tlv_tag') is not None for h in hyps):
+            continue
+        edges = sorted(e for e, c in votes[fam].items() if c >= 0.5 * reach[fam][e])
+        end07 = max(int(h['start']) + int(h['length']) for h in hyps)
+        median = int(np.median(lengths[fam]))
+        out = []
+        for h in hyps:
+            a, b = int(h['start']), int(h['start']) + int(h['length'])
+            cuts = [e for e in edges if a < e < b] if b - a >= min_width else []
+            if not cuts:
+                out.append(h); continue
+            for lo, hi in zip([a] + cuts, cuts + [b]):
+                out.append(dict(h, start=lo, length=hi - lo, attributes=dict(h.get('attributes') or {}, zeroshot_split=True)))
+            added += len(cuts)
+        if median > end07:
+            tail = [end07] + [e for e in edges if end07 < e < median] + [median]
+            for lo, hi in zip(tail, tail[1:]):
+                out.append({'family_id': hyps[0].get('family_id'), 'start': lo, 'length': hi - lo, 'field_type': 'blob',
+                            'confidence': 0.5, 'endian': None, 'evidence': {}, 'attributes': {'zeroshot_tail': True}})
+            added += len(tail) - 2
+        families[fam] = dict(det, field_hypotheses=out)
+        touched += 1
+    return {'families_gated': touched, 'edges_added': added}

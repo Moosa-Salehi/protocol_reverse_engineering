@@ -93,3 +93,44 @@ def test_predict_split_and_apply_end_to_end(tmp_path):
     summary = fsb.apply_to_families(families, new_family, pred, {m: len(b) for m, b in payload.items()})
     assert summary["families_rebuilt"] == len(families)
     assert all(len(d["field_hypotheses"]) >= 4 for d in families.values())
+
+
+def test_zeroshot_threshold_table_and_prediction(tmp_path):
+    rng = random.Random(11)
+    training = {}
+    for name in ("p1", "p2", "p3"):
+        order, payload, labels_all, family_of = _synthetic(rng)
+        training[name] = fsb.build_rows(order, family_of, payload, {}, labels_all)
+    thresholds = fsb.zeroshot_thresholds(training)
+    assert set(thresholds) == {"p1", "p2", "p3", "*"}
+    path = tmp_path / "train.npz"
+    fsb.save_training_set(path, training, thresholds)
+    assert fsb.load_zeroshot_threshold(path, exclude=["p2"]) == thresholds["p2"]
+    assert fsb.load_zeroshot_threshold(path) == thresholds["*"]
+    order, payload, labels_all, family_of = _synthetic(rng)
+    pred, summary = fsb.predict_edges_zeroshot(order, family_of, payload, {}, path, posts=[])
+    assert summary["mode"] == "zeroshot" and set(pred) == set(order)
+
+
+def test_shared_layer_transfer_needs_a_long_common_block():
+    header = bytes.fromhex("0300001902f080")                     # TPKT + COTP, 7 bytes
+    ref = [("known", header + b"\x32\x01\x00\x00\x00\x01", [0, 1, 2, 4, 5, 6, 7, 13])]
+    edges, cov, donor = fsb.shared_layer_edges(header + b"\x99\x10\x20", ref)
+    assert donor == "known" and {1, 2, 4, 5, 6} <= edges
+    edges, cov, donor = fsb.shared_layer_edges(bytes(range(40, 60)), ref)
+    assert donor is None and not edges
+
+
+def test_gated_keeps_stage07_fields_and_splits_only_wide_ones():
+    payload_len = {m: 12 for m in range(10)}
+    family_of = {m: "f" for m in range(10)}
+    pred = {m: {2, 3, 6, 9} for m in range(10)}
+    families = {"f": {"field_hypotheses": [
+        {"family_id": "f", "start": 0, "length": 2, "field_type": "counter", "attributes": {}},
+        {"family_id": "f", "start": 2, "length": 2, "field_type": "constant", "attributes": {}},
+        {"family_id": "f", "start": 4, "length": 4, "field_type": "blob", "attributes": {}}]}}
+    fsb.apply_gated(families, family_of, pred, payload_len)
+    spans = [(h["start"], h["length"]) for h in families["f"]["field_hypotheses"]]
+    assert (2, 2) in spans                 # a 2-byte stage-07 field is not split at 3
+    assert (4, 2) in spans and (6, 2) in spans
+    assert spans[-1][0] + spans[-1][1] == 12 and (8, 1) in spans   # tail past the last stage-07 field

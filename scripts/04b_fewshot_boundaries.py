@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Stage 04b: few-shot boundary predictions from a few labelled messages, and the family split by layout.
+"""Stage 04b: learned boundary predictions per message (few-shot from labelled messages, or zero-shot), and the
+family split by layout.
+
+--mode fewshot (needs --labels) adapts the model to the capture with a few labelled messages; --mode zeroshot uses
+the generic model trained on the shipped protocols, the label-free structural post-processors (--posts) and,
+with --reference, edges carried over from known protocols that share a lower layer.
 
 Runs after family discovery (04) when --fewshot-labels is given:
   1. framing body starts of the current families (stage-05 defaults),
@@ -33,8 +38,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("messages_jsonl", type=Path)
     parser.add_argument("assignments_json", type=Path)
-    parser.add_argument("labels_jsonl", type=Path)
     parser.add_argument("output_json", type=Path, help="Per-message predicted edges")
+    parser.add_argument("--mode", choices=["fewshot", "zeroshot"], default="fewshot")
+    parser.add_argument("--labels", type=Path, help="Labelled messages (JSONL), required for --mode fewshot")
+    parser.add_argument("--posts", default="strings,ber,crc", help="Zero-shot post-processors (comma list, may be empty)")
+    parser.add_argument("--reference", type=Path, help="Zero-shot shared-layer transfer: reference messages (jsonl.gz)")
     parser.add_argument("--training-set", type=Path, required=True)
     parser.add_argument("--exclude-protocol", action="append", default=[],
                         help="Leave this protocol's rows out of the training set (evaluation on a benchmark protocol)")
@@ -42,6 +50,8 @@ def main() -> None:
                         help="Split families whose messages disagree on their layout (default on)")
     parser.add_argument("--split-verify", dest="split_verify", action=argparse.BooleanOptionalAction, default=True,
                         help="Split a family only into layouts its labelled messages show (default on)")
+    parser.add_argument("--split-support", type=int, default=None,
+                        help="Labelled messages a layout needs to count as verified (default FewShotBoundaries.SPLIT_LABELLED_SUPPORT)")
     parser.add_argument("--log-dir", default="logs")
     args = parser.parse_args()
     logger = setup_stage_logging("04b_fewshot_boundaries", Path(args.log_dir))
@@ -58,7 +68,7 @@ def main() -> None:
         family_of = {int(a["msg_id"]): a["family_id"] for a in doc["assignments"]}
         by_payload = {payload[m].hex(): m for m in order}
         labels = {}
-        for line in args.labels_jsonl.open(encoding="utf-8"):
+        for line in (args.labels.open(encoding="utf-8") if args.labels else []):
             if not line.strip():
                 continue
             a = json.loads(line)
@@ -66,7 +76,7 @@ def main() -> None:
             if mid is not None and a.get("boundaries"):
                 labels[mid] = [int(x) for x in a["boundaries"]]
         logger.metric("labelled_messages", len(labels), "messages")
-        if not labels:
+        if args.mode == "fewshot" and not labels:
             raise SystemExit("04b_fewshot_boundaries: no labelled message matches the corpus")
 
     with logger.stage("framing_body_starts"):
@@ -82,14 +92,21 @@ def main() -> None:
                 body_start_of[fam] = int(best["body_start"])
 
     with logger.stage("predict"):
-        pred, summary = fsb.predict_edges(order, family_of, payload, body_start_of, labels, args.training_set,
-                                          exclude=args.exclude_protocol)
+        if args.mode == "fewshot":
+            pred, summary = fsb.predict_edges(order, family_of, payload, body_start_of, labels, args.training_set,
+                                              exclude=args.exclude_protocol)
+        else:
+            reference = fsb.load_reference_messages(args.reference, exclude=args.exclude_protocol) if args.reference else None
+            posts = [x for x in args.posts.split(",") if x]
+            pred, summary = fsb.predict_edges_zeroshot(order, family_of, payload, body_start_of, args.training_set,
+                                                       exclude=args.exclude_protocol, posts=posts, reference=reference)
         print(f"[+] few-shot boundaries: {summary}")
 
     split = {"moved_messages": 0, "sub_families": 0, "skipped": {}}
     if args.split:
         with logger.stage("split_families"):
-            moved, split = fsb.split_families(family_of, pred, payload, labels=labels if args.split_verify else None)
+            moved, split = fsb.split_families(family_of, pred, payload, labels=labels if (args.split_verify and labels) else None,
+                                              support=args.split_support)
             if moved:
                 shutil.copy(args.assignments_json, args.assignments_json.with_name("02_family_assignments.pre-fewshot-split.json"))
                 for a in doc["assignments"]:
@@ -102,7 +119,7 @@ def main() -> None:
     args.output_json.write_text(json.dumps({"summary": summary, "split": split,
                                             "edges": {str(m): sorted(int(x) for x in e) for m, e in pred.items()}}),
                                 encoding="utf-8")
-    print(f"[+] Wrote few-shot edges for {len(pred)} messages to {args.output_json}")
+    print(f"[+] Wrote {args.mode} edges for {len(pred)} messages to {args.output_json}")
 
 
 if __name__ == "__main__":

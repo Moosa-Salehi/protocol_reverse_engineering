@@ -642,23 +642,36 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     # Few-shot boundaries: a few labelled messages adapt the learned boundary model to this protocol.
     # 04b predicts per-message edges right after family discovery (and splits families whose messages
     # disagree on their layout); 07c writes the predicted edges into the families after stage 07.
-    if args.fewshot_labels:
+    # Zero-shot mode (--zeroshot-boundaries, no labels) uses the same two steps with the generic model.
+    if args.fewshot_labels or args.zeroshot_boundaries:
         fewshot_json = data_dir / "04b_fewshot_edges.json"
+        zeroshot = not args.fewshot_labels
         for index, (name, _) in enumerate(pipeline):
             if name == "04_discover_families":
                 step_args = [
                     _script("04b_fewshot_boundaries.py"),
                     _path(messages_jsonl),
                     _path(assignments_json),
-                    _path(args.fewshot_labels),
                     _path(fewshot_json),
                     "--training-set",
                     _path(args.fewshot_training_set),
                 ]
+                if zeroshot:
+                    step_args.extend(["--mode", "zeroshot", "--posts", args.zeroshot_posts])
+                    if args.zeroshot_shared_layers:
+                        step_args.extend(["--reference", _path(args.zeroshot_reference_messages)])
+                    if not args.zeroshot_split:
+                        step_args.append("--no-split")
+                else:
+                    step_args.extend(["--labels", _path(args.fewshot_labels)])
+                    if not args.fewshot_split:
+                        step_args.append("--no-split")
                 for protocol in args.fewshot_exclude_protocol or []:
                     step_args.extend(["--exclude-protocol", protocol])
-                if not args.fewshot_split:
-                    step_args.append("--no-split")
+                if not args.fewshot_split_verify:
+                    step_args.append("--no-split-verify")
+                if args.fewshot_split_support is not None:
+                    step_args.extend(["--split-support", str(args.fewshot_split_support)])
                 pipeline.insert(index + 1, ("04b_fewshot_boundaries", step_args))
                 break
         for index, (name, _) in enumerate(pipeline):
@@ -669,7 +682,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(assignments_json),
                     _path(fewshot_json),
                     _path(families_json),
-                ]))
+                ] + (["--gate"] if zeroshot and args.zeroshot_gate else [])))
                 break
 
     if args.stop_after:
@@ -957,6 +970,58 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="With --fewshot-labels: split families whose messages disagree on their predicted layout (default on).",
     )
     boundary_group.add_argument(
+        "--zeroshot-boundaries",
+        action="store_true",
+        help="Learned boundaries without labels: the generic model trained on the shipped protocols (stage 04b, "
+             "--fewshot-training-set) plus label-free structural detectors, written into the families by 07c. "
+             "Ignored when --fewshot-labels is given.",
+    )
+    boundary_group.add_argument(
+        "--zeroshot-gate",
+        dest="zeroshot_gate",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Zero-shot: keep stage-07 fields and only split fields of >= 3 bytes / extend past the last field "
+             "(default on); --no-zeroshot-gate rebuilds the fields from the predictions.",
+    )
+    boundary_group.add_argument(
+        "--zeroshot-posts",
+        default="strings,ber,crc",
+        help="Zero-shot structural post-processors: comma list of strings, ber, crc (empty for none).",
+    )
+    boundary_group.add_argument(
+        "--zeroshot-split",
+        dest="zeroshot_split",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Zero-shot: split families whose messages disagree on their predicted layout (default off).",
+    )
+    boundary_group.add_argument(
+        "--zeroshot-shared-layers",
+        action="store_true",
+        help="Zero-shot: carry edges over from known protocols that share a lower layer (TPKT/COTP, EtherNet/IP "
+             "encapsulation, ...), aligning each group to the most similar reference message.",
+    )
+    boundary_group.add_argument(
+        "--zeroshot-reference-messages",
+        type=Path,
+        default=Path("assets/pre_trained/fewshot_reference_messages.jsonl.gz"),
+        help="Reference messages of known protocols for --zeroshot-shared-layers.",
+    )
+    boundary_group.add_argument(
+        "--fewshot-split-verify",
+        dest="fewshot_split_verify",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Split a family only into layouts its labelled messages show (default on).",
+    )
+    boundary_group.add_argument(
+        "--fewshot-split-support",
+        type=int,
+        default=None,
+        help="Labelled messages a layout needs to count as verified for the split (default 1).",
+    )
+    boundary_group.add_argument(
         "--boundary-max-fields",
         type=int,
         default=15,
@@ -1127,9 +1192,13 @@ def validate_args(args: argparse.Namespace) -> None:
     else:
         args.pcap_dir = args.data_dir / "pcaps"
     args.llm_config = _resolve_under_project(args.llm_config)
+    if args.fewshot_labels or args.zeroshot_boundaries:
+        args.fewshot_training_set = _resolve_under_project(args.fewshot_training_set)
+        args.zeroshot_reference_messages = _resolve_under_project(args.zeroshot_reference_messages)
+        if args.zeroshot_shared_layers and not args.zeroshot_reference_messages.is_file():
+            raise SystemExit(f"--zeroshot-reference-messages not found: {args.zeroshot_reference_messages}")
     if args.fewshot_labels:
         args.fewshot_labels = _resolve_under_project(args.fewshot_labels)
-        args.fewshot_training_set = _resolve_under_project(args.fewshot_training_set)
         if not args.fewshot_labels.is_file():
             raise SystemExit(f"--fewshot-labels not found: {args.fewshot_labels}")
         if not args.fewshot_training_set.is_file():

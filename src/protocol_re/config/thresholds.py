@@ -1043,6 +1043,14 @@ class FewShotBoundaries:
     SPLIT_MAX: int = 8
     # With labelled messages: a family is split only when its labelled messages show at least this many
     # distinct layouts (signatures), each seen at least SPLIT_LABELLED_SUPPORT times; only those verified
-    # layouts become sub-families.
+    # layouts become sub-families. Support 1 keeps every protocol at or above the stage-07 baseline on the
+    # 14-protocol truth files (+0.142 overall, 12 up / 0 down); the unverified split has the higher mean
+    # (+0.155) but loses on Modbus and EtherNet/IP (dol/accuracy-push LOG.md).
     SPLIT_LABELLED_LAYOUTS: int = 2
-    SPLIT_LABELLED_SUPPORT: int = 2
+    SPLIT_LABELLED_SUPPORT: int = 1
+
+    # --- Zero-shot shared-layer transfer (reference messages of known protocols) ---
+    # Edges are carried over only inside matching blocks of at least this many bytes ...
+    SHARED_MIN_BLOCK: int = 6
+    # ... from a reference whose similarity (difflib ratio on the first 128 bytes) is at least this.
+    SHARED_MIN_RATIO: float = 0.5
