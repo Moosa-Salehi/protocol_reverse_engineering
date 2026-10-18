@@ -27,6 +27,8 @@ def main() -> None:
     parser.add_argument("families_json", type=Path)
     parser.add_argument("--gate", action="store_true",
                         help="Keep stage-07 fields; predicted edges only split fields of >= 3 bytes and extend past the last field")
+    parser.add_argument("--fallback-gate", dest="fallback_gate", action=argparse.BooleanOptionalAction, default=True,
+                        help="Few-shot: gate (instead of rebuild) families whose mixed layouts the labels could not verify")
     args = parser.parse_args()
     edges = {int(m): set(e) for m, e in json.loads(args.fewshot_json.read_text(encoding="utf-8"))["edges"].items()}
     family_of = {int(a["msg_id"]): a["family_id"] for a in json.loads(args.assignments_json.read_text(encoding="utf-8"))["assignments"]}
@@ -37,10 +39,19 @@ def main() -> None:
             payload_len[int(m["msg_id"])] = int(m["payload_len"])
     families = json.loads(args.families_json.read_text(encoding="utf-8"))
     shutil.copy(args.families_json, args.families_json.with_name("05_families.pre-fewshot.json"))
+    doc = json.loads(args.fewshot_json.read_text(encoding="utf-8"))
+    gate_families = set() if args.gate or not args.fallback_gate else set((doc.get("split") or {}).get("unverified_families", []))
     if args.gate:
         summary = fsb.apply_gated(families, family_of, edges, payload_len)
     else:
-        summary = fsb.apply_to_families(families, family_of, edges, payload_len)
+        # families whose messages mix layouts the labels could not verify keep stage 07's fields, refined by
+        # the predictions (zero-shot gating); every other family is rebuilt from its messages' edges
+        gated = {f: families[f] for f in gate_families if f in families}
+        rest = {f: d for f, d in families.items() if f not in gated}
+        summary = fsb.apply_to_families(rest, family_of, edges, payload_len)
+        if gated:
+            summary["fallback_gate"] = fsb.apply_gated(gated, family_of, edges, payload_len)
+        families = {**rest, **gated}
     args.families_json.write_text(json.dumps(families, indent=2), encoding="utf-8")
     print(f"[+] few-shot edges applied: {summary}")
 

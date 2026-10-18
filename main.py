@@ -682,7 +682,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(assignments_json),
                     _path(fewshot_json),
                     _path(families_json),
-                ] + (["--gate"] if zeroshot and args.zeroshot_gate else [])))
+                ] + (["--gate"] if zeroshot and args.zeroshot_gate else [])
+                  + (["--no-fallback-gate"] if not zeroshot and not args.fewshot_fallback_gate else [])))
                 break
 
     if args.stop_after:
@@ -796,6 +797,32 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     runner_group.add_argument("--log-dir", type=Path, default=Path("logs"), help="Pipeline and stage log directory.")
     runner_group.add_argument("--stop-after", help="Run through the named pipeline step and then stop; useful for smoke tests.")
 
+    collect_group.add_argument(
+        "--detect-knowns",
+        dest="detect_knowns",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Without --tshark-filter: separate protocols tshark dissects (known) from unknown traffic, exclude the "
+             "known ones (summarised in output/protocol_inventory.md/.html) and reverse-engineer each unknown group "
+             "(transport + server port) in <data/output/log-dir>/unknown/<group>. Default ON; --no-detect-knowns "
+             "disables it. Ignored with --tshark-filter or --use-existing-messages.",
+    )
+    collect_group.add_argument(
+        "--treat-as-unknown",
+        default="",
+        help="detect_knowns: comma list of dissector names to reverse-engineer anyway (e.g. mbtcp).",
+    )
+    collect_group.add_argument(
+        "--treat-as-known",
+        default="",
+        help="detect_knowns: comma list of dissector names or tcp/PORT, udp/PORT groups to exclude (e.g. tcp/5000).",
+    )
+    collect_group.add_argument(
+        "--detect-knowns-min-packets",
+        type=int,
+        default=20,
+        help="detect_knowns: unknown groups with fewer payload packets are reported but not reverse-engineered.",
+    )
     collect_group.add_argument(
         "--collect",
         action="store_true",
@@ -1014,6 +1041,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Split a family only into layouts its labelled messages show (default on).",
+    )
+    boundary_group.add_argument(
+        "--fewshot-fallback-gate",
+        dest="fewshot_fallback_gate",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Few-shot: families whose messages mix layouts the labels cannot verify keep stage 07's fields, "
+             "refined by the predictions (zero-shot gating), instead of being rebuilt (default on).",
     )
     boundary_group.add_argument(
         "--fewshot-split-support",
@@ -1250,6 +1285,7 @@ def validate_args(args: argparse.Namespace) -> None:
             f"{RED}Error:{RESET} --compare-no-llm is meaningless with --llm-render-only (the LLM stages do not run at all)"
         )
 
+    args.detect_mode = False
     if args.use_existing_messages:
         if not messages_jsonl.is_file():
             raise SystemExit(f"{RED}Error:{RESET} existing messages file does not exist: {messages_jsonl}")
@@ -1257,8 +1293,12 @@ def validate_args(args: argparse.Namespace) -> None:
             args.input_folder = args.input_folder.resolve()
         return
 
-    if args.extraction_method == "tshark" and not args.tshark_filter:
-        raise SystemExit(f"{RED}Error:{RESET} --tshark-filter is required with --extraction-method tshark.")
+    # detect_knowns: without an explicit target protocol, stage 02b separates known protocols from unknown
+    # traffic and the pipeline runs once per unknown group (each with its own display filter)
+    args.detect_mode = bool(args.detect_knowns and args.extraction_method == "tshark" and not args.tshark_filter)
+    if args.extraction_method == "tshark" and not args.tshark_filter and not args.detect_mode:
+        raise SystemExit(f"{RED}Error:{RESET} --tshark-filter is required with --extraction-method tshark "
+                         "(or leave --detect-knowns on to reverse-engineer the unknown traffic).")
     if args.tshark_workers <= 0:
         raise SystemExit(f"{RED}Error:{RESET} --tshark-workers must be greater than 0.")
 
@@ -1473,6 +1513,81 @@ def run_no_llm_comparison(args: argparse.Namespace, logger: object) -> None:
     logger.info("LLM contribution comparison written to %s", comparison_path, file_only=True)
 
 
+def run_detect_knowns(args: argparse.Namespace, logger: object) -> None:
+    """detect_knowns mode: inventory the captures (stage 02b), then run the pipeline once per unknown group."""
+    import copy
+    from protocol_re.io import protocol_inventory as pinv
+
+    pre = []
+    for name, step_args in build_pipeline(args):
+        if name == "03_extract_messages":
+            break
+        pre.append((name, step_args))
+    pcap_source = args.pcap_dir if args.collect else args.input_folder
+    inventory_json = args.data_dir / "02b_protocol_inventory.json"
+    markdown, html_path = args.output_dir / "protocol_inventory.md", args.output_dir / "protocol_inventory.html"
+    pre.append(("02b_detect_known_protocols", [
+        _script("02b_detect_known_protocols.py"), _path(pcap_source), _path(inventory_json),
+        "--markdown", _path(markdown), "--html", _path(html_path),
+        "--treat-as-unknown", args.treat_as_unknown, "--treat-as-known", args.treat_as_known,
+        "--min-packets", str(args.detect_knowns_min_packets), "--workers", str(args.tshark_workers),
+        "--log-dir", _path(args.log_dir),
+    ]))
+    for idx, (name, step_args) in enumerate(pre, 1):
+        logger.info(f"Stage {idx}/{len(pre)}: {name}")
+        with logger.stage(name):
+            if not run_step(name, step_args, logger):
+                logger.error(f"Pipeline aborted at step: {name}")
+                raise SystemExit(f"{RED}\nPipeline aborted due to failure in step: {name}{RESET}")
+    if args.stop_after == "02b_detect_known_protocols":
+        print(f"{GREEN}Protocol inventory:{RESET} {markdown}")
+        return
+
+    inventory = json.loads(inventory_json.read_text(encoding="utf-8"))
+    groups = [g for g in inventory["unknown_groups"] if g["reverse_engineer"]]
+    if not groups:
+        print(f"{YELLOW}No unknown traffic to reverse-engineer.{RESET} Protocol inventory: {markdown}")
+        return
+    links, failed = {}, []
+    for k, group in enumerate(groups, 1):
+        name = group["name"]
+        print(f"\n{CYAN}=== Unknown group {k}/{len(groups)}: {group['transport']}/{group['port']} "
+              f"({group['packets']} packets, filter: {group['filter']}) ==={RESET}")
+        g = copy.copy(args)
+        g.tshark_filter, g.collect, g.input_folder, g.detect_mode = group["filter"], False, pcap_source, False
+        g.data_dir, g.output_dir, g.log_dir = (args.data_dir / "unknown" / name, args.output_dir / "unknown" / name,
+                                               args.log_dir / "unknown" / name)
+        prepare_output_dirs(g)
+        try:
+            steps = build_pipeline(g)
+        except ValueError as exc:
+            logger.error(f"{name}: pipeline build failed: {exc}")
+            failed.append(name)
+            continue
+        ok = True
+        for idx, (step, step_args) in enumerate(steps, 1):
+            logger.info(f"[{name}] Stage {idx}/{len(steps)}: {step}")
+            with logger.stage(f"{name}:{step}"):
+                if not run_step(step, step_args, logger):
+                    logger.error(f"[{name}] aborted at step: {step}")
+                    ok = False
+                    break
+        if ok:
+            report = g.output_dir / "protocol_report.html"
+            if report.exists():
+                links[name] = os.path.relpath(report, args.output_dir)
+        else:
+            failed.append(name)
+    inv = pinv.Inventory(inventory["known"], inventory["unknown_groups"], inventory.get("unknown_layer2", []))
+    text = pinv.render_markdown(inv, links)
+    markdown.write_text(text, encoding="utf-8")
+    html_path.write_text(pinv.render_html(text), encoding="utf-8")
+    print(f"\n{GREEN}Protocol inventory:{RESET} {markdown}")
+    for name in [group["name"] for group in groups]:
+        status = f"{RED}failed{RESET}" if name in failed else (links.get(name) or "no report")
+        print(f"  - {name}: {status}")
+
+
 def main() -> None:
     print(f"{CYAN}=== Protocol RE Pipeline Runner ==={RESET}")
 
@@ -1499,6 +1614,13 @@ def main() -> None:
         mode = "PCAP"
     logger.info(f"Input {mode} folder: {source}", file_only=True)
     print(f"{GREEN}{mode} input:{RESET} {source}\n")
+
+    if getattr(args, "detect_mode", False):
+        run_detect_knowns(args, logger)
+        logger.info("Pipeline finished successfully")
+        logger.metric("total_execution_time", time.time() - start, "seconds")
+        logger.log_stage_summary()
+        return
 
     try:
         with logger.stage("build_pipeline"):

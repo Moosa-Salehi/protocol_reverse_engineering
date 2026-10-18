@@ -531,6 +531,7 @@ def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]
         if f not in (None, 'noise'):
             fams[str(f)].append(m)
     moved, skipped, splits = {}, Counter(), 0
+    unverified: List[str] = []
     for fam, rows in fams.items():
         sig = {m: tuple(sorted(e for e in pred[m] if 0 < e < min(len(payload[m]), _FS.SIG_BYTES))) for m in rows if m in pred}
         if not sig:
@@ -550,6 +551,7 @@ def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]
             verified = {s for s, c in lab.items() if c >= (support or _FS.SPLIT_LABELLED_SUPPORT)}
             if len(verified) < _FS.SPLIT_LABELLED_LAYOUTS:
                 skipped['labels_show_one_layout'] += 1
+                unverified.append(fam)        # mixed layouts the labels cannot resolve: gate instead of rebuild
                 continue
         keep = [s for s, c in Counter(sig.values()).most_common(_FS.SPLIT_MAX)
                 if c >= min_size and (verified is None or s in verified)]
@@ -560,7 +562,8 @@ def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]
             if s in label:
                 moved[m] = label[s]
         splits += len(keep)
-    return moved, {'moved_messages': len(moved), 'sub_families': splits, 'skipped': dict(skipped)}
+    return moved, {'moved_messages': len(moved), 'sub_families': splits, 'skipped': dict(skipped),
+                   'unverified_families': sorted(unverified)}
 
 
 # ---------------------------------------------------------------- rebuild family fields from predictions
