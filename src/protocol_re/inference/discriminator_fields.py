@@ -129,6 +129,33 @@ def _offset_window_values(messages: Sequence[bytes], offset: int, width: int) ->
     return values, indexes
 
 
+def _request_response_pairs(records: Sequence[MessageRecord], family_by_msg_id: Dict[int, str]) -> List[Tuple[bytes, bytes]]:
+    """Consecutive (request, response) payloads of a session in capture order (known capture direction only)."""
+    by_session: Dict[str, List[MessageRecord]] = defaultdict(list)
+    for record in records:
+        if family_by_msg_id.get(record.msg_id) not in (None, "noise"):
+            by_session[record.session_id].append(record)
+    pairs = []
+    for session in by_session.values():
+        session.sort(key=lambda r: (r.timestamp or 0.0, r.index_in_session, r.msg_id))
+        for a, b in zip(session, session[1:]):
+            if (a.direction or "").lower() in ("client_to_server", "c2s", "request") and (b.direction or "").lower() in ("server_to_client", "s2c", "response"):
+                pairs.append((hex_to_bytes(a.payload_hex), hex_to_bytes(b.payload_hex)))
+    return pairs
+
+
+def _pair_determinism(pairs: Sequence[Tuple[bytes, bytes]], offset: int, width: int) -> float:
+    """1 - H(response value | request value) / H(response value) at one window."""
+    req, resp = [], []
+    for a, b in pairs:
+        if len(a) >= offset + width and len(b) >= offset + width:
+            req.append(int.from_bytes(a[offset:offset + width], "big")); resp.append(int.from_bytes(b[offset:offset + width], "big"))
+    h = entropy(resp)
+    if len(resp) < 2 or h <= 0:
+        return 0.0
+    return 1.0 - _conditional_entropy(resp, req) / h
+
+
 def _conditional_entropy(labels: Sequence[Any], strata: Sequence[Any]) -> float:
     """H(labels | strata) in bits."""
     groups: Dict[Any, List[Any]] = defaultdict(list)
@@ -334,7 +361,10 @@ def detect_global_discriminator(
                     "_stable_ratio": stable_ratio,
                     "_session_bound": session_bound,
                     "_coverage": coverage,
-                    "_partial": coverage < min_coverage,
+                    # windows the shortest messages lack, and windows past the usual header
+                    # range (FamilyRefinement.DEEP_MAX_OFFSET), are eligible only through the
+                    # structure checks
+                    "_partial": coverage < min_coverage or offset >= _FR.MAX_OFFSET,
                     "_structure_mi": normalized_mi(values, [message_lengths[index] for index in indexes]),
                 }
             )
@@ -370,6 +400,14 @@ def detect_global_discriminator(
         chosen = max(candidates, key=lambda candidate: (candidate["_structure_mi"], -candidate["offset"]))
         if chosen["_structure_mi"] < _FR.SINGLE_FAMILY_MIN_STRUCTURE_MI:
             return None
+        if _FR.PAIR_TIEBREAK_MARGIN > 0:
+            # Close calls: prefer the candidate whose request value best determines the response value
+            # (FamilyRefinement.PAIR_TIEBREAK_MARGIN); needs request -> response pairs.
+            pairs = _request_response_pairs(records, family_by_msg_id)
+            if len(pairs) >= _FR.PAIR_TIEBREAK_MIN_PAIRS:
+                close = [c for c in candidates if c["_structure_mi"] >= chosen["_structure_mi"] - _FR.PAIR_TIEBREAK_MARGIN
+                         and c["_structure_mi"] >= _FR.SINGLE_FAMILY_MIN_STRUCTURE_MI]
+                chosen = max(close, key=lambda c: (_pair_determinism(pairs, c["offset"], c["width"]), c["_structure_mi"], -c["offset"]))
         result = {key: value for key, value in chosen.items() if not key.startswith("_")}
         result["structure_mi"] = round(chosen["_structure_mi"], 6)
         result["label_free"] = True

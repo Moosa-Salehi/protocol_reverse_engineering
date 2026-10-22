@@ -982,6 +982,15 @@ class FamilyRefinement:
     # at BACnet / EtherNet/IP / HART-IP (post hoc), 2026-10-24.
     SESSION_ROLE_MIN_UNKNOWN_SHARE: float = 0.5
 
+    # Clustering improvements under evaluation (dol/improve): refine a label-free bootstrap with unknown direction by
+    # discriminator value alone; search type fields up to DEEP_MAX_OFFSET (structure checks only past MAX_OFFSET);
+    # break close label-free calls (within PAIR_TIEBREAK_MARGIN of the best NMI(value; length)) by request -> response
+    # determinism (>= PAIR_TIEBREAK_MIN_PAIRS pairs). 0 / False = off.
+    UNKNOWN_DIRECTION_VALUE_ONLY: bool = True
+    DEEP_MAX_OFFSET: int = 0
+    PAIR_TIEBREAK_MARGIN: float = 0.0
+    PAIR_TIEBREAK_MIN_PAIRS: int = 20
+
     # Minimum effective cardinality for the type-aware path to treat a byte as an
     # opcode. Three distinct values support narrow captures while excluding common
     # near-binary header fields such as unit/device ids. A floor of four rejected

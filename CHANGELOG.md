@@ -103,6 +103,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MBAP length field parsed that way).
 
 ### Changed
+- Family refinement no longer skips a label-free bootstrap with unknown message direction: families are keyed by the
+  discriminator value alone (`FamilyRefinement.UNKNOWN_DIRECTION_VALUE_ONLY`; no role, no length bucket); the TLV
+  guard still applies. Stage-04 ARI vs truth types 0.405 -> 0.432; overall (14 protocols) rules 0.404 -> 0.435,
+  zero-shot 0.468 -> 0.478, few-shot 10 / 20 / 50 0.494 / 0.518 / 0.530 -> 0.519 / 0.533 / 0.540 (EtherCAT
+  0.37 -> 0.55 rules; POWERLINK -0.02 in the learning configurations). Clustering V-measure vs NetPlier 0.579 vs
+  0.440 (dol/final-v4).
+- Tried and not adopted: type-field search up to byte 32 (`DEEP_MAX_OFFSET`; MMS picks a data byte, ARI 0.405 ->
+  0.398) and request -> response determinism as a label-free tie-break (`PAIR_TIEBREAK_MARGIN`; never triggers on
+  the benchmark). Both stay off.
+
 - Zero-shot learned boundaries are now the default (`main.py --zeroshot-boundaries`, opt out with
   `--no-zeroshot-boundaries`); without the shipped training set the pipeline falls back to rule-based boundaries.
 - The shipped boundary training set (`assets/pre_trained/fewshot_boundary_training.npz`, reference messages) is

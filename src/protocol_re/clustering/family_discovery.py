@@ -307,8 +307,14 @@ def refine_families_by_discriminator(
     # the corpus is not TLV (_label_free_guard). The same guards hold for any
     # label-free selection (a length-determined bootstrap, checked after detection).
     bootstrap_families = {family for family in family_by_msg_id.values() if family != "noise"}
+    # With FamilyRefinement.UNKNOWN_DIRECTION_VALUE_ONLY an unknown direction does not stop the refinement: families
+    # are then keyed by the discriminator value alone (no role, no length bucket), which splits by type without the
+    # length fragmentation the direction guard protects against. The TLV guard always applies.
+    value_only = False
     if len(bootstrap_families) < 2:
         reason = _label_free_guard(records, "single_bootstrap_family")
+        if reason is not None and reason.endswith("_unknown_direction") and _FR.UNKNOWN_DIRECTION_VALUE_ONLY:
+            value_only, reason = True, None
         if reason is not None:
             family_count = len({assignment.family_id for assignment in assignments})
             return list(assignments), {
@@ -321,7 +327,7 @@ def refine_families_by_discriminator(
     discriminator = detect_global_discriminator(
         records,
         family_by_msg_id,
-        max_offset=max_offset,
+        max_offset=max(max_offset, _FR.DEEP_MAX_OFFSET),
         widths=widths,
         min_global_mi=min_global_mi,
         min_cardinality=min_cardinality,
@@ -339,6 +345,8 @@ def refine_families_by_discriminator(
         }
     if discriminator.get("label_free") and len(bootstrap_families) >= 2:
         reason = _label_free_guard(records, "length_determined_bootstrap")
+        if reason is not None and reason.endswith("_unknown_direction") and _FR.UNKNOWN_DIRECTION_VALUE_ONLY:
+            value_only, reason = True, None
         if reason is not None:
             return list(assignments), {
                 "applied": False,
@@ -385,13 +393,15 @@ def refine_families_by_discriminator(
         role = _signature_role(record.direction, use_direction)
         if role == "unknown" and session_roles is not None:
             role = session_roles.get(record.msg_id, "unknown")
+        if value_only:
+            role = "any"
         # Direction (request/response) is the correct way to split one opcode's short
         # request from its variable-length response. Length is only a *proxy* for that
         # role when direction is unavailable (e.g. a capture without ports): folding it
         # in unconditionally instead fragments a single variable-length response (a
         # register array spanning many sizes) into one family per length. So use the
         # length bucket only when the role is unknown, and never when it is known.
-        if include_length_bucket and role == "unknown":
+        if include_length_bucket and role == "unknown" and not value_only:
             length_component = _length_bucket(record.payload_len, length_bucket_edges)
         else:
             length_component = 0
@@ -485,6 +495,7 @@ def refine_families_by_discriminator(
 
     meta = {
         "applied": True,
+        "value_only": value_only,
         "offset": offset,
         "width": width,
         "global_mi": discriminator["global_mi"],

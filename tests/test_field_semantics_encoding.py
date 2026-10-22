@@ -1108,7 +1108,21 @@ def test_refine_splits_single_bootstrap_family_by_opcode() -> None:
     assert meta["family_count_after"] == 4
 
 
-def test_refine_leaves_single_bootstrap_family_without_direction() -> None:
+def test_refine_single_bootstrap_family_without_direction_keys_by_value_only() -> None:
+    records, assignments = _single_family_modbus_corpus(direction="unknown")
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is True
+    assert meta["value_only"] is True
+    assert meta["offset"] == 7
+    assert meta["family_count_after"] == 4  # one family per function code, no length buckets
+
+
+def test_refine_leaves_single_bootstrap_family_without_direction_when_value_only_is_off(monkeypatch) -> None:
+    from protocol_re.config.thresholds import FamilyRefinement
+
+    monkeypatch.setattr(FamilyRefinement, "UNKNOWN_DIRECTION_VALUE_ONLY", False)
     records, assignments = _single_family_modbus_corpus(direction="unknown")
 
     refined, meta = refine_families_by_discriminator(records, assignments)
