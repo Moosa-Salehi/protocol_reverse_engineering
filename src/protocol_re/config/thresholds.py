@@ -912,6 +912,28 @@ class FamilyRefinement:
     # label-guided / structural rules below.
     MIN_STRUCTURE_MI: float = 0.1
 
+    # Single bootstrap family. When clustering returns one family (HDBSCAN can pick
+    # the root cluster), there are no labels to measure type information against.
+    # The discriminator is then the candidate whose value best explains the exact
+    # message length, normalised MI(value; length), and it must reach this floor.
+    # A type code fixes the message structure; a data, address or BER-content byte
+    # does not. On the benchmark captures that start from one family: ZigBee's
+    # best candidate scores 0.03 (one message type mixed with data, left unsplit),
+    # the 50K Modbus slice's function code 0.50 and POWERLINK's message type 0.20.
+    # TLV/BER corpora are skipped: their type identity is the tag sequence (TLV
+    # family merge), and splitting a single-type GOOSE capture on a content byte
+    # cost 0.52 overall. Measured 2026-10-20 (dol/single-family-fix).
+    SINGLE_FAMILY_MIN_STRUCTURE_MI: float = 0.1
+    # ... after dropping candidates that act as a length field (value == len - c)
+    # for at least this share of the messages: a byte count present in one message
+    # direction only (the Modbus response byte count at offset 8 matches in 0.45 of
+    # the messages, the function code at offset 7 in 0.27) explains length better
+    # than the type code but is not one.
+    SINGLE_FAMILY_MAX_LENGTH_RELATION: float = 0.4
+    # ... and only when at least this share of the messages has a known direction
+    # (see refine_families_by_discriminator: without it the split is by length).
+    SINGLE_FAMILY_MIN_KNOWN_DIRECTION: float = 0.5
+
     # Minimum effective cardinality for the type-aware path to treat a byte as an
     # opcode. Three distinct values support narrow captures while excluding common
     # near-binary header fields such as unit/device ids. A floor of four rejected

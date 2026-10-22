@@ -119,6 +119,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a constant 0.99.
 
 ### Fixed
+- Family refinement never ran when bootstrap clustering returned a single family (HDBSCAN can select the root
+  cluster): `detect_global_discriminator` returned early with fewer than two labels, so the first 10K / 50K messages
+  of the 200K multi-device Modbus capture scored 0.089 / 0.087 overall. With one bootstrap family and a known message
+  direction (>= `FamilyRefinement.SINGLE_FAMILY_MIN_KNOWN_DIRECTION`), the detector now picks the candidate whose
+  value best explains the exact message length (normalised MI >= `SINGLE_FAMILY_MIN_STRUCTURE_MI`), after dropping
+  length fields counting from any constant offset and candidates that are a length field for >=
+  `SINGLE_FAMILY_MAX_LENGTH_RELATION` of the messages; single-family TLV/BER corpora are skipped. Modbus slices
+  0.600 / 0.603; truth files, 14 protocols: unchanged in the rule-based, zero-shot and few-shot-50 configurations.
+  Without the direction guard the rule-based macro rose 0.357 -> 0.368 (EtherCAT, POWERLINK) but few-shot EtherCAT
+  fell 0.605 -> 0.328 and zero-shot POWERLINK 0.498 -> 0.343 (length-bucket split of the one family); simply
+  removing the early return cost 0.045. Rules chosen while looking at these cases (post hoc). Experiments:
+  `dol/single-family-fix`.
 - Family refinement keyed a multi-device Modbus capture on the Unit-Id (offset 6) instead
   of the function code (offset 7) once the bootstrap used neural features, because the
   selection floor depended on the bootstrap labels.

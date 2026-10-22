@@ -129,6 +129,16 @@ def _offset_window_values(messages: Sequence[bytes], offset: int, width: int) ->
     return values, indexes
 
 
+def _length_relation_share(messages: Sequence[bytes], offset: int, width: int) -> float:
+    """Share of messages where the value at (offset, width) equals len(message) - c
+    for the single most common constant c (a length field counting from any offset)."""
+    values, indexes = _offset_window_values(messages, offset, width)
+    if not values:
+        return 0.0
+    counts = Counter(len(messages[index]) - value for value, index in zip(values, indexes))
+    return counts.most_common(1)[0][1] / len(values)
+
+
 def _length_field_match_ratio(messages: Sequence[bytes], offset: int, width: int) -> float:
     """Fraction of messages where the value at (offset, width) equals a length
     expression (payload_len, payload_len-offset, or payload_len-offset-width).
@@ -193,8 +203,14 @@ def detect_global_discriminator(
         messages.append(hex_to_bytes(record.payload_hex))
         labels.append(family_id)
         sessions.append(record.session_id)
-    if len(messages) < 2 or len(set(labels)) < 2:
+    # A single bootstrap family is the most degraded bootstrap of all (HDBSCAN can
+    # select the root cluster). The label-free gates and the structural fallback
+    # below do not need the labels, so only an empty corpus is a reason to stop;
+    # with one label every MI term is 0 and selection falls through to the
+    # earliest qualifying window.
+    if len(messages) < 2:
         return None
+    single_bootstrap = len(set(labels)) < 2
 
     # Sessions long enough for a type code to vary inside them; the
     # session-bound test (FamilyRefinement.SESSION_BOUND_*) is computed over
@@ -225,6 +241,10 @@ def detect_global_discriminator(
     for offset in range(max_offset + max(scan_widths)):
         for width in scan_widths:
             if _length_field_match_ratio(messages, offset, width) >= length_field_match_ratio:
+                header_offsets.update(range(offset, offset + width))
+            elif single_bootstrap and _length_relation_share(messages, offset, width) >= length_field_match_ratio:
+                # value == len(message) - c for one constant c (e.g. an EtherCAT frame
+                # length counting from offset 2); only needed without label evidence
                 header_offsets.update(range(offset, offset + width))
 
     if _FR.EXCLUDE_CORRELATION_OFFSETS:
@@ -356,6 +376,28 @@ def detect_global_discriminator(
         if meaningful:
             chosen = min(meaningful, key=lambda candidate: (candidate["offset"], candidate["width"]))
             return {key: value for key, value in chosen.items() if not key.startswith("_")}
+
+    if single_bootstrap:
+        # No label evidence at all: the type code is the candidate whose value best
+        # explains the message structure (exact length), with a floor; otherwise no
+        # split (see FamilyRefinement.SINGLE_FAMILY_MIN_STRUCTURE_MI).
+        candidates = [
+            candidate
+            for candidate in candidates
+            if _length_relation_share(messages, candidate["offset"], candidate["width"])
+            < _FR.SINGLE_FAMILY_MAX_LENGTH_RELATION
+        ]
+        if not candidates:
+            return None
+        for candidate in candidates:
+            values, indexes = _offset_window_values(messages, candidate["offset"], candidate["width"])
+            candidate["_structure_mi"] = normalized_mi(values, [message_lengths[index] for index in indexes])
+        chosen = max(candidates, key=lambda candidate: (candidate["_structure_mi"], -candidate["offset"]))
+        if chosen["_structure_mi"] < _FR.SINGLE_FAMILY_MIN_STRUCTURE_MI:
+            return None
+        result = {key: value for key, value in chosen.items() if not key.startswith("_")}
+        result["structure_mi"] = round(chosen["_structure_mi"], 6)
+        return result
 
     best_mi = max(candidate["_mi"] for candidate in candidates)
     if best_mi >= min_global_mi:

@@ -1065,3 +1065,54 @@ def test_length_match_in_fixed_length_family_needs_corpus_confirmation() -> None
     fields = [{"start": 4, "length": 2, "field_type": "constant"}, {"start": 7, "length": 1, "field_type": "constant"}]
     labelled = {h.field_start for h in infer_length_fields(fields, result["families"]["family_a"], None)}
     assert labelled == {4}
+
+
+def _single_family_modbus_corpus(direction: str = "request"):
+    """Every message in one bootstrap family (HDBSCAN picked the root cluster): four
+    function codes with different PDU lengths, requests and responses."""
+    records = []
+    assignments = []
+    # PDU lengths chosen so no constant c gives value == len - c for most messages
+    # (that would make the function code look like a length field)
+    data_len_by_fc = {1: 4, 2: 2, 3: 7, 4: 1}
+    msg_id = 0
+    txn = 0
+    for fc in (1, 2, 3, 4):
+        for _ in range(20):
+            records.append(_refine_record(msg_id, _mbap_pdu(txn, fc, b"\x00" * data_len_by_fc[fc]), direction))
+            assignments.append(FamilyAssignment(msg_id=msg_id, family_id="family_0", confidence=1.0))
+            msg_id += 1
+            txn += 1
+    return records, assignments
+
+
+def test_detect_global_discriminator_with_single_bootstrap_family() -> None:
+    records, assignments = _single_family_modbus_corpus()
+    family_by_msg_id = {item.msg_id: item.family_id for item in assignments}
+
+    result = detect_global_discriminator(records, family_by_msg_id)
+
+    assert result is not None
+    assert result["offset"] == 7
+    assert result["width"] == 1
+
+
+def test_refine_splits_single_bootstrap_family_by_opcode() -> None:
+    records, assignments = _single_family_modbus_corpus()
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is True
+    assert meta["offset"] == 7
+    assert meta["family_count_before"] == 1
+    assert meta["family_count_after"] == 4
+
+
+def test_refine_leaves_single_bootstrap_family_without_direction() -> None:
+    records, assignments = _single_family_modbus_corpus(direction="unknown")
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is False
+    assert meta["reason"] == "single_bootstrap_family_unknown_direction"
+    assert {item.family_id for item in refined} == {"family_0"}

@@ -245,6 +245,34 @@ def refine_families_by_discriminator(
     """
     family_by_msg_id = {assignment.msg_id: assignment.family_id for assignment in assignments}
 
+    # A single bootstrap family is refined only when message direction is known.
+    # Without direction the signature falls back to a length bucket, so a split of
+    # the one family is largely a split by length (EtherCAT 1 -> 13 families): it
+    # helped the rule-based boundaries but scattered the few-shot labels and the
+    # zero-shot groups (EtherCAT few-shot 0.605 -> 0.328, POWERLINK zero-shot
+    # 0.498 -> 0.343). A single bootstrap family over a TLV/BER corpus is also left
+    # alone: the message type of a self-describing protocol is its tag sequence,
+    # which the TLV family merge keys on; a content byte would split one message
+    # type (GOOSE).
+    bootstrap_families = {family for family in family_by_msg_id.values() if family != "noise"}
+    if len(bootstrap_families) < 2:
+        reason = None
+        known = sum(_signature_role(record.direction, True) != "unknown" for record in records)
+        if known < _FR.SINGLE_FAMILY_MIN_KNOWN_DIRECTION * max(1, len(records)):
+            reason = "single_bootstrap_family_unknown_direction"
+        else:
+            payloads = [hex_to_bytes(record.payload_hex) for record in records if record.payload_hex]
+            if detect_tlv_framing(payloads) is not None:
+                reason = "single_bootstrap_family_tlv_corpus"
+        if reason is not None:
+            family_count = len({assignment.family_id for assignment in assignments})
+            return list(assignments), {
+                "applied": False,
+                "reason": reason,
+                "family_count_before": family_count,
+                "family_count_after": family_count,
+            }
+
     discriminator = detect_global_discriminator(
         records,
         family_by_msg_id,
