@@ -235,6 +235,20 @@ def _reassign_noise_to_nearest(points: Any, labels: Sequence[int]) -> Any:
     return labels
 
 
+def _session_roles(records: Sequence[MessageRecord]) -> Dict[int, str]:
+    """Request/response role from session order, for messages whose capture
+    direction is unknown (symmetric UDP ports, layer-2 frames): the first sender of
+    a session is the client, so its messages are requests and the other side's are
+    responses (the rule NetPlier uses). Keyed by msg_id."""
+    first_sender: Dict[str, tuple] = {}
+    for record in sorted(records, key=lambda item: (item.timestamp or 0.0, item.index_in_session, item.msg_id)):
+        first_sender.setdefault(record.session_id, (record.src_ip, record.src_port))
+    return {
+        record.msg_id: "request" if first_sender[record.session_id] == (record.src_ip, record.src_port) else "response"
+        for record in records
+    }
+
+
 # Signature value of messages too short for a partial-coverage discriminator window.
 ABSENT_DISCRIMINATOR_VALUE = -1
 
@@ -337,6 +351,14 @@ def refine_families_by_discriminator(
     # id) and take the value ABSENT_DISCRIMINATOR_VALUE.
     keep_short = float(discriminator.get("coverage", 1.0)) < min_coverage
     records_by_msg_id = {record.msg_id: record for record in records}
+    # Without a capture direction the signature would fall back to a length bucket,
+    # which over-fragments (FamilyRefinement.INFER_ROLE_FROM_SESSION).
+    unknown_share = sum(_signature_role(record.direction, True) == "unknown" for record in records) / max(1, len(records))
+    session_roles = (
+        _session_roles(records)
+        if use_direction and _FR.INFER_ROLE_FROM_SESSION and unknown_share >= _FR.SESSION_ROLE_MIN_UNKNOWN_SHARE
+        else None
+    )
     signature_by_msg_id: Dict[int, Any] = {}
     members_by_signature: Dict[Any, List[int]] = defaultdict(list)
     noise_msg_ids: List[int] = []
@@ -355,6 +377,8 @@ def refine_families_by_discriminator(
         else:
             value = int.from_bytes(payload[offset : offset + width], "big")
         role = _signature_role(record.direction, use_direction)
+        if role == "unknown" and session_roles is not None:
+            role = session_roles[record.msg_id]
         # Direction (request/response) is the correct way to split one opcode's short
         # request from its variable-length response. Length is only a *proxy* for that
         # role when direction is unavailable (e.g. a capture without ports): folding it

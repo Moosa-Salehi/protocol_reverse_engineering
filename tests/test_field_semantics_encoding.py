@@ -1180,3 +1180,17 @@ def test_reassign_noise_to_nearest_cluster() -> None:
 
     assert list(_reassign_noise_to_nearest(points, labels)) == [0, 0, 1, 1, 0, 1]
     assert list(_reassign_noise_to_nearest(points, [-1] * 6)) == [-1] * 6
+
+
+def test_session_roles_from_first_sender() -> None:
+    from protocol_re.clustering.family_discovery import _session_roles
+
+    def record(msg_id: int, session: str, src: str, ts: float) -> MessageRecord:
+        return MessageRecord(
+            msg_id=msg_id, source_file="c.pcap", session_id=session, session_key=session, src_ip=src, src_port=47808,
+            dst_ip="10.0.0.9", dst_port=47808, direction="unknown", payload_hex="00", payload_len=1, timestamp=ts,
+        )
+
+    records = [record(0, "s1", "10.0.0.2", 2.0), record(1, "s1", "10.0.0.1", 1.0), record(2, "s2", "10.0.0.3", 5.0)]
+
+    assert _session_roles(records) == {0: "response", 1: "request", 2: "request"}

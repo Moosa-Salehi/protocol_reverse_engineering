@@ -132,6 +132,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sample hid and a random sample exposed (GOOSE on 500 messages: 34 families for one message type).
 
 ### Fixed
+- Over-fragmented families when the capture gives no message direction (symmetric UDP ports: 94% of BACnet, 86% of
+  EtherNet/IP): the refinement signature fell back to a length bucket. The role now comes from session order (first
+  sender = client; `FamilyRefinement.INFER_ROLE_FROM_SESSION`) when at least `SESSION_ROLE_MIN_UNKNOWN_SHARE` of the
+  corpus lacks a direction (HART-IP, 32% unknown, keeps the length bucket: its sessions start mid-conversation and
+  the inferred roles were inverted). Truth files, 14 protocols, macro overall: rules 0.387 -> 0.406, zero-shot
+  0.458 -> 0.478, few-shot 50 0.519 -> 0.545; only BACnet and EtherNet/IP change (e.g. rules 0.220 -> 0.366 and
+  0.223 -> 0.344). On the 500-message samples BACnet drops (0.304 -> 0.195; sampled sessions are cut).
+  Experiments: `dol/direction-fix`.
 - TLV family merge: messages that do not parse kept their old family id, which could collide with the new
   tag-sequence ids (`family_<n>`) and merge unrelated messages; they now keep it as `<id>_unparsed`, and truncated
   messages join the most common tag sequence that starts with their complete elements.

@@ -969,6 +969,19 @@ class FamilyRefinement:
     # benchmark bootstraps this rejected one pick, BACnet offset 4 (NMI 0.03).
     LABEL_GUIDED_MIN_LENGTH_MI: float = 0.1
 
+    # When the capture gives no direction (symmetric UDP ports: 95% of BACnet, 86% of
+    # EtherNet/IP), the refinement signature takes the role from session order
+    # instead of a length bucket. With length buckets, a discriminator with many
+    # values over-fragmented (BACnet 94 families, 56 false-positive types). The
+    # label-free guards still use the capture direction only.
+    INFER_ROLE_FROM_SESSION: bool = True
+    # ... only when at least this share of the corpus lacks a capture direction. When
+    # most messages have one, the unknown remainder is the odd case (HART-IP: 32%
+    # unknown, sessions captured mid-conversation, so "first sender = client" was
+    # inverted for all 68 of them) and keeps the length bucket. Chosen after looking
+    # at BACnet / EtherNet/IP / HART-IP (post hoc), 2026-10-24.
+    SESSION_ROLE_MIN_UNKNOWN_SHARE: float = 0.5
+
     # Minimum effective cardinality for the type-aware path to treat a byte as an
     # opcode. Three distinct values support narrow captures while excluding common
     # near-binary header fields such as unit/device ids. A floor of four rejected
