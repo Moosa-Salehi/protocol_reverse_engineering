@@ -132,6 +132,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sample hid and a random sample exposed (GOOSE on 500 messages: 34 families for one message type).
 
 ### Fixed
+- Session-order role inference labelled every message of a one-sender session a request: on the single-device Modbus
+  capture (no direction, one session with one sender) each function code's requests and responses merged (10 -> 6
+  families, overall 0.971 -> 0.696). Roles are now inferred only in sessions where both endpoints send; other
+  messages keep the length bucket. Experiments: `dol/final-v2`, `dol/thesis-final`.
 - Over-fragmented families when the capture gives no message direction (symmetric UDP ports: 94% of BACnet, 86% of
   EtherNet/IP): the refinement signature fell back to a length bucket. The role now comes from session order (first
   sender = client; `FamilyRefinement.INFER_ROLE_FROM_SESSION`) when at least `SESSION_ROLE_MIN_UNKNOWN_SHARE` of the

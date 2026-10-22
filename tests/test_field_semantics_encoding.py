@@ -1193,4 +1193,5 @@ def test_session_roles_from_first_sender() -> None:
 
     records = [record(0, "s1", "10.0.0.2", 2.0), record(1, "s1", "10.0.0.1", 1.0), record(2, "s2", "10.0.0.3", 5.0)]
 
-    assert _session_roles(records) == {0: "response", 1: "request", 2: "request"}
+    # s2 has a single sender: no role is inferred for it
+    assert _session_roles(records) == {0: "response", 1: "request"}

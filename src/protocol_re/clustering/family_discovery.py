@@ -239,13 +239,19 @@ def _session_roles(records: Sequence[MessageRecord]) -> Dict[int, str]:
     """Request/response role from session order, for messages whose capture
     direction is unknown (symmetric UDP ports, layer-2 frames): the first sender of
     a session is the client, so its messages are requests and the other side's are
-    responses (the rule NetPlier uses). Keyed by msg_id."""
+    responses (the rule NetPlier uses). Only sessions in which both endpoints send
+    get a role: in a one-sender session every message would be a "request" (a
+    capture keyed per direction merged each function code's requests and responses).
+    Keyed by msg_id; messages without an inferred role are absent."""
     first_sender: Dict[str, tuple] = {}
+    senders: Dict[str, set] = defaultdict(set)
     for record in sorted(records, key=lambda item: (item.timestamp or 0.0, item.index_in_session, item.msg_id)):
         first_sender.setdefault(record.session_id, (record.src_ip, record.src_port))
+        senders[record.session_id].add((record.src_ip, record.src_port))
     return {
         record.msg_id: "request" if first_sender[record.session_id] == (record.src_ip, record.src_port) else "response"
         for record in records
+        if len(senders[record.session_id]) >= 2
     }
 
 
@@ -378,7 +384,7 @@ def refine_families_by_discriminator(
             value = int.from_bytes(payload[offset : offset + width], "big")
         role = _signature_role(record.direction, use_direction)
         if role == "unknown" and session_roles is not None:
-            role = session_roles[record.msg_id]
+            role = session_roles.get(record.msg_id, "unknown")
         # Direction (request/response) is the correct way to split one opcode's short
         # request from its variable-length response. Length is only a *proxy* for that
         # role when direction is unavailable (e.g. a capture without ports): folding it
