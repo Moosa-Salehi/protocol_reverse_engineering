@@ -189,11 +189,71 @@ def parse_tlv_tree(
     return top
 
 
+def _spread(messages: Sequence[bytes], limit: int) -> Sequence[bytes]:
+    """Up to ``limit`` messages evenly spaced over the corpus. The head alone can
+    come from one capture file and miss how the rest of the corpus looks (GOOSE:
+    the first 2000 messages are intact, 35% of the corpus is truncated)."""
+    if len(messages) <= limit:
+        return messages
+    step = len(messages) / limit
+    return [messages[int(index * step)] for index in range(limit)]
+
+
+def truncated_tag_prefix(payload: bytes, header_length: int) -> Optional[Tuple[int, ...]]:
+    """Tags of the complete inner elements of a TLV chain cut short by the capture
+    (snap length), or None. Requires one constructed wrapper at the chain start
+    whose declared length runs past the end, and at least
+    ``TlvFraming.TRUNCATED_MIN_COMPLETE_ELEMENTS`` complete elements before the cut.
+    Random bytes rarely look like this; a real truncated PDU does."""
+    pos = header_length
+    if pos + 2 > len(payload):
+        return None
+    tag = payload[pos]
+    if tag & 0x1F == 0x1F or not tag & 0x20:  # high-tag-number form, or not constructed
+        return None
+    first_len = payload[pos + 1]
+    if first_len & _TF.BER_LONG_FORM_MASK:
+        count = first_len & 0x7F
+        if count == 0 or count > 4 or pos + 2 + count > len(payload):
+            return None
+        length = int.from_bytes(payload[pos + 2 : pos + 2 + count], "big")
+        pos += 2 + count
+    else:
+        length = first_len
+        pos += 2
+    if pos + length <= len(payload):
+        return None  # not truncated; the strict parser decides
+    tags: List[int] = []
+    while pos + 2 <= len(payload):
+        inner_tag = payload[pos]
+        if inner_tag & 0x1F == 0x1F:
+            return None
+        first_len = payload[pos + 1]
+        if first_len & _TF.BER_LONG_FORM_MASK:
+            count = first_len & 0x7F
+            if count == 0 or count > 4 or pos + 2 + count > len(payload):
+                break
+            inner_length = int.from_bytes(payload[pos + 2 : pos + 2 + count], "big")
+            header_bytes = 2 + count
+        else:
+            inner_length = first_len
+            header_bytes = 2
+        if pos + header_bytes + inner_length > len(payload):
+            break  # the element the capture cut off
+        tags.append(inner_tag)
+        pos += header_bytes + inner_length
+    return tuple(tags) if len(tags) >= _TF.TRUNCATED_MIN_COMPLETE_ELEMENTS else None
+
+
 def _parse_ratio(messages: Sequence[bytes], header_length: int, limit: int) -> float:
-    sample = messages[:limit]
+    sample = _spread(messages, limit)
     if not sample:
         return 0.0
-    ok = sum(1 for payload in sample if parse_tlv_tree(payload, header_length) is not None)
+    ok = sum(
+        1
+        for payload in sample
+        if parse_tlv_tree(payload, header_length) is not None or truncated_tag_prefix(payload, header_length) is not None
+    )
     return ok / len(sample)
 
 
@@ -208,7 +268,7 @@ def _tree_stats(
     value_lengths: Dict[int, set[int]] = {}
     parsed = 0
     wrapped = 0
-    for payload in messages[:limit]:
+    for payload in _spread(messages, limit):
         view = parse_tlv_tree(payload, header_length)
         if view is None:
             continue
@@ -357,15 +417,30 @@ def merge_families_by_tlv_signature(
     signature_to_family: Dict[Tuple[int, ...], str] = {}
     for index, (signature, _members) in enumerate(ordered):
         signature_to_family[signature] = f"family_{index}"
+    truncated_joined = 0
     for assignment in assignments:
         record = record_by_msg_id.get(assignment.msg_id)
         signature = None
         if record is not None:
-            view = parse_tlv_tree(hex_to_bytes(record.payload_hex), detection.header_length)
+            payload = hex_to_bytes(record.payload_hex)
+            view = parse_tlv_tree(payload, detection.header_length)
             if view is not None:
                 signature = tuple(element.tag for element in view.elements)
+            else:
+                # cut short by the capture: join the most common complete sequence
+                # that starts with the elements it still has (``ordered`` is by size)
+                prefix = truncated_tag_prefix(payload, detection.header_length)
+                if prefix is not None:
+                    signature = next((sig for sig, _members in ordered if sig[: len(prefix)] == prefix), None)
+                    truncated_joined += signature is not None
         if signature is None:
-            new_assignments.append(assignment)  # keep pre-existing family
+            # keep the pre-existing family, under an id that cannot collide with the
+            # tag-sequence families numbered above
+            if assignment.family_id != "noise":
+                assignment = FamilyAssignment(
+                    msg_id=assignment.msg_id, family_id=f"{assignment.family_id}_unparsed", confidence=assignment.confidence
+                )
+            new_assignments.append(assignment)
             continue
         new_assignments.append(
             FamilyAssignment(msg_id=assignment.msg_id, family_id=signature_to_family[signature], confidence=assignment.confidence)
@@ -380,6 +455,7 @@ def merge_families_by_tlv_signature(
         "sequence_count": detection.sequence_count,
         "parse_success_ratio": detection.parse_success_ratio,
         "parse_failures": parse_failures,
+        "truncated_joined": truncated_joined,
         "family_count_before": family_count_before,
         "family_count_after": family_count_after,
         "signatures": [

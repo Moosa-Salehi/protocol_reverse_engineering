@@ -77,21 +77,14 @@ def main() -> None:
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
 
-    # The filter is the user-provided. It is metadata only and never enters the neural model.
+    # The filter is the user-provided. It is metadata only: it never enters the neural
+    # model and never selects clustering settings. The checkpoint also stores HDBSCAN
+    # settings tuned per training protocol; looking them up by the filter (as earlier
+    # versions did) gave every benchmark protocol settings tuned on its own labels
+    # (e.g. min_cluster_size = corpus size for ZigBee / POWERLINK), a prior an unknown
+    # protocol never has. Only the protocol-independent global setting is used.
     supervised_hdbscan = None
     supervised_hdbscan_is_global = False
-    protocol_filter = (args.tshark_filter or "").strip().lower()
-    protocol_aliases = {
-        "iec60870_104": "iec104",
-        "iec60870-104": "iec104",
-        "bacapp": "bacnet",
-        "ecat": "ethercat",
-        "zbee_nwk": "zigbee",
-        "pn_io": "profinet",
-        "epl": "powerlink",
-        "mbtcp || modbus": "modbus",
-    }
-    protocol_id = protocol_aliases.get(protocol_filter, protocol_filter)
     if args.supervised_hdbscan_checkpoint:
         try:
             with open(args.supervised_hdbscan_checkpoint, "rb") as handle:
@@ -105,19 +98,8 @@ def main() -> None:
                     "checkpoint was not trained on generic transport/L2 payloads; rebuild the "
                     "training dataset and retrain the supervised VAE"
                 )
-            if protocol_filter:
-                matches = [key for key in saved if key == protocol_id or key in protocol_id or protocol_id in key]
-                if len(matches) == 1:
-                    supervised_hdbscan = saved[matches[0]]
-                elif len(matches) > 1:
-                    raise ValueError(f"Ambiguous --tshark-filter {protocol_filter!r}: matches {matches}")
-                else:
-                    supervised_hdbscan = saved_global
-                    supervised_hdbscan_is_global = True
-            elif len(saved) == 1:
-                supervised_hdbscan = next(iter(saved.values()))
-            else:
-                raise ValueError("--tshark-filter is required with a multi-protocol supervised checkpoint")
+            supervised_hdbscan = saved_global
+            supervised_hdbscan_is_global = True
             if supervised_hdbscan is None and saved:
                 values = list(saved.values())
                 sizes = sorted(int(item["min_cluster_size"]) for item in values)
@@ -317,6 +299,7 @@ def main() -> None:
             "discriminator_refinement": result.refinement,
             "conformance_filter": result.conformance,
             "tlv_family_merge": result.tlv_merge,
+            "hdbscan_noise_share": result.hdbscan_noise_share,
             "tshark_filter": args.tshark_filter,
             "supervised_hdbscan_checkpoint": args.supervised_hdbscan_checkpoint,
             "supervised_hdbscan": supervised_hdbscan,

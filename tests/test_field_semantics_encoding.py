@@ -1116,3 +1116,67 @@ def test_refine_leaves_single_bootstrap_family_without_direction() -> None:
     assert meta["applied"] is False
     assert meta["reason"] == "single_bootstrap_family_unknown_direction"
     assert {item.family_id for item in refined} == {"family_0"}
+
+
+def _iec104_like_corpus():
+    """6-byte control frames (no type id) and longer frames with the type id at
+    offset 6; offset 5 is the high byte of a sequence number (mostly 0). The
+    bootstrap separates the two frame kinds by length only, so it carries no type
+    evidence beyond length."""
+    data_len_by_type = {1: 5, 13: 9, 45: 6, 100: 8}
+    records = []
+    assignments = []
+    msg_id = 0
+    for index in range(240):
+        direction = "request" if index % 2 == 0 else "response"
+        receive_high = 1 if index % 30 == 0 else 0
+        if index % 3 == 0:
+            payload = bytes([0x68, 0x04, 0x01, 0x00, (index * 2) & 0xFF, receive_high])
+            family = "family_0"
+        else:
+            type_id = (1, 13, 45, 100)[index % 4]
+            asdu = bytes([type_id, 0x01, 0x03, 0x00]) + bytes(data_len_by_type[type_id])
+            control = bytes([(index * 2) & 0xFF, 0x00, (index * 6) & 0xFF, receive_high])
+            payload = bytes([0x68, len(control) + len(asdu)]) + control + asdu
+            family = "family_1"
+        records.append(_refine_record(msg_id, payload, direction))
+        assignments.append(FamilyAssignment(msg_id=msg_id, family_id=family, confidence=1.0))
+        msg_id += 1
+    return records, assignments
+
+
+def test_length_determined_bootstrap_selects_partial_type_field() -> None:
+    records, assignments = _iec104_like_corpus()
+    family_by_msg_id = {item.msg_id: item.family_id for item in assignments}
+
+    result = detect_global_discriminator(records, family_by_msg_id)
+
+    assert result is not None
+    assert result["offset"] == 6
+    assert result["label_free"] is True
+    assert result["coverage"] < 0.9
+
+
+def test_refine_keeps_messages_shorter_than_partial_discriminator() -> None:
+    records, assignments = _iec104_like_corpus()
+
+    refined, meta = refine_families_by_discriminator(records, assignments)
+
+    assert meta["applied"] is True
+    assert meta["offset"] == 6
+    short_ids = {record.msg_id for record in records if record.payload_len == 6}
+    short_families = {item.family_id for item in refined if item.msg_id in short_ids}
+    assert "noise" not in short_families
+    long_families = {item.family_id for item in refined if item.msg_id not in short_ids}
+    assert not short_families & long_families
+
+
+def test_reassign_noise_to_nearest_cluster() -> None:
+    import numpy as np
+    from protocol_re.clustering.family_discovery import _reassign_noise_to_nearest
+
+    points = np.array([[0.0], [0.1], [10.0], [10.2], [0.3], [9.7]])
+    labels = [0, 0, 1, 1, -1, -1]
+
+    assert list(_reassign_noise_to_nearest(points, labels)) == [0, 0, 1, 1, 0, 1]
+    assert list(_reassign_noise_to_nearest(points, [-1] * 6)) == [-1] * 6

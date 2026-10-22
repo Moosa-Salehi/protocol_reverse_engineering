@@ -129,6 +129,15 @@ def _offset_window_values(messages: Sequence[bytes], offset: int, width: int) ->
     return values, indexes
 
 
+def _conditional_entropy(labels: Sequence[Any], strata: Sequence[Any]) -> float:
+    """H(labels | strata) in bits."""
+    groups: Dict[Any, List[Any]] = defaultdict(list)
+    for label, stratum in zip(labels, strata):
+        groups[stratum].append(label)
+    total = float(len(labels))
+    return sum(len(members) / total * entropy(members) for members in groups.values()) if total else 0.0
+
+
 def _length_relation_share(messages: Sequence[bytes], offset: int, width: int) -> float:
     """Share of messages where the value at (offset, width) equals len(message) - c
     for the single most common constant c (a length field counting from any offset)."""
@@ -211,6 +220,11 @@ def detect_global_discriminator(
     if len(messages) < 2:
         return None
     single_bootstrap = len(set(labels)) < 2
+    # Families fixed by message length carry no type evidence beyond length either
+    # (FamilyRefinement.MIN_BOOTSTRAP_CONDITIONAL_ENTROPY): both cases select label-free.
+    label_free = single_bootstrap or (
+        _conditional_entropy(labels, [len(message) for message in messages]) < _FR.MIN_BOOTSTRAP_CONDITIONAL_ENTROPY
+    )
 
     # Sessions long enough for a type code to vary inside them; the
     # session-bound test (FamilyRefinement.SESSION_BOUND_*) is computed over
@@ -242,7 +256,7 @@ def detect_global_discriminator(
         for width in scan_widths:
             if _length_field_match_ratio(messages, offset, width) >= length_field_match_ratio:
                 header_offsets.update(range(offset, offset + width))
-            elif single_bootstrap and _length_relation_share(messages, offset, width) >= length_field_match_ratio:
+            elif label_free and _length_relation_share(messages, offset, width) >= length_field_match_ratio:
                 # value == len(message) - c for one constant c (e.g. an EtherCAT frame
                 # length counting from offset 2); only needed without label evidence
                 header_offsets.update(range(offset, offset + width))
@@ -271,7 +285,11 @@ def detect_global_discriminator(
             if len(values) < 2:
                 continue
             coverage = len(values) / len(messages)
-            if coverage < min_coverage:
+            # a window the shortest messages lack (FamilyRefinement.PARTIAL_MIN_COVERAGE)
+            # may still be the type code; such partial candidates are only eligible
+            # through the structure checks below, and the short messages form their
+            # own "absent" value in the refinement signature
+            if coverage < min(min_coverage, _FR.PARTIAL_MIN_COVERAGE):
                 continue
             value_counts = Counter(values)
             cardinality = len(value_counts)
@@ -309,11 +327,15 @@ def detect_global_discriminator(
                     "global_mi": round(mi, 6),
                     "type_mi": round(type_mi, 6),
                     "cardinality": cardinality,
+                    "coverage": round(coverage, 6),
                     "_mi": mi,
                     "_type_mi": type_mi,
                     "_effective_cardinality": effective_cardinality,
                     "_stable_ratio": stable_ratio,
                     "_session_bound": session_bound,
+                    "_coverage": coverage,
+                    "_partial": coverage < min_coverage,
+                    "_structure_mi": normalized_mi(values, [message_lengths[index] for index in indexes]),
                 }
             )
     if not candidates:
@@ -333,6 +355,26 @@ def detect_global_discriminator(
     narrowest = min(candidate["width"] for candidate in candidates)
     candidates = [candidate for candidate in candidates if candidate["width"] == narrowest]
 
+    if label_free:
+        # No label evidence: the type code is the candidate whose value best
+        # explains the message structure (exact length), with a floor; otherwise no
+        # split (see FamilyRefinement.SINGLE_FAMILY_MIN_STRUCTURE_MI).
+        candidates = [
+            candidate
+            for candidate in candidates
+            if _length_relation_share(messages, candidate["offset"], candidate["width"])
+            < _FR.SINGLE_FAMILY_MAX_LENGTH_RELATION
+        ]
+        if not candidates:
+            return None
+        chosen = max(candidates, key=lambda candidate: (candidate["_structure_mi"], -candidate["offset"]))
+        if chosen["_structure_mi"] < _FR.SINGLE_FAMILY_MIN_STRUCTURE_MI:
+            return None
+        result = {key: value for key, value in chosen.items() if not key.startswith("_")}
+        result["structure_mi"] = round(chosen["_structure_mi"], 6)
+        result["label_free"] = True
+        return result
+
     # Type-aware selection (primary): the opcode is the EARLIEST byte that carries
     # real type information *beyond message length* — i.e. the earliest survivor
     # whose I(byte; label | exact_length) clears a floor. Conditioning on exact
@@ -350,11 +392,15 @@ def detect_global_discriminator(
     # Earliest-above-floor is what the original structural fallback did right; the
     # type_mi floor is what additionally rejects the leading address it could not.
     if structure_aware:
+        # A type code also shapes the message: its value explains some of the exact
+        # length (FamilyRefinement.LABEL_GUIDED_MIN_LENGTH_MI). A sequence/counter byte
+        # can still carry "type information" against a degraded bootstrap, but not this.
         meaningful = [
             candidate
             for candidate in candidates
             if candidate["_type_mi"] >= min_structure_mi
             and candidate["_effective_cardinality"] >= min_type_cardinality
+            and candidate["_structure_mi"] >= _FR.LABEL_GUIDED_MIN_LENGTH_MI
         ]
         filtered_meaningful = []
         for candidate in meaningful:
@@ -377,28 +423,11 @@ def detect_global_discriminator(
             chosen = min(meaningful, key=lambda candidate: (candidate["offset"], candidate["width"]))
             return {key: value for key, value in chosen.items() if not key.startswith("_")}
 
-    if single_bootstrap:
-        # No label evidence at all: the type code is the candidate whose value best
-        # explains the message structure (exact length), with a floor; otherwise no
-        # split (see FamilyRefinement.SINGLE_FAMILY_MIN_STRUCTURE_MI).
-        candidates = [
-            candidate
-            for candidate in candidates
-            if _length_relation_share(messages, candidate["offset"], candidate["width"])
-            < _FR.SINGLE_FAMILY_MAX_LENGTH_RELATION
-        ]
-        if not candidates:
-            return None
-        for candidate in candidates:
-            values, indexes = _offset_window_values(messages, candidate["offset"], candidate["width"])
-            candidate["_structure_mi"] = normalized_mi(values, [message_lengths[index] for index in indexes])
-        chosen = max(candidates, key=lambda candidate: (candidate["_structure_mi"], -candidate["offset"]))
-        if chosen["_structure_mi"] < _FR.SINGLE_FAMILY_MIN_STRUCTURE_MI:
-            return None
-        result = {key: value for key, value in chosen.items() if not key.startswith("_")}
-        result["structure_mi"] = round(chosen["_structure_mi"], 6)
-        return result
-
+    # The fallbacks below rank on label MI / position alone; a partial window is not
+    # eligible there.
+    candidates = [candidate for candidate in candidates if not candidate["_partial"]]
+    if not candidates:
+        return None
     best_mi = max(candidate["_mi"] for candidate in candidates)
     if best_mi >= min_global_mi:
         # Label-guided: highest MI, ties broken toward the narrower, earlier window.

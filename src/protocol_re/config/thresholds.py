@@ -628,6 +628,13 @@ class Clustering:
     # Batch size used for centroid-based assignment of messages to clusters.
     CENTROID_ASSIGNMENT_BATCH_SIZE: int = 10000
 
+    # Reassign HDBSCAN noise to the cluster of its nearest clustered neighbour in the
+    # clustering space. Noise messages get no family and so no fields; with the
+    # protocol-independent HDBSCAN setting (min_cluster_size = a fixed fraction of
+    # the corpus) noise reached 97% (ZigBee), 86% (POWERLINK) and 42% (EtherCAT) of
+    # a corpus. Measured 2026-10-23 (dol/hdbscan-global).
+    REASSIGN_NOISE_TO_NEAREST: bool = True
+
     # --- Volatile (noise) offset detection (structural_features.volatile_offsets) ---
     #
     # A byte offset is treated as volatile noise and excluded from the structural
@@ -789,6 +796,11 @@ class TlvFraming:
     # Per-message tag-sequence sample cap used when deriving the corpus tag
     # vocabulary and family signatures (deterministic: first N by msg_id).
     SIGNATURE_SAMPLE_CAP: int = 2000
+    # A message cut short by the capture (snap length) still counts as a TLV parse
+    # during detection when its constructed wrapper holds at least this many
+    # complete elements before the cut (GOOSE: 35% of the corpus is truncated by
+    # ~51 bytes; the first 2000 messages are not, which hid it).
+    TRUNCATED_MIN_COMPLETE_ELEMENTS: int = 3
 
     # Per-message layout. Fixed field hypotheses cannot describe a TLV body: every
     # variable-length element shifts the offsets of all later elements, so no
@@ -933,6 +945,29 @@ class FamilyRefinement:
     # ... and only when at least this share of the messages has a known direction
     # (see refine_families_by_discriminator: without it the split is by length).
     SINGLE_FAMILY_MIN_KNOWN_DIRECTION: float = 0.5
+
+    # Length-determined bootstrap. When the bootstrap families are (almost) fixed by
+    # the exact message length, H(family | length) is ~0 and the normalised
+    # I(value; family | length) is a ratio of two near-zero numbers: nearly every byte
+    # scores 1.0 and "earliest meaningful" picks the first varying byte. Below this
+    # conditional entropy (bits) the bootstrap carries no type evidence beyond length
+    # and selection uses the label-free rule of the single-family case. IEC 104:
+    # 0.016 bits (2 families split by length; offset 5, a sequence-number high byte,
+    # was chosen instead of the type id at 6); the other multi-family benchmark
+    # bootstraps have 0.22-1.65 bits. Measured 2026-10-23 (dol/iec104-discriminator).
+    MIN_BOOTSTRAP_CONDITIONAL_ENTROPY: float = 0.05
+    # A window may be absent from the shortest messages (IEC 104 S/U control frames
+    # are 6 bytes, the type id sits at offset 6) as long as it is present in at least
+    # this share; the short messages form their own "absent" value. Such a partial
+    # window is eligible only through the structure checks (label-free rule, or a
+    # "meaningful" label-guided candidate), never through the label-MI fallbacks.
+    PARTIAL_MIN_COVERAGE: float = 0.5
+    # Label-guided "meaningful" candidates must also explain some of the exact
+    # message length, NMI(value; length) >= this. A type code shapes the message; a
+    # sequence-number byte does not, yet it can carry spurious "type information"
+    # against a degraded bootstrap (IEC 104 offset 3 / 5: NMI 0.03). On the 14
+    # benchmark bootstraps this rejected one pick, BACnet offset 4 (NMI 0.03).
+    LABEL_GUIDED_MIN_LENGTH_MI: float = 0.1
 
     # Minimum effective cardinality for the type-aware path to treat a byte as an
     # opcode. Three distinct values support narrow captures while excluding common

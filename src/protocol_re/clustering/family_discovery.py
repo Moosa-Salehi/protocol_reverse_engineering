@@ -56,6 +56,8 @@ class ClusteringResult:
     refinement: Dict[str, Any] | None = None
     conformance: Dict[str, Any] | None = None
     tlv_merge: Dict[str, Any] | None = None
+    # share of clustered messages HDBSCAN labelled noise, before any reassignment
+    hdbscan_noise_share: float | None = None
 
 
 
@@ -218,6 +220,42 @@ def _signature_role(direction: str | None, use_direction: bool) -> str:
     return "unknown"
 
 
+def _reassign_noise_to_nearest(points: Any, labels: Sequence[int]) -> Any:
+    """Give every noise point (-1) the label of its nearest clustered point;
+    unchanged when everything or nothing is noise."""
+    labels = np.asarray(labels).copy()
+    noise = labels == -1
+    if noise.all() or not noise.any():
+        return labels
+    from sklearn.neighbors import NearestNeighbors
+
+    clustered = np.asarray(points)[~noise]
+    _distances, nearest = NearestNeighbors(n_neighbors=1).fit(clustered).kneighbors(np.asarray(points)[noise])
+    labels[noise] = labels[~noise][nearest[:, 0]]
+    return labels
+
+
+# Signature value of messages too short for a partial-coverage discriminator window.
+ABSENT_DISCRIMINATOR_VALUE = -1
+
+
+def _label_free_guard(records: Sequence[MessageRecord], prefix: str) -> str | None:
+    """Reason to skip a label-free refinement, or None. Without direction the
+    signature falls back to a length bucket, so a split of the one family is
+    largely a split by length (EtherCAT 1 -> 13 families): it helped the rule-based
+    boundaries but scattered the few-shot labels and the zero-shot groups (EtherCAT
+    few-shot 0.605 -> 0.328, POWERLINK zero-shot 0.498 -> 0.343). Over a TLV/BER
+    corpus the message type is the tag sequence, which the TLV family merge keys
+    on; a content byte would split one message type (GOOSE)."""
+    known = sum(_signature_role(record.direction, True) != "unknown" for record in records)
+    if known < _FR.SINGLE_FAMILY_MIN_KNOWN_DIRECTION * max(1, len(records)):
+        return f"{prefix}_unknown_direction"
+    payloads = [hex_to_bytes(record.payload_hex) for record in records if record.payload_hex]
+    if detect_tlv_framing(payloads) is not None:
+        return f"{prefix}_tlv_corpus"
+    return None
+
+
 def refine_families_by_discriminator(
     records: Sequence[MessageRecord],
     assignments: Sequence[FamilyAssignment],
@@ -245,25 +283,12 @@ def refine_families_by_discriminator(
     """
     family_by_msg_id = {assignment.msg_id: assignment.family_id for assignment in assignments}
 
-    # A single bootstrap family is refined only when message direction is known.
-    # Without direction the signature falls back to a length bucket, so a split of
-    # the one family is largely a split by length (EtherCAT 1 -> 13 families): it
-    # helped the rule-based boundaries but scattered the few-shot labels and the
-    # zero-shot groups (EtherCAT few-shot 0.605 -> 0.328, POWERLINK zero-shot
-    # 0.498 -> 0.343). A single bootstrap family over a TLV/BER corpus is also left
-    # alone: the message type of a self-describing protocol is its tag sequence,
-    # which the TLV family merge keys on; a content byte would split one message
-    # type (GOOSE).
+    # A single bootstrap family is refined only when message direction is known and
+    # the corpus is not TLV (_label_free_guard). The same guards hold for any
+    # label-free selection (a length-determined bootstrap, checked after detection).
     bootstrap_families = {family for family in family_by_msg_id.values() if family != "noise"}
     if len(bootstrap_families) < 2:
-        reason = None
-        known = sum(_signature_role(record.direction, True) != "unknown" for record in records)
-        if known < _FR.SINGLE_FAMILY_MIN_KNOWN_DIRECTION * max(1, len(records)):
-            reason = "single_bootstrap_family_unknown_direction"
-        else:
-            payloads = [hex_to_bytes(record.payload_hex) for record in records if record.payload_hex]
-            if detect_tlv_framing(payloads) is not None:
-                reason = "single_bootstrap_family_tlv_corpus"
+        reason = _label_free_guard(records, "single_bootstrap_family")
         if reason is not None:
             family_count = len({assignment.family_id for assignment in assignments})
             return list(assignments), {
@@ -292,12 +317,25 @@ def refine_families_by_discriminator(
             "family_count_before": family_count_before,
             "family_count_after": family_count_before,
         }
+    if discriminator.get("label_free") and len(bootstrap_families) >= 2:
+        reason = _label_free_guard(records, "length_determined_bootstrap")
+        if reason is not None:
+            return list(assignments), {
+                "applied": False,
+                "reason": reason,
+                "family_count_before": family_count_before,
+                "family_count_after": family_count_before,
+            }
 
     offset = int(discriminator["offset"])
     width = int(discriminator["width"])
 
     # Re-key each assigned message to (discriminator value, length bucket, role).
-    # Messages too short to contain the discriminator window stay as "noise".
+    # Messages too short to contain the discriminator window stay as "noise",
+    # unless the chosen window is a partial one the shortest messages lack: they
+    # are then their own message kind (IEC 104 S/U control frames before the type
+    # id) and take the value ABSENT_DISCRIMINATOR_VALUE.
+    keep_short = float(discriminator.get("coverage", 1.0)) < min_coverage
     records_by_msg_id = {record.msg_id: record for record in records}
     signature_by_msg_id: Dict[int, Any] = {}
     members_by_signature: Dict[Any, List[int]] = defaultdict(list)
@@ -310,9 +348,12 @@ def refine_families_by_discriminator(
             continue
         payload = hex_to_bytes(record.payload_hex)
         if offset + width > len(payload):
-            noise_msg_ids.append(assignment.msg_id)
-            continue
-        value = int.from_bytes(payload[offset : offset + width], "big")
+            if not keep_short:
+                noise_msg_ids.append(assignment.msg_id)
+                continue
+            value = ABSENT_DISCRIMINATOR_VALUE
+        else:
+            value = int.from_bytes(payload[offset : offset + width], "big")
         role = _signature_role(record.direction, use_direction)
         # Direction (request/response) is the correct way to split one opcode's short
         # request from its variable-length response. Length is only a *proxy* for that
@@ -617,6 +658,10 @@ def discover_families(
     else:
         raise ValueError(f"Unsupported clustering method: {method}")
 
+    hdbscan_noise_share = float(np.mean(np.asarray(labels) == -1)) if len(labels) else 0.0
+    if method == "hdbscan" and _CL.REASSIGN_NOISE_TO_NEAREST:
+        labels = _reassign_noise_to_nearest(reduced, labels)
+
     sampled_assignments = []
     for record, label in zip(working_records, labels):
         family_id = "noise" if label == -1 else f"family_{label}"
@@ -680,4 +725,5 @@ def discover_families(
         refinement=refinement_meta,
         conformance=conformance_meta,
         tlv_merge=tlv_meta,
+        hdbscan_noise_share=hdbscan_noise_share if method == "hdbscan" else None,
     )

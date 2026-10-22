@@ -118,7 +118,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The local backend reports the real consensus share as its boundary confidence instead of
   a constant 0.99.
 
+### Changed
+- Stage 04 no longer looks up HDBSCAN settings tuned per training protocol by the tshark filter name (a threat
+  to validity: every benchmark protocol was clustered with settings tuned on its own labels, e.g. min_cluster_size
+  = corpus size for ZigBee / POWERLINK); only the checkpoint's protocol-independent global setting is used. HDBSCAN
+  noise is reassigned to the nearest clustered point (`Clustering.REASSIGN_NOISE_TO_NEAREST`; noise had reached
+  97% / 86% / 42% on ZigBee / POWERLINK / EtherCAT with the global setting).
+- Discriminator selection: label-guided "meaningful" candidates must explain some exact length
+  (`FamilyRefinement.LABEL_GUIDED_MIN_LENGTH_MI`); windows present in >= `PARTIAL_MIN_COVERAGE` of the messages are
+  eligible through the structure checks in both modes (short messages keep their own group).
+- TLV detection samples messages evenly over the corpus instead of its head and accepts captures cut short by the
+  snap length (`TlvFraming.TRUNCATED_MIN_COMPLETE_ELEMENTS`): 35% of the GOOSE corpus is truncated, which the head
+  sample hid and a random sample exposed (GOOSE on 500 messages: 34 families for one message type).
+
 ### Fixed
+- TLV family merge: messages that do not parse kept their old family id, which could collide with the new
+  tag-sequence ids (`family_<n>`) and merge unrelated messages; they now keep it as `<id>_unparsed`, and truncated
+  messages join the most common tag sequence that starts with their complete elements.
+  Effect of these changes (truth files, 14 protocols, macro overall): rules 0.380 -> 0.387, zero-shot 0.437 -> 0.458,
+  shared layers 0.418 -> 0.461, few-shot 10 / 20 / 50 0.442 / 0.444 / 0.511 -> 0.494 / 0.505 / 0.519 (none of the
+  paired bootstrap CIs excludes 0). BACnet (0.371 -> 0.220) and EtherNet/IP (0.309 -> 0.223) drop in every
+  configuration: the new discriminator picks separate the types better (family/type NMI 0.10 -> 0.51 and
+  0.51 -> 0.72) but over-fragment with length buckets (direction unknown), so message-type precision falls.
+  Experiments: `dol/hdbscan-global`.
+
+- Family refinement picked a sequence-number byte on IEC 104: the two bootstrap families split the corpus almost
+  purely by length (H(family | length) = 0.016 bits), so the normalised I(value; family | length) was a ratio of
+  near-zero numbers (~1.0 for nearly every byte) and "earliest meaningful" chose offset 5 (receive-sequence high
+  byte); the type id at offset 6 was also excluded because the 6-byte S/U control frames lack it (coverage 0.64).
+  A bootstrap with H(family | length) < `FamilyRefinement.MIN_BOOTSTRAP_CONDITIONAL_ENTROPY` now selects label-free
+  like a single family (max NMI(value; length), same guards), may use a window present in >=
+  `LABEL_FREE_MIN_COVERAGE` of the messages, and keeps the shorter messages as their own group (value
+  `ABSENT_DISCRIMINATOR_VALUE`) instead of noise. IEC 104 overall 0.082 -> 0.415 (rule-based), 0.129 -> 0.435
+  (zero-shot), 0.246 -> 0.548 (few-shot 50); the other 13 protocols and the Modbus slices are identical. Threshold
+  chosen after measuring the 14 bootstraps (next lowest 0.22 bits). Experiments: `dol/iec104-discriminator`.
 - Family refinement never ran when bootstrap clustering returned a single family (HDBSCAN can select the root
   cluster): `detect_global_discriminator` returned early with fewer than two labels, so the first 10K / 50K messages
   of the 200K multi-device Modbus capture scored 0.089 / 0.087 overall. With one bootstrap family and a known message

@@ -557,3 +557,26 @@ def test_detect_tlv_framing_rejects_single_element_chains():
 
     messages = [mbap(n, bytes([4, 2 * (1 + n % 4)]) + bytes((n * 37 + i) % 251 + 1 for i in range(2 * (1 + n % 4)))) for n in range(300)]
     assert detect_tlv_framing(messages) is None
+
+
+def test_detect_tlv_framing_tolerates_truncated_captures_spread_over_the_corpus() -> None:
+    # 40% of the messages were cut short by the capture (snap length), and they are
+    # spread over the corpus, not at its head
+    messages = []
+    for index in range(400):
+        message = _goose_like(st_num=index, pad=index % 7)
+        messages.append(message[:-12] if index % 5 in (1, 3) else message)
+
+    detection = detect_tlv_framing(messages)
+
+    assert detection is not None
+    assert detection.header_length == 8
+
+
+def test_truncation_tolerance_does_not_make_random_bytes_tlv() -> None:
+    import random
+
+    rng = random.Random(7)
+    messages = [bytes(rng.randrange(256) for _ in range(rng.randrange(20, 120))) for _ in range(400)]
+
+    assert detect_tlv_framing(messages) is None
