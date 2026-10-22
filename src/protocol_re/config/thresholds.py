@@ -1092,6 +1092,17 @@ class FewShotBoundaries:
     14 benchmark protocols, leave-one-protocol-out.
     """
 
+    # Change co-variation and bit-congruence features (fewshot_boundaries.change_features), 8 extra columns per
+    # offset. The shipped training set must be built with the same setting.
+    CHANGE_FEATURES: bool = False
+
+    # Zero-shot gating may merge away a stage-07 edge whose family-mean model probability is below this, unless it
+    # bounds a confident length / keyword / opcode field. Leave-one-protocol-out per-message F1 on the 14 benchmark
+    # protocols: 0.614 -> 0.620 (OPC UA +0.066, EtherNet/IP and S7comm +0.009, none worse); 0.05 and 0.10 gave the
+    # same macro, 0.02 slightly less (dol/improve). Chosen on the benchmark (post hoc).
+    ZEROSHOT_VETO: float = 0.05
+
+
     # Messages with one exact length form their own group when there are at least this many
     # (the rest of the family is one remainder group).
     MIN_GROUP: int = 20

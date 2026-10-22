@@ -100,7 +100,7 @@ def main() -> None:
             posts = [x for x in args.posts.split(",") if x]
             pred, summary = fsb.predict_edges_zeroshot(order, family_of, payload, body_start_of, args.training_set,
                                                        exclude=args.exclude_protocol, posts=posts, reference=reference)
-        print(f"[+] few-shot boundaries: {summary}")
+        print(f"[+] few-shot boundaries: { {k: v for k, v in summary.items() if k != 'family_probability'} }")
 
     split = {"moved_messages": 0, "sub_families": 0, "skipped": {}}
     if args.split:

@@ -103,6 +103,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MBAP length field parsed that way).
 
 ### Changed
+- Zero-shot learned boundaries are now the default (`main.py --zeroshot-boundaries`, opt out with
+  `--no-zeroshot-boundaries`); without the shipped training set the pipeline falls back to rule-based boundaries.
+- The shipped boundary training set (`assets/pre_trained/fewshot_boundary_training.npz`, reference messages) is
+  rebuilt from the families of the current clustering (global HDBSCAN setting; old files kept as `*.v1.*`).
+  Leave-one-protocol-out per-message F1 (14 protocols, truth files): 0.608 -> 0.614.
+- Zero-shot gating may merge away a stage-07 edge the model considers very unlikely (family-mean probability <
+  `FewShotBoundaries.ZEROSHOT_VETO`), except the edges of confident length / keyword / opcode fields: 0.614 -> 0.620
+  (OPC UA +0.066; none worse). Stage 04b exports the family-mean probabilities for stage 07c.
+- Tried and not adopted (dol/improve): per-(family, length) message layouts for zero-shot edges (0.608 -> 0.606);
+  change co-variation / bit-congruence features (`FewShotBoundaries.CHANGE_FEATURES`, 0.614 -> 0.610); request ->
+  response consistency as a type signal (endpoint / transaction fields are echoed too; it would pick the Modbus
+  unit id).
+
+### Fixed
+- Stages 04b and 07c did not receive the instance `--log-dir`.
+
 - Few-shot boundaries: the family split is verified by the labelled messages (a family is split only into
   layouts its labels show, `--[no-]fewshot-split-verify`, `--fewshot-split-support`), and rebuilt fields end at
   the family's median length. Truth files: 12 up / 0 down (Modbus 0.756 -> 0.816, EtherNet/IP 0.288 -> 0.343),

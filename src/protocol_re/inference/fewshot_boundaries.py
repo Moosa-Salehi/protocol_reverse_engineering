@@ -87,6 +87,28 @@ def _pair_stats(M, valid, H, i):
     return change, nmi
 
 
+def change_features(M, valid, i):
+    """Co-variation of offsets i-1 and i over consecutive messages of a group (capture order), and NEMESYS-style bit
+    congruence: bytes of one field tend to change together and look alike bit-wise; a field boundary separates
+    independently changing parts (an 8-byte address changes as a whole, a counter's low byte alone)."""
+    both = valid[:, i] & valid[:, i - 1]
+    a, b = M[both, i - 1].astype(np.int32), M[both, i].astype(np.int32)
+    if a.size < 3:
+        return [0.0] * 8
+    ca, cb = a[1:] != a[:-1], b[1:] != b[:-1]
+    any_change = ca | cb
+    together = float((ca & cb).sum() / any_change.sum()) if any_change.any() else 1.0
+    only_left = float((ca & ~cb).mean()); only_right = float((~ca & cb).mean())
+    pop = np.array([bin(x).count('1') for x in range(256)])
+    bc = 1.0 - pop[a ^ b] / 8.0                       # bit congruence of the adjacent byte pair, per message
+    prev = 1.0 - pop[M[both, i - 2] ^ M[both, i - 1]] / 8.0 if i >= 2 else bc
+    c = valid[:, i - 1] & valid[:, i] & (valid[:, i + 1] if i + 1 < M.shape[1] else valid[:, i])
+    nxt = 1.0 - pop[M[c, i] ^ M[c, i + 1]] / 8.0 if i + 1 < M.shape[1] and c.any() else bc
+    return [together, only_left, only_right, float(any_change.mean()),
+            float(bc.mean()), float(bc.mean() - prev.mean()), float(nxt.mean() - bc.mean()),
+            float((nxt.mean() - bc.mean()) - (bc.mean() - prev.mean()))]
+
+
 def family_rows(msgs: Sequence[bytes], corpus, body_start: Optional[int]):
     """Feature rows for the offsets 1.. of one group of messages; returns (rows, offsets)."""
     msgs = msgs[:CAP]
@@ -123,6 +145,8 @@ def family_rows(msgs: Sequence[bytes], corpus, body_start: Optional[int]):
             min((i - body_start), 64) / 64 if body_start is not None and i >= body_start else -1.0,
             np.log2(n) / 15, min(distinct_lengths, 32) / 32, min(med, 512) / 512,
         ]
+        if _FS.CHANGE_FEATURES:
+            row += change_features(M, valid, i)
         rows.append(row)
         offs.append(i)
     return np.array(rows, dtype=float), offs
@@ -736,9 +760,13 @@ def predict_edges_zeroshot(order, family_of, payload, body_start_of, training_se
     t = load_zeroshot_threshold(training_set, exclude)
     pred: Dict[int, Set[int]] = {}
     donors: Counter = Counter()
+    prob_sum: Dict[str, Counter] = defaultdict(Counter)
+    prob_n: Dict[str, Counter] = defaultdict(Counter)
     for g in groups:
         s = model.predict_proba(g['X'])[:, 1]
         e = {o for o, v in zip(g['offs'], s) if v >= t}
+        for o, v in zip(g['offs'], s):
+            prob_sum[g['fam']][o] += float(v); prob_n[g['fam']][o] += 1
         shared = None
         if reference:
             rep = g['mids'][0]
@@ -755,28 +783,57 @@ def predict_edges_zeroshot(order, family_of, payload, body_start_of, training_se
     for m in pred:
         for name in posts:
             pred[m] = funcs[name](payload[m], pred[m])
+    family_probability = {fam: {o: prob_sum[fam][o] / prob_n[fam][o] for o in prob_sum[fam]} for fam in prob_sum if fam != NOISE}
     return pred, {'mode': 'zeroshot', 'groups': len(groups), 'threshold': t, 'posts': list(posts),
-                  'training_protocols': n_protocols, 'shared_layer_donors': dict(donors)}
+                  'training_protocols': n_protocols, 'shared_layer_donors': dict(donors),
+                  'family_probability': family_probability}
+
+
+def veto_unlikely_edges(hyps: List[Dict[str, Any]], probability: Dict[int, float],
+                        threshold: float = _FS.ZEROSHOT_VETO) -> Tuple[List[Dict[str, Any]], int]:
+    """Merge away stage-07 edges the zero-shot model considers very unlikely (family-mean probability < threshold),
+    except the edges of fields stage 07 identified with confidence (length / keyword / opcode, confidence >= 0.9)."""
+    keep = set()
+    for h in hyps:
+        if h.get('field_type') in ('length', 'keyword', 'opcode') and float(h.get('confidence', 0) or 0) >= 0.9:
+            keep.update((int(h['start']), int(h['start']) + int(h['length'])))
+    merged, vetoed = [dict(hyps[0])], 0
+    for h in hyps[1:]:
+        e = int(h['start']); pv = probability.get(e)
+        if e not in keep and pv is not None and pv < threshold:
+            last = merged[-1]
+            last['length'] = int(h['start']) + int(h['length']) - int(last['start'])
+            last['field_type'] = 'blob'
+            last['attributes'] = dict(last.get('attributes') or {}, zeroshot_veto=True)
+            vetoed += 1
+        else:
+            merged.append(dict(h))
+    return merged, vetoed
 
 
 def apply_gated(families: Dict[str, Any], family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]],
-                payload_len: Dict[int, int], min_width: int = 3) -> Dict[str, Any]:
+                payload_len: Dict[int, int], min_width: int = 3,
+                family_probability: Optional[Dict[str, Dict[int, float]]] = None) -> Dict[str, Any]:
     """Zero-shot combination with stage 07 (in place): stage-07 fields and edges are kept; the family-majority
     predicted edges only split stage-07 fields of >= min_width bytes and add fields past the last stage-07 field
-    (up to the family's median length). TLV-tagged chains are left alone."""
+    (up to the family's median length). TLV-tagged chains are left alone. With the model's family-mean edge
+    probabilities, stage-07 edges it considers very unlikely are first merged away (veto_unlikely_edges)."""
     votes, reach, lengths = defaultdict(Counter), defaultdict(Counter), defaultdict(list)
     for m, edges in pred.items():
         fam, n = family_of.get(m), payload_len.get(m)
         if fam is None or n is None:
             continue
         votes[fam].update(e for e in edges if 0 < e < n); reach[fam].update(range(1, n)); lengths[fam].append(n)
-    touched = added = 0
+    touched = added = vetoed = 0
     for fam, det in families.items():
         if fam not in votes or not isinstance(det, dict):
             continue
         hyps = sorted(det.get('field_hypotheses', []) or [], key=lambda h: int(h.get('start', 0) or 0))
         if not hyps or any((h.get('attributes') or {}).get('tlv_tag') is not None for h in hyps):
             continue
+        if family_probability and str(fam) in family_probability:
+            hyps, n_vetoed = veto_unlikely_edges(hyps, {int(k): float(v) for k, v in family_probability[str(fam)].items()})
+            vetoed += n_vetoed
         edges = sorted(e for e, c in votes[fam].items() if c >= 0.5 * reach[fam][e])
         end07 = max(int(h['start']) + int(h['length']) for h in hyps)
         median = int(np.median(lengths[fam]))
@@ -797,4 +854,4 @@ def apply_gated(families: Dict[str, Any], family_of: Dict[int, Optional[str]], p
             added += len(tail) - 2
         families[fam] = dict(det, field_hypotheses=out)
         touched += 1
-    return {'families_gated': touched, 'edges_added': added}
+    return {'families_gated': touched, 'edges_added': added, 'edges_vetoed': vetoed}

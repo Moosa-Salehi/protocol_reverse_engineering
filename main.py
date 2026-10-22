@@ -672,6 +672,7 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     step_args.append("--no-split-verify")
                 if args.fewshot_split_support is not None:
                     step_args.extend(["--split-support", str(args.fewshot_split_support)])
+                step_args.extend(["--log-dir", _path(args.log_dir)])
                 pipeline.insert(index + 1, ("04b_fewshot_boundaries", step_args))
                 break
         for index, (name, _) in enumerate(pipeline):
@@ -683,7 +684,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     _path(fewshot_json),
                     _path(families_json),
                 ] + (["--gate"] if zeroshot and args.zeroshot_gate else [])
-                  + (["--no-fallback-gate"] if not zeroshot and not args.fewshot_fallback_gate else [])))
+                  + (["--no-fallback-gate"] if not zeroshot and not args.fewshot_fallback_gate else [])
+                  + ["--log-dir", _path(args.log_dir)]))
                 break
 
     if args.stop_after:
@@ -998,10 +1000,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     boundary_group.add_argument(
         "--zeroshot-boundaries",
-        action="store_true",
-        help="Learned boundaries without labels: the generic model trained on the shipped protocols (stage 04b, "
-             "--fewshot-training-set) plus label-free structural detectors, written into the families by 07c. "
-             "Ignored when --fewshot-labels is given.",
+        dest="zeroshot_boundaries",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Learned boundaries without labels (default on): the generic model trained on the shipped protocols "
+             "(stage 04b, --fewshot-training-set) plus label-free structural detectors, written into the families by "
+             "07c. --no-zeroshot-boundaries runs the rule-based boundaries only. Ignored when --fewshot-labels is given.",
     )
     boundary_group.add_argument(
         "--zeroshot-gate",
@@ -1229,6 +1233,10 @@ def validate_args(args: argparse.Namespace) -> None:
     args.llm_config = _resolve_under_project(args.llm_config)
     if args.fewshot_labels or args.zeroshot_boundaries:
         args.fewshot_training_set = _resolve_under_project(args.fewshot_training_set)
+        if args.zeroshot_boundaries and not args.fewshot_labels and not args.fewshot_training_set.is_file():
+            print(f"[!] --fewshot-training-set not found ({args.fewshot_training_set}): zero-shot boundaries disabled, "
+                  "rule-based boundaries only")
+            args.zeroshot_boundaries = False
         args.zeroshot_reference_messages = _resolve_under_project(args.zeroshot_reference_messages)
         if args.zeroshot_shared_layers and not args.zeroshot_reference_messages.is_file():
             raise SystemExit(f"--zeroshot-reference-messages not found: {args.zeroshot_reference_messages}")

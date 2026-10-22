@@ -134,3 +134,19 @@ def test_gated_keeps_stage07_fields_and_splits_only_wide_ones():
     assert (2, 2) in spans                 # a 2-byte stage-07 field is not split at 3
     assert (4, 2) in spans and (6, 2) in spans
     assert spans[-1][0] + spans[-1][1] == 12 and (8, 1) in spans   # tail past the last stage-07 field
+
+
+def test_veto_merges_unlikely_stage07_edges_but_keeps_confident_fields() -> None:
+    from protocol_re.inference.fewshot_boundaries import veto_unlikely_edges
+
+    hyps = [
+        {"start": 0, "length": 2, "field_type": "length", "confidence": 1.0},
+        {"start": 2, "length": 1, "field_type": "blob", "confidence": 0.5},
+        {"start": 3, "length": 3, "field_type": "blob", "confidence": 0.5},
+        {"start": 6, "length": 2, "field_type": "blob", "confidence": 0.5},
+    ]
+    # edge 2 bounds the confident length field: kept despite a low probability; edge 3 is vetoed; edge 6 is likely
+    merged, vetoed = veto_unlikely_edges(hyps, {2: 0.01, 3: 0.01, 6: 0.9}, threshold=0.05)
+
+    assert vetoed == 1
+    assert [(h["start"], h["length"]) for h in merged] == [(0, 2), (2, 4), (6, 2)]

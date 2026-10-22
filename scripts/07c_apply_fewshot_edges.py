@@ -29,6 +29,7 @@ def main() -> None:
                         help="Keep stage-07 fields; predicted edges only split fields of >= 3 bytes and extend past the last field")
     parser.add_argument("--fallback-gate", dest="fallback_gate", action=argparse.BooleanOptionalAction, default=True,
                         help="Few-shot: gate (instead of rebuild) families whose mixed layouts the labels could not verify")
+    parser.add_argument("--log-dir", default="logs", help="Accepted for pipeline uniformity (this step only prints)")
     args = parser.parse_args()
     edges = {int(m): set(e) for m, e in json.loads(args.fewshot_json.read_text(encoding="utf-8"))["edges"].items()}
     family_of = {int(a["msg_id"]): a["family_id"] for a in json.loads(args.assignments_json.read_text(encoding="utf-8"))["assignments"]}
@@ -42,7 +43,8 @@ def main() -> None:
     doc = json.loads(args.fewshot_json.read_text(encoding="utf-8"))
     gate_families = set() if args.gate or not args.fallback_gate else set((doc.get("split") or {}).get("unverified_families", []))
     if args.gate:
-        summary = fsb.apply_gated(families, family_of, edges, payload_len)
+        summary = fsb.apply_gated(families, family_of, edges, payload_len,
+                                  family_probability=(doc.get("summary") or {}).get("family_probability"))
     else:
         # families whose messages mix layouts the labels could not verify keep stage 07's fields, refined by
         # the predictions (zero-shot gating); every other family is rebuilt from its messages' edges
