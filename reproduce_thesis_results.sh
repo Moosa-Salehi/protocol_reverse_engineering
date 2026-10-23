@@ -37,6 +37,7 @@ if [ "$mode" = full ]; then
   bash dol/ablation-final/run.sh                      # component ablation (13 variants x 14 protocols)
   bash dol/fewshot-seeds/run.sh                       # few-shot 50 with label seeds 1-4
   bash dol/llm-semantics-eval/run.sh                  # stage 11b with the local fine-tuned model (llama.cpp server on :8080)
+  bash dol/llm-relations-eval/run.sh                  # stage 10b with the local backend (deterministic relation gate only)
   bash dol/disc-split/run.sh                          # optional second-level discriminator split (evaluated, not default)
   ( cd dol/baseline-comparison/scripts
     ~/.venvs/nemesys39/bin/python run_nemesys.py synphasor ams doip cnip
