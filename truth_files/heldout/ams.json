@@ -1,0 +1,498 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "ams",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "Beckhoff ADS/AMS over TCP",
+    "version": "ADS (Beckhoff TwinCAT)",
+    "description": "Beckhoff ADS over AMS/TCP (TCP/48898): a 6-byte AMS/TCP header and a 32-byte AMS header whose command id and response flag select the message type, followed by the ADS command data. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "AMS/TCP and AMS header fields use wire-absolute offsets 0..37; ADS types are relative to offset 38.",
+    "message_types": [
+      {
+        "message_type_id": "ams_header",
+        "name": "AMS/TCP and AMS header",
+        "role": "header",
+        "description": "AMS/TCP reserved and length, then target/sender AMS net id and port, command id, state flags, data length, error code and invoke id. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "tcp_reserved",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "reserved",
+            "endian": "little"
+          },
+          {
+            "name": "tcp_length",
+            "start": 2,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "targetnetid",
+            "start": 6,
+            "length": 6,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "targetport",
+            "start": 12,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "sendernetid",
+            "start": 14,
+            "length": 6,
+            "field_type": "bytes",
+            "semantic_role": "address"
+          },
+          {
+            "name": "senderport",
+            "start": 20,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "cmdid",
+            "start": 22,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "little"
+          },
+          {
+            "name": "stateflags",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "cbdata",
+            "start": 26,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "errorcode",
+            "start": 30,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "status",
+            "endian": "little"
+          },
+          {
+            "name": "invokeid",
+            "start": 34,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "transaction_id",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "00 00 20 00 00 00 05 0D 75 60 01 01 10 27 C0 A8 01 C7 01 01 03 80 04 00 04 00 00 00 00 00 00 00 00 00 03 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_read_request",
+        "name": "ams read request",
+        "role": "request",
+        "description": "1162 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "ads_indexgroup",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ads_indexoffset",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ads_cblength",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "BC 02 00 00 01 00 00 00 04 00 00 00",
+          "BC 02 00 00 01 00 00 00 96 02 00 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_read_response",
+        "name": "ams read response",
+        "role": "response",
+        "description": "1159 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "adsresult",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "status",
+            "endian": "little"
+          },
+          {
+            "name": "ads_cblength",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "ads_data",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "payload",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 04 00 00 00 96 02 00 00",
+          "00 00 00 00 96 02 00 00 3C 54 63 54 61 72 67 65 74 44 65 73 63 3E 3C 54"
+        ]
+      },
+      {
+        "message_type_id": "ams_read_state_request",
+        "name": "ams read state request",
+        "role": "request",
+        "description": "1149 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "ams_read_state_response",
+        "name": "ams read state response",
+        "role": "response",
+        "description": "1144 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "adsresult",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "status",
+            "endian": "little"
+          },
+          {
+            "name": "ads_state",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          },
+          {
+            "name": "ads_devicestate",
+            "start": 6,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 05 00 02 00",
+          "00 00 00 00 05 00 02 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_read_write_request",
+        "name": "ams read write request",
+        "role": "request",
+        "description": "44 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "ads_indexgroup",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ads_indexoffset",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ads_cbreadlength",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "ads_cbwritelength",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 16,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "C8 00 00 00 00 00 00 00 E8 03 00 00 2A 00 00 00 53 6F 66 74 77 61 72 65",
+          "C8 00 00 00 00 00 00 00 E8 03 00 00 27 00 00 00 53 6F 66 74 77 61 72 65"
+        ]
+      },
+      {
+        "message_type_id": "ams_read_write_response",
+        "name": "ams read write response",
+        "role": "response",
+        "description": "44 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "data",
+            "start": 0,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 01 00 00 00 00",
+          "02 00 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_read_device_info_request",
+        "name": "ams read device info request",
+        "role": "request",
+        "description": "25 messages in the benchmark capture.",
+        "fields": [],
+        "examples": [
+          "",
+          ""
+        ]
+      },
+      {
+        "message_type_id": "ams_read_device_info_response",
+        "name": "ams read device info response",
+        "role": "response",
+        "description": "25 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "data",
+            "start": 0,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "",
+          "00 00 00 00 02 0B 37 08 50 4C 43 20 53 65 72 76 65 72 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_add_notification_request",
+        "name": "ams add notification request",
+        "role": "request",
+        "description": "12 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "ads_indexgroup",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ads_indexoffset",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "address",
+            "endian": "little"
+          },
+          {
+            "name": "ads_cblength",
+            "start": 8,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "little"
+          },
+          {
+            "name": "ads_transmode",
+            "start": 12,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "flags",
+            "endian": "little"
+          },
+          {
+            "name": "ads_maxdelay",
+            "start": 16,
+            "length": 4,
+            "field_type": "uint32",
+            "endian": "little"
+          },
+          {
+            "name": "ads_cycletime",
+            "start": 20,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "little"
+          },
+          {
+            "name": "data",
+            "start": 24,
+            "length": 16,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "01 00 00 00 FF FF 00 00 00 04 00 00 03 00 00 00 00 00 00 00 00 00 00 00",
+          "01 00 00 00 FF FF 00 00 00 04 00 00 03 00 00 00 00 00 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_add_notification_response",
+        "name": "ams add notification response",
+        "role": "response",
+        "description": "12 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "adsresult",
+            "start": 0,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "status",
+            "endian": "little"
+          },
+          {
+            "name": "ads_notificationhandle",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "unit_id",
+            "endian": "little"
+          }
+        ],
+        "examples": [
+          "00 00 00 00 11 00 00 00",
+          "00 00 00 00 12 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_delete_notification_request",
+        "name": "ams delete notification request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "data",
+            "start": 0,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "11 00 00 00",
+          "05 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "ams_delete_notification_response",
+        "name": "ams delete notification response",
+        "role": "response",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "data",
+            "start": 0,
+            "length": 4,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "00 00 00 00",
+          "00 00 00 00"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "ams_add_notification_request",
+        "response_message_type_id": "ams_add_notification_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "ams_delete_notification_request",
+        "response_message_type_id": "ams_delete_notification_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "ams_read_device_info_request",
+        "response_message_type_id": "ams_read_device_info_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "ams_read_request",
+        "response_message_type_id": "ams_read_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "ams_read_state_request",
+        "response_message_type_id": "ams_read_state_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "ams_read_write_request",
+        "response_message_type_id": "ams_read_write_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      }
+    ]
+  }
+}

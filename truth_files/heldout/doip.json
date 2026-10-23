@@ -1,0 +1,374 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "doip",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "DoIP (ISO 13400-2) with UDS",
+    "version": "ISO 13400-2:2019 / ISO 14229",
+    "description": "Diagnostics over IP (TCP/UDP 13400): an 8-byte generic header whose payload type selects the message; diagnostic messages carry source and target addresses and a UDS PDU whose service id (with the reply bit) selects the type. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "Generic header fields use wire-absolute offsets 0..7; payload types are relative to offset 8.",
+    "message_types": [
+      {
+        "message_type_id": "doip_header",
+        "name": "DoIP generic header",
+        "role": "header",
+        "description": "Protocol version, inverse version, payload type and payload length. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "version",
+            "start": 0,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "inverse",
+            "start": 1,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "constant"
+          },
+          {
+            "name": "type",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "big"
+          },
+          {
+            "name": "length",
+            "start": 4,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "length",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "02 FD 00 05 00 00 00 07"
+        ]
+      },
+      {
+        "message_type_id": "doip_diagnostic_ack",
+        "name": "doip diagnostic ack",
+        "role": "response",
+        "description": "5029 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "source_address",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "target_address",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "diag_ack_code",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          }
+        ],
+        "examples": [
+          "0E 80 30 00 00",
+          "0E 80 30 00 00"
+        ]
+      },
+      {
+        "message_type_id": "doip_uds_negative_response",
+        "name": "doip uds negative response",
+        "role": "response",
+        "description": "5022 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "source_address",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "target_address",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "sid",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "err_sid",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8"
+          },
+          {
+            "name": "err_code",
+            "start": 6,
+            "length": 1,
+            "field_type": "uint8"
+          }
+        ],
+        "examples": [
+          "30 00 0E 80 7F 11 11",
+          "30 00 0E 80 7F 00 11"
+        ]
+      },
+      {
+        "message_type_id": "doip_uds_22_request",
+        "name": "doip uds 22 request",
+        "role": "request",
+        "description": "4921 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "source_address",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "target_address",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "sid",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "rdbi_data_identifier",
+            "start": 5,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "0E 80 30 00 22",
+          "0E 80 30 00 22 00 00"
+        ]
+      },
+      {
+        "message_type_id": "doip_routing_activation_request",
+        "name": "doip routing activation request",
+        "role": "request",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "source_address",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "activation_type",
+            "start": 2,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "opcode"
+          },
+          {
+            "name": "reserved_iso",
+            "start": 3,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "constant",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "0E 80 00 00 00 00 00",
+          "0E 80 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "doip_routing_activation_response",
+        "name": "doip routing activation response",
+        "role": "response",
+        "description": "10 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "tester_logical_address",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "source_address",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "response_code",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "status"
+          },
+          {
+            "name": "reserved_iso",
+            "start": 5,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "constant",
+            "endian": "big"
+          },
+          {
+            "name": "reserved_oem",
+            "start": 9,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "constant",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "0E 80 30 00 10 00 00 00 00 00 00 00 00",
+          "0E 80 30 00 10 00 00 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "doip_uds_22_response",
+        "name": "doip uds 22 response",
+        "role": "response",
+        "description": "7 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "source_address",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "target_address",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "sid",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "rdbi_data_identifier",
+            "start": 5,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "data",
+            "start": 7,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "30 00 0E 80 62 00 07 79 6F 75 20 61 72 65 20 77 61 61 61 61 61 61 79 20",
+          "30 00 0E 80 62 03 30 C2 AF 5C 5F 28 E3 83 84 29 5F 2F C2 AF 20 6B 69 6E"
+        ]
+      },
+      {
+        "message_type_id": "doip_uds_11_request",
+        "name": "doip uds 11 request",
+        "role": "request",
+        "description": "6 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "source_address",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "target_address",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "sid",
+            "start": 4,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "function_code"
+          },
+          {
+            "name": "er_subfunction",
+            "start": 5,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "opcode"
+          }
+        ],
+        "examples": [
+          "0E 80 30 00 11 01",
+          "0E 80 30 00 11"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "doip_routing_activation_request",
+        "response_message_type_id": "doip_routing_activation_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      },
+      {
+        "request_message_type_id": "doip_uds_22_request",
+        "response_message_type_id": "doip_uds_22_response",
+        "relation_type": "request_response",
+        "description": "The request is answered by the matching response."
+      }
+    ]
+  }
+}

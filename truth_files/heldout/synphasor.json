@@ -1,0 +1,313 @@
+{
+  "predicted_protocol": {
+    "protocol_name": "synphasor",
+    "version": "unknown",
+    "families": [],
+    "relations": [],
+    "llm_analysis": null
+  },
+  "ground_truth_protocol": {
+    "protocol_name": "IEEE C37.118 synchrophasor",
+    "version": "IEEE C37.118.2-2011",
+    "description": "IEEE C37.118 synchrophasor frames over TCP/UDP 4712: a 14-byte common header whose SYNC word carries the frame type (data, header, configuration 1/2/3, command), then the frame body and a CRC-CCITT. Derived from the Wireshark/tshark dissection of the benchmark capture (dol/truth-file-derivation/scripts/build_truth.py): fields at a fixed offset in at least 60% of a type's messages, bitfields sharing a byte merged, arrays of 3+ equal fields and variable-position content kept as one bytes field (the modbus.json convention for register arrays); types with fewer than 5 messages are omitted.",
+    "offset_convention": "Common header fields use wire-absolute offsets 0..13; frame types are relative to offset 14.",
+    "message_types": [
+      {
+        "message_type_id": "synphasor_header",
+        "name": "C37.118 common header",
+        "role": "header",
+        "description": "SYNC (frame type and version), frame size, ID code, SOC and FRACSEC. Offsets are wire-absolute.",
+        "fields": [
+          {
+            "name": "sync",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "function_code",
+            "endian": "big"
+          },
+          {
+            "name": "frsize",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "length",
+            "endian": "big"
+          },
+          {
+            "name": "idcode_stream_source",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "unit_id",
+            "endian": "big"
+          },
+          {
+            "name": "soc",
+            "start": 6,
+            "length": 4,
+            "field_type": "uint32",
+            "semantic_role": "timestamp",
+            "endian": "big"
+          },
+          {
+            "name": "time_quality",
+            "start": 10,
+            "length": 1,
+            "field_type": "uint8",
+            "semantic_role": "flags"
+          },
+          {
+            "name": "fracsec",
+            "start": 11,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          }
+        ],
+        "examples": [
+          "AA 41 00 12 00 F1 00 00 00 00 00 00 00 00"
+        ]
+      },
+      {
+        "message_type_id": "synphasor_data",
+        "name": "synphasor data",
+        "role": "notification",
+        "description": "19561 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "data_status",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "phasor_array",
+            "start": 2,
+            "length": 32,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "data",
+            "start": 34,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          }
+        ],
+        "examples": [
+          "08 00 42 F6 8F 24 C7 C3 66 23 43 01 88 CB C7 C3 63 32 C7 A9 56 76 47 42",
+          "08 00 42 F5 A5 6B C7 C3 66 47 43 01 17 01 C7 C3 63 5B C7 A9 56 75 47 42"
+        ]
+      },
+      {
+        "message_type_id": "synphasor_command",
+        "name": "synphasor command",
+        "role": "request",
+        "description": "58 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "data",
+            "start": 0,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "payload",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 2,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "checksum",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "00 05 D7 D0",
+          "00 02 A7 37"
+        ]
+      },
+      {
+        "message_type_id": "synphasor_cfg2",
+        "name": "synphasor cfg2",
+        "role": "response",
+        "description": "14 messages in the benchmark capture.",
+        "fields": [
+          {
+            "name": "data_0",
+            "start": 0,
+            "length": 1,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "conf_timebase",
+            "start": 1,
+            "length": 3,
+            "field_type": "bytes",
+            "semantic_role": "timestamp"
+          },
+          {
+            "name": "conf_numpmu",
+            "start": 4,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "data_6",
+            "start": 6,
+            "length": 16,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "idcode_data_source",
+            "start": 22,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "address",
+            "endian": "big"
+          },
+          {
+            "name": "conf_dfreq_format",
+            "start": 24,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "num_phasors",
+            "start": 26,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "num_analog_values",
+            "start": 28,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "quantity",
+            "endian": "big"
+          },
+          {
+            "name": "num_digital_status_words",
+            "start": 30,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "channel_name_array",
+            "start": 32,
+            "length": 928,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "conversion_factor_array",
+            "start": 960,
+            "length": 40,
+            "field_type": "bytes",
+            "semantic_role": "payload"
+          },
+          {
+            "name": "status_word_mask_normal_state",
+            "start": 1000,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "status_word_mask_valid_bits",
+            "start": 1002,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "status_word_mask_normal_state",
+            "start": 1004,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "status_word_mask_valid_bits",
+            "start": 1006,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "status_word_mask_normal_state",
+            "start": 1008,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "status_word_mask_valid_bits",
+            "start": 1010,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "status",
+            "endian": "big"
+          },
+          {
+            "name": "conf_fnom",
+            "start": 1012,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "conf_cfgcnt",
+            "start": 1014,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "rate_of_transmission",
+            "start": 1016,
+            "length": 2,
+            "field_type": "uint16",
+            "endian": "big"
+          },
+          {
+            "name": "checksum",
+            "start": 1018,
+            "length": 2,
+            "field_type": "uint16",
+            "semantic_role": "checksum",
+            "endian": "big"
+          }
+        ],
+        "examples": [
+          "00 FF FF FF 00 01 42 6C 75 65 20 50 4D 55 20 20 20 20 20 20 20 20 00 F1",
+          "00 0F 42 40 00 01 50 4D 55 31 20 20 20 20 20 20 20 20 20 20 20 20 00 3D"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "request_message_type_id": "synphasor_command",
+        "response_message_type_id": "synphasor_cfg2",
+        "relation_type": "request_response",
+        "description": "A command frame requests a configuration frame."
+      }
+    ]
+  }
+}
