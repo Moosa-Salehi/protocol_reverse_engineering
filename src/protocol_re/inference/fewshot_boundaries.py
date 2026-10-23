@@ -590,6 +590,72 @@ def split_families(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]
                    'unverified_families': sorted(unverified)}
 
 
+def _span_agreement(pred: Dict[int, Set[int]], mids: Sequence[int], payload: Dict[int, bytes], span: int) -> float:
+    """layout_agreement with layouts cut at ``span`` bytes."""
+    votes, reach = Counter(), Counter()
+    for m in mids:
+        n = min(len(payload[m]), span); votes.update(e for e in pred.get(m, ()) if 0 < e < n); reach.update(range(1, n))
+    maj = {e for e, c in votes.items() if c * 2 >= reach[e]}
+    f = []
+    for m in mids:
+        n = min(len(payload[m]), span); a = {e for e in pred.get(m, ()) if 0 < e < n}; b = {e for e in maj if e < n}
+        f.append(1.0 if not a and not b else 2 * len(a & b) / max(1, len(a) + len(b)))
+    return sum(f) / max(1, len(f))
+
+
+def discriminator_split(family_of: Dict[int, Optional[str]], pred: Dict[int, Set[int]], payload: Dict[int, bytes],
+                        start: int = 0) -> Tuple[Dict[int, str], Dict[str, Any]]:
+    """Second-level discriminator per family, chosen by layout agreement (FewShotBoundaries.DISC_SPLIT_*): new family
+    id ``<family>.<value>`` per moved message, and the split decisions."""
+    from protocol_re.inference.discriminator_fields import _effective_cardinality, _length_field_match_ratio, _length_relation_share
+    from protocol_re.inference.tlv import detect_tlv_framing
+    fams: Dict[str, List[int]] = defaultdict(list)
+    for m, f in family_of.items():
+        if f not in (None, 'noise') and m in payload:
+            fams[str(f)].append(m)
+    moved, decisions, skipped = {}, {}, Counter()
+    for fam, rows in sorted(fams.items()):
+        n = len(rows)
+        if n < 2 * _FS.SPLIT_MIN_SIZE:
+            skipped['small'] += 1; continue
+        base = _span_agreement(pred, rows, payload, _FS.DISC_SPLIT_SPAN)
+        if base >= _FS.SPLIT_AGREE:
+            skipped['homogeneous'] += 1; continue
+        msgs = [payload[m] for m in rows]
+        if detect_tlv_framing(msgs) is not None:
+            skipped['tlv'] += 1; continue          # a TLV/BER family's type is its tag sequence (stage 04 keys on it)
+        best = None
+        for o in range(start, start + _FS.DISC_SPLIT_DEPTH):
+            vals = {m: payload[m][o] for m in rows if len(payload[m]) > o}
+            if len(vals) < _FS.DISC_SPLIT_MIN_COVERAGE * n:
+                continue
+            counts = Counter(vals.values())
+            eff = _effective_cardinality(counts, len(vals), 0.01)
+            if eff < 2 or eff > _FS.DISC_SPLIT_MAX_CARD or counts.most_common(1)[0][1] / len(vals) > 0.98:
+                continue
+            if _length_field_match_ratio(msgs, o, 1) >= 0.85 or _length_relation_share(msgs, o, 1) >= 0.85:
+                continue
+            keep = [v for v, c in counts.items() if c >= max(_FS.SPLIT_MIN_SHARE * n, _FS.SPLIT_MIN_SIZE)]
+            if len(keep) < 2:
+                continue
+            largest = max(keep, key=lambda v: (counts[v], -v))
+            groups: Dict[int, List[int]] = defaultdict(list)
+            for m in rows:
+                v = vals.get(m, largest)
+                groups[v if v in keep else largest].append(m)
+            gain = sum(len(g) * _span_agreement(pred, g, payload, _FS.DISC_SPLIT_SPAN) for g in groups.values()) / n - base
+            if best is None or gain > best[0] + 1e-9:
+                best = (gain, o, dict(groups))
+        if best is None or best[0] < _FS.DISC_SPLIT_MIN_GAIN:
+            skipped['no_gain'] += 1; continue
+        gain, o, groups = best
+        for v, g in groups.items():
+            for m in g:
+                moved[m] = f'{fam}.{v}'
+        decisions[fam] = {'offset': o, 'sub_families': len(groups), 'gain': round(gain, 4)}
+    return moved, {'split_families': decisions, 'moved_messages': len(moved), 'skipped': dict(skipped), 'start': start}
+
+
 # ---------------------------------------------------------------- rebuild family fields from predictions
 
 def rebuild_fields(details: Dict[str, Any], edges: Sequence[int], end_hint: int) -> Tuple[Dict[str, Any], int]:

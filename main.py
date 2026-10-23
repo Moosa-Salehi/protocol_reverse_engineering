@@ -668,6 +668,8 @@ def build_pipeline(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                         step_args.append("--no-split")
                 for protocol in args.fewshot_exclude_protocol or []:
                     step_args.extend(["--exclude-protocol", protocol])
+                if args.discriminator_split:
+                    step_args.append("--discriminator-split")
                 if not args.fewshot_split_verify:
                     step_args.append("--no-split-verify")
                 if args.fewshot_split_support is not None:
@@ -1019,6 +1021,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--zeroshot-posts",
         default="strings,ber,crc",
         help="Zero-shot structural post-processors: comma list of strings, ber, crc (empty for none).",
+    )
+    boundary_group.add_argument(
+        "--discriminator-split",
+        dest="discriminator_split",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Zero-/few-shot: split families by a second-level discriminator byte chosen by predicted-layout agreement "
+             "(stage 04b, FewShotBoundaries.DISC_SPLIT_*).",
     )
     boundary_group.add_argument(
         "--zeroshot-split",

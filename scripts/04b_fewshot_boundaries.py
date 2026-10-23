@@ -46,6 +46,9 @@ def main() -> None:
     parser.add_argument("--training-set", type=Path, required=True)
     parser.add_argument("--exclude-protocol", action="append", default=[],
                         help="Leave this protocol's rows out of the training set (evaluation on a benchmark protocol)")
+    parser.add_argument("--discriminator-split", dest="discriminator_split", action=argparse.BooleanOptionalAction, default=False,
+                        help="split families by a second-level discriminator byte chosen by predicted-layout agreement "
+                             "(FewShotBoundaries.DISC_SPLIT_*), before the layout split")
     parser.add_argument("--split", dest="split", action=argparse.BooleanOptionalAction, default=True,
                         help="Split families whose messages disagree on their layout (default on)")
     parser.add_argument("--split-verify", dest="split_verify", action=argparse.BooleanOptionalAction, default=True,
@@ -102,6 +105,26 @@ def main() -> None:
                                                        exclude=args.exclude_protocol, posts=posts, reference=reference)
         print(f"[+] few-shot boundaries: { {k: v for k, v in summary.items() if k != 'family_probability'} }")
 
+    disc_split = {"applied": False}
+    if args.discriminator_split:
+        with logger.stage("discriminator_split"):
+            ref = (doc.get("metadata") or {}).get("discriminator_refinement") or {}
+            start = int(ref["offset"]) + int(ref["width"]) if ref.get("applied") else 0
+            moved, disc_split = fsb.discriminator_split(family_of, pred, payload, start=start)
+            disc_split["applied"] = True
+            if moved:
+                backup = args.assignments_json.with_name("02_family_assignments.pre-discriminator-split.json")
+                if not backup.exists():
+                    shutil.copy(args.assignments_json, backup)
+                for a in doc["assignments"]:
+                    mid = int(a["msg_id"])
+                    if mid in moved:
+                        a["family_id"] = moved[mid]
+                doc.setdefault("metadata", {})["discriminator_split"] = {k: v for k, v in disc_split.items()}
+                args.assignments_json.write_text(json.dumps(doc), encoding="utf-8")
+                family_of.update(moved)
+            print(f"[+] second-level discriminator split: {disc_split.get('split_families')}")
+
     split = {"moved_messages": 0, "sub_families": 0, "skipped": {}}
     if args.split:
         with logger.stage("split_families"):
@@ -116,7 +139,7 @@ def main() -> None:
                 args.assignments_json.write_text(json.dumps(doc), encoding="utf-8")
             print(f"[+] few-shot layout split: {split}")
 
-    args.output_json.write_text(json.dumps({"summary": summary, "split": split,
+    args.output_json.write_text(json.dumps({"summary": summary, "split": split, "discriminator_split": disc_split,
                                             "edges": {str(m): sorted(int(x) for x in e) for m, e in pred.items()}}),
                                 encoding="utf-8")
     print(f"[+] Wrote {args.mode} edges for {len(pred)} messages to {args.output_json}")

@@ -1139,6 +1139,21 @@ class FewShotBoundaries:
     SPLIT_LABELLED_LAYOUTS: int = 2
     SPLIT_LABELLED_SUPPORT: int = 1
 
+    # --- Second-level (hierarchical) discriminator chosen by layout agreement (stage 04b, --discriminator-split) ---
+    # A family whose predicted layouts disagree (< SPLIT_AGREE) is split by the value of one byte after the stage-04
+    # discriminator (or from offset 0 when stage 04 found none): of the candidate bytes, the one whose value groups
+    # raise the size-weighted layout agreement most, if by at least DISC_SPLIT_MIN_GAIN. Candidates lie within
+    # DISC_SPLIT_DEPTH bytes, are present in >= DISC_SPLIT_MIN_COVERAGE of the family, take 2..DISC_SPLIT_MAX_CARD
+    # effective values, are not constant (<= 98% one value) and not a length field. Layouts are compared below
+    # DISC_SPLIT_SPAN bytes. Value groups below SPLIT_MIN_SHARE / SPLIT_MIN_SIZE fold into the largest group.
+    # Benchmark families (V-measure 0.615 -> 0.632, ARI 0.436 -> 0.448; mostly MMS and BACnet); no gain on the
+    # held-out protocols (dol/hier-disc). Adopted after seeing benchmark results (post hoc).
+    DISC_SPLIT_DEPTH: int = 64
+    DISC_SPLIT_SPAN: int = 64
+    DISC_SPLIT_MIN_GAIN: float = 0.05
+    DISC_SPLIT_MIN_COVERAGE: float = 0.9
+    DISC_SPLIT_MAX_CARD: int = 16
+
     # --- Zero-shot shared-layer transfer (reference messages of known protocols) ---
     # Edges are carried over only inside matching blocks of at least this many bytes ...
     SHARED_MIN_BLOCK: int = 6
