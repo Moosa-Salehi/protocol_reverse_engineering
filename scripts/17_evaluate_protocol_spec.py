@@ -214,6 +214,23 @@ def _truth_uses_absolute_offsets(message_type: Dict[str, Any]) -> bool:
     return any(token and ("header" in token or token in {"transport", "framing"}) for token in tokens)
 
 
+# Alignment of PDU-relative truth fields with the predicted (wire-absolute) fields. The truth files declare
+# their convention: header-role types use wire-absolute offsets, every other type is relative to a fixed wire
+# offset, the end of the header (``base_offset`` on a type overrides it, e.g. ENIP class-1 I/O frames that carry
+# no encapsulation header). "truth" shifts by that declared base, so field boundaries are compared at their real
+# wire offsets and a misplaced predicted header/body split does not misalign every body field of the family.
+# "predicted" (the earlier behaviour) shifts by each family's predicted body start instead.
+_ALIGN: Dict[str, Any] = {"source": "truth", "header_length": 0, "base": {}}
+
+
+def _body_base(family: Dict[str, Any], truth_type: Dict[str, Any] | None = None) -> int:
+    if _ALIGN["source"] != "truth":
+        return _family_body_offset(family)
+    if truth_type is not None:
+        return int(_ALIGN["base"].get(str(truth_type.get("message_type_id")), _ALIGN["header_length"]))
+    return int(_ALIGN["header_length"])
+
+
 def _family_body_offset(family: Dict[str, Any]) -> int:
     framing = family.get("framing_summary") if isinstance(family.get("framing_summary"), dict) else {}
     layouts = framing.get("layout_hypotheses", []) if isinstance(framing, dict) else []
@@ -532,7 +549,7 @@ def _field_matches(
         truth_type = truth_by_id.get(truth_id) or {}
         predicted_fields = _comparable_predicted_fields(family, truth_type)
         truth_fields = list(truth_type.get("fields", []) or [])
-        offset_shift = 0 if _truth_uses_absolute_offsets(truth_type) else _family_body_offset(family)
+        offset_shift = 0 if _truth_uses_absolute_offsets(truth_type) else _body_base(family, truth_type)
 
         # Tag-keyed pass. A truth field declared as a TLV element (``tlv_tag``)
         # has no stable byte offset: its position shifts with the lengths of
@@ -608,7 +625,7 @@ def _comparable_predicted_fields(family: Dict[str, Any], truth_type: Dict[str, A
     predicted_fields = list(family.get("field_hypotheses", []) or [])
     if _truth_uses_absolute_offsets(truth_type):
         return predicted_fields
-    body_offset = _family_body_offset(family)
+    body_offset = _body_base(family, truth_type)
     if body_offset <= 0:
         return predicted_fields
     return [
@@ -685,7 +702,7 @@ def _relation_matches(
 
 def _header_region_fields(family: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Predicted fields that fall in the framing/header region (before the body)."""
-    body_offset = _family_body_offset(family)
+    body_offset = _body_base(family)
     if body_offset <= 0:
         return []
     return [
@@ -775,6 +792,13 @@ def evaluate_protocol_spec(
     ground_truth_protocol = (ground_truth_bundle.get("ground_truth_protocol") or ground_truth_bundle.get("predicted_protocol") or {})
     families = predicted_protocol.get("families", []) or []
     truth_types = ground_truth_protocol.get("message_types", []) or []
+    header_length = _truth_header_length(truth_types)
+    _ALIGN["header_length"] = header_length
+    _ALIGN["base"] = {
+        str(mt.get("message_type_id")): int(mt.get("base_offset", header_length))
+        for mt in truth_types
+        if not _truth_uses_absolute_offsets(mt)
+    }
     predicted_relations = predicted_protocol.get("relations", []) or []
     truth_relations = ground_truth_protocol.get("relations", []) or []
 
@@ -1040,8 +1064,16 @@ def main() -> None:
         help="Message corpus (01_messages.jsonl). When given, truth types are scoped by the "
              "discriminator values observed in the corpus instead of by the predicted families.",
     )
+    parser.add_argument(
+        "--body-offset-source",
+        choices=["truth", "predicted"],
+        default="truth",
+        help="Shift for PDU-relative truth fields: the base offset the truth file declares (default) or each "
+             "family's predicted body start (earlier behaviour).",
+    )
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
+    _ALIGN["source"] = args.body_offset_source
 
     # Setup logging
     logger = setup_stage_logging("17_evaluate_protocol_spec", Path(args.log_dir))

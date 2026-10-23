@@ -143,7 +143,8 @@
         "examples": [
           "AD C4 3B 6A F2 3F BF 59 CD A7 A6 26 02 6C 9D 0E 6B 7D 42 ED EC 3C B7 94",
           "AD C4 3B 6A F2 3F BF 59 CD A7 A6 26 02 6C 9D 0E 6B 7D 42 ED EC 3C B7 94"
-        ]
+        ],
+        "base_offset": 0
       },
       {
         "message_type_id": "enip_send_unit_data_request",
