@@ -34,6 +34,10 @@ if [ "$mode" = full ]; then
   python3 dol/heldout/prepare.py
   python3 dol/heldout/prepare_new.py doip cnip
   bash dol/heldout/run_all_ours.sh
+  bash dol/ablation-final/run.sh                      # component ablation (13 variants x 14 protocols)
+  bash dol/fewshot-seeds/run.sh                       # few-shot 50 with label seeds 1-4
+  bash dol/llm-semantics-eval/run.sh                  # stage 11b with the local fine-tuned model (llama.cpp server on :8080)
+  bash dol/disc-split/run.sh                          # optional second-level discriminator split (evaluated, not default)
   ( cd dol/baseline-comparison/scripts
     ~/.venvs/nemesys39/bin/python run_nemesys.py synphasor ams doip cnip
     for p in synphasor ams doip cnip; do
@@ -50,7 +54,14 @@ $PY dol/thesis-numbers/gen_final.py $T/results_final_data.tex
   $PY summarize.py > ../summary.txt
   $PY gen_tex.py ../../../$T/results_baselines_data.tex > /dev/null )
 $PY -W ignore dol/heldout/score.py > /dev/null
+~/.venvs/protocol_re/bin/python dol/supervised-baselines/make_preds.py > /dev/null   # copy-nearest-label baselines
 $PY dol/thesis-numbers/gen_heldout.py $T/results_heldout_data.tex
+$PY -W ignore dol/metric-robustness/rescore.py > /dev/null                         # equal weights / optimal matching
+$PY dol/ablation-final/gen_tex.py $T/results_ablation_data.tex > /dev/null
+$PY dol/fewshot-seeds/gen_tex.py $T/results_seeds_data.tex > /dev/null
+python3 dol/llm-semantics-eval/role_disagreements.py > /dev/null && python3 dol/llm-semantics-eval/gen_tex.py $T/results_llmsem_data.tex > /dev/null
+$PY -W ignore dol/disc-split/score.py > /dev/null
+$PY -W ignore dol/hier-disc/gen_tex.py $T/results_family_data.tex > /dev/null        # needs hier.json, layout_select.json
 ~/.local/thesis-build/build.sh
 cp ~/.local/thesis-build/out/thesis.pdf archive/thesis/thesis_report/thesis.pdf
 echo "thesis rebuilt: archive/thesis/thesis_report/thesis.pdf"
