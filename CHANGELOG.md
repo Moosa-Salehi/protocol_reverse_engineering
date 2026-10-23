@@ -102,6 +102,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   common tag sequence. A one-element chain is only a length-prefixed message (the Modbus
   MBAP length field parsed that way).
 
+### Added
+- Held-out evaluation extended to DoIP (ISO 13400, UDS) and CN/IP (LonWorks), chosen after the design was frozen and run
+  once (`dol/heldout/prepare_new.py`); held-out scoring and the tool comparison report a trivial every-byte baseline
+  and the share of positions each method marks as an edge.
+- `dol/thesis-numbers/run_thesis_final.sh` runs the case study, supplementary corpora and runtime in the default
+  (zero-shot) configuration with the corpus's protocol excluded from the boundary model's training rows.
+
 ### Changed
 - Family refinement no longer skips a label-free bootstrap with unknown message direction: families are keyed by the
   discriminator value alone (`FamilyRefinement.UNKNOWN_DIRECTION_VALUE_ONLY`; no role, no length bucket); the TLV
