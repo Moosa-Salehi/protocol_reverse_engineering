@@ -39,6 +39,13 @@ if [ "$mode" = full ]; then
   bash dol/llm-semantics-eval/run.sh                  # stage 11b with the local fine-tuned model (llama.cpp server on :8080)
   bash dol/llm-relations-eval/run.sh                  # stage 10b with the local backend (deterministic relation gate only)
   bash dol/disc-split/run.sh                          # optional second-level discriminator split (evaluated, not default)
+  bash dol/fewshot-vs-copy/run.sh                     # copy baselines through the pipeline in place of few-shot edges
+  bash dol/boundary-seeds/run.sh                      # default configuration with boundary-model seeds 1-3
+  for p in synphasor:synphasor ams:ams doip:doip cnip:cnip; do HELDOUT=1 python3 dol/truth-file-derivation/scripts/dissect_fields.py ${p%%:*} ${p##*:}
+    python3 dol/truth-file-derivation/scripts/build_truth.py ${p%%:*} --write; done   # held-out truth files
+  $PY dol/heldout-truth/make_labels.py && bash dol/heldout-truth/run.sh
+  bash dol/lopo-encoder/worker.sh & sleep 5; bash dol/lopo-encoder/worker.sh; wait   # LOPO encoders (CPU, hours)
+  JOBLIB_MULTIPROCESSING=0 PYTHONPATH=src $PY dol/lopo-encoder/cluster_eval.py && bash dol/lopo-encoder/run.sh pipeline
   ( cd dol/baseline-comparison/scripts
     ~/.venvs/nemesys39/bin/python run_nemesys.py synphasor ams doip cnip
     for p in synphasor ams doip cnip; do
@@ -63,6 +70,9 @@ $PY dol/fewshot-seeds/gen_tex.py $T/results_seeds_data.tex > /dev/null
 python3 dol/llm-semantics-eval/role_disagreements.py > /dev/null && python3 dol/llm-semantics-eval/gen_tex.py $T/results_llmsem_data.tex > /dev/null
 $PY -W ignore dol/disc-split/score.py > /dev/null
 $PY -W ignore dol/hier-disc/gen_tex.py $T/results_family_data.tex > /dev/null        # needs hier.json, layout_select.json
+python3 dol/fewshot-vs-copy/score.py > /dev/null
+python3 dol/thesis-numbers/gen_new.py $T/results_new_data.tex > /dev/null            # copy, held-out truth, seeds, LOPO
+( cd dol/dissector-demo && python3 gen_tex.py ../../$T/results_dissector_data.tex )  # needs the demo's json (evaluate.py)
 ~/.local/thesis-build/build.sh
 cp ~/.local/thesis-build/out/thesis.pdf archive/thesis/thesis_report/thesis.pdf
 echo "thesis rebuilt: archive/thesis/thesis_report/thesis.pdf"
