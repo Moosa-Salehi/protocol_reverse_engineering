@@ -7,7 +7,9 @@ usage: role_llm.py <runs-root> <protocols> <out-tag> [--no-classifier-hint]
 from __future__ import annotations
 
 import json
+import os
 import re
+import time
 import subprocess
 import sys
 import urllib.request
@@ -21,6 +23,7 @@ sys.path.insert(0, str(HERE))
 import role_eval as re_  # noqa: E402
 
 URL = "http://127.0.0.1:8080/v1/chat/completions"
+PAUSE = float(os.environ.get("LLM_PAUSE", "0"))   # seconds of rest between calls (laptop load)
 ROLES = re_.rf.ROLES
 
 
@@ -72,6 +75,15 @@ def main():
     out_root = HERE / "runs" / tag
     summary = {}
     for p in protos:
+        done = out_root / p / "15_evaluation_result.json"
+        if done.exists():                      # resume: re-read the finished protocol
+            src = re_.run_dir(runs_root, p)
+            r = json.loads(done.read_text()); b = json.loads((src / "15_evaluation_result.json").read_text())
+            summary[p] = dict(base=b["metrics"]["field_roles"]["f1_score"], new=r["metrics"]["field_roles"]["f1_score"],
+                              overall_base=b["summary"]["overall_score"], overall_new=r["summary"]["overall_score"], changed=None)
+            continue
+        if PAUSE:
+            time.sleep(PAUSE)
         Xs, ys = [syn["X"]], [syn["y"]]
         for q, d in train_real.items():
             if q != p:
@@ -99,6 +111,8 @@ def main():
             prompt = (f"Fields of one message type of an unknown binary protocol, described only by statistics over many messages.\n"
                       f"Allowed roles: {', '.join(ROLES)}, or none if unsure.\n" + "\n".join(lines) +
                       '\nReply as JSON {"<field number>": "<role or none>", ...}.')
+            if PAUSE:
+                time.sleep(PAUSE)
             try:
                 ans = json.loads(re.search(r"\{.*\}", chat(prompt), re.S).group(0))
             except Exception as e:   # unparsable / server error: leave the family unchanged
