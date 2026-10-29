@@ -36,6 +36,11 @@ def crc16(data: bytes) -> int:
 
 
 T = [0.0]   # current capture time (seconds), advanced by generate_protocol
+PLE = [False]  # protocol-wide byte-order preference (real protocols are mostly consistent)
+
+
+def pick_le(r: random.Random) -> bool:
+    return r.random() < (0.9 if PLE[0] else 0.1)
 
 ROLE_OF_KIND = {"enum": None, "counter": "sequence_number", "pv_int": "payload", "pv_float": "payload", "wide": "payload",
                 "zero": "constant", "small": None, "bool": "flags", "address": "address", "status": "status",
@@ -55,7 +60,7 @@ class Scalar:
         self.w = width or r.choice({"enum": [1, 1, 2], "counter": [1, 2, 4], "pv_int": [2, 2, 4], "wide": [2, 4, 4, 8],
                                     "zero": [1, 2, 4], "small": [1, 2], "bool": [1], "address": [1, 2, 2, 4],
                                     "status": [1, 1, 2], "time": [4, 8]}[self.kind])
-        self.little = r.random() < 0.4 if little is None else little
+        self.little = pick_le(r) if little is None else little
         self.vals = [r.randrange(0, min(256 ** self.w, 1 << 16)) for _ in range(r.randint(2, 6))]
         if self.kind == "address":
             lo = r.randrange(0, min(256 ** self.w, 1 << 16) // 2)
@@ -99,11 +104,11 @@ class Element:
     """A body element: emits a list of primitive byte strings (each one truth field)."""
 
     def __init__(self, r: random.Random, depth: int = 0):
-        kinds = ["scalar"] * 6 + ["address", "quantity", "fstring", "lpstring", "blob", "array", "tlv"]
+        kinds = ["scalar"] * 6 + ["address", "quantity", "fstring", "lpstring", "blob", "array", "tlv", "ber", "items"]
         if depth:
             kinds = ["scalar"] * 6 + ["fstring", "lpstring"]
         self.kind = r.choice(kinds)
-        self.little = r.random() < 0.4
+        self.little = pick_le(r)
         if self.kind == "scalar":
             self.s = Scalar(r)
         elif self.kind == "address":
@@ -120,6 +125,14 @@ class Element:
             self.items = [Scalar(r, kind=r.choice(["enum", "pv_int", "pv_float", "small", "wide"])) for _ in range(r.randint(1, 3))]
             self.maxn = r.choice([4, 8, 16])
             self.fixed_n = r.randint(1, self.maxn) if r.random() < 0.3 else None
+        elif self.kind == "ber":
+            self.tags = [r.choice([0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x02, 0x04, 0x0a, 0x1a, 0x91])
+                         for _ in range(r.randint(2, 6))]
+            self.ctag = r.choice([0x30, 0xa0, 0xa1, 0xa2, 0xa3])
+            self.nested = r.random() < 0.6
+        elif self.kind == "items":
+            self.types = {r.randrange(1, 0x200): [Scalar(r, kind=r.choice(["address", "pv_int", "wide", "enum"]))
+                                                   for _ in range(r.randint(1, 3))] for _ in range(r.randint(2, 4))}
         elif self.kind == "tlv":
             self.tw, self.lw = r.choice([(1, 1), (1, 1), (1, 2), (2, 2)])
             self.tags = {r.randrange(1, 256 ** self.tw if self.tw == 1 else 4096): r.choice(["int", "str", "blob"])
@@ -146,6 +159,27 @@ class Element:
             for _ in range(n):
                 out += [(it.emit(r, k), ROLE_OF_KIND[it.kind]) for it in self.items]
             return out
+        if self.kind == "ber":
+            def berlen(n):
+                if n < 128 and r.random() < 0.9:
+                    return bytes([n])
+                return bytes([0x81, n]) if n < 256 else bytes([0x82, n >> 8, n & 0xFF])
+            inner = []
+            for tag in r.sample(self.tags, r.randint(1, len(self.tags))):
+                v = (ib(r.randrange(1 << 16), r.choice([1, 2, 4]), False) if tag in (0x02, 0x0a, 0x80, 0x85)
+                     else (r.choice(WORDS) if tag in (0x1a, 0x81, 0x83) else bytes(r.randrange(256) for _ in range(r.randint(1, 10)))))
+                inner += [(bytes([tag]), None), (berlen(len(v)), "length"), (v, "payload")]
+            if not self.nested:
+                return inner
+            n = sum(len(x) for x, _ in inner)
+            return [(bytes([self.ctag]), None), (berlen(n), "length")] + inner
+        if self.kind == "items":
+            chosen = [r.choice(list(self.types)) for _ in range(r.randint(1, 3))]
+            out = [(ib(len(chosen), 2, self.little), "quantity")]
+            for t in chosen:
+                data = [(sc.emit(r, k), ROLE_OF_KIND[sc.kind]) for sc in self.types[t]]
+                out += [(ib(t, 2, self.little), None), (ib(sum(len(x) for x, _ in data), 2, self.little), "length")] + data
+            return out
         out = []
         for _ in range(r.randint(1, self.maxn)):
             tag = r.choice(list(self.tags))
@@ -160,7 +194,7 @@ class Layer:
     """A header layer; the last layer holds the opcode. Length fields are filled after the payload is built."""
 
     def __init__(self, r: random.Random, last: bool):
-        self.little = r.random() < 0.4
+        self.little = pick_le(r)
         p = {"magic": 0.4, "version": 0.3, "length": 0.75, "txn": 0.4, "seq": 0.2, "unit": 0.45, "flags": 0.35,
              "reserved": 0.2, "timestamp": 0.15}
         names = [n for n in p if r.random() < p[n]]
@@ -176,7 +210,7 @@ class Layer:
             elif n == "version":
                 self.fields.append((n, Scalar(r, "enum", 1)))
             elif n == "length":
-                self.fields.append((n, (r.choice([1, 2, 2, 4]), r.random() < 0.4, r.choice(["total", "after", "layer"]),
+                self.fields.append((n, (r.choice([1, 2, 2, 4]), pick_le(r), r.choice(["total", "after", "layer"]),
                                         r.choice([0, 0, 0, 2, -2]))))
             elif n in ("txn", "seq"):
                 self.fields.append((n, Scalar(r, "counter" if r.random() < 0.7 else "wide", r.choice([1, 2, 2, 4]), self.little)))
@@ -193,6 +227,7 @@ class Layer:
 
 
 def generate_protocol(r: random.Random, n_messages: int = 400) -> List[Dict[str, Any]]:
+    PLE[0] = r.random() < 0.4
     layers = [Layer(r, i == n - 1) for n in [r.choice([1, 1, 2, 2, 3])] for i in range(n)]
     opw = next(v for name, v in layers[-1].fields if name == "opcode")
     n_ops = r.randint(2, 10)

@@ -59,6 +59,8 @@ def main():
     thr_real = dict(zip([str(x) for x in real["zs_threshold_protocols"]], [float(x) for x in real["zs_thresholds"]]))
     Xr, yr, wr, pr = real["X"], real["y"], real["weight"].astype(float), real["proto"]
     Xs, ys, ws, ps, nsyn = load(syn_paths)
+    keep = (ps % 5 < int(__import__("os").environ.get("SYN_KEEP5", "2")))   # share of synthetic protocols (memory)
+    Xs, ys, ws, ps = Xs[keep], ys[keep], ws[keep], ps[keep]
     hold = ps % 10 == 0                                  # 10% of synthetic protocols for the threshold
     Xh, yh, wh, ph = Xs[hold], ys[hold], ws[hold], ps[hold]
     Xt, yt, wt = Xs[~hold], ys[~hold], ws[~hold].astype(float)
