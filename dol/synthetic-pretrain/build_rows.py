@@ -51,7 +51,7 @@ def protocol_rows(seed: int, n_messages: int):
 
 def main():
     out, first, n = Path(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
-    n_messages = int(sys.argv[4]) if len(sys.argv) > 4 else 600
+    n_messages = int(sys.argv[4]) if len(sys.argv) > 4 else 1500
     per = {}
     for s in range(first, first + n):
         rows, _ = protocol_rows(s, n_messages)
