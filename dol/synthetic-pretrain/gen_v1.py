@@ -1,0 +1,237 @@
+"""Random binary protocol generator with exact per-message field boundaries (synthetic pretraining, idea 1).
+
+A protocol is a stack of 1-3 header layers followed by an opcode-dependent body. Each layer draws its fields
+from magic / version / length (total, after-field or rest-of-layer; 1-4 bytes, either byte order) / transaction /
+sequence / unit / flags / reserved / timestamp; the last layer carries the opcode, and responses use a derived
+opcode (op | 0x80, op + 1, or the same op with a direction flag). Bodies are sequences of elements: fixed integers
+(enumerations, counters, slow-moving process values as scaled ints or float32, wide random values, zero padding),
+fixed-width or length-prefixed strings, length-prefixed blobs, counted arrays of 1-3-field items, TLV chains
+(1/2-byte tag and length), and an optional trailing CRC-16. Every primitive is one truth field, the convention of
+dol/accuracy-push/annotations-truthconv (boundaries are field start offsets, 0 included).
+
+Usage as a module: generate_protocol(rng) -> list of dicts(payload: bytes, boundaries: list[int], type: str, direction).
+"""
+from __future__ import annotations
+
+import math
+import random
+import struct
+from typing import Any, Dict, List, Tuple
+
+WORDS = [b"temp", b"pump", b"valve", b"motor", b"line", b"tank", b"PLC", b"node", b"sensor", b"alarm", b"setpoint",
+         b"station", b"device", b"input", b"output", b"status", b"level", b"flow", b"press", b"zone"]
+
+
+def ib(v: int, w: int, little: bool) -> bytes:
+    return int(v % (256 ** w)).to_bytes(w, "little" if little else "big")
+
+
+def crc16(data: bytes) -> int:
+    crc = 0xFFFF
+    for b in data:
+        crc ^= b
+        for _ in range(8):
+            crc = (crc >> 1) ^ 0xA001 if crc & 1 else crc >> 1
+    return crc
+
+
+class Scalar:
+    """A fixed-width integer-like field with a value distribution and per-protocol state."""
+
+    def __init__(self, r: random.Random, kind: str = None, width: int = None, little: bool = None):
+        self.kind = kind or r.choice(["enum", "enum", "counter", "pv_int", "pv_float", "wide", "zero", "small", "bool"])
+        if self.kind == "pv_float":
+            width = 4
+        self.w = width or r.choice({"enum": [1, 1, 2], "counter": [1, 2, 4], "pv_int": [2, 2, 4], "wide": [2, 4, 4, 8],
+                                    "zero": [1, 2, 4], "small": [1, 2], "bool": [1]}[self.kind])
+        self.little = r.random() < 0.4 if little is None else little
+        self.vals = [r.randrange(0, min(256 ** self.w, 1 << 16)) for _ in range(r.randint(2, 6))]
+        self.base, self.amp, self.period = r.uniform(-500, 500), r.uniform(1, 200), r.uniform(20, 400)
+        self.scale = r.choice([1, 10, 100])
+        self.state = r.randrange(0, 256 ** min(self.w, 2))
+
+    def emit(self, r: random.Random, k: int) -> bytes:
+        w, le = self.w, self.little
+        if self.kind == "enum":
+            return ib(r.choice(self.vals), w, le)
+        if self.kind == "counter":
+            self.state += 1
+            return ib(self.state, w, le)
+        if self.kind == "pv_int":
+            v = (self.base + self.amp * math.sin(k / self.period) + r.gauss(0, self.amp * 0.02)) * self.scale
+            return ib(int(v), w, le)
+        if self.kind == "pv_float":
+            v = self.base + self.amp * math.sin(k / self.period) + r.gauss(0, self.amp * 0.02)
+            return struct.pack("<f" if le else ">f", v)
+        if self.kind == "wide":
+            return bytes(r.randrange(256) for _ in range(w))
+        if self.kind == "zero":
+            return bytes(w)
+        if self.kind == "small":
+            return ib(r.randrange(0, 40), w, le)
+        return ib(r.randrange(2), w, le)
+
+
+Field = Tuple[bytes, ...]  # one primitive = one bytes object; an element emits a list of primitives
+
+
+class Element:
+    """A body element: emits a list of primitive byte strings (each one truth field)."""
+
+    def __init__(self, r: random.Random, depth: int = 0):
+        kinds = ["scalar"] * 6 + ["fstring", "lpstring", "blob", "array", "tlv"]
+        if depth:
+            kinds = ["scalar"] * 6 + ["fstring", "lpstring"]
+        self.kind = r.choice(kinds)
+        self.little = r.random() < 0.4
+        if self.kind == "scalar":
+            self.s = Scalar(r)
+        elif self.kind == "fstring":
+            self.w = r.choice([4, 8, 16, 32])
+        elif self.kind in ("lpstring", "blob"):
+            self.lw = r.choice([1, 1, 2])
+            self.maxlen = r.choice([8, 16, 32, 64])
+        elif self.kind == "array":
+            self.cw = r.choice([1, 1, 2])
+            self.items = [Scalar(r, kind=r.choice(["enum", "pv_int", "pv_float", "small", "wide"])) for _ in range(r.randint(1, 3))]
+            self.maxn = r.choice([4, 8, 16])
+            self.fixed_n = r.randint(1, self.maxn) if r.random() < 0.3 else None
+        elif self.kind == "tlv":
+            self.tw, self.lw = r.choice([(1, 1), (1, 1), (1, 2), (2, 2)])
+            self.tags = {r.randrange(1, 256 ** self.tw if self.tw == 1 else 4096): r.choice(["int", "str", "blob"])
+                         for _ in range(r.randint(2, 6))}
+            self.maxn = r.choice([2, 4, 6])
+
+    def emit(self, r: random.Random, k: int) -> List[bytes]:
+        if self.kind == "scalar":
+            return [self.s.emit(r, k)]
+        if self.kind == "fstring":
+            s = r.choice(WORDS) + str(r.randrange(100)).encode()
+            return [(s + bytes(self.w))[: self.w]]
+        if self.kind == "lpstring":
+            s = (r.choice(WORDS) + b"_" + r.choice(WORDS))[: self.maxlen]
+            return [ib(len(s), self.lw, self.little), s]
+        if self.kind == "blob":
+            b = bytes(r.randrange(256) for _ in range(r.randint(2, self.maxlen)))
+            return [ib(len(b), self.lw, self.little), b]
+        if self.kind == "array":
+            n = self.fixed_n or r.randint(1, self.maxn)
+            out = [ib(n, self.cw, self.little)]
+            for _ in range(n):
+                out += [it.emit(r, k) for it in self.items]
+            return out
+        out = []
+        for _ in range(r.randint(1, self.maxn)):
+            tag = r.choice(list(self.tags))
+            t = self.tags[tag]
+            v = (ib(r.randrange(1 << 16), r.choice([1, 2, 4]), self.little) if t == "int"
+                 else (r.choice(WORDS) if t == "str" else bytes(r.randrange(256) for _ in range(r.randint(1, 12)))))
+            out += [ib(tag, self.tw, False), ib(len(v), self.lw, self.little), v]
+        return out
+
+
+class Layer:
+    """A header layer; the last layer holds the opcode. Length fields are filled after the payload is built."""
+
+    def __init__(self, r: random.Random, last: bool):
+        self.little = r.random() < 0.4
+        p = {"magic": 0.4, "version": 0.3, "length": 0.75, "txn": 0.4, "seq": 0.2, "unit": 0.45, "flags": 0.35,
+             "reserved": 0.2, "timestamp": 0.15}
+        names = [n for n in p if r.random() < p[n]]
+        r.shuffle(names)
+        if "length" in names and r.random() < 0.6:   # length fields usually sit early in the header
+            names.remove("length"); names.insert(r.randint(0, min(2, len(names))), "length")
+        if last:
+            names.insert(r.randint(max(0, len(names) - 2), len(names)), "opcode")
+        self.fields: List[Tuple[str, Any]] = []
+        for n in names:
+            if n == "magic":
+                w = r.choice([1, 2, 2, 4]); self.fields.append((n, bytes(r.randrange(256) for _ in range(w))))
+            elif n == "version":
+                self.fields.append((n, Scalar(r, "enum", 1)))
+            elif n == "length":
+                self.fields.append((n, (r.choice([1, 2, 2, 4]), r.random() < 0.4, r.choice(["total", "after", "layer"]),
+                                        r.choice([0, 0, 0, 2, -2]))))
+            elif n in ("txn", "seq"):
+                self.fields.append((n, Scalar(r, "counter" if r.random() < 0.7 else "wide", r.choice([1, 2, 2, 4]), self.little)))
+            elif n == "unit":
+                self.fields.append((n, Scalar(r, "enum", r.choice([1, 1, 2]), self.little)))
+            elif n == "flags":
+                self.fields.append((n, Scalar(r, "enum", 1)))
+            elif n == "reserved":
+                self.fields.append((n, Scalar(r, "zero", r.choice([1, 2]))))
+            elif n == "timestamp":
+                self.fields.append((n, Scalar(r, "counter", r.choice([4, 8]), self.little)))
+            elif n == "opcode":
+                self.fields.append((n, r.choice([1, 1, 1, 2])))
+
+
+def generate_protocol(r: random.Random, n_messages: int = 400) -> List[Dict[str, Any]]:
+    layers = [Layer(r, i == n - 1) for n in [r.choice([1, 1, 2, 2, 3])] for i in range(n)]
+    opw = next(v for name, v in layers[-1].fields if name == "opcode")
+    n_ops = r.randint(2, 10)
+    ops = r.sample(range(1, 0x7F), n_ops)
+    resp_rule = r.choice(["or80", "plus1", "same"])
+    bodies = {}
+    for op in ops:
+        for d in ("req", "resp"):
+            n_el = r.choice([0, 1, 2, 3, 4, 6]) if d == "req" else r.choice([0, 1, 2, 3, 5, 8])
+            bodies[(op, d)] = [Element(r) for _ in range(n_el)]
+    has_crc = r.random() < 0.12
+    msgs = []
+    weights = [r.random() ** 2 + 0.05 for _ in ops]
+    k = 0
+    while len(msgs) < n_messages:
+        op = r.choices(ops, weights)[0]
+        for d in ("req", "resp"):
+            if d == "resp" and r.random() < 0.15:
+                continue
+            code = op if d == "req" else {"or80": op | 0x80, "plus1": op + 1, "same": op}[resp_rule]
+            body = [p for el in bodies[(op, d)] for p in el.emit(r, k)]
+            # build layers inside-out so outer length fields can count inner bytes
+            inner = list(body)
+            starts_inner: List[int] = []
+            prims: List[bytes] = body
+            layer_prims: List[List[bytes]] = []
+            for layer in reversed(layers):
+                fl: List[bytes] = []
+                len_slot = None
+                for name, v in layer.fields:
+                    if name == "magic":
+                        fl.append(v)
+                    elif name == "length":
+                        len_slot = len(fl); fl.append(b"")
+                    elif name == "opcode":
+                        fl.append(ib(code, v, False))
+                    else:
+                        if name == "flags" and resp_rule == "same":
+                            fl.append(bytes([0x01 if d == "req" else 0x81]))
+                        else:
+                            fl.append(v.emit(r, k))
+                if len_slot is not None:
+                    w, le, rel, adj = layer.fields[len_slot][1]
+                    rest = sum(len(x) for x in fl[len_slot + 1:]) + sum(len(x) for x in prims)
+                    before = sum(len(x) for x in fl[:len_slot]) + w
+                    val = {"total": before + rest, "after": rest, "layer": rest}[rel] + adj
+                    fl[len_slot] = ib(max(0, val), w, le)
+                prims = fl + prims
+                layer_prims.append(fl)
+            if has_crc:
+                c = crc16(b"".join(prims))
+                prims = prims + [ib(c, 2, True)]
+            payload, edges, off = b"", [], 0
+            for p in prims:
+                if not p:
+                    continue
+                edges.append(off); off += len(p); payload += p
+            msgs.append({"payload": payload, "boundaries": edges, "type": f"op{code:x}_{d}",
+                         "direction": "client_to_server" if d == "req" else "server_to_client"})
+            k += 1
+    return msgs[:n_messages]
+
+
+if __name__ == "__main__":
+    import sys
+    r = random.Random(int(sys.argv[1]) if len(sys.argv) > 1 else 0)
+    for m in generate_protocol(r, 12):
+        print(m["type"], m["payload"].hex(), m["boundaries"])
