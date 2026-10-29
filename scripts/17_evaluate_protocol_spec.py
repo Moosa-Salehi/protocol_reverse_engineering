@@ -223,6 +223,66 @@ def _truth_uses_absolute_offsets(message_type: Dict[str, Any]) -> bool:
 _ALIGN: Dict[str, Any] = {"source": "truth", "header_length": 0, "base": {}}
 
 
+# Pairing of predicted families with truth message types. "content" (default) pairs them by the messages they hold:
+# Jaccard overlap of a family's messages (02_family_assignments.json next to the model data) and a type's messages
+# (per-message truth types, truth_files/[heldout/]annotations/<protocol>.jsonl). The annotations carry a payload hash
+# per message; when they do not describe the evaluated corpus (another capture of the same protocol) or an input is
+# missing, the evaluation falls back to "structure", the earlier pairing by name tokens, field count and role, which
+# with one family per truth type paired only 18% of the families with their own type. The pairing used is recorded
+# in the report inputs.
+_PAIRING: Dict[str, Any] = {"requested": "content", "used": "structure", "reason": "not loaded", "family_msgs": {}, "type_msgs": {}}
+CONTENT_PAIRING_THRESHOLD = 0.1
+
+
+def load_content_pairing(model_data_json: str, ground_truth_json: str, messages_jsonl: str | None,
+                         annotations_jsonl: str | None = None, assignments_json: str | None = None) -> str:
+    """Prepare content-based pairing; returns the pairing that will be used ("content" or "structure")."""
+    import hashlib
+
+    _PAIRING.update(used="structure", family_msgs={}, type_msgs={})
+    if _PAIRING["requested"] != "content":
+        _PAIRING["reason"] = "structure pairing requested"
+        return "structure"
+    truth_path = Path(ground_truth_json)
+    ann = Path(annotations_jsonl) if annotations_jsonl else truth_path.parent / "annotations" / f"{truth_path.stem}.jsonl"
+    asg = Path(assignments_json) if assignments_json else Path(model_data_json).parent / "02_family_assignments.json"
+    missing = [str(x) for x in (ann, asg) if not x.is_file()] + ([] if messages_jsonl else ["--messages-jsonl"])
+    if missing:
+        _PAIRING["reason"] = f"missing {', '.join(missing)}"
+        return "structure"
+    payload_hash: Dict[int, str] = {}
+    with open(messages_jsonl, "r", encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                record = json.loads(line)
+                payload_hash[int(record["msg_id"])] = hashlib.sha1(bytes.fromhex(str(record.get("payload_hex") or ""))).hexdigest()[:12]
+    type_msgs: Dict[str, set] = {}
+    checked = agree = 0
+    with open(ann, "r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if "msg_id" not in record or not record.get("type"):
+                continue
+            mid = int(record["msg_id"])
+            if mid not in payload_hash:
+                continue
+            checked += 1
+            if record.get("payload_sha1") == payload_hash[mid]:
+                agree += 1
+                type_msgs.setdefault(str(record["type"]), set()).add(mid)
+    if checked < 20 or agree < 0.99 * checked:
+        _PAIRING["reason"] = f"annotations do not describe this corpus ({agree}/{checked} payloads agree)"
+        return "structure"
+    family_msgs: Dict[str, set] = {}
+    for item in json.loads(asg.read_text(encoding="utf-8")).get("assignments", []):
+        family_msgs.setdefault(str(item.get("family_id")), set()).add(int(item["msg_id"]))
+    _PAIRING.update(used="content", family_msgs=family_msgs, type_msgs=type_msgs,
+                    reason=f"{agree} annotated messages, {len(type_msgs)} types ({ann.name})")
+    return "content"
+
+
 def _body_base(family: Dict[str, Any], truth_type: Dict[str, Any] | None = None) -> int:
     if _ALIGN["source"] != "truth":
         return _family_body_offset(family)
@@ -520,6 +580,26 @@ def _greedy_matches(candidates: Iterable[Tuple[str, str, float]], threshold: flo
 def _message_type_matches(
     predicted: Sequence[Dict[str, Any]], truth: Sequence[Dict[str, Any]], *, structural_tag: bool = False
 ) -> List[Dict[str, Any]]:
+    if _PAIRING["used"] == "content":
+        candidates = []
+        for family in predicted:
+            family_id = str(family.get("family_id"))
+            in_family = _PAIRING["family_msgs"].get(family_id, set())
+            for message_type in truth:
+                type_id = str(message_type.get("message_type_id"))
+                in_type = _PAIRING["type_msgs"].get(type_id, set())
+                overlap = len(in_family & in_type)
+                if overlap:
+                    candidates.append((family_id, type_id, round(overlap / len(in_family | in_type), 6)))
+        return [
+            {
+                "predicted_family_id": family_id,
+                "ground_truth_message_type_id": message_type_id,
+                "score": score,
+                "reason": "message_overlap",
+            }
+            for family_id, message_type_id, score in _greedy_matches(candidates, CONTENT_PAIRING_THRESHOLD)
+        ]
     candidates = [
         (str(family.get("family_id")), str(message_type.get("message_type_id")), _family_match_score(family, message_type, structural_tag=structural_tag))
         for family in predicted
@@ -1071,9 +1151,21 @@ def main() -> None:
         help="Shift for PDU-relative truth fields: the base offset the truth file declares (default) or each "
              "family's predicted body start (earlier behaviour).",
     )
+    parser.add_argument(
+        "--type-pairing",
+        choices=["content", "structure"],
+        default="content",
+        help="Pair families with truth types by the messages they hold (default; needs --messages-jsonl and the "
+             "truth's per-message annotations) or by name/field-count/role similarity (earlier behaviour).",
+    )
+    parser.add_argument("--type-annotations", default=None,
+                        help="Per-message truth types (default: <truth dir>/annotations/<truth stem>.jsonl).")
+    parser.add_argument("--family-assignments", default=None,
+                        help="Family assignments (default: 02_family_assignments.json next to the model data).")
     parser.add_argument("--log-dir", default="logs", help="Directory for log files")
     args = parser.parse_args()
     _ALIGN["source"] = args.body_offset_source
+    _PAIRING["requested"] = args.type_pairing
 
     # Setup logging
     logger = setup_stage_logging("17_evaluate_protocol_spec", Path(args.log_dir))
@@ -1098,10 +1190,18 @@ def main() -> None:
             )
         else:
             logger.warning("No --messages-jsonl given: truth scope falls back to the predicted families")
+        pairing = load_content_pairing(args.evaluation_model_data_json, args.ground_truth_json, args.messages_jsonl,
+                                       args.type_annotations, args.family_assignments)
+        if pairing != _PAIRING["requested"]:
+            logger.warning(f"Type pairing falls back to {pairing}: {_PAIRING['reason']}")
+        else:
+            logger.info(f"Type pairing: {pairing} ({_PAIRING['reason']})")
         report = evaluate_protocol_spec_with_refinement(evaluation_model_data, ground_truth, corpus_scope)
         report["inputs"] = {
             "predicted_protocol_file": args.evaluation_model_data_json,
             "ground_truth_protocol_file": args.ground_truth_json,
+            "type_pairing": pairing,
+            "type_pairing_note": _PAIRING["reason"],
         }
 
         # Log key metrics
