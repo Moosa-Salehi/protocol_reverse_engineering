@@ -28,6 +28,7 @@ import mdl
 
 HERE = Path(__file__).resolve().parent
 URL = "http://127.0.0.1:8080/v1/chat/completions"
+PAUSE = float(__import__("os").environ.get("LLM_PAUSE", "0"))   # seconds of rest before each call (laptop heat)
 N_SCORE = 200
 N_EVAL = 1500
 
@@ -49,7 +50,7 @@ The spec is scored by description length (lower = better); rejected messages and
 
 # ------------------------------------------------------------------ evidence
 
-def hexs(b: bytes, cap: int = 96) -> str:
+def hexs(b: bytes, cap: int = 80) -> str:
     s = " ".join(f"{x:02x}" for x in b[:cap])
     return s + (" …" if len(b) > cap else "")
 
@@ -70,12 +71,12 @@ def evidence(pl):
     for b in pl:
         by_len.setdefault(len(b), []).append(b)
     samples = []
-    for l, _ in lens.most_common(12):
+    for l, _ in lens.most_common(10):
         samples.append(by_len[l][0])
-    while len(samples) < 12 and len(samples) < len(pl):
+    while len(samples) < 10 and len(samples) < len(pl):
         samples.append(pl[len(samples) * 7 % len(pl)])
     lines.append("Sample messages (hex):")
-    lines += [hexs(b) for b in samples[:12]]
+    lines += [hexs(b) for b in samples[:10]]
     return "\n".join(lines)
 
 
@@ -94,14 +95,14 @@ def feedback(spec, pl):
         return f"spec error: {e}"
     ex = next((s for s in segs if s), None)
     b = pl[segs.index(ex)] if ex else b""
-    parse = ", ".join(f"{k}={b[s:e].hex()}" for k, s, e in (ex or [])[:24])
+    parse = ", ".join(f"{k}={b[s:e].hex()[:16]}" for k, s, e in (ex or [])[:16])
     return (f"score {bpm:.1f} bits/message; rejected {rej:.0%}" + (f" (reasons: {dict(Counter(reasons).most_common(3))})" if reasons else "")
-            + f"; unparsed bytes per message {unc:.1f}\nfield codes: {dict(list(codes.items())[:20])}\nexample parse: {parse}")
+            + f"; unparsed bytes per message {unc:.1f}\nfield codes: {dict(list(codes.items())[:12])}\nexample parse: {parse}")
 
 
 # ------------------------------------------------------------------ LLM
 
-def _trim(messages, budget=24000):
+def _trim(messages, budget=10500):
     """Keep the system prompt and the first user message; drop the oldest later turns until under ~budget chars."""
     msgs = list(messages)
     while sum(len(m["content"]) for m in msgs) > budget and len(msgs) > 4:
@@ -111,6 +112,8 @@ def _trim(messages, budget=24000):
 
 def chat(messages, temperature=0.7, max_tokens=1500):
     messages = _trim(messages)
+    if PAUSE:
+        time.sleep(PAUSE)
     body = json.dumps({"messages": messages, "temperature": temperature, "max_tokens": max_tokens, "top_p": 0.9}).encode()
     req = urllib.request.Request(URL, body, {"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=600) as r:
@@ -143,10 +146,16 @@ def labelled_block(lab):
     if not lab:
         return ""
     lines = ["Analyst-labelled messages of this family (fields separated by |). Your spec must reproduce these splits:"]
-    for b, e in lab[:8]:
+    for b, e in lab[:5]:
         pts = [0] + list(e) + [len(b)]
-        lines.append(" | ".join(" ".join(f"{x:02x}" for x in b[s:t]) for s, t in zip(pts, pts[1:]) if t > s)[:400])
+        lines.append(" | ".join(" ".join(f"{x:02x}" for x in b[s:t]) for s, t in zip(pts, pts[1:]) if t > s)[:300])
     return "\n".join(lines) + "\n\n"
+
+
+def short(spec, n=40):
+    """The spec as shown in a prompt: at most n top-level fields (long fixed field lists end in a rest field)."""
+    f = spec.get("fields", []) if isinstance(spec, dict) else []
+    return {"fields": f[:n] + ([{"name": "tail", "type": "rest"}] if len(f) > n else [])}
 
 
 def arm_llm(pl, pipe_spec, rounds, samples, log, lab=None, lab_fb=None):
@@ -156,7 +165,7 @@ def arm_llm(pl, pipe_spec, rounds, samples, log, lab=None, lab_fb=None):
     cands = []
     for r in range(rounds):
         fb = feedback(best_spec, pl) + (lab_fb(best_spec) if lab_fb else "")
-        user = (f"{DSL_DOC}\n\n{GOAL}\n\n{labelled_block(lab)}Family evidence:\n{evidence(pl)}\n\nCurrent best spec:\n{json.dumps(best_spec)}\n"
+        user = (f"{DSL_DOC}\n\n{GOAL}\n\n{labelled_block(lab)}Family evidence:\n{evidence(pl)}\n\nCurrent best spec:\n{json.dumps(short(best_spec))}\n"
                 f"Its result: {fb}\n\nWrite an improved spec (JSON only).")
         for s in range(samples):
             t0 = time.time()
@@ -225,7 +234,7 @@ def arm_agent(pl, pipe_spec, log, max_turns=8, lab=None, lab_fb=None):
     sysmsg = {"role": "system", "content": "You reverse-engineer unknown binary network protocols from raw messages by "
               "testing hypotheses with tools. The protocol is unknown and proprietary; reason only from the data."}
     msgs = [sysmsg, {"role": "user", "content": f"{DSL_DOC}\n\n{GOAL}\n\n{TOOLS_DOC}\n\n{labelled_block(lab)}Family evidence:\n{evidence(pl)}\n\n"
-                     f"Pipeline's spec: {json.dumps(pipe_spec)}\nIts result: {feedback(pipe_spec, pl)}\n\nStart."}]
+                     f"Pipeline's spec: {json.dumps(short(pipe_spec))}\nIts result: {feedback(pipe_spec, pl)}\n\nStart."}]
     cands = []
     for turn in range(max_turns):
         try:
@@ -386,6 +395,9 @@ def main():
                         sel = min([base] + scored, key=lambda x: x["bits"])
                     oracle = max([dict(pipeline=True, **pipe_eval)] + scored, key=lambda x: x["f1"])
                     r = dict(selected=sel, oracle=oracle, n_candidates=len(cands), n_valid=len(scored), candidates=scored)
+                if any(str(e.get("error", "")).startswith(("HTTP", "<urlopen", "timed out")) for e in log):
+                    print(f"{p:9s} {f:12s} {arm:6s} server errors, not saved (will be retried)", flush=True)
+                    continue
                 r["secs"] = round(time.time() - t0, 1); r["model"] = model; r["log"] = log
                 res["arms"][arm] = r
                 out.parent.mkdir(parents=True, exist_ok=True)
