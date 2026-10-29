@@ -223,14 +223,16 @@ def _truth_uses_absolute_offsets(message_type: Dict[str, Any]) -> bool:
 _ALIGN: Dict[str, Any] = {"source": "truth", "header_length": 0, "base": {}}
 
 
-# Pairing of predicted families with truth message types. "content" (default) pairs them by the messages they hold:
+# Pairing of predicted families with truth message types. "structure" (default) pairs them by name tokens, field
+# count and role (opcode gate where the truth declares a constant discriminator). "content" (optional) pairs them by
+# the messages they hold:
 # Jaccard overlap of a family's messages (02_family_assignments.json next to the model data) and a type's messages
 # (per-message truth types, truth_files/[heldout/]annotations/<protocol>.jsonl). The annotations carry a payload hash
 # per message; when they do not describe the evaluated corpus (another capture of the same protocol) or an input is
-# missing, the evaluation falls back to "structure", the earlier pairing by name tokens, field count and role, which
-# with one family per truth type paired only 18% of the families with their own type. The pairing used is recorded
-# in the report inputs.
-_PAIRING: Dict[str, Any] = {"requested": "content", "used": "structure", "reason": "not loaded", "family_msgs": {}, "type_msgs": {}}
+# missing, the content evaluation falls back to "structure". With one family per truth type, structure pairing paired
+# 36 of 198 families with their own type (dol/oracle-ceilings); content pairing gives every configuration about 0.015
+# lower scores with the same ranking (dol/content-matching). The pairing used is recorded in the report inputs.
+_PAIRING: Dict[str, Any] = {"requested": "structure", "used": "structure", "reason": "not loaded", "family_msgs": {}, "type_msgs": {}}
 CONTENT_PAIRING_THRESHOLD = 0.1
 
 
@@ -1154,9 +1156,9 @@ def main() -> None:
     parser.add_argument(
         "--type-pairing",
         choices=["content", "structure"],
-        default="content",
-        help="Pair families with truth types by the messages they hold (default; needs --messages-jsonl and the "
-             "truth's per-message annotations) or by name/field-count/role similarity (earlier behaviour).",
+        default="structure",
+        help="Pair families with truth types by name/field-count/role similarity (default) or by the messages they "
+             "hold (content; needs --messages-jsonl and the truth's per-message annotations).",
     )
     parser.add_argument("--type-annotations", default=None,
                         help="Per-message truth types (default: <truth dir>/annotations/<truth stem>.jsonl).")
